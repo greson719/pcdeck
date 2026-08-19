@@ -502,10 +502,43 @@
     }
 
     @media (max-width: 768px) {
+      .container {
+        padding: 0 16px;
+      }
+      .nav-inner {
+        padding: 4px 0;
+      }
+      .nav-links .nav-link {
+        display: none;
+      }
+      .btn-nav-download {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+      }
+      .hero {
+        padding: 40px 0 20px;
+      }
       .hero h1 {
-        font-size: 2.3rem;
+        font-size: 2.2rem;
+      }
+      .hero-sub-header {
+        font-size: 0.95rem !important;
+        letter-spacing: 0.5px !important;
+        margin-top: -6px !important;
+        margin-bottom: 14px !important;
       }
       .download-deck {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .comparison-section {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      .setup-steps {
         grid-template-columns: 1fr;
       }
     }
@@ -518,16 +551,17 @@
   <header>
     <div class="container nav-inner">
       <a href="#" class="logo-box">
-        <img src="PCDeck_Mouse_Logo.png" alt="PCDeck" style="width: 36px; height: 36px; border-radius: 8px; object-fit: contain; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);">
+        <img src="PCDeck_Mouse_Logo.png" alt="PCDeck" style="width: 34px; height: 34px; border-radius: 8px; object-fit: contain; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);">
         <div class="logo-text">
           <span>PC<span style="color: var(--neo-lime);">Deck</span></span>
         </div>
       </a>
       <div class="nav-links">
         <a href="#features" class="nav-link">Features</a>
+        <a href="#pro" class="nav-link" style="color: #ffd700;">PRO Upgrade</a>
         <a href="#comparison" class="nav-link">Comparison</a>
         <a href="#setup" class="nav-link">Setup</a>
-        <a href="PCDeck_Package.zip" download class="btn-nav-download">Download Suite (ZIP)</a>
+        <a href="PCDeck_Package.zip" download class="btn-nav-download">Download (ZIP)</a>
       </div>
     </div>
   </header>
@@ -540,7 +574,7 @@
         <span>Ultra-Lightweight APK (&lt; 1 MB)</span>
       </div>
       <h1>PC<span style="color: var(--neo-lime); text-shadow: 0 0 30px rgba(0, 255, 102, 0.4);">Deck</span></h1>
-      <div style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: 1.5px; margin-top: -12px; margin-bottom: 20px;">WIRELESS PC TOUCH DECK &amp; STREAMER</div>
+      <div class="hero-sub-header" style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: 1.5px; margin-top: -12px; margin-bottom: 20px;">WIRELESS PC TOUCH DECK &amp; STREAMER</div>
       <p>Transform any Android smartphone into an ultra-low latency PC remote, live desktop mirror, PC audio receiver, and bidirectional 70 MB/s file sharing system.</p>
 
       <div class="download-deck">
@@ -588,6 +622,47 @@
           </a>
         </div>
 
+      </div>
+    </section>
+
+    <!-- Dedicated PCDeck Pro Upgrade Section -->
+    <section id="pro" style="margin: 40px 0;">
+      <div class="download-card" style="border-color: #ffd700; background: linear-gradient(145deg, rgba(20, 26, 40, 0.9), rgba(10, 14, 22, 0.95)); box-shadow: 0 0 30px rgba(255, 215, 0, 0.15); max-width: 800px; margin: 0 auto; padding: 32px 24px; text-align: center;">
+        <div style="display: inline-block; padding: 4px 12px; background: linear-gradient(90deg, #ffd700, #ff9100); color: #000; font-weight: 900; font-size: 0.72rem; border-radius: 20px; text-transform: uppercase; margin-bottom: 12px;">
+          PRO UPGRADE
+        </div>
+        <h2 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 8px;">
+          Unlock 60 FPS &amp; Turbo Transfers
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 540px; margin: 0 auto 24px;">
+          Upgrade to PCDeck Pro with a one-time lifetime license. Unlocks silky smooth 60/120 FPS screen streaming, uncapped multi-stream file transfers, and all cyber chroma themes.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; text-align: left; margin-bottom: 24px;">
+          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
+            <div style="font-weight: 800; font-size: 0.88rem; color: var(--neo-cyan); margin-bottom: 2px;">⚡ 60 / 120 FPS Mirroring</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Ultra-fluid, low-latency desktop streaming for gaming &amp; productivity.</div>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
+            <div style="font-weight: 800; font-size: 0.88rem; color: var(--neo-lime); margin-bottom: 2px;">🚀 Turbo File Acceleration</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Uncapped multi-stream transfers up to 100+ MB/s.</div>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
+            <div style="font-weight: 800; font-size: 0.88rem; color: #ffd700; margin-bottom: 2px;">🎨 All Chroma Themes</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Matrix Lime, Solar Gold, Synthwave Purple, OLED Dark.</div>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
+            <div style="font-weight: 800; font-size: 0.88rem; color: #fff; margin-bottom: 2px;">💎 Lifetime License</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">One-time purchase ($3.99). Never pay again.</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+          <a href="https://gumroad.com" target="_blank" class="btn-download" style="background: linear-gradient(90deg, #ffd700, #ff9100); color: #000; font-weight: 900; font-size: 0.95rem; padding: 14px 28px; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <span>UNLOCK PCDECK PRO — $3.99 (LIFETIME)</span>
+          </a>
+          <span style="font-size: 0.72rem; color: var(--text-muted);">Instant license key delivery upon purchase • Works 100% offline</span>
+        </div>
       </div>
     </section>
 
