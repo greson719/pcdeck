@@ -1,0 +1,53 @@
+﻿{
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/PCDeck_Pro.apk",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/vnd.android.package-archive"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"PCDeck_Pro.apk\""
+        }
+      ]
+    },
+    {
+      "source": "/PCDeck_Pro.exe",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/octet-stream"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"PCDeck_Pro.exe\""
+        }
+      ]
+    },
+    {
+      "source": "/PCDeck_Pro_Package.zip",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/zip"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"PCDeck_Pro_Package.zip\""
+        }
+      ]
+    }
+  ]
+}
