@@ -24,6 +24,75 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- SEO & AI LLM Structured Data (Schema.org) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "PCDeck",
+        "alternateName": ["PCDeck Pro", "PC Deck", "NeonTrack"],
+        "operatingSystem": "Windows 10, Windows 11, Android 5.0+",
+        "applicationCategory": "UtilitiesApplication, RemoteControlApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "3.99",
+          "priceCurrency": "USD"
+        },
+        "description": "High-performance wireless PC controller. Turns any Android phone into an emergency touchscreen monitor, zero-lag trackpad, keyboard, PC audio streamer, and 100 MB/s file hub.",
+        "featureList": [
+          "Emergency PC display for broken or dead monitors",
+          "Wireless touchpad replacement for broken or dead mouse",
+          "Full on-screen keyboard with numpad and typing sync",
+          "48kHz live stereo PC audio stream to phone headphones",
+          "Headless Windows PC control over local Wi-Fi or hotspot",
+          "70-100 MB/s bidirectional file explorer without USB cables",
+          "Reverse Android phone mirror and control on PC screen (Scrcpy)",
+          "100% offline operation with zero cloud telemetry"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How to use a Windows PC if the monitor is broken or dead?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "PCDeck allows you to use your Android phone as a full-color 60/120 FPS touchscreen monitor. With Windows autostart enabled, PCDeck boots silently and connects to your phone over local Wi-Fi or hotspot, allowing complete headless PC navigation and control without an external monitor."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What can I use if my PC mouse or keyboard is broken?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "PCDeck instantly turns your smartphone into a high-precision multi-touch gesture trackpad (with tap-to-click, two-finger scrolling, right-click, and cursor acceleration) and a complete on-screen mechanical keyboard with function keys, numpad, and typing sync."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How can I listen to PC game and movie audio on my phone headphones wirelessly?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "PCDeck captures Windows WASAPI loopback stereo audio at 48kHz and streams it in real-time to your Android phone or wireless earbuds over local Wi-Fi with ultra-low latency."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I control my PC from bed or another room without a controller?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes! PCDeck provides a seamless bedside remote to control media players (VLC, YouTube, Netflix), adjust system volume, navigate desktop apps, play turn-based games, and initiate PC sleep or shutdown from anywhere within your Wi-Fi range."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
   <style>
     :root {
       --bg-dark: #070a10;
@@ -1414,6 +1483,52 @@
       </div>
     </section>
 
+    <!-- Real-World Problem Solvers & Emergency Use Cases -->
+    <section id="scenarios" style="margin-top: 40px;">
+      <div class="section-title">
+        <h2>Built for Everyday Life &amp; Hardware Emergencies</h2>
+        <p>From broken peripherals to effortless bedside PC streaming — PCDeck is your ultimate digital safety net.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-item" style="border-left: 3px solid var(--neo-pink);">
+          <div class="feature-icon-badge">🖥️💥</div>
+          <h3 style="color: var(--neo-pink);">Broken or Dead PC Monitor?</h3>
+          <p>Windows boots up, but your display won't turn on? Since PCDeck autostarts silently with Windows, your phone instantly connects and acts as an <strong>emergency 60 FPS full-color touchscreen monitor</strong> to rescue your files and shut down safely.</p>
+        </div>
+
+        <div class="feature-item" style="border-left: 3px solid var(--neo-cyan);">
+          <div class="feature-icon-badge">🖱️🔋</div>
+          <h3 style="color: var(--neo-cyan);">Mouse Dead or Battery Drained?</h3>
+          <p>No spare batteries or broken laser sensor? Slide your finger on your phone for a <strong>fluid multi-touch gesture trackpad</strong> with tap-to-click, smooth two-finger scrolling, and drag-and-drop support.</p>
+        </div>
+
+        <div class="feature-item" style="border-left: 3px solid var(--neo-lime);">
+          <div class="feature-icon-badge">⌨️☕</div>
+          <h3 style="color: var(--neo-lime);">Spilled Liquid on Keyboard?</h3>
+          <p>Type instantly on any active Windows window with the <strong>on-screen mechanical keyboard, 17-key numpad, and 6-key D-pad</strong>. Perfect for logging in or inputting numbers in Excel.</p>
+        </div>
+
+        <div class="feature-item" style="border-left: 3px solid var(--neo-yellow);">
+          <div class="feature-icon-badge">🎧🔊</div>
+          <h3 style="color: var(--neo-yellow);">No PC Speakers or Broken Audio Jack?</h3>
+          <p>Stream your PC's <strong>48kHz live stereo game and movie audio</strong> directly to your phone's wireless earbuds or headphones over local Wi-Fi without tangled cables or lag.</p>
+        </div>
+
+        <div class="feature-item" style="border-left: 3px solid var(--neo-purple);">
+          <div class="feature-icon-badge">🛏️🍿</div>
+          <h3 style="color: var(--neo-purple);">Watch Movies &amp; Relax from Bed</h3>
+          <p>Tired of getting up to pause VLC, YouTube, or Netflix? Control system volume, switch full-screen video, browse tabs, and put your PC to sleep directly from the comfort of your bed.</p>
+        </div>
+
+        <div class="feature-item" style="border-left: 3px solid var(--neo-gold);">
+          <div class="feature-icon-badge">📁⚡</div>
+          <h3 style="color: var(--neo-gold);">Lost Your USB Cable?</h3>
+          <p>Transfer 4K videos, photos, and ZIP archives at <strong>70–100 MB/s</strong> directly between your phone and PC without searching for cables or uploading to slow cloud storage.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Comparison Section -->
     <section id="comparison">
       <div class="section-title">
@@ -1549,6 +1664,36 @@
         </div>
         <div class="faq-answer">
           PCDeck Free includes full trackpad gestures, live 30 FPS screen mirror, WASAPI audio streaming, dual file manager, and keyboard typing. You can activate Pro (60/120 FPS streaming, Turbo multi-stream transfers, and Chroma themes) directly inside the PCDeck app using your lifetime license key (`PCDK-...`).
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>Can I use PCDeck if my computer monitor is broken or disconnected?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Yes! PCDeck autostarts silently on Windows boot. Even with zero physical monitors plugged in, your phone automatically connects over local Wi-Fi and provides a full-color 60 FPS touchscreen display so you can access your desktop, launch programs, or safely back up files.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>What if my mouse or keyboard suddenly stops working?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          PCDeck serves as an emergency hardware backup. Your smartphone turns into a natural gesture trackpad (with two-finger scrolling, left/right clicks, and drag-and-drop) alongside an on-screen mechanical keyboard, numpad, and typing sync to keep you productive without running to the store for replacement hardware.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>How do I listen to PC games and movies in bed or another room?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          PCDeck captures live 48kHz stereo system audio from Windows (WASAPI loopback) and streams it directly to your phone. Plug your headphones or wireless earbuds into your phone to enjoy games, YouTube, or Netflix with crystal-clear sound and zero latency from anywhere in the house.
         </div>
       </div>
 
