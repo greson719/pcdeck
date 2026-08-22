@@ -295,43 +295,6 @@
       margin-bottom: 70px;
     }
 
-    .download-deck-tabs {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .edition-toggle-btn {
-      background: rgba(14, 20, 34, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--text-muted);
-      padding: 10px 24px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      font-weight: 800;
-      font-family: var(--font-display);
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .edition-toggle-btn.active {
-      background: rgba(0, 240, 255, 0.15);
-      border-color: var(--neo-cyan);
-      color: #fff;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
-    }
-
-    .edition-toggle-btn.pro-btn.active {
-      background: rgba(255, 215, 0, 0.15);
-      border-color: var(--neo-gold);
-      color: #fff;
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.25);
-    }
-
     .download-deck {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -387,16 +350,6 @@
       opacity: 1;
     }
 
-    .card-gold {
-      border-color: rgba(255, 215, 0, 0.5);
-      box-shadow: 0 10px 30px rgba(255, 215, 0, 0.15);
-    }
-
-    .card-gold::before {
-      background: linear-gradient(90deg, var(--neo-gold), #ff9100);
-      opacity: 1;
-    }
-
     .card-badge-top {
       position: absolute;
       top: 16px;
@@ -410,12 +363,6 @@
       color: var(--neo-lime);
       border: 1px solid var(--neo-lime);
       letter-spacing: 0.5px;
-    }
-
-    .card-badge-gold {
-      background: rgba(255, 215, 0, 0.18);
-      color: var(--neo-gold);
-      border-color: var(--neo-gold);
     }
 
     .card-icon-box {
@@ -1031,13 +978,13 @@
         <img src="PCDeck_Master_Logo.png" alt="PCDeck Master Logo" class="logo-img">
         <div class="logo-text-group">
           <div class="logo-title">PC<span style="color: var(--neo-lime);">Deck</span></div>
-          <div class="logo-tag">PRO WIRELESS DECK</div>
+          <div class="logo-tag">WIRELESS TOUCH DECK</div>
         </div>
       </a>
       <div class="nav-links">
         <a href="#simulator" class="nav-link">Interactive Demo</a>
         <a href="#features" class="nav-link">Features</a>
-        <a href="#pro" class="nav-link nav-link-pro">⭐ PRO Upgrade</a>
+        <a href="#pro" class="nav-link nav-link-pro">⭐ PRO Features</a>
         <a href="#comparison" class="nav-link">Comparison</a>
         <a href="#setup" class="nav-link">Setup</a>
         <a href="#downloads" class="btn-nav-download">
@@ -1052,7 +999,7 @@
     <section class="hero">
       <div class="badge-pill-release">
         <span class="badge-dot-live"></span>
-        <span>Version 2.1 Released</span>
+        <span>Version 2.1 Release</span>
         <span>•</span>
         <span>60/120 FPS Engine &amp; Turbo Transfers</span>
       </div>
@@ -1072,19 +1019,9 @@
         <div class="hero-tag-item">🛡️ 100% Offline &amp; Private</div>
       </div>
 
-      <!-- Edition Selector & Download Center -->
+      <!-- Download Center -->
       <div id="downloads" class="download-deck-container">
-        <div class="download-deck-tabs">
-          <button class="edition-toggle-btn active" id="btn-tab-standard" onclick="switchEdition('standard')">
-            <span>📦 PCDeck Standard (Free)</span>
-          </button>
-          <button class="edition-toggle-btn pro-btn" id="btn-tab-pro" onclick="switchEdition('pro')">
-            <span>⭐ PCDeck Pro Edition</span>
-          </button>
-        </div>
-
-        <!-- Standard Edition Cards -->
-        <div class="download-deck" id="deck-standard">
+        <div class="download-deck">
           <!-- PCDeck Suite (Recommended) -->
           <div class="download-card card-highlight">
             <div class="card-badge-top">RECOMMENDED</div>
@@ -1101,7 +1038,7 @@
             </a>
           </div>
 
-          <!-- Android APK (Standard) -->
+          <!-- Android APK -->
           <div class="download-card">
             <div class="card-badge-top" style="color: var(--neo-cyan); border-color: var(--neo-cyan); background: rgba(0, 240, 255, 0.1);">NATIVE CLIENT</div>
             <div class="card-icon-box">📱</div>
@@ -1129,56 +1066,6 @@
             </div>
             <a href="PCDeck.exe" download class="btn-download btn-cyan">
               <span>🚀 Download EXE (.EXE)</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- Pro Edition Cards -->
-        <div class="download-deck" id="deck-pro" style="display: none;">
-          <!-- Pro Complete Suite -->
-          <div class="download-card card-gold">
-            <div class="card-badge-top card-badge-gold">PRO EDITION</div>
-            <div class="card-icon-box">👑</div>
-            <div class="card-title">PCDeck Pro Suite (ZIP)</div>
-            <div class="card-desc">The ultimate high-performance bundle with 60/120 FPS high-refresh engine, Turbo multi-stream transfers, and Chroma themes.</div>
-            <div class="card-meta">
-              <span>💾 58.9 MB</span>
-              <span>•</span>
-              <span>Windows + Pro Android APK</span>
-            </div>
-            <a href="PCDeck_Pro_Package.zip" download class="btn-download btn-gold">
-              <span>⭐ Download Pro Suite (.ZIP)</span>
-            </a>
-          </div>
-
-          <!-- Pro Android APK -->
-          <div class="download-card card-gold">
-            <div class="card-badge-top card-badge-gold">60 / 120 FPS</div>
-            <div class="card-icon-box">⚡</div>
-            <div class="card-title">PCDeck Pro APK</div>
-            <div class="card-desc">Enhanced native client loaded with ultra-high refresh rate support, turbo file streaming, and full offline license engine.</div>
-            <div class="card-meta">
-              <span>💾 5.5 MB</span>
-              <span>•</span>
-              <span>Android 5.0 – 16+ (API 36)</span>
-            </div>
-            <a href="PCDeck_Pro.apk" download class="btn-download btn-gold">
-              <span>📲 Download Pro APK (.APK)</span>
-            </a>
-          </div>
-
-          <!-- Windows Standalone Pro Server -->
-          <div class="download-card">
-            <div class="card-icon-box">🖥️</div>
-            <div class="card-title">Windows Pro Server</div>
-            <div class="card-desc">Standalone desktop server supporting high-throughput WASAPI audio capture, scrcpy reverse mirroring, and turbo file pipeline.</div>
-            <div class="card-meta">
-              <span>💾 57.8 MB</span>
-              <span>•</span>
-              <span>Windows 10/11 x64</span>
-            </div>
-            <a href="PCDeck_Pro.exe" download class="btn-download btn-cyan">
-              <span>🚀 Download Pro EXE (.EXE)</span>
             </a>
           </div>
         </div>
@@ -1442,10 +1329,10 @@
     <section id="pro" class="pro-banner">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
         <div>
-          <div class="pro-badge-pill">⭐ PRO UPGRADE EDITION</div>
+          <div class="pro-badge-pill">⭐ IN-APP PRO UNLOCK</div>
           <h2>Unlock 60/120 FPS &amp; Turbo Transfers</h2>
           <div class="pro-banner-lead">
-            Upgrade to PCDeck Pro with a one-time lifetime license. Unlocks silky-smooth 60/120 FPS screen streaming, uncapped multi-stream file transfers, and exclusive Chroma themes.
+            Upgrade your PCDeck installation with a one-time lifetime license. Unlocks silky-smooth 60/120 FPS screen streaming, uncapped multi-stream file transfers, and exclusive Chroma themes.
           </div>
         </div>
         <div style="text-align: right;">
@@ -1474,10 +1361,10 @@
       </div>
 
       <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
-        <a href="PCDeck_Pro_Package.zip" download class="btn-download btn-gold" style="max-width: 420px;">
-          <span>⚡ GET PCDECK PRO SUITE (.ZIP)</span>
+        <a href="PCDeck_Package.zip" download class="btn-download btn-gold" style="max-width: 420px;">
+          <span>⚡ DOWNLOAD PCDECK SUITE (.ZIP)</span>
         </a>
-        <span style="font-size: 0.76rem; color: var(--text-muted);">Includes Windows Server + Pro Android APK • Instant Offline Key Ready</span>
+        <span style="font-size: 0.76rem; color: var(--text-muted);">Activate Pro anytime inside PCDeck settings using your offline key</span>
       </div>
     </section>
 
@@ -1539,7 +1426,7 @@
           <thead>
             <tr>
               <th>Feature / Specification</th>
-              <th style="color: var(--neo-cyan);">PCDeck Pro</th>
+              <th style="color: var(--neo-cyan);">PCDeck</th>
               <th>Unified Remote</th>
               <th>AnyDesk / TeamViewer</th>
               <th>Spacedesk</th>
@@ -1548,7 +1435,7 @@
           <tbody>
             <tr>
               <td><strong>App Size (APK)</strong></td>
-              <td class="table-check">1.6 MB – 5.5 MB</td>
+              <td class="table-check">1.6 MB (Ultra-Light)</td>
               <td>45 MB – 65 MB</td>
               <td>30 MB – 50 MB</td>
               <td>25 MB – 40 MB</td>
@@ -1632,7 +1519,7 @@
     <section class="faq-section">
       <div class="section-title">
         <h2>Frequently Asked Questions</h2>
-        <p>Everything you need to know about PCDeck and PCDeck Pro.</p>
+        <p>Everything you need to know about PCDeck.</p>
       </div>
 
       <div class="faq-item active">
@@ -1657,11 +1544,11 @@
 
       <div class="faq-item">
         <div class="faq-question" onclick="toggleFaq(this)">
-          <span>What is the difference between PCDeck Free and PCDeck Pro?</span>
+          <span>How do I activate PCDeck Pro features?</span>
           <span class="faq-icon">+</span>
         </div>
         <div class="faq-answer">
-          PCDeck Free includes full trackpad gestures, live 30 FPS screen mirror, WASAPI audio streaming, dual file manager, and keyboard typing. PCDeck Pro unlocks high-refresh 60 FPS / 120 FPS streaming, uncapped Turbo multi-stream file transfers, and all 5 Chroma themes with a one-time lifetime license.
+          PCDeck Free includes full trackpad gestures, live 30 FPS screen mirror, WASAPI audio streaming, dual file manager, and keyboard typing. You can activate Pro (60/120 FPS streaming, Turbo multi-stream transfers, and Chroma themes) directly inside the PCDeck app using your lifetime license key (`PCDK-...`).
         </div>
       </div>
 
@@ -1699,10 +1586,8 @@
 
       <div class="footer-links">
         <a href="PCDeck_Package.zip" download>Download Suite (.ZIP)</a>
-        <a href="PCDeck_Pro_Package.zip" download>Download Pro Suite (.ZIP)</a>
-        <a href="PCDeck.apk" download>Android APK</a>
-        <a href="PCDeck_Pro.apk" download>Pro APK</a>
-        <a href="PCDeck.exe" download>Windows EXE</a>
+        <a href="PCDeck.apk" download>Android APK (.APK)</a>
+        <a href="PCDeck.exe" download>Windows Server (.EXE)</a>
       </div>
 
       <p>© 2026 PCDeck. Engineered for ultra-low latency, total privacy, and maximum performance.</p>
@@ -1710,26 +1595,6 @@
   </footer>
 
   <script>
-    // Edition Switcher (Standard vs Pro)
-    function switchEdition(edition) {
-      const btnStandard = document.getElementById('btn-tab-standard');
-      const btnPro = document.getElementById('btn-tab-pro');
-      const deckStandard = document.getElementById('deck-standard');
-      const deckPro = document.getElementById('deck-pro');
-
-      if (edition === 'pro') {
-        btnStandard.classList.remove('active');
-        btnPro.classList.add('active');
-        deckStandard.style.display = 'none';
-        deckPro.style.display = 'grid';
-      } else {
-        btnPro.classList.remove('active');
-        btnStandard.classList.add('active');
-        deckPro.style.display = 'none';
-        deckStandard.style.display = 'grid';
-      }
-    }
-
     // Simulator Tab Switcher
     function switchSimTab(tabId) {
       const allBtns = document.querySelectorAll('.sim-tab-btn');
