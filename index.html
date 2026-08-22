@@ -3,24 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PCDeck Pro — Ultra-Lightweight Wireless Trackpad, 60FPS Screen Streamer & File Hub</title>
-  <meta name="description" content="Turn any Android phone into a high-speed wireless trackpad, 60 FPS screen mirror, PC audio receiver, and bidirectional file sharing hub. Ultra-lightweight APK (< 1 MB) with zero cloud accounts.">
+  <title>PCDeck — Wireless PC Touch Deck, 60FPS Screen Streamer & Dual File Hub</title>
+  <meta name="description" content="Turn any Android phone into an ultra-low latency wireless trackpad, 60/120 FPS live desktop touchscreen mirror, WASAPI PC audio receiver, and 70-100 MB/s bidirectional file hub. 100% offline & private.">
   
+  <!-- Open Graph / Meta -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="PCDeck Pro — Wireless Trackpad, 60FPS Screen Mirror & File Hub">
-  <meta property="og:description" content="Ultra-fast, sub-megabyte (< 1 MB) wireless trackpad, PC audio streamer, and high-speed file sharing hub for Windows & Android.">
+  <meta property="og:title" content="PCDeck — Wireless PC Touch Deck, 60FPS Screen Streamer & Dual File Hub">
+  <meta property="og:description" content="Sub-millisecond wireless trackpad, 60/120 FPS screen mirror, live PC audio receiver, and high-speed bidirectional file manager for Windows & Android.">
+  <meta property="og:image" content="PCDeck_Master_Logo.png">
   <meta name="theme-color" content="#070a10">
 
-  <link rel="icon" type="image/png" href="PCDeck_Mouse_Logo.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --bg-dark: #070a10;
-      --bg-card: rgba(15, 21, 35, 0.75);
-      --bg-card-hover: rgba(20, 30, 50, 0.85);
+      --bg-surface: #0c121e;
+      --bg-card: rgba(14, 20, 34, 0.75);
+      --bg-card-hover: rgba(20, 30, 52, 0.9);
       --border-card: rgba(0, 240, 255, 0.2);
       --border-card-hover: rgba(0, 240, 255, 0.6);
       --neo-cyan: #00f0ff;
@@ -28,17 +37,25 @@
       --neo-lime: #00ff66;
       --neo-yellow: #ffe600;
       --neo-purple: #9d4edd;
+      --neo-gold: #ffd700;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --glass-blur: blur(16px);
+      --font-display: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font-body);
       -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
@@ -49,6 +66,7 @@
       line-height: 1.6;
     }
 
+    /* Ambient Background Glows */
     .ambient-glow {
       position: fixed;
       top: 0;
@@ -58,27 +76,30 @@
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(circle at 15% 20%, rgba(0, 240, 255, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 85% 30%, rgba(255, 42, 133, 0.12) 0%, transparent 50%),
-        radial-gradient(circle at 50% 80%, rgba(0, 255, 102, 0.08) 0%, transparent 50%);
+        radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 25%, rgba(255, 42, 133, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 50% 75%, rgba(0, 255, 102, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 85%, rgba(255, 215, 0, 0.07) 0%, transparent 45%);
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
       padding: 0 24px;
       position: relative;
       z-index: 1;
     }
 
+    /* Header & Navigation */
     header {
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 1000;
       backdrop-filter: var(--glass-blur);
-      background: rgba(7, 10, 16, 0.85);
+      background: rgba(7, 10, 16, 0.88);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 16px 0;
+      padding: 14px 0;
+      transition: all 0.3s;
     }
 
     .nav-inner {
@@ -94,76 +115,109 @@
       text-decoration: none;
     }
 
-    .logo-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--neo-cyan), var(--neo-pink));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    .logo-img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.4));
+      transition: transform 0.3s ease;
     }
 
-    .logo-text {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 800;
-      font-size: 1.4rem;
+    .logo-box:hover .logo-img {
+      transform: scale(1.08) rotate(-3deg);
+    }
+
+    .logo-text-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-title {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 1.45rem;
       background: linear-gradient(90deg, #ffffff, var(--neo-cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .logo-tag {
+      font-size: 0.62rem;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      color: var(--neo-lime);
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 22px;
     }
 
     .nav-link {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       font-weight: 600;
-      transition: color 0.2s;
+      transition: color 0.2s, transform 0.2s;
     }
 
     .nav-link:hover {
       color: var(--neo-cyan);
+      transform: translateY(-1px);
+    }
+
+    .nav-link-pro {
+      color: var(--neo-gold) !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 800;
+    }
+
+    .nav-link-pro:hover {
+      color: #fff !important;
+      text-shadow: 0 0 10px var(--neo-gold);
     }
 
     .btn-nav-download {
-      background: linear-gradient(90deg, var(--neo-cyan), #00a2ff);
+      background: linear-gradient(90deg, var(--neo-cyan), #0099ff);
       color: #070a10;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 0.85rem;
-      padding: 8px 18px;
+      padding: 9px 18px;
       border-radius: 8px;
       text-decoration: none;
-      transition: all 0.2s;
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .btn-nav-download:hover {
       transform: translateY(-2px);
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.65);
     }
 
+    /* Hero Section */
     .hero {
-      padding: 80px 0 50px;
+      padding: 70px 0 45px;
       text-align: center;
     }
 
-    .pill-badge {
+    .badge-pill-release {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
+      gap: 10px;
+      padding: 7px 18px;
       border-radius: 999px;
-      background: rgba(0, 240, 255, 0.1);
-      border: 1px solid rgba(0, 240, 255, 0.4);
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.35);
       color: var(--neo-cyan);
       font-size: 0.85rem;
       font-weight: 700;
@@ -171,38 +225,126 @@
       box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
     }
 
+    .badge-dot-live {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--neo-lime);
+      box-shadow: 0 0 8px var(--neo-lime);
+      animation: pulse-dot 1.8s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
     .hero h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 3.4rem;
+      font-family: var(--font-display);
+      font-size: 3.8rem;
       font-weight: 900;
-      line-height: 1.15;
-      letter-spacing: -1.5px;
-      margin-bottom: 20px;
-      background: linear-gradient(135deg, #ffffff 30%, var(--neo-cyan) 70%, var(--neo-pink) 100%);
+      line-height: 1.12;
+      letter-spacing: -1.8px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #ffffff 20%, var(--neo-cyan) 60%, var(--neo-pink) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
+    .hero-sub-header {
+      font-family: var(--font-display);
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 2px;
+      margin-bottom: 22px;
+      text-transform: uppercase;
+    }
+
     .hero p {
-      font-size: 1.2rem;
+      font-size: 1.18rem;
       color: var(--text-muted);
-      max-width: 760px;
-      margin: 0 auto 40px;
+      max-width: 820px;
+      margin: 0 auto 36px;
+      font-weight: 400;
+    }
+
+    .hero-tags-strip {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 44px;
+    }
+
+    .hero-tag-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-family: var(--font-mono);
+      color: #cbd5e1;
+    }
+
+    /* Download Deck Section */
+    .download-deck-container {
+      margin-bottom: 70px;
+    }
+
+    .download-deck-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .edition-toggle-btn {
+      background: rgba(14, 20, 34, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      font-family: var(--font-display);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .edition-toggle-btn.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--neo-cyan);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+    }
+
+    .edition-toggle-btn.pro-btn.active {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: var(--neo-gold);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.25);
     }
 
     .download-deck {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      max-width: 960px;
-      margin: 0 auto 60px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      max-width: 1080px;
+      margin: 0 auto;
     }
 
     .download-card {
       background: var(--bg-card);
       border: 1px solid var(--border-card);
-      border-radius: 16px;
-      padding: 28px 24px;
+      border-radius: 18px;
+      padding: 30px 26px;
       backdrop-filter: var(--glass-blur);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       text-align: left;
@@ -228,7 +370,7 @@
     .download-card:hover {
       transform: translateY(-6px);
       border-color: var(--border-card-hover);
-      box-shadow: 0 15px 35px rgba(0, 240, 255, 0.25);
+      box-shadow: 0 16px 36px rgba(0, 240, 255, 0.22);
     }
 
     .download-card:hover::before {
@@ -237,7 +379,7 @@
 
     .card-highlight {
       border-color: rgba(0, 255, 102, 0.5);
-      box-shadow: 0 10px 30px rgba(0, 255, 102, 0.15);
+      box-shadow: 0 10px 30px rgba(0, 255, 102, 0.12);
     }
 
     .card-highlight::before {
@@ -245,37 +387,64 @@
       opacity: 1;
     }
 
+    .card-gold {
+      border-color: rgba(255, 215, 0, 0.5);
+      box-shadow: 0 10px 30px rgba(255, 215, 0, 0.15);
+    }
+
+    .card-gold::before {
+      background: linear-gradient(90deg, var(--neo-gold), #ff9100);
+      opacity: 1;
+    }
+
     .card-badge-top {
       position: absolute;
-      top: 14px;
-      right: 16px;
-      font-size: 0.75rem;
-      font-weight: 800;
+      top: 16px;
+      right: 18px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      font-family: var(--font-mono);
       padding: 4px 10px;
       border-radius: 6px;
       background: rgba(0, 255, 102, 0.15);
       color: var(--neo-lime);
       border: 1px solid var(--neo-lime);
+      letter-spacing: 0.5px;
     }
 
-    .card-icon {
-      font-size: 2.2rem;
-      margin-bottom: 14px;
+    .card-badge-gold {
+      background: rgba(255, 215, 0, 0.18);
+      color: var(--neo-gold);
+      border-color: var(--neo-gold);
+    }
+
+    .card-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 18px;
     }
 
     .card-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 1.35rem;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-size: 1.45rem;
+      font-weight: 800;
       margin-bottom: 6px;
       color: #fff;
     }
 
     .card-desc {
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       color: var(--text-muted);
-      margin-bottom: 20px;
+      margin-bottom: 22px;
       flex-grow: 1;
+      line-height: 1.5;
     }
 
     .card-meta {
@@ -285,7 +454,8 @@
       font-size: 0.8rem;
       color: #cbd5e1;
       margin-bottom: 18px;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
+      font-weight: 600;
     }
 
     .btn-download {
@@ -296,11 +466,12 @@
       width: 100%;
       padding: 14px;
       border-radius: 10px;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 0.95rem;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: pointer;
+      border: none;
     }
 
     .btn-cyan {
@@ -325,38 +496,213 @@
       transform: scale(1.02);
     }
 
+    .btn-gold {
+      background: linear-gradient(90deg, var(--neo-gold), #ff9100);
+      color: #070a10;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.35);
+    }
+
+    .btn-gold:hover {
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.7);
+      transform: scale(1.02);
+    }
+
+    /* Section Titles */
     .section-title {
       text-align: center;
-      margin-bottom: 44px;
+      margin-bottom: 46px;
     }
 
     .section-title h2 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 2.3rem;
-      font-weight: 800;
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 900;
       margin-bottom: 12px;
-      background: linear-gradient(90deg, #ffffff, var(--neo-cyan));
+      background: linear-gradient(90deg, #ffffff 30%, var(--neo-cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      letter-spacing: -0.8px;
     }
 
     .section-title p {
       color: var(--text-muted);
-      font-size: 1.05rem;
+      font-size: 1.1rem;
+      max-width: 680px;
+      margin: 0 auto;
     }
 
+    /* Interactive Live Feature Simulator Section */
+    .simulator-section {
+      background: rgba(12, 18, 30, 0.85);
+      border: 1px solid var(--border-card);
+      border-radius: 24px;
+      padding: 36px 32px;
+      backdrop-filter: var(--glass-blur);
+      margin-bottom: 85px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .simulator-nav {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      scrollbar-width: none;
+    }
+
+    .simulator-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sim-tab-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sim-tab-btn:hover {
+      color: #fff;
+      border-color: rgba(0, 240, 255, 0.4);
+    }
+
+    .sim-tab-btn.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--neo-cyan);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+    }
+
+    .sim-content-pane {
+      display: none;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .sim-content-pane.active {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .sim-info h3 {
+      font-family: var(--font-display);
+      font-size: 1.85rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .sim-info p {
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      margin-bottom: 22px;
+      line-height: 1.6;
+    }
+
+    .sim-feature-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+
+    .sim-feature-bullets li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.92rem;
+      color: #e2e8f0;
+    }
+
+    .sim-bullet-check {
+      color: var(--neo-lime);
+      font-weight: 900;
+    }
+
+    .sim-ui-mockup {
+      background: #060911;
+      border: 2px solid rgba(0, 240, 255, 0.3);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0, 240, 255, 0.15);
+      position: relative;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mockup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .mockup-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .mockup-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--neo-lime);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      background: rgba(0, 255, 102, 0.1);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .mockup-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 14px;
+    }
+
+    /* Features Grid */
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 24px;
-      margin-bottom: 80px;
+      margin-bottom: 85px;
     }
 
     .feature-item {
       background: var(--bg-card);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 28px;
+      border-radius: 16px;
+      padding: 30px 26px;
       backdrop-filter: var(--glass-blur);
       transition: all 0.3s;
     }
@@ -364,43 +710,115 @@
     .feature-item:hover {
       border-color: var(--neo-cyan);
       transform: translateY(-4px);
-      box-shadow: 0 10px 30px rgba(0, 240, 255, 0.15);
+      box-shadow: 0 12px 32px rgba(0, 240, 255, 0.15);
     }
 
     .feature-icon-badge {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-      background: rgba(0, 240, 255, 0.1);
-      border: 1px solid rgba(0, 240, 255, 0.3);
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 24px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     .feature-item h3 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 1.2rem;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 800;
       margin-bottom: 10px;
       color: #fff;
     }
 
     .feature-item p {
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       color: var(--text-muted);
       line-height: 1.6;
     }
 
+    /* Pro Showcase Section */
+    .pro-banner {
+      background: linear-gradient(135deg, rgba(26, 32, 50, 0.9), rgba(12, 16, 26, 0.95));
+      border: 1.5px solid var(--neo-gold);
+      border-radius: 24px;
+      padding: 44px 36px;
+      backdrop-filter: var(--glass-blur);
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.15);
+      margin-bottom: 85px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pro-badge-pill {
+      display: inline-block;
+      padding: 5px 14px;
+      background: linear-gradient(90deg, #ffd700, #ff9100);
+      color: #000;
+      font-weight: 900;
+      font-size: 0.76rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    .pro-banner h2 {
+      font-family: var(--font-display);
+      font-size: 2.3rem;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .pro-banner-lead {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 720px;
+      margin-bottom: 30px;
+    }
+
+    .pro-perks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+      margin-bottom: 34px;
+    }
+
+    .pro-perk-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+
+    .pro-perk-title {
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pro-perk-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Comparison Table */
     .comparison-section {
       background: var(--bg-card);
       border: 1px solid var(--border-card);
-      border-radius: 20px;
-      padding: 36px 28px;
+      border-radius: 22px;
+      padding: 36px 30px;
       backdrop-filter: var(--glass-blur);
-      margin-bottom: 80px;
+      margin-bottom: 85px;
       overflow-x: auto;
     }
 
@@ -417,21 +835,21 @@
     }
 
     th {
-      font-family: 'Outfit', sans-serif;
-      font-size: 1.05rem;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-size: 1.08rem;
+      font-weight: 800;
       color: #fff;
     }
 
     th:nth-child(2), td:nth-child(2) {
-      background: rgba(0, 240, 255, 0.05);
-      border-left: 1px solid rgba(0, 240, 255, 0.2);
-      border-right: 1px solid rgba(0, 240, 255, 0.2);
+      background: rgba(0, 240, 255, 0.06);
+      border-left: 1px solid rgba(0, 240, 255, 0.25);
+      border-right: 1px solid rgba(0, 240, 255, 0.25);
     }
 
     .table-check {
       color: var(--neo-lime);
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .table-cross {
@@ -439,108 +857,166 @@
       font-weight: 700;
     }
 
+    /* Setup Steps */
     .setup-steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 24px;
-      margin-bottom: 80px;
+      margin-bottom: 85px;
     }
 
     .step-box {
       background: var(--bg-card);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 30px 24px;
+      border-radius: 18px;
+      padding: 32px 26px;
       text-align: center;
+      position: relative;
     }
 
     .step-num {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--neo-cyan), var(--neo-pink));
       color: #070a10;
       font-weight: 900;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 16px;
+      margin: 0 auto 18px;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
     }
 
     .step-box h4 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 1.2rem;
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 800;
       margin-bottom: 10px;
     }
 
     .step-box p {
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       color: var(--text-muted);
+      line-height: 1.5;
     }
 
+    /* FAQ Accordion */
+    .faq-section {
+      max-width: 920px;
+      margin: 0 auto 85px;
+    }
+
+    .faq-item {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .faq-item:hover {
+      border-color: rgba(0, 240, 255, 0.3);
+    }
+
+    .faq-question {
+      padding: 20px 24px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      color: #fff;
+    }
+
+    .faq-icon {
+      font-size: 1.2rem;
+      color: var(--neo-cyan);
+      transition: transform 0.3s;
+    }
+
+    .faq-item.active .faq-icon {
+      transform: rotate(45deg);
+    }
+
+    .faq-answer {
+      display: none;
+      padding: 0 24px 22px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 14px;
+    }
+
+    .faq-item.active .faq-answer {
+      display: block;
+    }
+
+    /* Footer */
     footer {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 36px 0;
+      padding: 45px 0 35px;
       text-align: center;
       color: var(--text-muted);
-      font-size: 0.88rem;
+      font-size: 0.9rem;
+      background: #05080e;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 18px;
     }
 
     .footer-links {
       display: flex;
       justify-content: center;
-      gap: 24px;
-      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 26px;
+      margin-bottom: 22px;
     }
 
     .footer-links a {
       color: var(--neo-cyan);
       text-decoration: none;
       font-weight: 600;
+      transition: color 0.2s;
     }
 
-    @media (max-width: 768px) {
-      .container {
-        padding: 0 16px;
-      }
-      .nav-inner {
-        padding: 4px 0;
-      }
-      .nav-links .nav-link {
-        display: none;
-      }
-      .btn-nav-download {
-        padding: 6px 12px;
-        font-size: 0.75rem;
-      }
-      .hero {
-        padding: 40px 0 20px;
-      }
-      .hero h1 {
-        font-size: 2.2rem;
-      }
-      .hero-sub-header {
-        font-size: 0.95rem !important;
-        letter-spacing: 0.5px !important;
-        margin-top: -6px !important;
-        margin-bottom: 14px !important;
-      }
-      .download-deck {
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
-      .comparison-section {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      .features-grid {
-        grid-template-columns: 1fr;
-      }
-      .setup-steps {
-        grid-template-columns: 1fr;
-      }
+    .footer-links a:hover {
+      color: #fff;
+    }
+
+    .footer-spec-strip {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 840px) {
+      .container { padding: 0 16px; }
+      .hero { padding: 45px 0 25px; }
+      .hero h1 { font-size: 2.5rem; }
+      .hero-sub-header { font-size: 1.1rem; letter-spacing: 1px; }
+      .sim-content-pane.active { grid-template-columns: 1fr; }
+      .nav-links .nav-link { display: none; }
+      .features-grid { grid-template-columns: 1fr; }
+      .download-deck { grid-template-columns: 1fr; }
+      .setup-steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -548,175 +1024,514 @@
 
   <div class="ambient-glow"></div>
 
+  <!-- Header / Navigation Bar -->
   <header>
     <div class="container nav-inner">
       <a href="#" class="logo-box">
-        <img src="PCDeck_Mouse_Logo.png" alt="PCDeck" style="width: 34px; height: 34px; border-radius: 8px; object-fit: contain; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);">
-        <div class="logo-text">
-          <span>PC<span style="color: var(--neo-lime);">Deck</span></span>
+        <img src="PCDeck_Master_Logo.png" alt="PCDeck Master Logo" class="logo-img">
+        <div class="logo-text-group">
+          <div class="logo-title">PC<span style="color: var(--neo-lime);">Deck</span></div>
+          <div class="logo-tag">PRO WIRELESS DECK</div>
         </div>
       </a>
       <div class="nav-links">
+        <a href="#simulator" class="nav-link">Interactive Demo</a>
         <a href="#features" class="nav-link">Features</a>
-        <a href="#pro" class="nav-link" style="color: #ffd700;">PRO Upgrade</a>
+        <a href="#pro" class="nav-link nav-link-pro">⭐ PRO Upgrade</a>
         <a href="#comparison" class="nav-link">Comparison</a>
         <a href="#setup" class="nav-link">Setup</a>
-        <a href="PCDeck_Package.zip" download class="btn-nav-download">Download (ZIP)</a>
+        <a href="#downloads" class="btn-nav-download">
+          <span>⚡ Download</span>
+        </a>
       </div>
     </div>
   </header>
 
   <main class="container">
+    <!-- Hero Section -->
     <section class="hero">
-      <div class="pill-badge">
-        <span>🚀 Version 2.1 Release</span>
+      <div class="badge-pill-release">
+        <span class="badge-dot-live"></span>
+        <span>Version 2.1 Released</span>
         <span>•</span>
-        <span>Ultra-Lightweight APK (&lt; 1 MB)</span>
+        <span>60/120 FPS Engine &amp; Turbo Transfers</span>
       </div>
-      <h1>PC<span style="color: var(--neo-lime); text-shadow: 0 0 30px rgba(0, 255, 102, 0.4);">Deck</span></h1>
-      <div class="hero-sub-header" style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: 1.5px; margin-top: -12px; margin-bottom: 20px;">WIRELESS PC TOUCH DECK &amp; STREAMER</div>
-      <p>Transform any Android smartphone into an ultra-low latency PC remote, live desktop mirror, PC audio receiver, and bidirectional 70 MB/s file sharing system.</p>
 
-      <div class="download-deck">
-        
-        <div class="download-card card-highlight">
-          <div class="card-badge-top">RECOMMENDED</div>
-          <div class="card-icon">📦</div>
-          <div class="card-title">PCDeck Suite (ZIP)</div>
-          <div class="card-desc">Complete bundle containing Windows Desktop Server (`PCDeck.exe`), Android 16 APK (`PCDeck.apk`), and Quick-Start Launcher.</div>
-          <div class="card-meta">
-            <span>💾 45.9 MB</span>
-            <span>•</span>
-            <span>Windows + Android</span>
-          </div>
-          <a href="PCDeck_Package.zip" download class="btn-download btn-lime">
-            <span>📥 Download Suite (.ZIP)</span>
-          </a>
+      <h1>PC<span style="color: var(--neo-lime); text-shadow: 0 0 35px rgba(0, 255, 102, 0.4);">Deck</span></h1>
+      <div class="hero-sub-header">WIRELESS TOUCH DECK, 60FPS MIRROR &amp; FILE HUB</div>
+      
+      <p>
+        Transform any Android smartphone into an ultra-low latency PC remote, live desktop touchscreen mirror, 48kHz stereo audio receiver, and 70–100 MB/s bidirectional dual file explorer.
+      </p>
+
+      <div class="hero-tags-strip">
+        <div class="hero-tag-item">⚡ Sub-30ms Latency</div>
+        <div class="hero-tag-item">📺 60/120 FPS Mirroring</div>
+        <div class="hero-tag-item">🔊 WASAPI System Audio</div>
+        <div class="hero-tag-item">📁 70 MB/s Dual File Hub</div>
+        <div class="hero-tag-item">🛡️ 100% Offline &amp; Private</div>
+      </div>
+
+      <!-- Edition Selector & Download Center -->
+      <div id="downloads" class="download-deck-container">
+        <div class="download-deck-tabs">
+          <button class="edition-toggle-btn active" id="btn-tab-standard" onclick="switchEdition('standard')">
+            <span>📦 PCDeck Standard (Free)</span>
+          </button>
+          <button class="edition-toggle-btn pro-btn" id="btn-tab-pro" onclick="switchEdition('pro')">
+            <span>⭐ PCDeck Pro Edition</span>
+          </button>
         </div>
 
-        <div class="download-card">
-          <div class="card-icon">📱</div>
-          <div class="card-title">PCDeck Android APK</div>
-          <div class="card-desc">Pure native, hardware-accelerated client for Android 5.0 through Android 16 (API 36). Zero ads, zero bloatware.</div>
-          <div class="card-meta">
-            <span>💾 &lt; 1 MB (985 KB)</span>
-            <span>•</span>
-            <span>Android 5.0 – 16+</span>
+        <!-- Standard Edition Cards -->
+        <div class="download-deck" id="deck-standard">
+          <!-- PCDeck Suite (Recommended) -->
+          <div class="download-card card-highlight">
+            <div class="card-badge-top">RECOMMENDED</div>
+            <div class="card-icon-box">📦</div>
+            <div class="card-title">PCDeck Complete Suite</div>
+            <div class="card-desc">Complete standalone bundle containing the Windows Server (`PCDeck.exe`), Android Client (`PCDeck.apk`), and 1-Click Launchers.</div>
+            <div class="card-meta">
+              <span>💾 58.9 MB</span>
+              <span>•</span>
+              <span>Windows 10/11 + Android</span>
+            </div>
+            <a href="PCDeck_Package.zip" download class="btn-download btn-lime">
+              <span>📥 Download Suite (.ZIP)</span>
+            </a>
           </div>
-          <a href="PCDeck.apk" download class="btn-download btn-cyan">
-            <span>📲 Download APK (.APK)</span>
-          </a>
+
+          <!-- Android APK (Standard) -->
+          <div class="download-card">
+            <div class="card-badge-top" style="color: var(--neo-cyan); border-color: var(--neo-cyan); background: rgba(0, 240, 255, 0.1);">NATIVE CLIENT</div>
+            <div class="card-icon-box">📱</div>
+            <div class="card-title">PCDeck Android App</div>
+            <div class="card-desc">Ultra-lightweight native client for Android 5.0 to 16+. Zero bloat, zero account registration, instant connect.</div>
+            <div class="card-meta">
+              <span>💾 1.6 MB</span>
+              <span>•</span>
+              <span>Android 5.0 – 16+ (API 36)</span>
+            </div>
+            <a href="PCDeck.apk" download class="btn-download btn-cyan">
+              <span>📲 Download APK (.APK)</span>
+            </a>
+          </div>
+
+          <!-- Windows Standalone EXE -->
+          <div class="download-card">
+            <div class="card-icon-box">💻</div>
+            <div class="card-title">Windows Server (Portable)</div>
+            <div class="card-desc">Standalone double-clickable Windows desktop server with system tray integration, screen streamer, audio loopback, and scrcpy phone mirror.</div>
+            <div class="card-meta">
+              <span>💾 57.8 MB</span>
+              <span>•</span>
+              <span>Windows 10/11 x64</span>
+            </div>
+            <a href="PCDeck.exe" download class="btn-download btn-cyan">
+              <span>🚀 Download EXE (.EXE)</span>
+            </a>
+          </div>
         </div>
 
-        <div class="download-card">
-          <div class="card-icon">💻</div>
-          <div class="card-title">Windows Portable Client</div>
-          <div class="card-desc">Standalone double-clickable Windows desktop server with built-in tray control, live streaming, and scrcpy phone mirror.</div>
-          <div class="card-meta">
-            <span>💾 45.7 MB</span>
-            <span>•</span>
-            <span>Windows 10/11 x64</span>
+        <!-- Pro Edition Cards -->
+        <div class="download-deck" id="deck-pro" style="display: none;">
+          <!-- Pro Complete Suite -->
+          <div class="download-card card-gold">
+            <div class="card-badge-top card-badge-gold">PRO EDITION</div>
+            <div class="card-icon-box">👑</div>
+            <div class="card-title">PCDeck Pro Suite (ZIP)</div>
+            <div class="card-desc">The ultimate high-performance bundle with 60/120 FPS high-refresh engine, Turbo multi-stream transfers, and Chroma themes.</div>
+            <div class="card-meta">
+              <span>💾 58.9 MB</span>
+              <span>•</span>
+              <span>Windows + Pro Android APK</span>
+            </div>
+            <a href="PCDeck_Pro_Package.zip" download class="btn-download btn-gold">
+              <span>⭐ Download Pro Suite (.ZIP)</span>
+            </a>
           </div>
-          <a href="PCDeck.exe" download class="btn-download btn-cyan">
-            <span>🚀 Download EXE (.EXE)</span>
-          </a>
-        </div>
 
+          <!-- Pro Android APK -->
+          <div class="download-card card-gold">
+            <div class="card-badge-top card-badge-gold">60 / 120 FPS</div>
+            <div class="card-icon-box">⚡</div>
+            <div class="card-title">PCDeck Pro APK</div>
+            <div class="card-desc">Enhanced native client loaded with ultra-high refresh rate support, turbo file streaming, and full offline license engine.</div>
+            <div class="card-meta">
+              <span>💾 5.5 MB</span>
+              <span>•</span>
+              <span>Android 5.0 – 16+ (API 36)</span>
+            </div>
+            <a href="PCDeck_Pro.apk" download class="btn-download btn-gold">
+              <span>📲 Download Pro APK (.APK)</span>
+            </a>
+          </div>
+
+          <!-- Windows Standalone Pro Server -->
+          <div class="download-card">
+            <div class="card-icon-box">🖥️</div>
+            <div class="card-title">Windows Pro Server</div>
+            <div class="card-desc">Standalone desktop server supporting high-throughput WASAPI audio capture, scrcpy reverse mirroring, and turbo file pipeline.</div>
+            <div class="card-meta">
+              <span>💾 57.8 MB</span>
+              <span>•</span>
+              <span>Windows 10/11 x64</span>
+            </div>
+            <a href="PCDeck_Pro.exe" download class="btn-download btn-cyan">
+              <span>🚀 Download Pro EXE (.EXE)</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Live Feature Simulator -->
+    <section id="simulator" class="simulator-section">
+      <div class="section-title" style="margin-bottom: 28px;">
+        <h2>Experience PCDeck Features</h2>
+        <p>Click through the live capability tabs to see how each tool empowers your workspace.</p>
+      </div>
+
+      <!-- Simulator Navigation Tabs -->
+      <div class="simulator-nav">
+        <button class="sim-tab-btn active" onclick="switchSimTab('screen')">
+          <span>📺</span>
+          <span>60 FPS Touch Mirror</span>
+        </button>
+        <button class="sim-tab-btn" onclick="switchSimTab('trackpad')">
+          <span>🖱️</span>
+          <span>Gesture Trackpad</span>
+        </button>
+        <button class="sim-tab-btn" onclick="switchSimTab('files')">
+          <span>📁</span>
+          <span>Dual File Manager (70MB/s)</span>
+        </button>
+        <button class="sim-tab-btn" onclick="switchSimTab('audio')">
+          <span>🔊</span>
+          <span>WASAPI Audio Stream</span>
+        </button>
+        <button class="sim-tab-btn" onclick="switchSimTab('keyboard')">
+          <span>⌨️</span>
+          <span>Live Typing &amp; Numpad</span>
+        </button>
+        <button class="sim-tab-btn" onclick="switchSimTab('scrcpy')">
+          <span>📱</span>
+          <span>Reverse Scrcpy Mirror</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: Screen Mirror -->
+      <div id="sim-pane-screen" class="sim-content-pane active">
+        <div class="sim-info">
+          <h3>60/120 FPS Touchscreen Mirror</h3>
+          <p>Turns your smartphone into a virtual touch-enabled secondary screen for Windows with real-time direct interaction.</p>
+          <ul class="sim-feature-bullets">
+            <li><span class="sim-bullet-check">✔</span> <strong>Direct Touch Click:</strong> Tap anywhere on your phone to click that exact position on your PC.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Pinch to Zoom &amp; Pan:</strong> 2-finger zoom up to 5x magnification with seamless pan navigation.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Right Click &amp; Drag Lock:</strong> Tap and hold for right-click context menus; toggle Drag mode for smooth window repositioning.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>FPS Toggle:</strong> Switch between 30 FPS, 60 FPS, or 120 FPS Pro high-refresh streams.</li>
+          </ul>
+        </div>
+        <div class="sim-ui-mockup">
+          <div class="mockup-header">
+            <div class="mockup-brand">
+              <span style="color: var(--neo-cyan);">📺</span>
+              <span>SCREEN MIRROR — 60 FPS</span>
+            </div>
+            <div class="mockup-status">● STREAMING ACTIVE</div>
+          </div>
+          <div class="mockup-body" style="background: linear-gradient(180deg, rgba(0, 240, 255, 0.05), transparent); border-radius: 10px; border: 1px dashed rgba(0, 240, 255, 0.3); padding: 24px;">
+            <div style="font-size: 2.2rem; margin-bottom: 6px;">🖥️ ↔️ 📱</div>
+            <div style="font-weight: 800; font-size: 1.1rem; color: #fff;">Windows Desktop Stream</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">1920x1080 @ 60 FPS • 24ms Latency • Touch Active</div>
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+              <span style="background: rgba(0, 240, 255, 0.2); color: var(--neo-cyan); font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">Direct Tap</span>
+              <span style="background: rgba(0, 255, 102, 0.2); color: var(--neo-lime); font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">5x Pinch Zoom</span>
+              <span style="background: rgba(255, 215, 0, 0.2); color: var(--neo-gold); font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">Multi-Monitor</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Trackpad -->
+      <div id="sim-pane-trackpad" class="sim-content-pane">
+        <div class="sim-info">
+          <h3>Zero-Lag Gesture Trackpad</h3>
+          <p>Smooth, precise cursor navigation with natural multi-touch gestures and dedicated scroll strip.</p>
+          <ul class="sim-feature-bullets">
+            <li><span class="sim-bullet-check">✔</span> <strong>Natural Multi-Touch:</strong> 1-finger move/tap, 2-finger right-click, middle-click button.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Dedicated Scroll Strip:</strong> Fast vertical and horizontal scrolling with inertia damping.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Custom Sensitivity:</strong> Speed multiplier sliders (0.4x – 4.0x) and natural acceleration curves.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Tactile Haptics:</strong> Gentle vibration confirmation on clicks and button presses.</li>
+          </ul>
+        </div>
+        <div class="sim-ui-mockup">
+          <div class="mockup-header">
+            <div class="mockup-brand">
+              <span style="color: var(--neo-cyan);">🖱️</span>
+              <span>TRACKPAD SURFACE</span>
+            </div>
+            <div class="mockup-status">● 1.5x SENSITIVITY</div>
+          </div>
+          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px;">
+            <div style="font-size: 2rem; margin-bottom: 4px;">👆</div>
+            <div style="font-weight: 800; font-size: 1rem; color: #fff;">Multi-Touch Canvas</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Glide to move • 2 fingers to right-click • Dedicated scroll bar</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; margin-top: 14px;">
+              <div style="background: rgba(0, 240, 255, 0.15); border: 1px solid var(--neo-cyan); color: #fff; padding: 8px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">LEFT CLICK</div>
+              <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 8px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">MIDDLE</div>
+              <div style="background: rgba(255, 42, 133, 0.15); border: 1px solid var(--neo-pink); color: #fff; padding: 8px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">RIGHT CLICK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Dual File Manager -->
+      <div id="sim-pane-files" class="sim-content-pane">
+        <div class="sim-info">
+          <h3>Dual File Manager (70–100 MB/s)</h3>
+          <p>Bi-directional file explorer with full access to PC drives and phone storage.</p>
+          <ul class="sim-feature-bullets">
+            <li><span class="sim-bullet-check">✔</span> <strong>💻 PC Files Panel:</strong> Browse PC folders (Transfers, Downloads, Desktop, Documents, Pictures, Videos) and upload files with live progress.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>📱 Phone Files Panel:</strong> In-app mobile storage explorer (PCDeck Downloads, DCIM, Camera, Movies, Documents).</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Batch Queue Downloads:</strong> Select multiple files with checkboxes and download one-by-one with HTTP Range streaming.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>1-Click Actions:</strong> Reveal downloaded files in Windows Explorer or open directly on phone.</li>
+          </ul>
+        </div>
+        <div class="sim-ui-mockup">
+          <div class="mockup-header">
+            <div class="mockup-brand">
+              <span style="color: var(--neo-lime);">📁</span>
+              <span>BI-DIRECTIONAL FILE HUB</span>
+            </div>
+            <div class="mockup-status" style="color: var(--neo-lime);">● 74.2 MB/s TURBO</div>
+          </div>
+          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; text-align: left; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
+              <span style="color: #fff; font-weight: 700;">📤 Video_4K_Render.mp4</span>
+              <span style="color: var(--neo-lime); font-family: var(--font-mono); font-weight: 800;">84% (74.2 MB/s)</span>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.08); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 14px;">
+              <div style="width: 84%; height: 100%; background: linear-gradient(90deg, var(--neo-lime), var(--neo-cyan));"></div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div style="flex: 1; background: rgba(255, 255, 255, 0.04); padding: 8px 10px; border-radius: 6px; font-size: 0.72rem; color: #94a3b8;">
+                💻 <strong>PC Folder:</strong> C:\Transfers\
+              </div>
+              <div style="flex: 1; background: rgba(255, 255, 255, 0.04); padding: 8px 10px; border-radius: 6px; font-size: 0.72rem; color: #94a3b8;">
+                📱 <strong>Phone Folder:</strong> /PCDeck/
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: WASAPI Audio -->
+      <div id="sim-pane-audio" class="sim-content-pane">
+        <div class="sim-info">
+          <h3>Live PC Audio Streaming (WASAPI)</h3>
+          <p>Stream your Windows system audio in real-time straight to your phone speakers or connected Bluetooth headphones.</p>
+          <ul class="sim-feature-bullets">
+            <li><span class="sim-bullet-check">✔</span> <strong>48kHz Stereo Loopback:</strong> Direct WASAPI hardware capture for crystal clear fidelity.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Ultra-Low Audio Delay:</strong> Sub-50ms synchronization perfect for YouTube, movies, and gaming.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Waveform Visualizer:</strong> Live audio bars and independent phone output volume control.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Media Controls:</strong> Play, pause, skip tracks, and adjust master PC volume remotely.</li>
+          </ul>
+        </div>
+        <div class="sim-ui-mockup">
+          <div class="mockup-header">
+            <div class="mockup-brand">
+              <span style="color: var(--neo-cyan);">🔊</span>
+              <span>WASAPI AUDIO RECEIVER</span>
+            </div>
+            <div class="mockup-status">● 48kHz STEREO</div>
+          </div>
+          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 22px;">
+            <div style="font-size: 2.2rem; margin-bottom: 6px;">🎧 🎵</div>
+            <div style="font-weight: 800; font-size: 1.1rem; color: #fff;">PC System Sound Streaming</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Gaming, Spotify, YouTube audio playing on phone</div>
+            <div style="display: flex; gap: 4px; align-items: flex-end; height: 28px;">
+              <div style="width: 6px; height: 18px; background: var(--neo-cyan); border-radius: 2px;"></div>
+              <div style="width: 6px; height: 26px; background: var(--neo-cyan); border-radius: 2px;"></div>
+              <div style="width: 6px; height: 14px; background: var(--neo-lime); border-radius: 2px;"></div>
+              <div style="width: 6px; height: 22px; background: var(--neo-lime); border-radius: 2px;"></div>
+              <div style="width: 6px; height: 28px; background: var(--neo-pink); border-radius: 2px;"></div>
+              <div style="width: 6px; height: 16px; background: var(--neo-pink); border-radius: 2px;"></div>
+              <div style="width: 6px; height: 20px; background: var(--neo-cyan); border-radius: 2px;"></div>
+              <div style="width: 6px; height: 10px; background: var(--neo-cyan); border-radius: 2px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 5: Keyboard & Numpad -->
+      <div id="sim-pane-keyboard" class="sim-content-pane">
+        <div class="sim-info">
+          <h3>Live Keystroke Sync &amp; Cyber Numpad</h3>
+          <p>Type directly into any PC text field with real-time phone keyboard input and a full 17-key mechanical numpad.</p>
+          <ul class="sim-feature-bullets">
+            <li><span class="sim-bullet-check">✔</span> <strong>Real-Time Live Typing:</strong> Every character typed on phone sends instantly to the active PC window.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>17-Key Mechanical Numpad:</strong> Full math keypad with NumLock, division, multiplication, and Enter.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Precision Cross D-Pad:</strong> 6-key navigation (Home, End, PgUp, PgDn, Insert, Delete) and directional arrows.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Power Hotkeys:</strong> Ctrl+C, Ctrl+V, Alt+Tab, Win+D, Win+Shift+S screenshot, Alt+F4, and F1–F12.</li>
+          </ul>
+        </div>
+        <div class="sim-ui-mockup">
+          <div class="mockup-header">
+            <div class="mockup-brand">
+              <span style="color: var(--neo-lime);">⌨️</span>
+              <span>MECHANICAL KEYPAD</span>
+            </div>
+            <div class="mockup-status">● REAL-TIME SYNC</div>
+          </div>
+          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px;">
+            <div style="width: 100%; background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neo-cyan); border-radius: 6px; padding: 8px 12px; font-size: 0.78rem; font-family: var(--font-mono); color: #fff; margin-bottom: 12px; text-align: left;">
+              > Real-time PC typing connected...█
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%;">
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">7</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">8</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">9</div>
+              <div style="background: rgba(0, 240, 255, 0.2); color: var(--neo-cyan); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800;">/</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">4</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">5</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">6</div>
+              <div style="background: rgba(0, 240, 255, 0.2); color: var(--neo-cyan); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800;">*</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">1</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">2</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">3</div>
+              <div style="background: rgba(0, 255, 102, 0.2); color: var(--neo-lime); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800;">↵</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 6: Reverse Scrcpy -->
+      <div id="sim-pane-scrcpy" class="sim-content-pane">
+        <div class="sim-info">
+          <h3>Reverse Scrcpy Phone Mirroring</h3>
+          <p>View and control your Android smartphone right on your Windows PC monitor with zero driver installation.</p>
+          <ul class="sim-feature-bullets">
+            <li><span class="sim-bullet-check">✔</span> <strong>1-Click Scrcpy Launcher:</strong> Built into PCDeck Windows desktop server tray.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>60 FPS Phone Display:</strong> Mirror your phone screen on PC with low latency over USB or Wi-Fi.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>PC Mouse &amp; Keyboard Control:</strong> Use your PC mouse and mechanical keyboard directly on phone apps.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Zero Accounts:</strong> Pure local ADB protocol execution with complete confidentiality.</li>
+          </ul>
+        </div>
+        <div class="sim-ui-mockup">
+          <div class="mockup-header">
+            <div class="mockup-brand">
+              <span style="color: var(--neo-gold);">📱</span>
+              <span>SCRCPY REVERSE CONTROL</span>
+            </div>
+            <div class="mockup-status" style="color: var(--neo-gold);">● PHONE ON PC</div>
+          </div>
+          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 22px;">
+            <div style="font-size: 2.2rem; margin-bottom: 6px;">📱 ➡️ 🖥️</div>
+            <div style="font-weight: 800; font-size: 1.1rem; color: #fff;">Phone Screen on Windows</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Full mouse clicks, typing, and drag gestures on Android</div>
+            <div style="background: rgba(255, 215, 0, 0.15); border: 1px solid var(--neo-gold); color: #fff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">
+              USB &amp; WIRELESS ADB SUPPORTED
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Dedicated PCDeck Pro Upgrade Section -->
-    <section id="pro" style="margin: 40px 0;">
-      <div class="download-card" style="border-color: #ffd700; background: linear-gradient(145deg, rgba(20, 26, 40, 0.9), rgba(10, 14, 22, 0.95)); box-shadow: 0 0 30px rgba(255, 215, 0, 0.15); max-width: 800px; margin: 0 auto; padding: 32px 24px; text-align: center;">
-        <div style="display: inline-block; padding: 4px 12px; background: linear-gradient(90deg, #ffd700, #ff9100); color: #000; font-weight: 900; font-size: 0.72rem; border-radius: 20px; text-transform: uppercase; margin-bottom: 12px;">
-          PRO UPGRADE
+    <section id="pro" class="pro-banner">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <div class="pro-badge-pill">⭐ PRO UPGRADE EDITION</div>
+          <h2>Unlock 60/120 FPS &amp; Turbo Transfers</h2>
+          <div class="pro-banner-lead">
+            Upgrade to PCDeck Pro with a one-time lifetime license. Unlocks silky-smooth 60/120 FPS screen streaming, uncapped multi-stream file transfers, and exclusive Chroma themes.
+          </div>
         </div>
-        <h2 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 8px;">
-          Unlock 60 FPS &amp; Turbo Transfers
-        </h2>
-        <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 540px; margin: 0 auto 24px;">
-          Upgrade to PCDeck Pro with a one-time lifetime license. Unlocks silky smooth 60/120 FPS screen streaming, uncapped multi-stream file transfers, and all cyber chroma themes.
-        </p>
+        <div style="text-align: right;">
+          <div style="font-size: 2.2rem; font-weight: 900; color: var(--neo-gold); font-family: var(--font-display);">$3.99</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">ONE-TIME • LIFETIME LICENSE</div>
+        </div>
+      </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; text-align: left; margin-bottom: 24px;">
-          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
-            <div style="font-weight: 800; font-size: 0.88rem; color: var(--neo-cyan); margin-bottom: 2px;">⚡ 60 / 120 FPS Mirroring</div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">Ultra-fluid, low-latency desktop streaming for gaming &amp; productivity.</div>
-          </div>
-          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
-            <div style="font-weight: 800; font-size: 0.88rem; color: var(--neo-lime); margin-bottom: 2px;">🚀 Turbo File Acceleration</div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">Uncapped multi-stream transfers up to 100+ MB/s.</div>
-          </div>
-          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
-            <div style="font-weight: 800; font-size: 0.88rem; color: #ffd700; margin-bottom: 2px;">🎨 All Chroma Themes</div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">Matrix Lime, Solar Gold, Synthwave Purple, OLED Dark.</div>
-          </div>
-          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
-            <div style="font-weight: 800; font-size: 0.88rem; color: #fff; margin-bottom: 2px;">💎 Lifetime License</div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">One-time purchase ($3.99). Never pay again.</div>
-          </div>
+      <div class="pro-perks-grid">
+        <div class="pro-perk-card">
+          <div class="pro-perk-title" style="color: var(--neo-cyan);">⚡ 60 / 120 FPS Mirroring</div>
+          <div class="pro-perk-desc">Ultra-fluid desktop stream with sub-30ms response for gaming, video, and creative productivity.</div>
         </div>
+        <div class="pro-perk-card">
+          <div class="pro-perk-title" style="color: var(--neo-lime);">🚀 Turbo File Acceleration</div>
+          <div class="pro-perk-desc">Uncapped multi-stream transfers up to 100+ MB/s for 4K video, archives, and bulk files.</div>
+        </div>
+        <div class="pro-perk-card">
+          <div class="pro-perk-title" style="color: var(--neo-gold);">🎨 All 5 Chroma Themes</div>
+          <div class="pro-perk-desc">Matrix Lime, Solar Gold, Synthwave Purple, Cyber Cyan, and Pure OLED Dark theme.</div>
+        </div>
+        <div class="pro-perk-card">
+          <div class="pro-perk-title" style="color: #fff;">💎 100% Offline Activation</div>
+          <div class="pro-perk-desc">Instant license key delivery. Zero online verification servers required. Never pay a subscription.</div>
+        </div>
+      </div>
 
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-          <a href="https://gumroad.com" target="_blank" class="btn-download" style="background: linear-gradient(90deg, #ffd700, #ff9100); color: #000; font-weight: 900; font-size: 0.95rem; padding: 14px 28px; border-radius: 8px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-            <span>UNLOCK PCDECK PRO — $3.99 (LIFETIME)</span>
-          </a>
-          <span style="font-size: 0.72rem; color: var(--text-muted);">Instant license key delivery upon purchase • Works 100% offline</span>
-        </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <a href="PCDeck_Pro_Package.zip" download class="btn-download btn-gold" style="max-width: 420px;">
+          <span>⚡ GET PCDECK PRO SUITE (.ZIP)</span>
+        </a>
+        <span style="font-size: 0.76rem; color: var(--text-muted);">Includes Windows Server + Pro Android APK • Instant Offline Key Ready</span>
       </div>
     </section>
 
+    <!-- Detailed Features Grid -->
     <section id="features">
       <div class="section-title">
-        <h2>Unrivaled Performance &amp; Cyber-Neon Utility</h2>
-        <p>Engineered from the ground up for instantaneous responsiveness, total privacy, and minimal battery drain.</p>
+        <h2>Unrivaled Utility &amp; Cyber-Neon Performance</h2>
+        <p>Engineered from the ground up for instantaneous responsiveness, zero battery drain, and total privacy.</p>
       </div>
 
       <div class="features-grid">
-        
         <div class="feature-item">
           <div class="feature-icon-badge">🖱️</div>
-          <h3>Zero-Lag Multi-Touch Trackpad</h3>
-          <p>Full natural gesture engine supporting two-finger scrolling, tap-to-click, drag &amp; drop, precise cursor acceleration, and customizable sensitivity sliders.</p>
+          <h3>Zero-Lag Gesture Trackpad</h3>
+          <p>Full natural gesture engine supporting two-finger scrolling, tap-to-click, drag &amp; drop, cursor acceleration, and sensitivity sliders.</p>
         </div>
 
         <div class="feature-item">
           <div class="feature-icon-badge">🖥️</div>
-          <h3>60 FPS Live Desktop Screen Mirror</h3>
-          <p>Real-time low-latency desktop screen streaming with direct touch-to-click on your desktop, multi-monitor switcher, and frame watchdog recovery.</p>
+          <h3>60/120 FPS Desktop Mirror</h3>
+          <p>Real-time low-latency desktop screen streaming with direct touch-to-click on PC windows, 5x pinch zoom, and multi-monitor switcher.</p>
         </div>
 
         <div class="feature-item">
           <div class="feature-icon-badge">🔊</div>
-          <h3>Live PC Audio Streaming to Phone</h3>
-          <p>Streams live stereo PC system audio (WASAPI loopback) to your phone headphones with zero delay. Listen to games, movies, and music anywhere in your house.</p>
+          <h3>Live PC Audio Streaming</h3>
+          <p>Streams live stereo PC system audio (WASAPI loopback) to your phone headphones with zero delay. Listen to games &amp; movies anywhere.</p>
         </div>
 
         <div class="feature-item">
           <div class="feature-icon-badge">📁</div>
-          <h3>High-Speed 70 MB/s File Transfer</h3>
-          <p>Bi-directional file explorer. Browse your PC from your phone or send photos/videos from phone to PC with high-speed chunked streaming and watchdog queue safety.</p>
+          <h3>Dual 70+ MB/s File Manager</h3>
+          <p>Bi-directional file explorer. Browse PC drives or send phone photos/videos with high-speed chunked streaming and batch queues.</p>
         </div>
 
         <div class="feature-item">
           <div class="feature-icon-badge">📱</div>
-          <h3>Reverse Phone Control (ADB &amp; Scrcpy)</h3>
-          <p>Mirror and interact with your Android phone on your PC screen at 60 FPS over USB or Wi-Fi without needing accessibility services or third-party drivers.</p>
+          <h3>Reverse Scrcpy Mirroring</h3>
+          <p>Mirror and interact with your Android phone on your PC screen at 60 FPS over USB or Wi-Fi without third-party drivers.</p>
         </div>
 
         <div class="feature-item">
           <div class="feature-icon-badge">🛡️</div>
           <h3>100% Offline &amp; Private</h3>
-          <p>No cloud servers, no account registration, no telemetry, and zero tracking. Works entirely on your local Wi-Fi router or phone mobile hotspot.</p>
+          <p>No cloud servers, no account registration, no telemetry, and zero tracking. Runs completely on your local Wi-Fi or hotspot.</p>
         </div>
-
       </div>
     </section>
 
+    <!-- Comparison Section -->
     <section id="comparison">
       <div class="section-title">
         <h2>Why PCDeck Dominates Competitors</h2>
-        <p>See how PCDeck outmatches traditional, bloated remote desktop utilities.</p>
+        <p>See how PCDeck outmatches bloated, subscription-laden remote desktop utilities.</p>
       </div>
 
       <div class="comparison-section">
@@ -724,16 +1539,18 @@
           <thead>
             <tr>
               <th>Feature / Specification</th>
-              <th style="color: var(--neo-cyan);">PCDeck</th>
+              <th style="color: var(--neo-cyan);">PCDeck Pro</th>
               <th>Unified Remote</th>
               <th>AnyDesk / TeamViewer</th>
+              <th>Spacedesk</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>App Size (APK)</strong></td>
-              <td class="table-check">&lt; 1 MB (985 KB)</td>
+              <td class="table-check">1.6 MB – 5.5 MB</td>
               <td>45 MB – 65 MB</td>
+              <td>30 MB – 50 MB</td>
               <td>25 MB – 40 MB</td>
             </tr>
             <tr>
@@ -741,80 +1558,199 @@
               <td class="table-check">❌ Never (100% Offline)</td>
               <td>Optional / Account-based</td>
               <td class="table-cross">Required</td>
+              <td>No Account</td>
             </tr>
             <tr>
-              <td><strong>60 FPS Screen Mirroring</strong></td>
-              <td class="table-check">✅ Included Free</td>
-              <td class="table-cross">Paid Pro Only</td>
+              <td><strong>60 / 120 FPS Screen Mirror</strong></td>
+              <td class="table-check">✅ Native Hardware Engine</td>
+              <td class="table-cross">Paid / Laggy</td>
               <td>Cloud Routed / Laggy</td>
+              <td>Basic 30 FPS</td>
             </tr>
             <tr>
-              <td><strong>Live PC Audio Streamer</strong></td>
-              <td class="table-check">✅ Built-in Low Latency</td>
+              <td><strong>Live PC Audio to Phone</strong></td>
+              <td class="table-check">✅ 48kHz WASAPI Built-in</td>
               <td class="table-cross">❌ Not Supported</td>
-              <td class="table-cross">❌ Poor / Delayed</td>
+              <td class="table-cross">❌ Delayed</td>
+              <td>Standard Audio</td>
             </tr>
             <tr>
-              <td><strong>Direct Bi-directional File Manager</strong></td>
-              <td class="table-check">✅ 70 MB/s High Speed</td>
+              <td><strong>Dual File Explorer (PC + Phone)</strong></td>
+              <td class="table-check">✅ 70–100 MB/s Bi-directional</td>
               <td class="table-cross">Basic / Limited</td>
               <td>Clunky File Transfer</td>
+              <td class="table-cross">❌ Not Supported</td>
             </tr>
             <tr>
-              <td><strong>Reverse Scrcpy Phone Mirroring</strong></td>
+              <td><strong>Reverse Scrcpy Phone Control</strong></td>
               <td class="table-check">✅ 1-Click USB/Wi-Fi</td>
               <td class="table-cross">❌ Not Supported</td>
               <td class="table-cross">❌ Not Supported</td>
+              <td class="table-cross">❌ Not Supported</td>
             </tr>
             <tr>
-              <td><strong>Target Android SDK</strong></td>
-              <td class="table-check">Android 16 (API 36)</td>
-              <td>Legacy Android</td>
-              <td>Legacy Android</td>
+              <td><strong>Pricing Model</strong></td>
+              <td class="table-check">Free / $3.99 Lifetime</td>
+              <td>Paid Addons</td>
+              <td>Monthly Subscription</td>
+              <td>Free / Paid Business</td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
 
+    <!-- Setup Guide -->
     <section id="setup">
       <div class="section-title">
         <h2>Quick 3-Step Setup</h2>
-        <p>Get up and running in less than 30 seconds.</p>
+        <p>Get up and running in less than 30 seconds with zero configuration.</p>
       </div>
 
       <div class="setup-steps">
         <div class="step-box">
           <div class="step-num">1</div>
           <h4>Run Server on PC</h4>
-          <p>Download and launch <code>PCDeck.exe</code> on your Windows 10/11 PC. The server starts automatically and displays your local IP.</p>
+          <p>Launch <code>PCDeck.exe</code> on Windows 10/11. The server starts instantly and displays your PC's IP address and a QR code.</p>
         </div>
 
         <div class="step-box">
           <div class="step-num">2</div>
-          <h4>Install Phone App</h4>
-          <p>Install <code>PCDeck.apk</code> on your Android smartphone (or open your mobile browser to the PC's IP address).</p>
+          <h4>Open Phone App</h4>
+          <p>Install <code>PCDeck.apk</code> on your Android phone, or simply open any mobile web browser to your PC's IP address.</p>
         </div>
 
         <div class="step-box">
           <div class="step-num">3</div>
           <h4>Connect &amp; Control</h4>
-          <p>Tap Connect! Enjoy instantaneous touch trackpad gestures, live screen mirroring, audio streaming, and high-speed file transfers.</p>
+          <p>Scan the QR code or tap Connect! Enjoy instant gesture control, 60 FPS screen mirror, audio stream, and fast file transfers.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+      <div class="section-title">
+        <h2>Frequently Asked Questions</h2>
+        <p>Everything you need to know about PCDeck and PCDeck Pro.</p>
+      </div>
+
+      <div class="faq-item active">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>Does PCDeck require an active internet connection?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          No! PCDeck operates 100% on your local Wi-Fi network or phone's mobile hotspot. It requires zero internet access, has no cloud accounts, and transmits no telemetry data.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>How does direct touchscreen clicking work in Screen Mirror mode?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          When you touch any window, icon, or button on the live screen stream, PCDeck translates your touch coordinates directly into high-precision native Windows Win32 cursor clicks at the exact desktop pixel location.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>What is the difference between PCDeck Free and PCDeck Pro?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          PCDeck Free includes full trackpad gestures, live 30 FPS screen mirror, WASAPI audio streaming, dual file manager, and keyboard typing. PCDeck Pro unlocks high-refresh 60 FPS / 120 FPS streaming, uncapped Turbo multi-stream file transfers, and all 5 Chroma themes with a one-time lifetime license.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>Which Android versions are supported?</span>
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          PCDeck is built with modern Android 16 (API 36) backward compatibility and supports all devices running Android 5.0 Lollipop through Android 16+.
         </div>
       </div>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer>
     <div class="container">
-      <div class="footer-links">
-        <a href="PCDeck_Package.zip" download>Download ZIP</a>
-        <a href="PCDeck.apk" download>Download APK</a>
-        <a href="PCDeck.exe" download>Download EXE</a>
+      <div class="footer-brand">
+        <img src="PCDeck_Master_Logo.png" alt="PCDeck" style="width: 32px; height: 32px; object-fit: contain;">
+        <span style="font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; color: #fff;">PC<span style="color: var(--neo-lime);">Deck</span></span>
       </div>
-      <p>© 2026 PCDeck. Built for speed, privacy, and performance.</p>
+
+      <div class="footer-spec-strip">
+        <span>Windows 10/11 x64</span>
+        <span>•</span>
+        <span>Android 5.0 – 16+</span>
+        <span>•</span>
+        <span>WASAPI Loopback 48kHz</span>
+        <span>•</span>
+        <span>WebSocket Binary Protocol</span>
+        <span>•</span>
+        <span>HTTP Range Streaming</span>
+      </div>
+
+      <div class="footer-links">
+        <a href="PCDeck_Package.zip" download>Download Suite (.ZIP)</a>
+        <a href="PCDeck_Pro_Package.zip" download>Download Pro Suite (.ZIP)</a>
+        <a href="PCDeck.apk" download>Android APK</a>
+        <a href="PCDeck_Pro.apk" download>Pro APK</a>
+        <a href="PCDeck.exe" download>Windows EXE</a>
+      </div>
+
+      <p>© 2026 PCDeck. Engineered for ultra-low latency, total privacy, and maximum performance.</p>
     </div>
   </footer>
 
+  <script>
+    // Edition Switcher (Standard vs Pro)
+    function switchEdition(edition) {
+      const btnStandard = document.getElementById('btn-tab-standard');
+      const btnPro = document.getElementById('btn-tab-pro');
+      const deckStandard = document.getElementById('deck-standard');
+      const deckPro = document.getElementById('deck-pro');
+
+      if (edition === 'pro') {
+        btnStandard.classList.remove('active');
+        btnPro.classList.add('active');
+        deckStandard.style.display = 'none';
+        deckPro.style.display = 'grid';
+      } else {
+        btnPro.classList.remove('active');
+        btnStandard.classList.add('active');
+        deckPro.style.display = 'none';
+        deckStandard.style.display = 'grid';
+      }
+    }
+
+    // Simulator Tab Switcher
+    function switchSimTab(tabId) {
+      const allBtns = document.querySelectorAll('.sim-tab-btn');
+      allBtns.forEach(btn => btn.classList.remove('active'));
+
+      const allPanes = document.querySelectorAll('.sim-content-pane');
+      allPanes.forEach(pane => pane.classList.remove('active'));
+
+      const targetPane = document.getElementById('sim-pane-' + tabId);
+      if (targetPane) {
+        targetPane.classList.add('active');
+      }
+
+      event.currentTarget.classList.add('active');
+    }
+
+    // FAQ Accordion Toggle
+    function toggleFaq(element) {
+      const item = element.parentElement;
+      item.classList.toggle('active');
+    }
+  </script>
 </body>
 </html>
