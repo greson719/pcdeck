@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PCDeck — Wireless PC Touch Deck, 60FPS Screen Streamer & Dual File Hub</title>
-  <meta name="description" content="Turn any Android phone into an ultra-low latency wireless trackpad, 60/120 FPS live desktop touchscreen mirror, WASAPI PC audio receiver, and 70-100 MB/s bidirectional file hub. 100% offline & private.">
+  <title>PCDeck — Wireless Touchpad, Screen Streaming & Dual File Hub</title>
+  <meta name="description" content="Turn any Android phone into an ultra-low latency wireless trackpad, 60/120 FPS live desktop screen streamer, wireless PC audio receiver, and 70-100 MB/s bidirectional file hub. 100% offline & private.">
   
   <!-- Open Graph / Meta -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="PCDeck — Wireless PC Touch Deck, 60FPS Screen Streamer & Dual File Hub">
-  <meta property="og:description" content="Sub-millisecond wireless trackpad, 60/120 FPS screen mirror, live PC audio receiver, and high-speed bidirectional file manager for Windows & Android.">
+  <meta property="og:title" content="PCDeck — Wireless Touchpad, Screen Streaming & Dual File Hub">
+  <meta property="og:description" content="Sub-millisecond wireless trackpad, 60/120 FPS desktop screen streaming, live PC audio receiver, and high-speed bidirectional file manager for Windows & Android.">
   <meta property="og:image" content="PCDeck_Master_Logo.png">
   <meta name="theme-color" content="#070a10">
 
@@ -1074,16 +1074,16 @@
       </div>
 
       <h1>PC<span style="color: var(--neo-lime); text-shadow: 0 0 35px rgba(0, 255, 102, 0.4);">Deck</span></h1>
-      <div class="hero-sub-header">WIRELESS TOUCH DECK, 60FPS MIRROR &amp; FILE HUB</div>
+      <div class="hero-sub-header">WIRELESS TOUCHPAD, 60FPS SCREEN STREAMING &amp; FILE HUB</div>
       
       <p>
-        Transform any Android smartphone into an ultra-low latency PC remote, live desktop touchscreen mirror, 48kHz stereo audio receiver, and 70–100 MB/s bidirectional dual file explorer.
+        Transform any Android smartphone into an ultra-low latency PC touchpad, live desktop screen streamer, wireless stereo audio receiver, and 70–100 MB/s bidirectional dual file explorer.
       </p>
 
       <div class="hero-tags-strip">
         <div class="hero-tag-item">⚡ Sub-30ms Latency</div>
-        <div class="hero-tag-item">📺 60/120 FPS Mirroring</div>
-        <div class="hero-tag-item">🔊 WASAPI System Audio</div>
+        <div class="hero-tag-item">📺 60/120 FPS Streaming</div>
+        <div class="hero-tag-item">🔊 Live PC Audio</div>
         <div class="hero-tag-item">📁 70 MB/s Dual File Hub</div>
         <div class="hero-tag-item">🛡️ 100% Offline &amp; Private</div>
       </div>
@@ -1152,7 +1152,7 @@
       <div class="simulator-nav">
         <button class="sim-tab-btn active" onclick="switchSimTab('screen')">
           <span>📺</span>
-          <span>60 FPS Touch Mirror</span>
+          <span>Screen Streaming</span>
         </button>
         <button class="sim-tab-btn" onclick="switchSimTab('trackpad')">
           <span>🖱️</span>
@@ -1160,11 +1160,11 @@
         </button>
         <button class="sim-tab-btn" onclick="switchSimTab('files')">
           <span>📁</span>
-          <span>Dual File Manager (70MB/s)</span>
+          <span>Dual File Hub</span>
         </button>
         <button class="sim-tab-btn" onclick="switchSimTab('audio')">
           <span>🔊</span>
-          <span>WASAPI Audio Stream</span>
+          <span>Live PC Audio</span>
         </button>
         <button class="sim-tab-btn" onclick="switchSimTab('keyboard')">
           <span>⌨️</span>
@@ -1172,38 +1172,64 @@
         </button>
         <button class="sim-tab-btn" onclick="switchSimTab('scrcpy')">
           <span>📱</span>
-          <span>Reverse Scrcpy Mirror</span>
+          <span>Android on PC</span>
         </button>
       </div>
 
-      <!-- Tab 1: Screen Mirror -->
+      <!-- Tab 1: Screen Streaming -->
       <div id="sim-pane-screen" class="sim-content-pane active">
         <div class="sim-info">
-          <h3>60/120 FPS Touchscreen Mirror</h3>
-          <p>Turns your smartphone into a virtual touch-enabled secondary screen for Windows with real-time direct interaction.</p>
+          <h3>High-Refresh Desktop Screen Streaming</h3>
+          <p>Stream your Windows desktop to your smartphone in real-time with direct touchscreen clicks, pinch-to-zoom, and responsive navigation.</p>
           <ul class="sim-feature-bullets">
-            <li><span class="sim-bullet-check">✔</span> <strong>Direct Touch Click:</strong> Tap anywhere on your phone to click that exact position on your PC.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Pinch to Zoom &amp; Pan:</strong> 2-finger zoom up to 5x magnification with seamless pan navigation.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Right Click &amp; Drag Lock:</strong> Tap and hold for right-click context menus; toggle Drag mode for smooth window repositioning.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>FPS Toggle:</strong> Switch between 30 FPS, 60 FPS, or 120 FPS Pro high-refresh streams.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Direct Touch Clicking:</strong> Tap any window, button, or link to interact natively on PC.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>5x Pinch Zoom &amp; Pan:</strong> Smooth two-finger zoom with effortless panning across multi-monitor layouts.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Fluid Frame Rates:</strong> Supports smooth 30 FPS, 60 FPS, and 120 FPS high-refresh display modes.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Zero Cloud Routing:</strong> High-efficiency local network streaming with sub-30ms response.</li>
           </ul>
         </div>
         <div class="sim-ui-mockup">
           <div class="mockup-header">
             <div class="mockup-brand">
               <span style="color: var(--neo-cyan);">📺</span>
-              <span>SCREEN MIRROR — 60 FPS</span>
+              <span>DESKTOP STREAM • 60 FPS</span>
             </div>
-            <div class="mockup-status">● STREAMING ACTIVE</div>
+            <div class="mockup-status" style="color: var(--neo-lime);">● LIVE STREAMING</div>
           </div>
-          <div class="mockup-body" style="background: linear-gradient(180deg, rgba(0, 240, 255, 0.05), transparent); border-radius: 10px; border: 1px dashed rgba(0, 240, 255, 0.3); padding: 24px;">
-            <div style="font-size: 2.2rem; margin-bottom: 6px;">🖥️ ↔️ 📱</div>
-            <div style="font-weight: 800; font-size: 1.1rem; color: #fff;">Windows Desktop Stream</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">1920x1080 @ 60 FPS • 24ms Latency • Touch Active</div>
-            <div style="display: flex; gap: 8px; margin-top: 14px;">
-              <span style="background: rgba(0, 240, 255, 0.2); color: var(--neo-cyan); font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">Direct Tap</span>
-              <span style="background: rgba(0, 255, 102, 0.2); color: var(--neo-lime); font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">5x Pinch Zoom</span>
-              <span style="background: rgba(255, 215, 0, 0.2); color: var(--neo-gold); font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">Multi-Monitor</span>
+          <div class="mockup-body" style="background: #0b101b; border-radius: 8px; border: 1px solid rgba(0, 240, 255, 0.25); padding: 0; overflow: hidden; display: flex; flex-direction: column; align-items: stretch;">
+            <!-- Realistic Windows Desktop Preview -->
+            <div style="background: #141c2c; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.72rem; color: #94a3b8;">
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff5f56; display: inline-block;"></span>
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #ffbd2e; display: inline-block;"></span>
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #27c93f; display: inline-block;"></span>
+                <span style="margin-left: 6px; color: #e2e8f0; font-weight: 600;">Windows 11 Workspace — 1920×1080</span>
+              </div>
+              <span style="color: var(--neo-cyan); font-family: var(--font-mono); font-weight: 700;">60.0 FPS • 18ms</span>
+            </div>
+            <div style="padding: 20px; background: radial-gradient(circle at 50% 30%, #152238 0%, #090e17 100%); min-height: 140px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;">
+              <!-- Floating App Windows Simulation -->
+              <div style="background: rgba(20, 30, 48, 0.85); backdrop-filter: blur(8px); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 6px; padding: 10px 16px; width: 85%; margin-bottom: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+                <div style="font-size: 0.75rem; color: var(--neo-cyan); font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>💻 Visual Studio Code / Chrome</span>
+                  <span style="color: #64748b;">Active Window</span>
+                </div>
+                <div style="font-size: 0.72rem; color: #cbd5e1; font-family: var(--font-mono);">Touch anywhere on screen to click, scroll, and drag.</div>
+              </div>
+              <!-- Touch Cursor Indicator -->
+              <div style="display: flex; gap: 8px; align-items: center; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--neo-cyan); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; color: #fff; font-weight: 700;">
+                <span style="color: var(--neo-cyan); font-size: 0.85rem;">👆</span> Direct Touch Active
+              </div>
+            </div>
+            <!-- Bottom Taskbar -->
+            <div style="background: #0e1422; border-top: 1px solid rgba(255,255,255,0.06); padding: 6px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: #64748b;">
+              <div style="display: flex; gap: 10px;">
+                <span>🪟 Start</span>
+                <span>📁 Explorer</span>
+                <span>🌐 Browser</span>
+                <span>⚙️ Settings</span>
+              </div>
+              <div style="font-family: var(--font-mono); color: #94a3b8;">100% Zoom • 1:1 Scale</div>
             </div>
           </div>
         </div>
@@ -1212,109 +1238,152 @@
       <!-- Tab 2: Trackpad -->
       <div id="sim-pane-trackpad" class="sim-content-pane">
         <div class="sim-info">
-          <h3>Zero-Lag Gesture Trackpad</h3>
-          <p>Smooth, precise cursor navigation with natural multi-touch gestures and dedicated scroll strip.</p>
+          <h3>Precision Multi-Touch Gesture Trackpad</h3>
+          <p>Fluid and responsive cursor navigation with natural touch gestures, inertia scrolling, and configurable sensitivity.</p>
           <ul class="sim-feature-bullets">
-            <li><span class="sim-bullet-check">✔</span> <strong>Natural Multi-Touch:</strong> 1-finger move/tap, 2-finger right-click, middle-click button.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Dedicated Scroll Strip:</strong> Fast vertical and horizontal scrolling with inertia damping.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Custom Sensitivity:</strong> Speed multiplier sliders (0.4x – 4.0x) and natural acceleration curves.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Tactile Haptics:</strong> Gentle vibration confirmation on clicks and button presses.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Natural Multi-Touch:</strong> 1-finger glide to move, tap to click, and 2-finger tap for right-click context menus.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Inertia Scroll Strip:</strong> Fast vertical and horizontal page scrolling with smooth momentum.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Configurable Sensitivity:</strong> Adjust speed multiplier (0.4x – 4.0x) and cursor acceleration to match your workflow.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Haptic Feedback:</strong> Subtle tactile vibration confirms clicks and button presses.</li>
           </ul>
         </div>
         <div class="sim-ui-mockup">
           <div class="mockup-header">
             <div class="mockup-brand">
               <span style="color: var(--neo-cyan);">🖱️</span>
-              <span>TRACKPAD SURFACE</span>
+              <span>TRACKPAD CANVAS</span>
             </div>
-            <div class="mockup-status">● 1.5x SENSITIVITY</div>
+            <div class="mockup-status" style="color: var(--neo-cyan);">● 1.5x SENSITIVITY</div>
           </div>
-          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px;">
-            <div style="font-size: 2rem; margin-bottom: 4px;">👆</div>
-            <div style="font-weight: 800; font-size: 1rem; color: #fff;">Multi-Touch Canvas</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">Glide to move • 2 fingers to right-click • Dedicated scroll bar</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; margin-top: 14px;">
-              <div style="background: rgba(0, 240, 255, 0.15); border: 1px solid var(--neo-cyan); color: #fff; padding: 8px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">LEFT CLICK</div>
-              <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 8px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">MIDDLE</div>
-              <div style="background: rgba(255, 42, 133, 0.15); border: 1px solid var(--neo-pink); color: #fff; padding: 8px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">RIGHT CLICK</div>
+          <div class="mockup-body" style="background: #090e18; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 14px; display: flex; flex-direction: column; align-items: stretch; min-height: 200px;">
+            <!-- Trackpad Area with subtle grid and scroll strip -->
+            <div style="flex: 1; background: radial-gradient(circle at 45% 45%, rgba(0, 240, 255, 0.06), transparent 70%), #0d1424; border: 1px dashed rgba(0, 240, 255, 0.25); border-radius: 8px; display: flex; position: relative; overflow: hidden; min-height: 120px;">
+              <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px;">
+                <div style="width: 14px; height: 14px; border: 2px solid var(--neo-cyan); border-radius: 50%; background: rgba(0,240,255,0.4); margin-bottom: 6px;"></div>
+                <div style="font-weight: 700; font-size: 0.85rem; color: #fff;">Touch &amp; Glide Area</div>
+                <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">1-finger cursor • 2-finger scroll/right-click</div>
+              </div>
+              <!-- Right Scroll Strip -->
+              <div style="width: 32px; background: rgba(0, 240, 255, 0.08); border-left: 1px solid rgba(0, 240, 255, 0.2); display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.65rem; color: var(--neo-cyan); font-weight: 800;">
+                <span>▲</span>
+                <span style="writing-mode: vertical-rl; margin: 6px 0; letter-spacing: 1px;">SCROLL</span>
+                <span>▼</span>
+              </div>
+            </div>
+            <!-- Click Buttons -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px;">
+              <div style="background: rgba(0, 240, 255, 0.12); border: 1px solid var(--neo-cyan); color: #fff; padding: 8px 4px; border-radius: 6px; font-weight: 800; font-size: 0.72rem; text-align: center;">LEFT CLICK</div>
+              <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); color: #94a3b8; padding: 8px 4px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; text-align: center;">MIDDLE</div>
+              <div style="background: rgba(255, 42, 133, 0.12); border: 1px solid var(--neo-pink); color: #fff; padding: 8px 4px; border-radius: 6px; font-weight: 800; font-size: 0.72rem; text-align: center;">RIGHT CLICK</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Tab 3: Dual File Manager -->
+      <!-- Tab 3: Dual File Hub -->
       <div id="sim-pane-files" class="sim-content-pane">
         <div class="sim-info">
           <h3>Dual File Manager (70–100 MB/s)</h3>
-          <p>Bi-directional file explorer with full access to PC drives and phone storage.</p>
+          <p>Bi-directional local network file transfer between your PC drives and phone storage without cables or cloud limits.</p>
           <ul class="sim-feature-bullets">
-            <li><span class="sim-bullet-check">✔</span> <strong>💻 PC Files Panel:</strong> Browse PC folders (Transfers, Downloads, Desktop, Documents, Pictures, Videos) and upload files with live progress.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>📱 Phone Files Panel:</strong> In-app mobile storage explorer (PCDeck Downloads, DCIM, Camera, Movies, Documents).</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Batch Queue Downloads:</strong> Select multiple files with checkboxes and download one-by-one with HTTP Range streaming.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>1-Click Actions:</strong> Reveal downloaded files in Windows Explorer or open directly on phone.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>💻 PC Files Explorer:</strong> Browse, search, and download files from PC drives (Transfers, Desktop, Downloads, Documents).</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>📱 Phone Storage Panel:</strong> Direct access to mobile storage (DCIM, Photos, Camera, Downloads, Movies).</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>High-Speed Pipeline:</strong> Multi-stream HTTP Range chunking delivers rapid 70–100+ MB/s transfers.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Batch Downloads:</strong> Select multiple files with checkboxes and download them seamlessly in sequence.</li>
           </ul>
         </div>
         <div class="sim-ui-mockup">
           <div class="mockup-header">
             <div class="mockup-brand">
               <span style="color: var(--neo-lime);">📁</span>
-              <span>BI-DIRECTIONAL FILE HUB</span>
+              <span>DUAL FILE EXPLORER</span>
             </div>
-            <div class="mockup-status" style="color: var(--neo-lime);">● 74.2 MB/s TURBO</div>
+            <div class="mockup-status" style="color: var(--neo-lime);">● 78.4 MB/s ACTIVE</div>
           </div>
-          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; text-align: left; align-items: stretch;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
-              <span style="color: #fff; font-weight: 700;">📤 Video_4K_Render.mp4</span>
-              <span style="color: var(--neo-lime); font-family: var(--font-mono); font-weight: 800;">84% (74.2 MB/s)</span>
-            </div>
-            <div style="background: rgba(255, 255, 255, 0.08); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 14px;">
-              <div style="width: 84%; height: 100%; background: linear-gradient(90deg, var(--neo-lime), var(--neo-cyan));"></div>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <div style="flex: 1; background: rgba(255, 255, 255, 0.04); padding: 8px 10px; border-radius: 6px; font-size: 0.72rem; color: #94a3b8;">
-                💻 <strong>PC Folder:</strong> C:\Transfers\
+          <div class="mockup-body" style="background: #090e18; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px; display: flex; flex-direction: column; align-items: stretch;">
+            <!-- Side by Side panels -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 8px; font-size: 0.72rem;">
+                <div style="color: var(--neo-cyan); font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between;">
+                  <span>💻 PC Files</span>
+                  <span style="color: #64748b;">C:\Transfers\</span>
+                </div>
+                <div style="color: #cbd5e1; margin-bottom: 3px;">☑ 🎥 Project_Render.mp4 (1.4 GB)</div>
+                <div style="color: #94a3b8; margin-bottom: 3px;">☐ 📦 Backup_Archive.zip (420 MB)</div>
+                <div style="color: #94a3b8;">☐ 📄 Financial_Sheet.xlsx (12 MB)</div>
               </div>
-              <div style="flex: 1; background: rgba(255, 255, 255, 0.04); padding: 8px 10px; border-radius: 6px; font-size: 0.72rem; color: #94a3b8;">
-                📱 <strong>Phone Folder:</strong> /PCDeck/
+              <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 8px; font-size: 0.72rem;">
+                <div style="color: var(--neo-lime); font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between;">
+                  <span>📱 Phone Storage</span>
+                  <span style="color: #64748b;">/PCDeck/</span>
+                </div>
+                <div style="color: #cbd5e1; margin-bottom: 3px;">📷 IMG_20260823.raw (48 MB)</div>
+                <div style="color: #94a3b8; margin-bottom: 3px;">🎬 ScreenRecord_01.mp4 (180 MB)</div>
+                <div style="color: #94a3b8;">📥 Downloaded_Suites/</div>
+              </div>
+            </div>
+            <!-- Live Transfer Progress Bar -->
+            <div style="background: rgba(0, 255, 102, 0.06); border: 1px solid rgba(0, 255, 102, 0.2); border-radius: 6px; padding: 8px 10px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 4px;">
+                <span style="color: #fff; font-weight: 700;">Uploading: Project_Render.mp4</span>
+                <span style="color: var(--neo-lime); font-family: var(--font-mono); font-weight: 700;">88% • 78.4 MB/s</span>
+              </div>
+              <div style="background: rgba(255, 255, 255, 0.08); height: 6px; border-radius: 3px; overflow: hidden;">
+                <div style="width: 88%; height: 100%; background: linear-gradient(90deg, var(--neo-lime), var(--neo-cyan));"></div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Tab 4: WASAPI Audio -->
+      <!-- Tab 4: Live Audio -->
       <div id="sim-pane-audio" class="sim-content-pane">
         <div class="sim-info">
-          <h3>Live PC Audio Streaming (WASAPI)</h3>
-          <p>Stream your Windows system audio in real-time straight to your phone speakers or connected Bluetooth headphones.</p>
+          <h3>Real-Time Live PC Audio Streaming</h3>
+          <p>Stream stereo system sound from your PC directly to your phone's wireless earbuds or headphones over local Wi-Fi.</p>
           <ul class="sim-feature-bullets">
-            <li><span class="sim-bullet-check">✔</span> <strong>48kHz Stereo Loopback:</strong> Direct WASAPI hardware capture for crystal clear fidelity.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Ultra-Low Audio Delay:</strong> Sub-50ms synchronization perfect for YouTube, movies, and gaming.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Waveform Visualizer:</strong> Live audio bars and independent phone output volume control.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Media Controls:</strong> Play, pause, skip tracks, and adjust master PC volume remotely.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>High-Fidelity 48kHz Stereo:</strong> Real-time hardware loopback audio capture for natural sound quality.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Low Latency Sync:</strong> Sub-50ms synchronization designed for gaming, YouTube, and movie playback.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Phone Volume Control:</strong> Independent audio slider and live spectrum frequency bars.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Media Controls:</strong> Play, pause, skip, and adjust master PC sound from across the room.</li>
           </ul>
         </div>
         <div class="sim-ui-mockup">
           <div class="mockup-header">
             <div class="mockup-brand">
               <span style="color: var(--neo-cyan);">🔊</span>
-              <span>WASAPI AUDIO RECEIVER</span>
+              <span>LIVE PC AUDIO STREAM</span>
             </div>
-            <div class="mockup-status">● 48kHz STEREO</div>
+            <div class="mockup-status" style="color: var(--neo-cyan);">● 48kHz STEREO</div>
           </div>
-          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 22px;">
-            <div style="font-size: 2.2rem; margin-bottom: 6px;">🎧 🎵</div>
-            <div style="font-weight: 800; font-size: 1.1rem; color: #fff;">PC System Sound Streaming</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Gaming, Spotify, YouTube audio playing on phone</div>
-            <div style="display: flex; gap: 4px; align-items: flex-end; height: 28px;">
-              <div style="width: 6px; height: 18px; background: var(--neo-cyan); border-radius: 2px;"></div>
-              <div style="width: 6px; height: 26px; background: var(--neo-cyan); border-radius: 2px;"></div>
-              <div style="width: 6px; height: 14px; background: var(--neo-lime); border-radius: 2px;"></div>
-              <div style="width: 6px; height: 22px; background: var(--neo-lime); border-radius: 2px;"></div>
-              <div style="width: 6px; height: 28px; background: var(--neo-pink); border-radius: 2px;"></div>
-              <div style="width: 6px; height: 16px; background: var(--neo-pink); border-radius: 2px;"></div>
-              <div style="width: 6px; height: 20px; background: var(--neo-cyan); border-radius: 2px;"></div>
-              <div style="width: 6px; height: 10px; background: var(--neo-cyan); border-radius: 2px;"></div>
+          <div class="mockup-body" style="background: #090e18; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; display: flex; flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div>
+                <div style="font-weight: 800; font-size: 0.95rem; color: #fff;">Windows System Audio</div>
+                <div style="font-size: 0.72rem; color: #94a3b8;">Streaming to phone headphones / earbuds</div>
+              </div>
+              <span style="background: rgba(0, 240, 255, 0.15); border: 1px solid var(--neo-cyan); color: var(--neo-cyan); font-size: 0.68rem; padding: 4px 8px; border-radius: 4px; font-weight: 700;">LOW DELAY</span>
+            </div>
+            <!-- Equalizer Waveform -->
+            <div style="display: flex; gap: 5px; align-items: flex-end; justify-content: center; height: 48px; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 6px 12px; margin-bottom: 14px;">
+              <div style="flex: 1; height: 35%; background: var(--neo-cyan); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 60%; background: var(--neo-cyan); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 85%; background: var(--neo-lime); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 50%; background: var(--neo-lime); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 95%; background: var(--neo-pink); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 70%; background: var(--neo-pink); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 40%; background: var(--neo-cyan); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 75%; background: var(--neo-cyan); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 90%; background: var(--neo-lime); border-radius: 2px;"></div>
+              <div style="flex: 1; height: 30%; background: var(--neo-cyan); border-radius: 2px;"></div>
+            </div>
+            <!-- Volume Slider Preview -->
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 0.72rem; color: #94a3b8;">
+              <span>🔈</span>
+              <div style="flex: 1; background: rgba(255, 255, 255, 0.1); height: 6px; border-radius: 3px; position: relative;">
+                <div style="width: 75%; height: 100%; background: var(--neo-cyan); border-radius: 3px;"></div>
+              </div>
+              <span style="font-family: var(--font-mono); font-weight: 700; color: #fff;">75%</span>
             </div>
           </div>
         </div>
@@ -1323,71 +1392,72 @@
       <!-- Tab 5: Keyboard & Numpad -->
       <div id="sim-pane-keyboard" class="sim-content-pane">
         <div class="sim-info">
-          <h3>Live Keystroke Sync &amp; Cyber Numpad</h3>
-          <p>Type directly into any PC text field with real-time phone keyboard input and a full 17-key mechanical numpad.</p>
+          <h3>Live Keystroke Sync &amp; Mechanical Numpad</h3>
+          <p>Type directly into any active Windows application using your phone's keyboard or the dedicated on-screen mechanical numpad.</p>
           <ul class="sim-feature-bullets">
-            <li><span class="sim-bullet-check">✔</span> <strong>Real-Time Live Typing:</strong> Every character typed on phone sends instantly to the active PC window.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>17-Key Mechanical Numpad:</strong> Full math keypad with NumLock, division, multiplication, and Enter.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Precision Cross D-Pad:</strong> 6-key navigation (Home, End, PgUp, PgDn, Insert, Delete) and directional arrows.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Power Hotkeys:</strong> Ctrl+C, Ctrl+V, Alt+Tab, Win+D, Win+Shift+S screenshot, Alt+F4, and F1–F12.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Real-Time Input:</strong> Text typed on your phone syncs immediately into Windows text fields, browsers, and terminals.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>17-Key Numpad:</strong> Full math keypad with division, multiplication, addition, and Enter.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>D-Pad &amp; Navigation:</strong> Directional arrows, Home, End, PgUp, PgDn, and Delete shortcuts.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Windows Hotkeys:</strong> Quick access to Ctrl+C, Ctrl+V, Alt+Tab, Win+D, and screenshot hotkeys.</li>
           </ul>
         </div>
         <div class="sim-ui-mockup">
           <div class="mockup-header">
             <div class="mockup-brand">
               <span style="color: var(--neo-lime);">⌨️</span>
-              <span>MECHANICAL KEYPAD</span>
+              <span>KEYBOARD &amp; NUMPAD</span>
             </div>
-            <div class="mockup-status">● REAL-TIME SYNC</div>
+            <div class="mockup-status" style="color: var(--neo-lime);">● REAL-TIME SYNC</div>
           </div>
-          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px;">
-            <div style="width: 100%; background: rgba(0, 240, 255, 0.08); border: 1px solid var(--neo-cyan); border-radius: 6px; padding: 8px 12px; font-size: 0.78rem; font-family: var(--font-mono); color: #fff; margin-bottom: 12px; text-align: left;">
-              > Real-time PC typing connected...█
+          <div class="mockup-body" style="background: #090e18; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 14px; display: flex; flex-direction: column; align-items: stretch;">
+            <div style="background: rgba(0, 240, 255, 0.06); border: 1px solid var(--neo-cyan); border-radius: 6px; padding: 6px 10px; font-size: 0.72rem; font-family: var(--font-mono); color: #fff; margin-bottom: 10px;">
+              > Typing into Notepad on PC: Hello PCDeck_█
             </div>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%;">
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">7</div>
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">8</div>
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">9</div>
-              <div style="background: rgba(0, 240, 255, 0.2); color: var(--neo-cyan); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800;">/</div>
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">4</div>
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">5</div>
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">6</div>
-              <div style="background: rgba(0, 240, 255, 0.2); color: var(--neo-cyan); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800;">*</div>
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">1</div>
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">2</div>
-              <div style="background: rgba(255, 255, 255, 0.06); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;">3</div>
-              <div style="background: rgba(0, 255, 102, 0.2); color: var(--neo-lime); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800;">↵</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">7</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">8</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">9</div>
+              <div style="background: rgba(0, 240, 255, 0.15); color: var(--neo-cyan); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; text-align: center;">/</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">4</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">5</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">6</div>
+              <div style="background: rgba(0, 240, 255, 0.15); color: var(--neo-cyan); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; text-align: center;">*</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">1</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">2</div>
+              <div style="background: rgba(255, 255, 255, 0.06); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-align: center;">3</div>
+              <div style="background: rgba(0, 255, 102, 0.15); color: var(--neo-lime); padding: 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; text-align: center;">↵</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Tab 6: Reverse Scrcpy -->
+      <!-- Tab 6: Android on PC -->
       <div id="sim-pane-scrcpy" class="sim-content-pane">
         <div class="sim-info">
-          <h3>Reverse Scrcpy Phone Mirroring</h3>
-          <p>View and control your Android smartphone right on your Windows PC monitor with zero driver installation.</p>
+          <h3>Android Screen Control on Windows Desktop</h3>
+          <p>Control your Android phone directly on your PC screen using your computer's mouse and physical keyboard.</p>
           <ul class="sim-feature-bullets">
-            <li><span class="sim-bullet-check">✔</span> <strong>1-Click Scrcpy Launcher:</strong> Built into PCDeck Windows desktop server tray.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>60 FPS Phone Display:</strong> Mirror your phone screen on PC with low latency over USB or Wi-Fi.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>PC Mouse &amp; Keyboard Control:</strong> Use your PC mouse and mechanical keyboard directly on phone apps.</li>
-            <li><span class="sim-bullet-check">✔</span> <strong>Zero Accounts:</strong> Pure local ADB protocol execution with complete confidentiality.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>1-Click Scrcpy Integration:</strong> Built right into the PCDeck Windows desktop server tray.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>60 FPS Phone Display:</strong> Mirror and manage phone apps on your PC monitor over USB or local Wi-Fi.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Mouse &amp; Keyboard Control:</strong> Reply to WhatsApp, manage photos, and navigate mobile apps with your physical PC setup.</li>
+            <li><span class="sim-bullet-check">✔</span> <strong>Zero Cloud Overhead:</strong> Direct local ADB connection with total privacy.</li>
           </ul>
         </div>
         <div class="sim-ui-mockup">
           <div class="mockup-header">
             <div class="mockup-brand">
               <span style="color: var(--neo-gold);">📱</span>
-              <span>SCRCPY REVERSE CONTROL</span>
+              <span>PHONE DISPLAY ON PC</span>
             </div>
-            <div class="mockup-status" style="color: var(--neo-gold);">● PHONE ON PC</div>
+            <div class="mockup-status" style="color: var(--neo-gold);">● ADB CONNECTED</div>
           </div>
-          <div class="mockup-body" style="background: #090e18; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 22px;">
-            <div style="font-size: 2.2rem; margin-bottom: 6px;">📱 ➡️ 🖥️</div>
-            <div style="font-weight: 800; font-size: 1.1rem; color: #fff;">Phone Screen on Windows</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Full mouse clicks, typing, and drag gestures on Android</div>
-            <div style="background: rgba(255, 215, 0, 0.15); border: 1px solid var(--neo-gold); color: #fff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;">
-              USB &amp; WIRELESS ADB SUPPORTED
+          <div class="mockup-body" style="background: #090e18; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="width: 140px; background: #131a29; border: 2px solid rgba(255, 215, 0, 0.4); border-radius: 14px; padding: 10px 8px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+              <div style="width: 24px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 8px;"></div>
+              <div style="background: rgba(255,255,255,0.04); border-radius: 6px; padding: 12px 6px; font-size: 0.68rem; color: #cbd5e1; margin-bottom: 8px;">
+                📱 Android Phone Screen
+              </div>
+              <div style="font-size: 0.62rem; color: var(--neo-gold); font-weight: 700;">Full PC Mouse Control</div>
             </div>
           </div>
         </div>
@@ -1412,7 +1482,7 @@
 
       <div class="pro-perks-grid">
         <div class="pro-perk-card">
-          <div class="pro-perk-title" style="color: var(--neo-cyan);">⚡ 60 / 120 FPS Mirroring</div>
+          <div class="pro-perk-title" style="color: var(--neo-cyan);">⚡ 60 / 120 FPS Streaming</div>
           <div class="pro-perk-desc">Ultra-fluid desktop stream with sub-30ms response for gaming, video, and creative productivity.</div>
         </div>
         <div class="pro-perk-card">
@@ -1453,14 +1523,14 @@
 
         <div class="feature-item">
           <div class="feature-icon-badge">🖥️</div>
-          <h3>60/120 FPS Desktop Mirror</h3>
+          <h3>60/120 FPS Desktop Screen Streaming</h3>
           <p>Real-time low-latency desktop screen streaming with direct touch-to-click on PC windows, 5x pinch zoom, and multi-monitor switcher.</p>
         </div>
 
         <div class="feature-item">
           <div class="feature-icon-badge">🔊</div>
           <h3>Live PC Audio Streaming</h3>
-          <p>Streams live stereo PC system audio (WASAPI loopback) to your phone headphones with zero delay. Listen to games &amp; movies anywhere.</p>
+          <p>Streams live stereo PC system audio directly to your phone headphones with zero delay. Listen to games &amp; movies anywhere.</p>
         </div>
 
         <div class="feature-item">
@@ -1471,8 +1541,8 @@
 
         <div class="feature-item">
           <div class="feature-icon-badge">📱</div>
-          <h3>Reverse Scrcpy Mirroring</h3>
-          <p>Mirror and interact with your Android phone on your PC screen at 60 FPS over USB or Wi-Fi without third-party drivers.</p>
+          <h3>Android Screen on Desktop</h3>
+          <p>Interact with your Android phone on your PC screen at 60 FPS over USB or Wi-Fi without third-party drivers.</p>
         </div>
 
         <div class="feature-item">
@@ -1532,8 +1602,8 @@
     <!-- Comparison Section -->
     <section id="comparison">
       <div class="section-title">
-        <h2>Why PCDeck Dominates Competitors</h2>
-        <p>See how PCDeck outmatches bloated, subscription-laden remote desktop utilities.</p>
+        <h2>Why PCDeck Outmatches Alternatives</h2>
+        <p>A focused comparison with common remote utilities.</p>
       </div>
 
       <div class="comparison-section">
@@ -1563,7 +1633,7 @@
               <td>No Account</td>
             </tr>
             <tr>
-              <td><strong>60 / 120 FPS Screen Mirror</strong></td>
+              <td><strong>60 / 120 FPS Screen Streaming</strong></td>
               <td class="table-check">✅ Native Hardware Engine</td>
               <td class="table-cross">Paid / Laggy</td>
               <td>Cloud Routed / Laggy</td>
@@ -1571,7 +1641,7 @@
             </tr>
             <tr>
               <td><strong>Live PC Audio to Phone</strong></td>
-              <td class="table-check">✅ 48kHz WASAPI Built-in</td>
+              <td class="table-check">✅ 48kHz Stereo Loopback</td>
               <td class="table-cross">❌ Not Supported</td>
               <td class="table-cross">❌ Delayed</td>
               <td>Standard Audio</td>
@@ -1584,7 +1654,7 @@
               <td class="table-cross">❌ Not Supported</td>
             </tr>
             <tr>
-              <td><strong>Reverse Scrcpy Phone Control</strong></td>
+              <td><strong>Android Phone Control on PC</strong></td>
               <td class="table-check">✅ 1-Click USB/Wi-Fi</td>
               <td class="table-cross">❌ Not Supported</td>
               <td class="table-cross">❌ Not Supported</td>
@@ -1625,7 +1695,7 @@
         <div class="step-box">
           <div class="step-num">3</div>
           <h4>Connect &amp; Control</h4>
-          <p>Scan the QR code or tap Connect! Enjoy instant gesture control, 60 FPS screen mirror, audio stream, and fast file transfers.</p>
+          <p>Scan the QR code or tap Connect! Enjoy instant gesture control, 60 FPS screen streaming, live audio, and fast file transfers.</p>
         </div>
       </div>
     </section>
@@ -1649,7 +1719,7 @@
 
       <div class="faq-item">
         <div class="faq-question" onclick="toggleFaq(this)">
-          <span>How does direct touchscreen clicking work in Screen Mirror mode?</span>
+          <span>How does direct touchscreen clicking work in Screen Streaming mode?</span>
           <span class="faq-icon">+</span>
         </div>
         <div class="faq-answer">
@@ -1663,7 +1733,7 @@
           <span class="faq-icon">+</span>
         </div>
         <div class="faq-answer">
-          PCDeck Free includes full trackpad gestures, live 30 FPS screen mirror, WASAPI audio streaming, dual file manager, and keyboard typing. You can activate Pro (60/120 FPS streaming, Turbo multi-stream transfers, and Chroma themes) directly inside the PCDeck app using your lifetime license key (`PCDK-...`).
+          PCDeck Free includes full trackpad gestures, live 30 FPS screen streaming, wireless audio streaming, dual file manager, and keyboard typing. You can activate Pro (60/120 FPS streaming, Turbo multi-stream transfers, and Chroma themes) directly inside the PCDeck app using your lifetime license key (`PCDK-...`).
         </div>
       </div>
 
@@ -1693,7 +1763,7 @@
           <span class="faq-icon">+</span>
         </div>
         <div class="faq-answer">
-          PCDeck captures live 48kHz stereo system audio from Windows (WASAPI loopback) and streams it directly to your phone. Plug your headphones or wireless earbuds into your phone to enjoy games, YouTube, or Netflix with crystal-clear sound and zero latency from anywhere in the house.
+          PCDeck captures live 48kHz stereo system audio from Windows and streams it directly to your phone. Plug your headphones or wireless earbuds into your phone to enjoy games, YouTube, or Netflix with crystal-clear sound and zero latency from anywhere in the house.
         </div>
       </div>
 
@@ -1722,7 +1792,7 @@
         <span>•</span>
         <span>Android 5.0 – 16+</span>
         <span>•</span>
-        <span>WASAPI Loopback 48kHz</span>
+        <span>48kHz Stereo Audio Loopback</span>
         <span>•</span>
         <span>WebSocket Binary Protocol</span>
         <span>•</span>
