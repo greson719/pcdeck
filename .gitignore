@@ -1,6 +1,5 @@
 ﻿*.exe
 *.zip
 
-# The Pro build is the paid tier. This directory auto-publishes to Vercel, so a
-# stray `git add .` would put the $3.99 APK up as a free download.
+# Leftover from renaming the app to PCDeck; the build now emits PCDeck.apk only.
 PCDeck_Pro.apk

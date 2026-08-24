@@ -137,7 +137,7 @@
           "name": "Is PCDeck free, and what does the paid version add?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "The free version covers trackpad gestures, the on-screen keyboard, 30 FPS screen streaming, PC audio streaming and the two-way file manager. A one-time 3.99 USD lifetime licence raises streaming to 60/120 FPS and unlocks faster transfers. There is no subscription, and the licence activates offline."
+            "text": "The free version covers trackpad gestures, the on-screen keyboard, 30 FPS screen streaming, PC audio streaming and the two-way file manager. A one-time 3.99 USD lifetime licence raises streaming to 60/120 FPS and unlocks faster transfers. There is no subscription, and the licence activates offline. Pro unlocks inside the app you already downloaded — there is no separate Pro build to download."
           }
         },
         {
@@ -637,7 +637,7 @@ footer{padding:44px 0 56px}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
               <span>Android app<small>APK · 1.6 MB</small></span>
             </a>
-            <a class="btn" id="hero-exe" href="PCDeck.exe" download>
+            <a class="btn" id="hero-exe" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
               <span>Windows app<small>EXE · 58 MB</small></span>
             </a>
@@ -645,7 +645,7 @@ footer{padding:44px 0 56px}
 
           <p class="get-alt">
             You need both: the app on your phone, the server on your PC. Prefer one file?
-            <a id="hero-zip" href="PCDeck_Package.zip" download>Download the full package (ZIP, 59 MB)</a>.
+            <a id="hero-zip" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck_Package.zip" download>Download the full package (ZIP, 59 MB)</a>.
           </p>
 
           <p class="get-missing">Some builds are not published yet — see <a href="#download">Download</a>.</p>
@@ -985,6 +985,10 @@ footer{padding:44px 0 56px}
         <details>
           <summary>Is PCDeck free, and what does the paid version add?</summary>
           <p>The free version covers trackpad gestures, the on-screen keyboard, 30 FPS screen streaming, PC audio streaming and the two-way file manager. A one-time $3.99 lifetime licence raises streaming to 60/120 FPS and unlocks faster transfers. There is no subscription, and the licence activates offline.</p>
+          <!-- The APK used to ship alongside a same-sized PCDeck_Pro.apk, which invited
+               the assumption that Pro is a separate build you have to find and download.
+               There is one APK; Pro is a switch inside it. -->
+          <p>Pro unlocks inside the app you already downloaded — there is no separate Pro build to hunt for. The APK below is the full app, free features first.</p>
         </details>
         <details>
           <summary>Which Windows and Android versions are supported?</summary>
@@ -1035,7 +1039,7 @@ footer{padding:44px 0 56px}
             <li>Self-contained · no Python or .NET</li>
             <li>Unsigned — SmartScreen will prompt once</li>
           </ul>
-          <a class="btn" id="dl-exe" href="PCDeck.exe" download>Download for Windows</a>
+          <a class="btn" id="dl-exe" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe" download>Download for Windows</a>
           <p class="unavail">Not published yet — see the note below.</p>
         </div>
 
@@ -1048,7 +1052,7 @@ footer{padding:44px 0 56px}
             <li>Includes the Android APK</li>
             <li>Useful for offline install</li>
           </ul>
-          <a class="btn ghost" id="dl-zip" href="PCDeck_Package.zip" download>Download ZIP</a>
+          <a class="btn ghost" id="dl-zip" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck_Package.zip" download>Download ZIP</a>
           <p class="unavail">Not published yet — see the note below.</p>
         </div>
       </div>
@@ -1206,19 +1210,24 @@ footer{padding:44px 0 56px}
 (function () {
   // Single source of truth for download locations.
   //
-  // The .exe and .zip are excluded by .gitignore, so they are NOT deployed with
-  // the site and these relative paths 404 in production. When they are published
-  // as GitHub Release assets, change the two lines below to:
+  // The .exe and .zip are excluded by .gitignore and so are never deployed with
+  // the site — relative paths for them returned a 404 page in production. They
+  // now come from GitHub Release assets instead. Releases are the right home for
+  // 60 MB binaries: GitHub warns over 50 MB per file in a repo, and keeping them
+  // out keeps clones and Vercel builds fast.
   //
-  //   exe: 'https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe',
-  //   zip: 'https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck_Package.zip'
+  // The `latest/download/` form resolves to whatever the newest published
+  // release is, so shipping a new build does not mean editing this file. Note
+  // that it deliberately skips drafts and prereleases: mark a release as either
+  // and these URLs go back to 404ing.
   //
-  // Releases are the right home for 60 MB binaries: GitHub warns over 50 MB per
-  // file in a repo, and keeping them out keeps clones and Vercel builds fast.
+  // The .apk stays same-origin. It is small enough to deploy, and being on the
+  // same origin means the `download` attribute is honoured and the probe below
+  // can actually read a status instead of being blocked by CORS.
   var BINARIES = {
     apk: 'PCDeck.apk',
-    exe: 'PCDeck.exe',
-    zip: 'PCDeck_Package.zip'
+    exe: 'https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe',
+    zip: 'https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck_Package.zip'
   };
 
   Object.keys(BINARIES).forEach(function (key) {
@@ -1235,8 +1244,15 @@ footer{padding:44px 0 56px}
     if (!targets.length) return;
     targets.forEach(function (t) { t.link.setAttribute('href', url); });
 
+    // Only same-origin URLs are worth probing. A cross-origin HEAD to GitHub is
+    // refused by CORS no matter whether the asset exists, so it can never tell us
+    // anything — it just logs two red console errors and burns two requests per
+    // page load. Clicking the link still works: a navigation is not subject to
+    // CORS, and GitHub sends Content-Disposition: attachment so it downloads.
+    if (new URL(url, location.href).origin !== location.origin) return;
+
     // A HEAD request is enough to learn whether the artifact exists. If the
-    // probe itself fails (offline, CORS, blocked), leave the button enabled:
+    // probe itself fails (offline, blocked), leave the button enabled:
     // never let a failed check block a download that would have worked.
     fetch(url, { method: 'HEAD' })
       .then(function (res) {
