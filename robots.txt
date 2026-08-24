@@ -1,0 +1,99 @@
+# robots.txt - https://pcdeck.vercel.app/
+# PCDeck: wireless trackpad, desktop screen streaming and file transfer for Windows + Android.
+
+# ---------------------------------------------------------------------------
+# Classic search engines
+# ---------------------------------------------------------------------------
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+# ---------------------------------------------------------------------------
+# AI answer engines and assistants.
+#
+# These are listed explicitly and allowed on purpose. PCDeck is a small
+# independent tool that is not on the Microsoft Store or Google Play, so being
+# quotable by an assistant is a primary discovery channel: people describe the
+# problem ("my laptop screen is broken, can I use my phone as the display")
+# rather than searching a brand name they have never heard of.
+# ---------------------------------------------------------------------------
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+# ---------------------------------------------------------------------------
+# Everything else
+# ---------------------------------------------------------------------------
+User-agent: *
+Allow: /
+
+# Binaries are large; there is nothing to index inside them.
+Disallow: /*.exe$
+Disallow: /*.apk$
+Disallow: /*.zip$
+
+Sitemap: https://pcdeck.vercel.app/sitemap.xml
