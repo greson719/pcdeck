@@ -57,6 +57,13 @@ The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` w
 - **Windows**: Package as **MSIX for Microsoft Store** / apply Code Signing to eliminate SmartScreen ("Windows protected your PC") and antivirus false positives.
 - **Website Sync**: Update download buttons with official store badges once published.
 
+### D. Mobile Onboarding & PC Server Sideloading (Offline PC Rescue)
+- **Problem Solved**: When a PC has a broken mouse, dead monitor, or no internet, the user cannot easily download `PCDeck.exe` on the PC itself.
+- **Feature**:
+  1. **In-App Download**: Android onboarding screen includes a *"Download PC Server to Phone"* button that downloads `PCDeck.exe` directly into the phone's `/Downloads` folder.
+  2. **Transfer Instructions**: Provides visual steps to transfer the `.exe` to the PC via USB cable, OTG pendrive, or local hotspot.
+  3. **Local Wi-Fi Host**: (Optional) Phone hosts a tiny local HTTP server so any PC connected to the phone's hotspot can download `PCDeck.exe` without internet.
+
 ---
 
 ## 5. Continuous Context Synchronization Rule (Living Document)
