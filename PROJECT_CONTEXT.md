@@ -64,14 +64,22 @@ The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` w
   2. **Transfer Instructions**: Provides visual steps to transfer the `.exe` to the PC via USB cable, OTG pendrive, or local hotspot.
   3. **Local Wi-Fi Host**: (Optional) Phone hosts a tiny local HTTP server so any PC connected to the phone's hotspot can download `PCDeck.exe` without internet.
 
-### E. Lemon Squeezy Pro Licensing & In-App Upgrade Logic (Pending Integration)
-- **Current Status**: Lemon Squeezy license key verification is NOT connected to app code yet. License keys exist in a raw text file (`lemon_squeezy_license_keys.txt`), but no verification logic or payment hook is wired into the client/server yet.
-- **Real Pro Functionality Requirement**:
-  - Pro must **actually function** (unlock real 60/120 FPS video streaming pipelines, remove transfer speed throttles, and enable the Drag-and-Drop HUD Keymapper) rather than being a decorative UI toggle.
-  - Implement a clean Lemon Squeezy API / Offline License verification flow where users enter their purchased key to activate the Pro flag.
+### E. Lemon Squeezy Pro Licensing & In-App Upgrade Logic
+- **Architecture (Official Lemon Squeezy License API)**:
+  - **No Custom Backend Required**: Lemon Squeezy provides public client-safe license endpoints that do not expose private store API keys:
+    1. **Activation**: `POST https://api.lemonsqueezy.com/v1/licenses/activate` with `license_key` and `instance_name` (e.g., Device ID/Name).
+    2. **Validation**: `POST https://api.lemonsqueezy.com/v1/licenses/validate` with `license_key` and `instance_id`.
+    3. **Deactivation**: `POST https://api.lemonsqueezy.com/v1/licenses/deactivate` to unbind a device.
+  - **Offline-First Storage**:
+    - Upon successful activation (`"activated": true`), save `is_pro = true`, `license_key`, and `instance_id` securely in local storage (Android `SharedPreferences` / Windows config).
+    - Pro features remain permanently unlocked offline without blocking users when Wi-Fi has no internet access.
+- **Real Pro Functionality**:
+  - Unlocks 60/120 FPS streaming pipeline in client/server.
+  - Unthrottles Wi-Fi file transfer chunking and queue limits.
+  - Enables the Pro Drag-and-Drop HUD Keymapper.
 - **Smart Upgrade Prompt (Retention Trigger)**:
   - Track app usage days locally (`first_launch_date` / active usage count).
-  - If a user is on the Free tier and has actively used the app for **2 to 3 days**, display a polite, non-intrusive modal highlighting Pro benefits ($3.99 lifetime unlock) with a direct purchase/enter license key button.
+  - If a user is on the Free tier and has actively used the app for **2 to 3 days**, display a polite, non-intrusive modal highlighting Pro benefits ($3.99 lifetime unlock) with direct Lemon Squeezy checkout link and license entry field.
 
 ---
 
