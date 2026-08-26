@@ -172,6 +172,15 @@ kbd{
 .pitch .row{display:flex;flex-wrap:wrap;gap:11px;margin:22px 0 0}
 .pitch .fine{margin:15px 0 0;font-size:14.5px;color:var(--muted)}
 
+.quick-card{
+  background:var(--signal-wash);border:1px solid #c2cff7;border-left:2px solid var(--signal);
+  border-radius:var(--r);padding:18px 20px;margin:0 0 34px;max-width:68ch;
+}
+.quick-card .tag{color:var(--signal-ink)}
+.quick-card p{margin:8px 0 0;font-size:15.5px;line-height:1.55;color:var(--ink)}
+.quick-card p:first-of-type{margin-top:6px}
+.quick-card a{font-weight:600;color:var(--signal-ink);text-decoration:underline}
+
 .next{margin:46px 0 0;padding:26px 0 0;border-top:1px solid var(--grid);max-width:68ch}
 .next h2{font-size:19px;margin:0 0 4px}
 
