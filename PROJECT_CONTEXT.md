@@ -49,3 +49,11 @@ The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` w
   - Pre-built Mobile Shooter HUD (Thumbstick + Aim area + Action buttons).
 - **Pro Plan Exclusive**:
   - **Drag-and-Drop HUD Editor**: Allows users to freely add, resize, and reposition buttons/sticks anywhere on the screen and bind them to any PC keyboard key or mouse click (similar to mobile FPS layout editors in Free Fire / PUBG).
+
+---
+
+## 5. Continuous Context Synchronization Rule (Living Document)
+- **Mandatory Agent Directive**: This file is a living document. Whenever any change, feature addition, bug fix, UI enhancement, pricing update, or new guide is created:
+  1. The developer or AI agent **MUST update this `PROJECT_CONTEXT.md` file immediately** in the same commit.
+  2. If new public URLs or guides are added, also update `sitemap.xml` and `llms.txt`.
+  3. Never leave context, architecture, or roadmap documentation stale or outdated.
