@@ -14,46 +14,19 @@
     </image:image>
   </url>
 
+  <!-- Real pages, not fragments of the homepage -->
   <url>
-    <loc>https://pcdeck.vercel.app/#features</loc>
-    <lastmod>2026-08-25</lastmod>
+    <loc>https://pcdeck.vercel.app/use-pc-without-mouse/</loc>
+    <lastmod>2026-08-26</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/#scenarios</loc>
-    <lastmod>2026-08-25</lastmod>
+    <loc>https://pcdeck.vercel.app/use-pc-without-keyboard/</loc>
+    <lastmod>2026-08-26</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://pcdeck.vercel.app/#setup</loc>
-    <lastmod>2026-08-25</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://pcdeck.vercel.app/#install-help</loc>
-    <lastmod>2026-08-25</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://pcdeck.vercel.app/#faq</loc>
-    <lastmod>2026-08-25</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://pcdeck.vercel.app/#comparison</loc>
-    <lastmod>2026-08-25</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.9</priority>
   </url>
 
 </urlset>

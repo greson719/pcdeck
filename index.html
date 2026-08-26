@@ -7,7 +7,7 @@
 <!-- Lead with what it does, not with a single failure. Framing the whole product
      around a dead monitor tells the much larger group who came for a spare screen,
      PC audio or cable-free transfers that the page is not for them. -->
-<meta name="description" content="Use an Android phone as a wireless trackpad, keyboard and emergency display for Windows. Fully offline — for a dead mouse, a black monitor, or a spare screen.">
+<meta name="description" content="Use an Android phone as a wireless trackpad, keyboard and emergency display for Windows. Fully offline — for a broken mouse or keyboard, a black monitor, or a spare screen.">
 <link rel="canonical" href="https://pcdeck.vercel.app/">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="author" content="PCDeck">
@@ -97,7 +97,7 @@
           "name": "What can I use if my PC mouse or keyboard is broken?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "PCDeck turns the phone into a multi-touch trackpad with left and right click, two-finger scrolling and drag, plus a full on-screen keyboard with a numpad. It covers pointer and typing well enough to finish what you were doing, needs no drivers on the PC, and works as an emergency replacement until the hardware is repaired."
+            "text": "PCDeck turns the phone into a multi-touch trackpad with left and right click, two-finger scrolling and drag, plus a full on-screen keyboard with a numpad. It covers pointer and typing well enough to finish what you were doing, needs no drivers on the PC, and works as an emergency replacement until the hardware is repaired. Windows also has built-in options that need no download at all, covered in the guides on using a PC without a mouse and using a PC without a keyboard."
           }
         },
         {
@@ -369,10 +369,10 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .hero-meta span{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink)}
 
 /* ---------- SIGNATURE: the live trackpad ---------- */
-/* The two hero columns stretch to match each other, and the text column is now
-   the taller one. Rather than leave white space under the readout, the rig is a
-   flex column and the pad absorbs the slack — the drag surface just gets bigger,
-   which is the one part of the panel that benefits from more room. */
+/* The two hero columns stretch to match each other, and the text column is the
+   taller one. The scene inside cannot stretch — monitor and phone both have
+   fixed aspect ratios or they stop looking like hardware — so .desk takes the
+   slack and centres them in it instead. */
 .rig{background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
 .rig-head{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -380,8 +380,24 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 }
 .rig-body{display:flex;flex-direction:column;flex:1;min-height:0}
 
-/* mock desktop */
-.screen{position:relative;aspect-ratio:16/9;background:#20262f;overflow:hidden}
+/* ---------- the desk scene ----------
+   A monitor and a phone, both recognisable at a glance. The monitor carries the
+   padding-bottom that the absolutely-positioned stand sits in; the phone
+   overhangs the monitor's lower-right corner, which sells the depth and costs
+   less of the desktop than centring it would. */
+.desk{
+  border-top:1px solid var(--grid);background:#fbfcfd;
+  padding:24px 24px 16px;flex:1;display:flex;flex-direction:column;justify-content:center;
+}
+.monitor{position:relative;padding-bottom:44px}
+.desk-lede{margin:0 0 22px;font-size:14.5px;line-height:1.5;color:var(--muted);max-width:38ch}
+
+/* mock desktop, now behind a bezel */
+.screen{
+  position:relative;aspect-ratio:16/9;background:#20262f;overflow:hidden;
+  border:9px solid #14181e;border-bottom-width:19px;border-radius:11px;
+  box-shadow:0 20px 34px -20px rgba(12,16,22,.5);
+}
 .screen-bar{height:26px;background:#171c23;display:flex;align-items:center;gap:6px;padding:0 9px;border-bottom:1px solid #2c333d}
 .dot{width:8px;height:8px;border-radius:50%;background:#39414c}
 .win{
@@ -399,9 +415,20 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .taskbar{position:absolute;bottom:0;left:0;right:0;height:28px;background:#171c23;border-top:1px solid #2c333d;display:flex;align-items:center;gap:7px;padding:0 10px}
 .taskbar i{width:15px;height:15px;border-radius:2px;background:#333b45;display:block}
 
-/* the cursor that the pad drives */
+/* monitor stand: tapered neck, wide foot */
+.stand{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
+.stand i{display:block;width:78px;height:30px;background:#1b2027;clip-path:polygon(30% 0,70% 0,100% 100%,0 100%)}
+.stand b{display:block;width:152px;height:10px;border-radius:2px 2px 4px 4px;background:#14181e}
+
+/* The cursor that the pad drives. Anchored at the screen's top-left, because
+   place() translates it by (fx x screenWidth, fy x screenHeight) — an absolute
+   position on the desktop, not an offset from wherever it started. It used to
+   sit at left/top 50%, which put the pointer in the middle of the screen when
+   your finger was at the top-left of the pad and drove it off the bottom-right
+   corner at the other end of the travel. overflow:hidden on .screen concealed
+   that, so the cursor just appeared to stall in the lower right. */
 .cursor{
-  position:absolute;left:50%;top:50%;width:20px;height:20px;
+  position:absolute;left:0;top:0;width:20px;height:20px;
   margin:-2px 0 0 -2px;pointer-events:none;z-index:5;
   transition:transform .04s linear;
 }
@@ -411,28 +438,72 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
   border:2px solid var(--signal);pointer-events:none;z-index:4;opacity:0;
 }
 
-/* the pad surface */
-.pad-wrap{border-top:1px solid var(--grid);padding:16px 14px 18px;background:#fbfcfd;flex:1;display:flex;flex-direction:column;min-height:0}
+/* ---------- the phone, and the pad that is its screen ----------
+   z-index 8 puts it in front of the cursor (5), so the pointer can slide behind
+   it — which is what a phone propped against a monitor actually does. The
+   overhang keeps that dead zone small, and .win sits far enough left to never
+   be covered. */
+.phone{
+  position:absolute;right:1.5%;bottom:5px;z-index:8;
+  width:26%;min-width:112px;max-width:138px;
+  background:#0d1116;border:1px solid #2b323c;border-radius:19px;
+  padding:10px 6px;display:flex;flex-direction:column;gap:6px;
+  box-shadow:0 18px 40px rgba(10,14,20,.45);
+}
+.phone-ear{display:block;width:32%;height:3px;border-radius:2px;background:#2b323c;margin:0 auto}
+.phone-bar{display:block;width:38%;height:3px;border-radius:2px;background:#333b45;margin:0 auto}
+/* 9/14 rather than a true phone's 9/19.5. At the 520px-wide rig the desktop
+   layout gives it, a correctly-proportioned phone that is tall enough to drag
+   comfortably ends up taller than the monitor image itself. The frame — bezel,
+   earpiece slit, home bar — is what makes it read as a phone; the exact ratio
+   is not, so this is the axis to trade. */
 .pad{
-  position:relative;flex:1;min-height:148px;border-radius:var(--r);cursor:crosshair;
+  position:relative;aspect-ratio:9/14;border-radius:10px;cursor:crosshair;
   background:
-    radial-gradient(circle at var(--px,50%) var(--py,50%),var(--signal-wash) 0,transparent 58%),
-    repeating-linear-gradient(0deg,transparent 0 15px,#e9edf2 15px 16px),
-    repeating-linear-gradient(90deg,transparent 0 15px,#e9edf2 15px 16px),
-    var(--panel);
-  border:1px solid var(--grid);
+    radial-gradient(circle at var(--px,50%) var(--py,50%),rgba(96,133,255,.5) 0,transparent 62%),
+    repeating-linear-gradient(0deg,transparent 0 13px,rgba(255,255,255,.06) 13px 14px),
+    repeating-linear-gradient(90deg,transparent 0 13px,rgba(255,255,255,.06) 13px 14px),
+    #161c24;
+  border:1px solid #2b323c;
   touch-action:none;
   display:grid;place-items:center;
   overflow:hidden;
 }
-.pad-hint{font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;text-align:center;padding:0 16px;transition:opacity .2s ease}
+/* --signal is too dark to see against the phone screen. */
+.pad:focus-visible{outline:2px solid #8ea6ff;outline-offset:3px}
+.pad-hint{font-family:var(--mono);font-size:10px;line-height:1.5;color:#8d97a4;letter-spacing:.13em;text-transform:uppercase;text-align:center;transition:opacity .2s ease}
 .pad.live .pad-hint{opacity:0}
-.touch{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:color-mix(in srgb,var(--signal) 18%,transparent);border:1px solid var(--signal);opacity:0;pointer-events:none}
+.touch{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(120,151,255,.22);border:1px solid #8ea6ff;opacity:0;pointer-events:none}
 .pad.live .touch{opacity:1}
 
-.readout{display:flex;gap:20px;margin-top:13px;flex-wrap:wrap}
+/* Two words carry the whole metaphor; the drawing alone stays ambiguous. */
+.desk-cap{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:13px 0 0;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.cap-mob{display:none}
+
+.readout{display:flex;gap:20px;padding:13px 24px 16px;flex-wrap:wrap;border-top:1px solid var(--grid)}
 .readout div{display:flex;align-items:baseline;gap:7px}
 .readout var{font-family:var(--mono);font-size:13.5px;font-style:normal;font-weight:500;color:var(--ink);min-width:4ch}
+
+/* Below this width an overlapping phone leaves a drag target of about 66px —
+   unusable, and phones are the likeliest visitors to a page about phones. So the
+   phone steps out from in front of the monitor and stands below it instead:
+   same two devices, just not overlapping. */
+@media (max-width:600px){
+  .monitor{padding-bottom:0;display:flex;flex-direction:column;align-items:center}
+  .screen{align-self:stretch}
+  .stand{position:static;transform:none}
+  .phone{position:static;width:186px;max-width:56%;margin-top:18px;box-shadow:0 10px 26px rgba(10,14,20,.3)}
+  /* Detached, the phone is the largest thing on screen, so the squat ratio the
+     desktop layout forces starts to show. There is vertical room here — give it
+     back closer to a real phone's proportions. */
+  .pad{aspect-ratio:9/17}
+  .desk-cap{justify-content:center}
+  .cap-pc,.cap-ph{display:none}
+  .cap-mob{display:block}
+}
 
 /* ==================== generic section ==================== */
 .sec{padding:78px 0;border-bottom:1px solid var(--grid)}
@@ -453,6 +524,10 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .case{background:var(--panel);border:1px solid var(--grid);border-left:2px solid var(--signal);border-radius:var(--r);padding:24px}
 .case h3{font-size:17px;margin:0 0 9px}
 .case p{margin:0;font-size:15.5px;color:var(--graphite)}
+/* One card leads somewhere — the broken-peripheral case has a full guide behind
+   it. .case p has no margin, so the follow-on link needs its own gap. */
+.case-more{margin:13px 0 0;font-size:14.5px;line-height:1.5}
+.case-more a{font-weight:500}
 
 /* ==================== install / trust ==================== */
 .warn{background:var(--caution-wash);border:1px solid var(--caution-line);border-radius:var(--r);padding:26px 26px 24px;margin-bottom:34px}
@@ -554,6 +629,10 @@ details p{margin:0 22px 20px;color:var(--graphite);font-size:15.5px;max-width:76
 footer{padding:44px 0 56px}
 .foot{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
 .foot p{margin:0;font-size:14px;color:var(--muted)}
+/* The footer is now the third place the guides are reachable from, after the
+   use-case card and the FAQ. It carries them because a footer link is where
+   crawlers expect to find the rest of a small site. */
+.foot-guides a{color:var(--graphite);font-weight:500}
 
 /* ==================== responsive ==================== */
 @media (max-width:900px){
@@ -660,12 +739,27 @@ footer{padding:44px 0 56px}
 
         <div class="hero-meta">
           <div><span class="tag">Runs</span><span>Fully offline</span></div>
-          <div><span class="tag">Price</span><span>Free · Pro $3.99 once</span></div>
+          <!-- The price used to read "Free · Pro $3.99 once" here. Someone whose
+               mouse just died was meeting a dollar sign before they had finished
+               reading what the thing does, and that reads as a paywall. The
+               figure is not hidden — it is stated in full at #download, in the
+               comparison table and in the FAQ — it just is not the first thing
+               on the page any more. -->
+          <div><span class="tag">Price</span><span>Free to use</span></div>
           <div><span class="tag">Account</span><span>None needed</span></div>
         </div>
       </div>
 
-      <!-- SIGNATURE ELEMENT: a working trackpad, not a claim about latency -->
+      <!-- SIGNATURE ELEMENT: a working trackpad, not a claim about latency.
+           The scene is drawn literally — a bezelled monitor on a stand with a
+           phone standing in front of it — because the earlier abstract version
+           (a plain grid below a plain rectangle) read as a generic touchpad
+           widget. The whole product is one device driving another, so the demo
+           has to show two recognisable devices or it explains nothing.
+
+           The phone is a sibling of .screen, not a child: .screen keeps
+           overflow:hidden so the cursor cannot escape the desktop, and a child
+           would be clipped where it overhangs the bezel. -->
       <div class="rig">
         <div class="rig-head">
           <span class="tag">Live demo · this page</span>
@@ -673,35 +767,58 @@ footer{padding:44px 0 56px}
         </div>
 
         <div class="rig-body">
-          <div class="screen" id="screen">
-            <div class="screen-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
-            <div class="win">
-              <div class="win-bar"><i></i><i></i><i></i><b>Documents</b></div>
-              <div class="win-body">
-                <div class="bar w70"></div>
-                <div class="bar w40 sig"></div>
-                <div class="bar w55"></div>
-                <div class="bar w40"></div>
+          <div class="desk">
+            <!-- The rig stretches to match the taller text column, and the scene
+                 inside is aspect-ratio-locked, so there is spare height at
+                 desktop widths. It goes to the one sentence that gets people to
+                 try the demo instead of scrolling past it. -->
+            <p class="desk-lede">Drag on the phone's screen. The cursor moves on the desktop behind it — that is the whole product.</p>
+
+            <div class="monitor">
+              <div class="screen" id="screen">
+                <div class="screen-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+                <div class="win">
+                  <div class="win-bar"><i></i><i></i><i></i><b>Documents</b></div>
+                  <div class="win-body">
+                    <div class="bar w70"></div>
+                    <div class="bar w40 sig"></div>
+                    <div class="bar w55"></div>
+                    <div class="bar w40"></div>
+                  </div>
+                </div>
+                <div class="taskbar"><i></i><i></i><i></i><i></i></div>
+                <div class="ping" id="ping"></div>
+                <div class="cursor" id="cursor">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2l14 9-6.5 1.2L15 20l-3 1.2-2.4-7L5 18z" fill="#fff" stroke="#12161c" stroke-width="1.2"/></svg>
+                </div>
+              </div>
+
+              <div class="stand" aria-hidden="true"><i></i><b></b></div>
+
+              <!-- The phone body is decoration; #pad is the live surface and keeps
+                   every hook the hero script relies on. -->
+              <div class="phone">
+                <span class="phone-ear" aria-hidden="true"></span>
+                <div class="pad" id="pad" role="application"
+                     aria-label="Interactive trackpad demonstration. Move your pointer or finger across this phone screen to move the cursor on the mock desktop behind it.">
+                  <div class="touch" id="touch"></div>
+                  <p class="pad-hint">Drag<br>here</p>
+                </div>
+                <span class="phone-bar" aria-hidden="true"></span>
               </div>
             </div>
-            <div class="taskbar"><i></i><i></i><i></i><i></i></div>
-            <div class="ping" id="ping"></div>
-            <div class="cursor" id="cursor">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2l14 9-6.5 1.2L15 20l-3 1.2-2.4-7L5 18z" fill="#fff" stroke="#12161c" stroke-width="1.2"/></svg>
-            </div>
+
+            <p class="desk-cap">
+              <span class="cap-pc">the PC you're driving</span>
+              <span class="cap-ph">your phone ↑</span>
+              <span class="cap-mob">the phone drives the PC ↑</span>
+            </p>
           </div>
 
-          <div class="pad-wrap">
-            <div class="pad" id="pad" role="application"
-                 aria-label="Interactive trackpad demonstration. Move your pointer or finger across this surface to move the cursor on the mock desktop above.">
-              <div class="touch" id="touch"></div>
-              <p class="pad-hint">Drag here to move the cursor ↑</p>
-            </div>
-            <div class="readout">
-              <div><span class="tag">x</span><var id="rx">—</var></div>
-              <div><span class="tag">y</span><var id="ry">—</var></div>
-              <div><span class="tag">events</span><var id="rn">0</var></div>
-            </div>
+          <div class="readout">
+            <div><span class="tag">x</span><var id="rx">—</var></div>
+            <div><span class="tag">y</span><var id="ry">—</var></div>
+            <div><span class="tag">events</span><var id="rn">0</var></div>
           </div>
         </div>
       </div>
@@ -770,6 +887,10 @@ footer{padding:44px 0 56px}
         <div class="case">
           <h3>The mouse or keyboard quit</h3>
           <p>No shop open, no spare peripheral. The phone covers pointer and typing well enough to finish what you were doing.</p>
+          <!-- The one case card with a guide behind it. Someone in this situation
+               searched for the problem, not for this product, so the guide is the
+               page that answers them — and it is also how they arrive here. -->
+          <p class="case-more">Guides: <a href="/use-pc-without-mouse/">use a PC without a mouse</a> · <a href="/use-pc-without-keyboard/">without a keyboard</a></p>
         </div>
         <div class="case">
           <h3>A headless box in a cupboard</h3>
@@ -964,7 +1085,7 @@ footer{padding:44px 0 56px}
         </details>
         <details>
           <summary>What can I use if my PC mouse or keyboard is broken?</summary>
-          <p>PCDeck turns the phone into a multi-touch trackpad with left and right click, two-finger scrolling and drag, plus a full on-screen keyboard with a numpad. It covers pointer and typing well enough to finish what you were doing, needs no drivers on the PC, and works as an emergency replacement until the hardware is repaired.</p>
+          <p>PCDeck turns the phone into a multi-touch trackpad with left and right click, two-finger scrolling and drag, plus a full on-screen keyboard with a numpad. It covers pointer and typing well enough to finish what you were doing, needs no drivers on the PC, and works as an emergency replacement until the hardware is repaired. Windows also has built-in options that need no download at all — see <a href="/use-pc-without-mouse/">how to use a PC without a mouse</a> and <a href="/use-pc-without-keyboard/">how to use a PC without a keyboard</a>.</p>
         </details>
         <details>
           <summary>Why does Windows say “Windows protected your PC”?</summary>
@@ -1013,6 +1134,7 @@ footer{padding:44px 0 56px}
         <p class="tag">Download</p>
         <h2>Get PCDeck</h2>
         <p>You need both halves: the app on your phone and the server on your PC. Read the <a href="#install-help">install warnings</a> first so the prompts are not a surprise.</p>
+        <p>Everything below is free: trackpad, keyboard, 30 FPS screen streaming, PC audio and the two-way file manager. Pro is a one-time $3.99 unlock <em>inside</em> the app for 60/120 FPS streaming and faster transfers — there is nothing extra to download and no subscription.</p>
       </div>
 
       <div class="dl">
@@ -1096,6 +1218,7 @@ footer{padding:44px 0 56px}
 <footer>
   <div class="shell foot">
     <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides"><a href="/use-pc-without-mouse/">Using a PC without a mouse</a> · <a href="/use-pc-without-keyboard/">without a keyboard</a></p>
     <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
   </div>
 </footer>
@@ -1121,6 +1244,7 @@ footer{padding:44px 0 56px}
 
   var events = 0;
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var CURSOR = 20;   // .cursor is 20x20; keep this in step with the CSS.
 
   function place(e) {
     var b = pad.getBoundingClientRect();
@@ -1128,8 +1252,18 @@ footer{padding:44px 0 56px}
     var fx = Math.min(Math.max((e.clientX - b.left) / b.width, 0), 1);
     var fy = Math.min(Math.max((e.clientY - b.top) / b.height, 0), 1);
 
-    var s = screen.getBoundingClientRect();
-    cursor.style.transform = 'translate(' + (fx * s.width) + 'px,' + (fy * s.height) + 'px)';
+    // Map the pad onto the desktop minus one cursor glyph. Mapping onto the full
+    // width instead put the glyph's own origin on the far corner at the end of
+    // the travel, so .screen's overflow:hidden clipped the arrow away entirely
+    // and the pointer looked like it had vanished at the edges.
+    //
+    // clientWidth/clientHeight, not getBoundingClientRect(): the monitor bezel is
+    // a border, and absolutely-positioned children are laid out against the
+    // padding box. Measuring the border box overshot by the bezel width and
+    // pushed the cursor back under the frame on the right and bottom edges.
+    var cx = fx * Math.max(screen.clientWidth  - CURSOR, 0);
+    var cy = fy * Math.max(screen.clientHeight - CURSOR, 0);
+    cursor.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
 
     touch.style.left = (fx * b.width) + 'px';
     touch.style.top  = (fy * b.height) + 'px';
@@ -1141,7 +1275,7 @@ footer{padding:44px 0 56px}
     ry.textContent = Math.round(fy * 1200);
     events++;
     rn.textContent = events;
-    return { fx: fx, fy: fy, s: s };
+    return { cx: cx, cy: cy };
   }
 
   pad.addEventListener('pointerenter', function () {
@@ -1167,8 +1301,9 @@ footer{padding:44px 0 56px}
     mode.textContent = 'Click sent';
 
     if (!reduce) {
-      ping.style.left = (p.fx * p.s.width) + 'px';
-      ping.style.top  = (p.fy * p.s.height) + 'px';
+      // Same coordinates as the cursor, so the ring lands on the pointer tip.
+      ping.style.left = p.cx + 'px';
+      ping.style.top  = p.cy + 'px';
       ping.animate(
         [ { opacity: .9, transform: 'scale(.35)' }, { opacity: 0, transform: 'scale(1.5)' } ],
         { duration: 420, easing: 'ease-out' }
