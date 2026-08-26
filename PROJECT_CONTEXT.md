@@ -40,7 +40,29 @@ The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` w
 
 ---
 
-## 4. Upcoming Roadmap & Planned Features
+---
+
+## 4. File Transfer Architecture (High-Speed Streaming Engine)
+The local file transfer system is designed for high reliability across small batches (KBs) up to massive archives (5GB - TB+):
+
+1. **Direct Stream Protocol (`/api/fs/upload-stream`)**:
+   - Streams raw binary chunks (512 KB on phone, 1 MB on server disk buffer) directly into destination files.
+   - Completely bypasses `python-multipart` / temporary disk spooling on `%TEMP%` (`C:\`), ensuring constant O(1) RAM usage (~1 MB) and eliminating redundant disk writes.
+   - Supports resumable stream offsets via `X-File-Offset` and `offset` parameters.
+
+2. **Network Resilience & Android Power Management**:
+   - **Infinite Socket Timeout**: `conn.setReadTimeout(0)` during active data streams, preventing socket dropouts on long-running multi-gigabyte transfers.
+   - **WakeLock & WifiLock**: Automatically acquires Android `PowerManager.PARTIAL_WAKE_LOCK` and `WifiManager.WIFI_MODE_FULL_HIGH_PERF` during transfers to prevent OS Doze throttling and Wi-Fi radio sleep.
+   - **Ongoing Status Bar Notifications**: Dispatches sticky Android notifications on channel `pcdeck_transfers_channel` with live percentage, throughput speed (MB/s), and real-time ETA countdown. Transfers proceed uninterrupted even if the app is minimized.
+
+3. **Integrity Verification & Auto-Resume**:
+   - **Verification Endpoint (`/api/fs/verify` & `/api/fs/stat`)**: Queries exact byte size on receiver disk immediately upon stream close. Only flags `Verified` when written bytes match source file length.
+   - **Auto-Resume on Interruption**: Queries remote partial byte size before starting large transfers (>10 MB). Automatically seeks and streams only remaining bytes if a prior transfer was interrupted.
+   - **Inactivity Watchdog**: Replaced fixed static timers with an activity monitor that only triggers if zero bytes or progress events are received for 60 consecutive seconds.
+
+---
+
+## 5. Upcoming Roadmap & Planned Features
 
 ### A. Gaming Controller & Pro Custom Keymapper
 - **Feature Overview**: Turn Android phone into a low-latency virtual gamepad for PC gaming and retro emulators.
@@ -83,7 +105,17 @@ The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` w
 
 ---
 
-## 5. Continuous Context Synchronization Rule (Living Document)
+## 6. Verification & Release Protocol
+Before committing and pushing any changes to GitHub or production:
+1. **Compile & Sign Android APK**: Run `python build_apk.py` (verifies Java compilation, resources, DEX conversion, alignment, and apksigner signature).
+2. **Update Distribution Packages**: Update `PCDeck_Package.zip` with fresh binaries and documentation.
+3. **Regenerate Checksums**: Run `python tools/update_checksums.py` to calculate exact SHA-256 digests and update the download table in `website/index.html`.
+4. **Synchronize Context**: Review and update `PROJECT_CONTEXT.md` in root and `website/` to match all implemented features and technical specs.
+5. **Verify Git Tree & Push**: Stage verified files (`git add PCDeck.apk index.html PROJECT_CONTEXT.md`), commit with clear descriptive messages, and push to `origin main`.
+
+---
+
+## 7. Continuous Context Synchronization Rule (Living Document)
 - **Mandatory Agent Directive**: This file is a living document. Whenever any change, feature addition, bug fix, UI enhancement, pricing update, or new guide is created:
   1. The developer or AI agent **MUST update this `PROJECT_CONTEXT.md` file immediately** in the same commit.
   2. If new public URLs or guides are added, also update `sitemap.xml` and `llms.txt`.
