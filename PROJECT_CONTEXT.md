@@ -1,4 +1,4 @@
-﻿# PCDeck — Project Context & Engineering Standards
+# PCDeck — Project Context & Engineering Standards
 
 ## 1. Core Identity & Architecture
 - **Product Name**: **PCDeck** (written as **PCDeck** or **PC Deck** in SEO contexts).
@@ -40,15 +40,22 @@ The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` w
 
 ---
 
-## 4. Upcoming Roadmap: Gaming Controller & Pro Custom Keymapper
+## 4. Upcoming Roadmap & Planned Features
+
+### A. Gaming Controller & Pro Custom Keymapper
 - **Feature Overview**: Turn Android phone into a low-latency virtual gamepad for PC gaming and retro emulators.
-- **Latency Design**:
-  - Direct local UDP transmission (<5ms latency) for gamepad input when user looks at their PC monitor.
-- **Free Tier**:
-  - Pre-built Standard Gamepad (D-Pad, Left Stick, A/B/X/Y, Triggers, Bumpers).
-  - Pre-built Mobile Shooter HUD (Thumbstick + Aim area + Action buttons).
-- **Pro Plan Exclusive**:
-  - **Drag-and-Drop HUD Editor**: Allows users to freely add, resize, and reposition buttons/sticks anywhere on the screen and bind them to any PC keyboard key or mouse click (similar to mobile FPS layout editors in Free Fire / PUBG).
+- **Latency Design**: Direct local UDP transmission (<5ms latency) for gamepad input when user looks at their PC monitor.
+- **Free Tier**: Pre-built Standard Gamepad (D-Pad, Left Stick, A/B/X/Y, Triggers, Bumpers) & Mobile Shooter HUD (Thumbstick + Aim area + Action buttons).
+- **Pro Plan Exclusive**: **Drag-and-Drop HUD Editor** allowing users to freely place, resize, and bind buttons/sticks anywhere on screen (similar to mobile FPS layout editors in Free Fire / PUBG).
+
+### B. Auto-Start with Windows (Headless & Emergency Mode)
+- **Feature**: Add an in-app toggle / setup prompt in `PCDeck.exe` for **"Start with Windows"** (registered via `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
+- **Purpose**: Ensures the server launches on system boot/wakeup so users with a broken monitor or headless PC can connect immediately without needing a working display to click anything.
+
+### C. Store Publishing & Warning Elimination
+- **Android**: Publish to **Google Play Store** to eliminate "Install unknown apps" / Play Protect prompts.
+- **Windows**: Package as **MSIX for Microsoft Store** / apply Code Signing to eliminate SmartScreen ("Windows protected your PC") and antivirus false positives.
+- **Website Sync**: Update download buttons with official store badges once published.
 
 ---
 
