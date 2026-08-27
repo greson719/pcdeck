@@ -48,15 +48,21 @@ The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` w
 ## 4. File Transfer Architecture (High-Speed Streaming Engine)
 The local file transfer system is designed for high reliability across small batches (KBs) up to massive archives (5GB - TB+):
 
-### 4. File Transfer & MediaStore Storage Architecture
+### 4. File Transfer & Storage Architecture
+- **Intuitive Directory Naming**:
+  - Phone Side: `📥 Received from PC` (saved to standard `Downloads/PCDeck/` on phone).
+  - PC Side: `📥 Received from Phone` (saved to standard `Downloads/PCDeck_Transfers` on PC).
+  - All legacy references and fallbacks to `PCDeck_Pro` have been permanently eliminated.
+- **Android All Files Access (`MANAGE_EXTERNAL_STORAGE`)**:
+  - Full Android 11+ (API 30+) `MANAGE_EXTERNAL_STORAGE` and Android 13+ `READ_MEDIA_*` permissions declared in `AndroidManifest.xml`.
+  - Live permission check (`Environment.isExternalStorageManager()`) with interactive 1-tap "GRANT ACCESS" banner.
+  - Full filesystem traversal across Internal Storage, Downloads, DCIM, Pictures, Movies, Documents, and Music.
 - **Bidirectional Streaming**:
   - `POST /api/fs/upload-stream`: Unbuffered chunk streaming with 2MB disk buffer.
   - `GET /api/fs/download`: Chunked HTTP streaming with `Accept-Ranges: bytes` support for resume and multi-gigabyte files.
-- **Android Scoped Storage & MediaStore (API 29+)**:
-  - Downloads are saved to `Downloads/PCDeck/`.
-  - Android Q+ `MediaStore.Downloads.EXTERNAL_CONTENT_URI` handles scoped storage with `IS_PENDING = 1` during active streaming and `IS_PENDING = 0` upon full completion.
-  - Automatic `MediaScannerConnection.scanFile()` indexes direct file writes immediately so downloaded files appear in the phone's gallery and file managers.
-  - Phone File Browser queries `MediaStore.Downloads.EXTERNAL_CONTENT_URI` to list all downloaded files seamlessly without permission lockouts.
+- **MediaStore Indexing**:
+  - `MediaStore.Downloads.EXTERNAL_CONTENT_URI` with `IS_PENDING = 1` during streaming and `IS_PENDING = 0` on completion.
+  - `MediaScannerConnection.scanFile()` indexes direct writes immediately into Android OS media provider.
 
 2. **Network Resilience & Android Power Management**:
    - **Infinite Socket Timeout**: `conn.setReadTimeout(0)` during active data streams, preventing socket dropouts on long-running multi-gigabyte transfers.
