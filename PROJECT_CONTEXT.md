@@ -1,147 +1,133 @@
-# PCDeck — Project Context & Engineering Standards
+﻿# PCDeck — Project Context & Engineering Standards
 
-## 1. Core Identity & Architecture
+> [!IMPORTANT]
+> **MANDATORY DIRECTIVE FOR ALL AI AGENTS & NEW INSTANCES**:
+> Every new AI assistant, coding agent, or subagent working on this repository **MUST READ THIS ENTIRE FILE FIRST** before designing, writing, modifying, or executing code. All architecture, protocols, UX standards, and design invariants defined here must be preserved at all times.
+
+---
+
+## 1. Core Identity & Architectural Invariants
 - **Product Name**: **PCDeck** (written as **PCDeck** or **PC Deck** in SEO contexts).
-- **Core Value Proposition**: 100% Offline, local Wi-Fi utility suite for Windows 10/11 & Android (Trackpad, Keyboard, Emergency Screen Streaming, Live PC Audio, and Cable-free File Transfer).
-- **Privacy Standard**: Zero cloud accounts, zero telemetry, zero analytics. All communication is strictly local network (LAN / Hotspot).
+- **Core Value Proposition**: 100% Offline, ultra-low latency local Wi-Fi utility suite for Windows 10/11 & Android (Multi-Touch Trackpad, Full Virtual Mechanical Keyboard + Numpad, Real-Time Low-Latency PC Screen Streaming, Live Stereo PC Audio Streaming, and Cable-Free Local File Transfer).
+- **Privacy Standard**: Zero cloud accounts, zero telemetry, zero analytics, zero external dependencies. All communication is strictly local network (LAN / Mobile Hotspot).
 - **Monetization & Pro Plan Model**:
-  - The core application is completely free.
-  - **Pro** is an optional **one-time $3.99 in-app lifetime unlock** inside the main PCDeck app (enables 60/120 FPS streaming and faster transfers).
-  - **Rule**: Never create or distribute a separate "PCDeck Pro" binary. PCDeck is a single unified app.
+  - The core application is completely free and fully functional.
+  - **Pro** is an optional **one-time $3.99 in-app lifetime unlock** inside the main PCDeck app (enables 60/120 FPS high-refresh desktop mirroring, unthrottled gigabit file transfers, neon chroma themes, and the pro keymapper).
+  - **Rule**: Never create or distribute a separate "PCDeck Pro" binary. PCDeck is a single unified app with in-app activation.
 
 ---
 
-## 2. Design & Content Standards (Strict Anti-AI Slop Rules)
-Any future agent or developer working on this repository must adhere to the following rules:
+## 2. Input Controller & Touch Architecture (Strict Physical Standards)
 
-1. **No AI Cliché Emojis or Slop**:
-   - Strictly forbidden: `⚡`, `🚀`, `🔥`, `↓`, `🤖`, `✨`, or generic marketing emojis.
-   - Strictly forbidden: Fluffy marketing hype ("revolutionary", "cutting-edge", "game-changing").
-   - Use clean, honest, technical, and human-friendly editorial prose.
+### A. Screen Streaming Direct Touch & 1:1 Scrolling Physics
+When the user streams the PC screen to their Android phone (`tab-screen`):
+1. **1:1 Direct Physical Tracking (Phone Level)**:
+   - The user expects dragging content on the phone screen to feel identical to scrolling on a native mobile app.
+   - Content on the PC must move at the **exact same physical speed** as the user's finger on the phone display.
+   - Dynamic scaling formula:
+     - `scaleY = (canvas.height / rect.height) / effectiveZoom`
+     - `scaleX = (canvas.width / rect.width) / effectiveZoom`
+     - `wheelDy = dy * scaleY * scrollSpeed * scrollFactor`
+     - `wheelDx = dx * scaleX * scrollSpeed * scrollFactor`
+   - **Never** add arbitrary fixed multipliers (such as `24x` or `50x`) to the wheel delta.
 
-2. **No Cheap or Generic UI**:
-   - Maintain the bespoke design aesthetic: typography (`Archivo`, `Instrument Sans`, `IBM Plex Mono`), clean borders (`var(--grid)`), subtle tint washes (`var(--signal-wash)`), and responsive step lists.
-   - Every guide must be genuinely useful first (documenting built-in Windows tools and shortcuts accurately) with natural `.quick-card` and in-line PCDeck product placement.
+2. **Mobile Kinetic Momentum (Fling Inertia)**:
+   - Tracks finger release velocity over the last 80ms (`vx`, `vy` in px/ms).
+   - If release velocity `|v| > 0.35 px/ms`, engage a `requestAnimationFrame` momentum loop with exponential friction decay (`0.92^(dt / 16.67)`).
+   - **Tap-to-Stop**: Any subsequent `touchstart` immediately cancels active momentum animation, matching iOS and Android touch behavior.
 
----
+3. **Targeted Sub-Pixel Win32 Accumulators**:
+   - `WindowsInputController` in `server/input_controller.py` maintains dedicated float sub-pixel accumulators (`_accum_scroll_y` and `_accum_scroll_x`).
+   - Dispatches `user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, step_y, None)` for vertical scrolling and `user32.mouse_event(MOUSEEVENTF_HWHEEL, 0, 0, step_x, None)` for horizontal scrolling with signed `ctypes.c_long` parameters.
+   - `scroll_at(norm_x, norm_y, dx, dy)` automatically positions the Windows cursor over the target window before emitting wheel deltas so Windows delivers scroll events to the exact control under the user's finger.
 
-## 3. Active SEO & AEO (AI Engine) Infrastructure
-The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` with 11 canonical routes structured across high-intent topic clusters:
-
-### A. Homepage & Trust Hub:
-- `/` — Homepage: Turn Your Android Phone Into a Mouse, Keyboard & Screen for Windows.
-- `/security/` — Security & Privacy Architecture (LAN socket isolation, zero telemetry, SHA-256 binary verification, defensible SmartScreen reputation context).
-
-### B. Core Feature Landing Pages:
-- `/use-phone-as-mouse/` — Multi-touch trackpad, left/right click, 2-finger scroll, drag & drop, low-latency UDP.
-- `/use-phone-as-keyboard/` — Full virtual QWERTY keyboard, dedicated numeric keypad (numpad), Windows modifier keys (<kbd>Win</kbd>, <kbd>Ctrl</kbd>, <kbd>Alt</kbd>), speech-to-text dictation to PC.
-- `/use-phone-as-second-monitor/` — Live Windows desktop streaming to Android phone, direct touch-to-click, 30/60 FPS, pinch-to-zoom for emergency screen recovery & headless PC control.
-- `/control-windows-from-android/` — Unified control suite (Trackpad, Keyboard, Live Screen, Audio, and File Manager) over local LAN / Hotspot.
-
-### C. Problem-Solving Emergency & Feature Guides:
-- `/use-pc-without-monitor/` — Broken laptop screen, blind shortcuts (<kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>, Narrator), emergency phone screen streaming.
-- `/use-pc-without-mouse/` — Mouse failure, keyboard focus navigation, Mouse Keys numpad.
-- `/use-pc-without-keyboard/` — Keyboard failure, sign-in screen on-screen keyboard, voice typing.
-- `/use-pc-without-internet/` — Controlling Windows offline over local Wi-Fi router or phone mobile hotspot.
-- `/stream-pc-audio-to-phone/` — Broken 3.5mm jack, wireless 48 kHz stereo PC audio to phone earbuds.
-- `/transfer-files-pc-to-android/` — Cable-free local Wi-Fi file transfers with HTTP byte range auto-resume.
-
-**SEO & Technical Files Maintained:**
-- `sitemap.xml`: Full XML sitemap with all 11 canonical URLs, accurate `lastmod`, changefreq, and image metadata.
-- `llms.txt`: Structured query reference for AI search engines (Perplexity, ChatGPT Search, Claude, Gemini).
-- `robots.txt`: Explicitly allows major AI and search crawlers while disallowing binary crawlers from `.exe`, `.apk`, and `.zip`.
-- `index.html`: Optimized JSON-LD with `SoftwareApplication`, `Organization`, `WebSite`, and `FAQPage` schemas; direct download links with zero "Not published yet" friction.
+### B. Trackpad Gesture Engine (`tab-trackpad`)
+- **1-Finger Drag**: Ballistic cursor acceleration with adaptive tremor filtering (`alpha` smoothing) and sub-pixel accumulation (`_accum_x`, `_accum_y`).
+- **1-Finger Tap (< 220ms, < 8px moved)**: Left Click (`c,left`).
+- **2-Finger Tap**: Right Click (`c,right`).
+- **1-Finger Long Press (350ms, < 14px moved)**: Drag & Drop lock (`td` down, `tm` move, `tu` up).
+- **Dedicated Scroll Strip**: Calibrated vertical scrollbar thumb strip sending smooth `s,0,dy` wheel steps.
 
 ---
 
+## 3. Real-Time WebSocket Communication Protocols
+
+The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSocket endpoints:
+
+| Endpoint | Protocol / Format | Purpose |
+| :--- | :--- | :--- |
+| `/ws` | Text JSON/CSV commands | Mouse moves (`m`), clicks (`c`), keypresses (`k`), hotkeys (`h`), unicode text (`t`), media keys (`media`). |
+| `/ws/screen` | Binary JPEG frames (Server -> Client) + Text commands (Client -> Server) | Zero-lag adaptive binary screen streaming (30/60 FPS, quality 20-90, scale 0.3-1.0), touch move (`a`, `tm`), touch drag (`td`, `tu`), touch scroll (`ts`). |
+| `/ws/audio` | Binary PCM 16-bit 48kHz stereo frames | Real-time loopback PC audio streaming to phone earbuds. |
+
+### Command Reference Table:
+- `ts,normX,normY,dx,dy` — Targeted scroll at normalized coordinate `(normX, normY)` with `dx` horizontal and `dy` vertical delta.
+- `s,dx,dy` — Relative mouse wheel scroll (`dx` horizontal, `dy` vertical).
+- `a,normX,normY` — Absolute mouse cursor repositioning across virtual desktop.
+- `m,dx,dy` — Relative mouse cursor move with ballistic acceleration.
+- `c,btn` — Click button (`left`, `right`, `middle`, `double`).
+- `td,normX,normY,btn` — Touch down (press mouse button at coordinate).
+- `tm,normX,normY` — Touch move (drag cursor to coordinate).
+- `tu,normX,normY,btn` — Touch up (release mouse button at coordinate).
+- `k,key` — Press key (`enter`, `backspace`, `f1`-`f12`, `esc`, `ctrl`, `alt`, `win`, etc.).
+- `h,key1+key2` — Hotkey combination (e.g. `ctrl+c`, `win+d`, `alt+tab`).
+- `t,text` — High-speed Unicode typing synchronization.
+- `media,action` — Media control (`play_pause`, `next`, `prev`, `vol_up`, `vol_down`, `mute`).
+- `cfg,quality,scale,fps` — Dynamically reconfigure screen stream encoder parameters on the fly.
+
 ---
 
-## 4. File Transfer Architecture (High-Speed Streaming Engine)
-The local file transfer system is designed for high reliability across small batches (KBs) up to massive archives (5GB - TB+):
+## 4. File Transfer Architecture (High-Speed Local Streaming)
 
-### 4. File Transfer & Storage Architecture
-- **Intuitive Directory Naming**:
-  - Phone Side: `📥 Received from PC` (saved to standard `Downloads/PCDeck/` on phone).
-  - PC Side: `📥 Received from Phone` (saved to standard `Downloads/PCDeck_Transfers` on PC).
-  - All legacy references and fallbacks to `PCDeck_Pro` have been permanently eliminated.
+- **Standard Directory Naming**:
+  - Phone Side: `Downloads/PCDeck/` (`📥 Received from PC`).
+  - PC Side: `Downloads/PCDeck_Transfers/` (`📥 Received from Phone`).
 - **Android All Files Access (`MANAGE_EXTERNAL_STORAGE`)**:
-  - Full Android 11+ (API 30+) `MANAGE_EXTERNAL_STORAGE` and Android 13+ `READ_MEDIA_*` permissions declared in `AndroidManifest.xml`.
-  - Live permission check (`Environment.isExternalStorageManager()`) with interactive 1-tap "GRANT ACCESS" banner.
-  - Full filesystem traversal across Internal Storage, Downloads, DCIM, Pictures, Movies, Documents, and Music.
+  - Android 11+ (API 30+) `MANAGE_EXTERNAL_STORAGE` and Android 13+ `READ_MEDIA_*` permissions declared in `AndroidManifest.xml`.
+  - Permission status checked via `Environment.isExternalStorageManager()` with an in-app 1-tap grant banner.
 - **Bidirectional Streaming**:
   - `POST /api/fs/upload-stream`: Unbuffered chunk streaming with 2MB disk buffer.
-  - `GET /api/fs/download`: Chunked HTTP streaming with `Accept-Ranges: bytes` support for resume and multi-gigabyte files.
-- **MediaStore Indexing**:
-  - `MediaStore.Downloads.EXTERNAL_CONTENT_URI` with `IS_PENDING = 1` during streaming and `IS_PENDING = 0` on completion.
-  - `MediaScannerConnection.scanFile()` indexes direct writes immediately into Android OS media provider.
-
-2. **Network Resilience & Android Power Management**:
-   - **Infinite Socket Timeout**: `conn.setReadTimeout(0)` during active data streams, preventing socket dropouts on long-running multi-gigabyte transfers.
-   - **WakeLock & WifiLock**: Automatically acquires Android `PowerManager.PARTIAL_WAKE_LOCK` and `WifiManager.WIFI_MODE_FULL_HIGH_PERF` during transfers to prevent OS Doze throttling and Wi-Fi radio sleep.
-   - **Ongoing Status Bar Notifications**: Dispatches sticky Android notifications on channel `pcdeck_transfers_channel` with live percentage, throughput speed (MB/s), and real-time ETA countdown. Transfers proceed uninterrupted even if the app is minimized.
-
-3. **Integrity Verification & Auto-Resume**:
-   - **Verification Endpoint (`/api/fs/verify` & `/api/fs/stat`)**: Queries exact byte size on receiver disk immediately upon stream close. Only flags `Verified` when written bytes match source file length.
-   - **Auto-Resume on Interruption**: Queries remote partial byte size before starting large transfers (>10 MB). Automatically seeks and streams only remaining bytes if a prior transfer was interrupted.
-   - **Inactivity Watchdog**: Replaced fixed static timers with an activity monitor that only triggers if zero bytes or progress events are received for 60 consecutive seconds.
+  - `GET /api/fs/download`: Chunked HTTP streaming with `Accept-Ranges: bytes` support for auto-resume.
+- **Network Resilience & Power Management**:
+  - Infinite socket read timeout (`setReadTimeout(0)`) during active transfers.
+  - Android `PowerManager.PARTIAL_WAKE_LOCK` and `WifiManager.WIFI_MODE_FULL_HIGH_PERF` held during transfers to prevent OS Doze throttling.
+  - Sticky ongoing Android status bar notifications with live percentage, throughput speed (MB/s), and real-time ETA countdown.
 
 ---
 
-## 5. Upcoming Roadmap & Planned Features
+## 5. Design & Content Standards (Strict Anti-AI Slop Rules)
 
-### A. Gaming Controller & Pro Custom Keymapper
-- **Feature Overview**: Turn Android phone into a low-latency virtual gamepad for PC gaming and retro emulators.
-- **Latency Design**: Direct local UDP transmission (<5ms latency) for gamepad input when user looks at their PC monitor.
-- **Free Tier**: Pre-built Standard Gamepad (D-Pad, Left Stick, A/B/X/Y, Triggers, Bumpers) & Mobile Shooter HUD (Thumbstick + Aim area + Action buttons).
-- **Pro Plan Exclusive**: **Drag-and-Drop HUD Editor** allowing users to freely place, resize, and bind buttons/sticks anywhere on screen (similar to mobile FPS layout editors in Free Fire / PUBG).
+1. **No AI Cliché Emojis or Marketing Slop**:
+   - Strictly forbidden: `⚡`, `🚀`, `🔥`, `🤖`, `✨` or cheesy emojis in technical UI and documentation.
+   - Strictly forbidden: Empty buzzwords ("revolutionary", "cutting-edge", "game-changing", "next-gen").
+   - Use clean, honest, technical, and human-friendly editorial prose.
 
-### B. Auto-Start with Windows (Headless & Emergency Mode)
-- **Feature**: Add an in-app toggle / setup prompt in `PCDeck.exe` for **"Start with Windows"** (registered via `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
-- **Purpose**: Ensures the server launches on system boot/wakeup so users with a broken monitor or headless PC can connect immediately without needing a working display to click anything.
-
-### C. Store Publishing & Warning Elimination
-- **Android**: Publish to **Google Play Store** to eliminate "Install unknown apps" / Play Protect prompts.
-- **Windows**: Package as **MSIX for Microsoft Store** / apply Code Signing to eliminate SmartScreen ("Windows protected your PC") and antivirus false positives.
-- **Website Sync**: Update download buttons with official store badges once published.
-
-### D. Mobile Onboarding & PC Server Sideloading (Offline PC Rescue)
-- **Problem Solved**: When a PC has a broken mouse, dead monitor, or no internet, the user cannot easily download `PCDeck.exe` on the PC itself.
-- **Feature**:
-  1. **In-App Download**: Android onboarding screen includes a *"Download PC Server to Phone"* button that downloads `PCDeck.exe` directly into the phone's `/Downloads` folder.
-  2. **Transfer Instructions**: Provides visual steps to transfer the `.exe` to the PC via USB cable, OTG pendrive, or local hotspot.
-  3. **Local Wi-Fi Host**: (Optional) Phone hosts a tiny local HTTP server so any PC connected to the phone's hotspot can download `PCDeck.exe` without internet.
-
-### E. Lemon Squeezy Pro Licensing & In-App Upgrade Logic
-- **Architecture (Official Lemon Squeezy License API)**:
-  - **No Custom Backend Required**: Lemon Squeezy provides public client-safe license endpoints that do not expose private store API keys:
-    1. **Activation**: `POST https://api.lemonsqueezy.com/v1/licenses/activate` with `license_key` and `instance_name` (e.g., Device ID/Name).
-    2. **Validation**: `POST https://api.lemonsqueezy.com/v1/licenses/validate` with `license_key` and `instance_id`.
-    3. **Deactivation**: `POST https://api.lemonsqueezy.com/v1/licenses/deactivate` to unbind a device.
-  - **Offline-First Storage**:
-    - Upon successful activation (`"activated": true`), save `is_pro = true`, `license_key`, and `instance_id` securely in local storage (Android `SharedPreferences` / Windows config).
-    - Pro features remain permanently unlocked offline without blocking users when Wi-Fi has no internet access.
-- **Real Pro Functionality**:
-  - Unlocks 60/120 FPS streaming pipeline in client/server.
-  - Unthrottles Wi-Fi file transfer chunking and queue limits.
-  - Enables the Pro Drag-and-Drop HUD Keymapper.
-- **Smart Upgrade Prompt (Retention Trigger)**:
-  - Track app usage days locally (`first_launch_date` / active usage count).
-  - If a user is on the Free tier and has actively used the app for **2 to 3 days**, display a polite, non-intrusive modal highlighting Pro benefits ($3.99 lifetime unlock) with direct Lemon Squeezy checkout link and license entry field.
+2. **Cyber-Neon Glassmorphism Design Aesthetic**:
+   - Deep obsidian background (`#0a0e17`), elevated surfaces (`#131926`), typography (`Outfit`, `JetBrains Mono`, `Archivo`), vibrant cyan (`#00f0ff`), lime (`#00ff66`), and yellow (`#ffe600`) accents with micro-animations and tactile haptics.
 
 ---
 
-## 6. Verification & Release Protocol
-Before committing and pushing any changes to GitHub or production:
-1. **Compile & Sign Android APK**: Run `python build_apk.py` (verifies Java compilation, resources, DEX conversion, alignment, and apksigner signature).
-2. **Update Distribution Packages**: Update `PCDeck_Package.zip` with fresh binaries and documentation.
-3. **Regenerate Checksums**: Run `python tools/update_checksums.py` to calculate exact SHA-256 digests and update the download table in `website/index.html`.
-4. **Synchronize Context**: Review and update `PROJECT_CONTEXT.md` in root and `website/` to match all implemented features and technical specs.
-5. **Verify Git Tree & Push**: Stage verified files (`git add PCDeck.apk index.html PROJECT_CONTEXT.md`), commit with clear descriptive messages, and push to `origin main`.
+## 6. Lemon Squeezy Pro Licensing Architecture
+
+### Official Lemon Squeezy License API Endpoints
+Public, client-safe endpoints that require zero private API keys:
+- **Activation**: `POST https://api.lemonsqueezy.com/v1/licenses/activate` (`license_key`, `instance_name`).
+- **Validation**: `POST https://api.lemonsqueezy.com/v1/licenses/validate` (`license_key`, `instance_id`).
+- **Deactivation**: `POST https://api.lemonsqueezy.com/v1/licenses/deactivate` (`license_key`, `instance_id`).
+
+### Offline-First Fallback Engine
+- Upon activation, store `is_pro = true`, `license_key`, and `instance_id` securely in local storage.
+- If offline, grant instant access if the key passes cryptographic HMAC verification (`PCDK-XXXX-YYYY-ZZZZ`), ensuring zero disruption on isolated LANs/hotspots without internet access.
+- Each lifetime license covers up to 5 personal devices across Android and Windows.
 
 ---
 
-## 7. Continuous Context Synchronization Rule (Living Document)
-- **Mandatory Agent Directive**: This file is a living document. Whenever any change, feature addition, bug fix, UI enhancement, pricing update, or new guide is created:
-  1. The developer or AI agent **MUST update this `PROJECT_CONTEXT.md` file immediately** in the same commit.
-  2. If new public URLs or guides are added, also update `sitemap.xml` and `llms.txt`.
-  3. Never leave context, architecture, or roadmap documentation stale or outdated.
+## 7. Verification, Build & Release Protocol
+
+Before committing or releasing updates:
+1. **Verify Input & Controller Tests**: Run `uv run python test_input.py` to confirm all Win32 cursor, click, and wheel accumulators pass.
+2. **Sync Client Assets**: Ensure `static/app.js` and `android_app/assets/app.js` remain bit-for-bit identical.
+3. **Compile & Sign Android APK**: Run `uv run python build_apk.py` to compile Java sources, convert to DEX, align, and sign `PCDeck.apk`.
+4. **Regenerate Checksums**: Run `uv run python tools/update_checksums.py` to calculate exact SHA-256 digests and update the download table in `website/index.html`.
+5. **Keep Context Synchronized**: Update `PROJECT_CONTEXT.md` in root and `website/` to reflect every architecture change.
+6. **Commit & Push to GitHub**: Commit verified changes and push to `origin main` on `greson719/pcdeck-pro`.
