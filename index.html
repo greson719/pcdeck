@@ -719,13 +719,16 @@ footer{padding:44px 0 56px}
             </a>
             <a class="btn" id="hero-exe" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span>Windows app<small>EXE · 58 MB</small></span>
+              <span>Windows Portable<small>EXE · 58 MB</small></span>
+            </a>
+            <a class="btn ghost" id="hero-msix" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.msix" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>
+              <span>Store / MSIX<small>Package · 58 MB</small></span>
             </a>
           </div>
 
           <p class="get-alt">
-            You need both: the app on your phone, the server on your PC. Prefer one file?
-            <a id="hero-zip" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck_Package.zip" download>Download the full package (ZIP, 59 MB)</a>.
+            You need both: the app on your phone, the server on your PC. Also available on <a href="#card-msix">Microsoft Store</a> or as a <a id="hero-zip" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck_Package.zip" download>full package (ZIP)</a>.
           </p>
 
           <p class="get-missing">Some builds are not published yet — see <a href="#download">Download</a>.</p>
@@ -1154,26 +1157,42 @@ footer{padding:44px 0 56px}
         </div>
 
         <div class="card" id="card-exe">
-          <p class="tag">PC · Windows</p>
-          <h3>PCDeck for Windows</h3>
-          <p>The PC side. One executable, nothing to install first.</p>
+          <p class="tag">PC · Windows Portable</p>
+          <h3>PCDeck Portable (EXE)</h3>
+          <p>The PC side. Standalone executable, runs immediately without install.</p>
           <ul class="spec">
             <li>Windows 10 or 11, 64-bit</li>
             <li>Self-contained · no Python or .NET</li>
-            <li>Unsigned — SmartScreen will prompt once</li>
+            <li>Unsigned — SmartScreen prompts once</li>
           </ul>
-          <a class="btn" id="dl-exe" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe" download>Download for Windows</a>
+          <a class="btn" id="dl-exe" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe" download>Download Portable EXE</a>
+          <p class="unavail">Not published yet — see the note below.</p>
+        </div>
+
+        <div class="card" id="card-msix">
+          <p class="tag">PC · Windows Store & MSIX</p>
+          <h3>PCDeck Store & MSIX</h3>
+          <p>Modern packaged app with automatic updates or direct store installation.</p>
+          <ul class="spec">
+            <li>Windows 10 or 11, 64-bit</li>
+            <li>Packaged MSIX installer</li>
+            <li>Zero SmartScreen warnings</li>
+          </ul>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto">
+            <a class="btn" id="dl-msix" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.msix" download>Download MSIX</a>
+            <a class="btn ghost" id="dl-msstore" href="https://apps.microsoft.com/store/detail/pcdeck" target="_blank" rel="noopener">Get from Microsoft Store</a>
+          </div>
           <p class="unavail">Not published yet — see the note below.</p>
         </div>
 
         <div class="card" id="card-zip">
           <p class="tag">PC · Windows</p>
-          <h3>Full package</h3>
+          <h3>Full Offline Package</h3>
           <p>Executable plus the APK and setup notes in one archive.</p>
           <ul class="spec">
             <li>ZIP archive</li>
-            <li>Includes the Android APK</li>
-            <li>Useful for offline install</li>
+            <li>Includes EXE, MSIX & Android APK</li>
+            <li>Useful for offline recovery</li>
           </ul>
           <a class="btn ghost" id="dl-zip" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck_Package.zip" download>Download ZIP</a>
           <p class="unavail">Not published yet — see the note below.</p>
@@ -1371,6 +1390,7 @@ footer{padding:44px 0 56px}
   var BINARIES = {
     apk: 'PCDeck.apk',
     exe: 'https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe',
+    msix: 'https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.msix',
     zip: 'https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck_Package.zip'
   };
 
