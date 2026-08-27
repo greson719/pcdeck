@@ -48,10 +48,15 @@ The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` w
 ## 4. File Transfer Architecture (High-Speed Streaming Engine)
 The local file transfer system is designed for high reliability across small batches (KBs) up to massive archives (5GB - TB+):
 
-1. **Direct Stream Protocol (`/api/fs/upload-stream`)**:
-   - Streams raw binary chunks (512 KB on phone, 1 MB on server disk buffer) directly into destination files.
-   - Completely bypasses `python-multipart` / temporary disk spooling on `%TEMP%` (`C:\`), ensuring constant O(1) RAM usage (~1 MB) and eliminating redundant disk writes.
-   - Supports resumable stream offsets via `X-File-Offset` and `offset` parameters.
+### 4. File Transfer & MediaStore Storage Architecture
+- **Bidirectional Streaming**:
+  - `POST /api/fs/upload-stream`: Unbuffered chunk streaming with 2MB disk buffer.
+  - `GET /api/fs/download`: Chunked HTTP streaming with `Accept-Ranges: bytes` support for resume and multi-gigabyte files.
+- **Android Scoped Storage & MediaStore (API 29+)**:
+  - Downloads are saved to `Downloads/PCDeck/`.
+  - Android Q+ `MediaStore.Downloads.EXTERNAL_CONTENT_URI` handles scoped storage with `IS_PENDING = 1` during active streaming and `IS_PENDING = 0` upon full completion.
+  - Automatic `MediaScannerConnection.scanFile()` indexes direct file writes immediately so downloaded files appear in the phone's gallery and file managers.
+  - Phone File Browser queries `MediaStore.Downloads.EXTERNAL_CONTENT_URI` to list all downloaded files seamlessly without permission lockouts.
 
 2. **Network Resilience & Android Power Management**:
    - **Infinite Socket Timeout**: `conn.setReadTimeout(0)` during active data streams, preventing socket dropouts on long-running multi-gigabyte transfers.
