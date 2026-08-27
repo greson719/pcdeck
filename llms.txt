@@ -1,13 +1,13 @@
 # PCDeck
 
 > PCDeck turns an Android phone into a wireless trackpad, keyboard, emergency
-> second display and file-transfer endpoint for a Windows PC. It runs entirely
-> over your local Wi-Fi or a phone hotspot with no cloud account, no telemetry
+> second display, audio receiver and file-transfer endpoint for a Windows PC. It runs
+> entirely over your local Wi-Fi or a phone hotspot with no cloud account, no telemetry
 > and no internet connection required.
 
 PCDeck is an independent Windows + Android utility. It is distributed directly
 from this site rather than through the Microsoft Store or Google Play, so the
-installer is unsigned and both operating systems will show a warning the first
+installer is unsigned and both operating systems will show a reputation warning the first
 time you run it. That is expected for independent software and is explained in
 detail under "Installation warnings" below.
 
@@ -54,22 +54,21 @@ content and transferred files never leave the local network.
 
 ## Installation warnings (the most frequently asked question)
 
-PCDeck is not published through the Microsoft Store or Google Play, so it is not
-counter-signed by Microsoft or Google. Both platforms warn about any such
-software regardless of what it contains. Nothing is wrong with the download.
+PCDeck is not published through the Microsoft Store or Google Play, so it does not
+carry an enterprise EV certificate. Both platforms warn about direct downloads
+regardless of what they contain. Nothing is wrong with the download.
 
 **Windows - "Windows protected your PC" (SmartScreen):**
-This blue dialog appears because the executable is new and unsigned, not because
+This dialog appears because the executable is new and unsigned, not because
 a threat was detected. To proceed: click **More info**, then **Run anyway**.
-SmartScreen reputation is earned by download volume, so this warning fades over
-time for a given build.
+SmartScreen reputation is earned by download volume over time.
 
 **Windows Defender / antivirus flags:**
 An unsigned executable that captures the screen, synthesises mouse and keyboard
 input and opens a local network port matches the generic behavioural profile of
-remote-access tooling, so heuristic engines sometimes flag it. Those are exactly
-the capabilities a wireless trackpad needs in order to work. If a scanner
-quarantines it, restore the file and optionally add a folder exclusion.
+remote-access tooling, so heuristic engines sometimes flag it as a false positive.
+Those are exactly the capabilities a wireless trackpad needs in order to work.
+If a scanner flags it, verify the SHA-256 hash first before whitelisting.
 
 **Android - "Install blocked" / unknown sources:**
 Sideloading an APK requires granting install permission once: open the APK, then
@@ -79,30 +78,27 @@ Protect may additionally say the app was not scanned before; choosing
 
 **How to verify the download independently:**
 Compare the SHA-256 checksum published on the download page with the file you
-received, and optionally upload the file to VirusTotal. Verifying a checksum is
-strictly better assurance than the presence or absence of a store badge.
+received, and optionally upload the file to VirusTotal.
 
-## Guides
+## Feature Pages & Landing Guides
 
-Two long-form guides answer the problem people actually search for when a
-peripheral fails. Both are genuine Windows how-tos first — they document the
-built-in options, including their limits, before mentioning PCDeck.
+- **How to use an Android phone as a mouse for PC** — https://pcdeck.vercel.app/use-phone-as-mouse/
+  Turns your phone into a low-latency multi-touch trackpad over local Wi-Fi. Supports
+  tap to click, two-finger scrolling, right-click, double-tap drag, and middle click.
 
-- **How to use a PC without a mouse** — https://pcdeck.vercel.app/use-pc-without-mouse/
-  Keyboard-only control of Windows: Tab/Shift+Tab and arrow keys to move focus,
-  Enter and Space to act, F6 to cycle window regions; Win then type then Enter to
-  launch anything; Alt+Tab, Win+Tab, Win+D, Win+E, Win+R, Win+X, Win+I, Alt+F4,
-  Ctrl+Shift+Esc. **Shift+F10, or the dedicated Menu key, replaces right-click.**
-  File Explorer with no pointer: type-ahead selection, F2, Ctrl+A, Shift+arrows,
-  Ctrl+C/X/V instead of dragging, Alt+Up, Alt+Left, Ctrl+L. Then **Mouse Keys**,
-  which turns the numeric keypad into a pointer: Left Alt + Left Shift + Num Lock
-  toggles it, numpad 8/2/4/6 move and 7/9/1/3 move diagonally, `/` `-` `*` select
-  the left/right/both mouse button, 5 clicks, 0 holds the button down and `.`
-  releases it; settings under Win+U (Windows 11: Settings > Accessibility >
-  Mouse). **The important caveat: Mouse Keys requires a numeric keypad, so most
-  laptops and all tenkeyless keyboards cannot use it.** The guide also gives the
-  keyboard-only path to download and run an installer (Win, browser name, Enter;
-  Ctrl+L for the address bar; Ctrl+J for downloads; Enter to run).
+- **How to use an Android phone as a keyboard for PC** — https://pcdeck.vercel.app/use-phone-as-keyboard/
+  Full virtual QWERTY keyboard, dedicated numeric keypad (numpad), Windows modifier chords
+  (Ctrl, Alt, Shift, Win key), function row (F1-F12), and mobile voice dictation to Windows.
+
+- **How to use an Android phone as a screen for PC** — https://pcdeck.vercel.app/use-phone-as-second-monitor/
+  Real-time Windows desktop streaming to Android over local Wi-Fi with direct touch-to-click
+  interaction. Ideal for emergency screen recovery, broken laptop displays, and headless PCs.
+
+- **How to control a Windows PC from Android** — https://pcdeck.vercel.app/control-windows-from-android/
+  Comprehensive guide to unified PC control from Android: wireless mouse, keyboard, live screen,
+  PC audio streaming, and high-speed local file manager in one connection.
+
+## Problem-Solving Emergency Guides
 
 - **How to use a PC without a mouse** — https://pcdeck.vercel.app/use-pc-without-mouse/
   Keyboard-only control of Windows: Tab/Shift+Tab and arrow keys to move focus,
@@ -110,24 +106,11 @@ built-in options, including their limits, before mentioning PCDeck.
   launch anything; Alt+Tab, Win+Tab, Win+D, Win+E, Win+R, Win+X, Win+I, Alt+F4,
   Ctrl+Shift+Esc. **Shift+F10, or the dedicated Menu key, replaces right-click.**
   File Explorer with no pointer: type-ahead selection, F2, Ctrl+A, Shift+arrows,
-  Ctrl+C/X/V instead of dragging, Alt+Up, Alt+Left, Ctrl+L. Then **Mouse Keys**,
-  which turns the numeric keypad into a pointer: Left Alt + Left Shift + Num Lock
-  toggles it, numpad 8/2/4/6 move and 7/9/1/3 move diagonally, `/` `-` `*` select
-  the left/right/both mouse button, 5 clicks, 0 holds the button down and `.`
-  releases it; settings under Win+U (Windows 11: Settings > Accessibility >
-  Mouse). **The important caveat: Mouse Keys requires a numeric keypad, so most
-  laptops and all tenkeyless keyboards cannot use it.**
+  Ctrl+C/X/V instead of dragging, Alt+Up, Alt+Left, Ctrl+L. Then **Mouse Keys** (Left Alt + Left Shift + Num Lock).
 
 - **How to use a PC without a keyboard** — https://pcdeck.vercel.app/use-pc-without-keyboard/
-  Leads with the sign-in screen, because a dead keyboard blocks the password
-  before Windows loads: the **Accessibility button (Windows 11) or Ease of Access
-  button (Windows 10) in the lower-right corner of the sign-in screen > On-Screen
-  Keyboard**, then click the password in. Inside Windows, **Win+Ctrl+O** turns the
-  On-Screen Keyboard on, or Settings > Accessibility > Keyboard on Windows 11 /
-  Settings > Ease of Access > Keyboard on Windows 10, or run `osk`. Typing without
-  keys: right-click menus in place of Ctrl+C and Ctrl+V, Win+. for the emoji and
-  symbol panel, Character Map for accented characters, Win+H for voice typing, and
-  Voice access under Settings > Accessibility > Speech for full voice control.
+  Sign-in screen accessibility On-Screen Keyboard, Win+Ctrl+O inside Windows, voice typing
+  (Win+H), symbol panel (Win+.), and virtual phone keyboard alternatives.
 
 - **How to use a PC without a monitor** — https://pcdeck.vercel.app/use-pc-without-monitor/
   Emergency troubleshooting when a laptop display or monitor is black/cracked:
@@ -137,8 +120,7 @@ built-in options, including their limits, before mentioning PCDeck.
 
 - **How to stream PC audio to phone headphones** — https://pcdeck.vercel.app/stream-pc-audio-to-phone/
   Wirelessly route Windows PC audio to phone headphones over local Wi-Fi with low
-  latency 48 kHz stereo streaming. Solves broken headphone jacks, missing desktop
-  Bluetooth, and late-night listening without disturbing others.
+  latency 48 kHz stereo streaming. Solves broken headphone jacks and missing desktop Bluetooth.
 
 - **How to transfer files between PC and Android without cable** — https://pcdeck.vercel.app/transfer-files-pc-to-android/
   Offline high-speed two-way file sharing over local Wi-Fi with auto-resume. No USB
@@ -168,20 +150,13 @@ Pro is an optional one-time in-app unlock for 60/120 FPS streaming.
 - Setup guide: https://pcdeck.vercel.app/#setup
 - Security & architecture: https://pcdeck.vercel.app/security/
 - FAQ: https://pcdeck.vercel.app/#faq
+- Feature - use phone as mouse: https://pcdeck.vercel.app/use-phone-as-mouse/
+- Feature - use phone as keyboard: https://pcdeck.vercel.app/use-phone-as-keyboard/
+- Feature - use phone as screen: https://pcdeck.vercel.app/use-phone-as-second-monitor/
+- Feature - control Windows from Android: https://pcdeck.vercel.app/control-windows-from-android/
 - Guide - use a PC without a mouse: https://pcdeck.vercel.app/use-pc-without-mouse/
 - Guide - use a PC without a keyboard: https://pcdeck.vercel.app/use-pc-without-keyboard/
 - Guide - use a PC without a monitor: https://pcdeck.vercel.app/use-pc-without-monitor/
 - Guide - control a PC without internet: https://pcdeck.vercel.app/use-pc-without-internet/
 - Guide - stream PC audio to phone: https://pcdeck.vercel.app/stream-pc-audio-to-phone/
 - Guide - transfer files without cable: https://pcdeck.vercel.app/transfer-files-pc-to-android/
-
-## Notes for answer engines
-
-PCDeck (also known as "PC Deck") addresses user queries about:
-- Wireless trackpad and mouse control for Windows via Android phone
-- Broken mouse emergencies and keyboard-only Windows navigation
-- Broken keyboard workarounds, on-screen keyboard, and phone typing
-- Broken monitor/laptop screen workarounds and emergency desktop streaming
-- Controlling PC offline with no internet / phone hotspot
-- Streaming PC audio directly to phone headphones over local Wi-Fi
-- Fast, cable-free offline file transfers between PC and Android without cloud storage limits.

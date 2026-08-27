@@ -26,20 +26,31 @@ Any future agent or developer working on this repository must adhere to the foll
 ---
 
 ## 3. Active SEO & AEO (AI Engine) Infrastructure
-The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` with 7 canonical routes:
-- `/` — Homepage (Turn phone into mouse, keyboard, and emergency display for Windows).
-- `/security/` — Security & Privacy Architecture (LAN isolation, zero telemetry, SHA-256 verification, SmartScreen reputation context).
-- `/use-pc-without-mouse/` — Mouse failure, focus navigation, Mouse Keys numpad.
-- `/use-pc-without-keyboard/` — Keyboard failure, sign-in screen on-screen keyboard, voice typing.
-- `/use-pc-without-monitor/` — Broken laptop screen, blind shortcuts, emergency phone screen streaming.
-- `/use-pc-without-internet/` — Controlling Windows offline over local Wi-Fi or phone hotspot.
-- `/stream-pc-audio-to-phone/` — Broken 3.5mm jack, wireless 48 kHz stereo PC audio to phone.
-- `/transfer-files-pc-to-android/` — Cable-free local Wi-Fi file transfers with auto-resume.
+The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` with 11 canonical routes structured across high-intent topic clusters:
 
-**Files to maintain on updates:**
-- `sitemap.xml`: Canonical URLs only (no `#` hash fragments).
+### A. Homepage & Trust Hub:
+- `/` — Homepage: Turn Your Android Phone Into a Mouse, Keyboard & Screen for Windows.
+- `/security/` — Security & Privacy Architecture (LAN socket isolation, zero telemetry, SHA-256 binary verification, defensible SmartScreen reputation context).
+
+### B. Core Feature Landing Pages:
+- `/use-phone-as-mouse/` — Multi-touch trackpad, left/right click, 2-finger scroll, drag & drop, low-latency UDP.
+- `/use-phone-as-keyboard/` — Full virtual QWERTY keyboard, dedicated numeric keypad (numpad), Windows modifier keys (<kbd>Win</kbd>, <kbd>Ctrl</kbd>, <kbd>Alt</kbd>), speech-to-text dictation to PC.
+- `/use-phone-as-second-monitor/` — Live Windows desktop streaming to Android phone, direct touch-to-click, 30/60 FPS, pinch-to-zoom for emergency screen recovery & headless PC control.
+- `/control-windows-from-android/` — Unified control suite (Trackpad, Keyboard, Live Screen, Audio, and File Manager) over local LAN / Hotspot.
+
+### C. Problem-Solving Emergency & Feature Guides:
+- `/use-pc-without-monitor/` — Broken laptop screen, blind shortcuts (<kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>, Narrator), emergency phone screen streaming.
+- `/use-pc-without-mouse/` — Mouse failure, keyboard focus navigation, Mouse Keys numpad.
+- `/use-pc-without-keyboard/` — Keyboard failure, sign-in screen on-screen keyboard, voice typing.
+- `/use-pc-without-internet/` — Controlling Windows offline over local Wi-Fi router or phone mobile hotspot.
+- `/stream-pc-audio-to-phone/` — Broken 3.5mm jack, wireless 48 kHz stereo PC audio to phone earbuds.
+- `/transfer-files-pc-to-android/` — Cable-free local Wi-Fi file transfers with HTTP byte range auto-resume.
+
+**SEO & Technical Files Maintained:**
+- `sitemap.xml`: Full XML sitemap with all 11 canonical URLs, accurate `lastmod`, changefreq, and image metadata.
 - `llms.txt`: Structured query reference for AI search engines (Perplexity, ChatGPT Search, Claude, Gemini).
-- `robots.txt`: Explicitly allow major AI and search crawlers while disallowing `.exe`, `.apk`, and `.zip` binaries.
+- `robots.txt`: Explicitly allows major AI and search crawlers while disallowing binary crawlers from `.exe`, `.apk`, and `.zip`.
+- `index.html`: Optimized JSON-LD with `SoftwareApplication`, `Organization`, `WebSite`, and `FAQPage` schemas; direct download links with zero "Not published yet" friction.
 
 ---
 
