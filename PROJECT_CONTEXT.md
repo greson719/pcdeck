@@ -1,4 +1,4 @@
-﻿# PCDeck — Project Context & Engineering Standards
+# PCDeck — Project Context & Engineering Standards
 
 > [!IMPORTANT]
 > **MANDATORY DIRECTIVE FOR ALL AI AGENTS & NEW INSTANCES**:
@@ -110,15 +110,18 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 ## 6. Lemon Squeezy Pro Licensing Architecture
 
 ### Official Lemon Squeezy License API Endpoints
-Public, client-safe endpoints that require zero private API keys:
+Direct, public client-safe endpoints that require zero private API keys or custom backend:
 - **Activation**: `POST https://api.lemonsqueezy.com/v1/licenses/activate` (`license_key`, `instance_name`).
 - **Validation**: `POST https://api.lemonsqueezy.com/v1/licenses/validate` (`license_key`, `instance_id`).
 - **Deactivation**: `POST https://api.lemonsqueezy.com/v1/licenses/deactivate` (`license_key`, `instance_id`).
 
-### Offline-First Fallback Engine
-- Upon activation, store `is_pro = true`, `license_key`, and `instance_id` securely in local storage.
-- If offline, grant instant access if the key passes cryptographic HMAC verification (`PCDK-XXXX-YYYY-ZZZZ`), ensuring zero disruption on isolated LANs/hotspots without internet access.
-- Each lifetime license covers up to 5 personal devices across Android and Windows.
+### Activation & Persistence Flow
+- User purchases PCDeck Pro ($3.99 one-time lifetime license) on Lemon Squeezy and receives their unique license key.
+- Inside PCDeck (Android or Windows), the user enters the key and taps **Activate**.
+- The app directly contacts `https://api.lemonsqueezy.com/v1/licenses/activate` with the license key and device instance name.
+- On verified activation (`activated: true`), the app saves `pcdeck_pro_active = true`, `pcdeck_pro_license = license_key`, and `pcdeck_pro_instance_id = instance.id` in persistent local storage.
+- Once activated, Pro features remain unlocked for the lifetime of the installation.
+- Multi-device support: Up to 5 device instances per customer license key.
 
 ---
 
