@@ -731,18 +731,18 @@ footer{padding:44px 0 56px}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
               <span>Android app<small>APK · 1.6 MB</small></span>
             </a>
-            <a class="btn" id="hero-exe" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.exe" download>
+            <a class="btn" id="hero-exe" href="PCDeck.exe" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
               <span>Windows Portable<small>EXE · 58 MB</small></span>
             </a>
-            <a class="btn ghost" id="hero-msix" href="https://github.com/greson719/pcdeck-pro/releases/latest/download/PCDeck.msix" download>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>
-              <span>Store / MSIX<small>Package · 58 MB</small></span>
+            <a class="btn ghost" id="hero-zip" href="PCDeck_Package.zip" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Full Package<small>ZIP · 59 MB</small></span>
             </a>
           </div>
 
           <p class="get-alt">
-            You need both: the app on your phone, the server on your PC. Also available on <a href="#card-msix">Microsoft Store</a> or as a <a id="hero-zip" href="PCDeck_Package.zip" download>full package (ZIP)</a>.
+            You need both: the app on your phone, the server on your PC. Download them separately above or together in the <a href="PCDeck_Package.zip" download>full offline ZIP bundle</a>.
           </p>
 
           <p class="get-note">
@@ -1176,28 +1176,13 @@ footer{padding:44px 0 56px}
           <a class="btn" id="dl-exe" href="PCDeck.exe" download>Download Portable EXE</a>
         </div>
 
-        <div class="card" id="card-msix">
-          <p class="tag">PC · Windows Store & MSIX</p>
-          <h3>PCDeck Store & MSIX</h3>
-          <p>Modern packaged app with automatic updates or direct store installation.</p>
-          <ul class="spec">
-            <li>Windows 10 or 11, 64-bit</li>
-            <li>Packaged MSIX installer</li>
-            <li>Zero SmartScreen warnings</li>
-          </ul>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto">
-            <a class="btn" id="dl-msix" href="PCDeck.msix" download>Download MSIX</a>
-            <a class="btn ghost" id="dl-msstore" href="https://apps.microsoft.com/store/detail/pcdeck" target="_blank" rel="noopener">Get from Microsoft Store</a>
-          </div>
-        </div>
-
         <div class="card" id="card-zip">
           <p class="tag">PC · Windows</p>
           <h3>Full Offline Package</h3>
           <p>Executable plus the APK and setup notes in one archive.</p>
           <ul class="spec">
             <li>ZIP archive</li>
-            <li>Includes EXE, MSIX & Android APK</li>
+            <li>Includes EXE & Android APK</li>
             <li>Useful for offline recovery</li>
           </ul>
           <a class="btn ghost" id="dl-zip" href="PCDeck_Package.zip" download>Download ZIP</a>
@@ -1222,10 +1207,6 @@ footer{padding:44px 0 56px}
         <dl class="sumrow">
           <dt>PCDeck.exe<span>60,694,897 BYTES</span></dt>
           <dd>ecc7c2d42a629b249acf0b53ebd15ae6257d6d5f73e06445a66d77f5eec5f129</dd>
-        </dl>
-        <dl class="sumrow">
-          <dt>PCDeck.msix<span>62,224,827 BYTES</span></dt>
-          <dd>cde8647d92f0a5406acfe3a2b1a35eed9ec8d81c16913bb5f2000af0a6aadc7c</dd>
         </dl>
         <dl class="sumrow">
           <dt>PCDeck_Package.zip<span>61,839,539 BYTES</span></dt>
@@ -1381,7 +1362,6 @@ footer{padding:44px 0 56px}
   var BINARIES = {
     apk: '/PCDeck.apk',
     exe: '/PCDeck.exe',
-    msix: '/PCDeck.msix',
     zip: '/PCDeck_Package.zip'
   };
 
