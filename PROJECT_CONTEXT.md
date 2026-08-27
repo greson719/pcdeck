@@ -26,10 +26,13 @@ Any future agent or developer working on this repository must adhere to the foll
 ---
 
 ## 3. Active SEO & AEO (AI Engine) Infrastructure
-The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` with 5 pillar problem-solving guides:
+The website (`website/`) is deployed on Vercel at `https://pcdeck.vercel.app/` with 7 canonical routes:
+- `/` — Homepage (Turn phone into mouse, keyboard, and emergency display for Windows).
+- `/security/` — Security & Privacy Architecture (LAN isolation, zero telemetry, SHA-256 verification, SmartScreen reputation context).
 - `/use-pc-without-mouse/` — Mouse failure, focus navigation, Mouse Keys numpad.
 - `/use-pc-without-keyboard/` — Keyboard failure, sign-in screen on-screen keyboard, voice typing.
 - `/use-pc-without-monitor/` — Broken laptop screen, blind shortcuts, emergency phone screen streaming.
+- `/use-pc-without-internet/` — Controlling Windows offline over local Wi-Fi or phone hotspot.
 - `/stream-pc-audio-to-phone/` — Broken 3.5mm jack, wireless 48 kHz stereo PC audio to phone.
 - `/transfer-files-pc-to-android/` — Cable-free local Wi-Fi file transfers with auto-resume.
 

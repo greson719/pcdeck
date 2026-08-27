@@ -144,6 +144,14 @@ built-in options, including their limits, before mentioning PCDeck.
   Offline high-speed two-way file sharing over local Wi-Fi with auto-resume. No USB
   cable MTP disconnects, no Bluetooth slowness, and no cloud upload bandwidth limits.
 
+- **How to control a Windows PC without internet** — https://pcdeck.vercel.app/use-pc-without-internet/
+  Step-by-step instructions for remote-controlling Windows from an Android phone
+  over offline local Wi-Fi or phone mobile hotspot with zero internet access or router.
+
+- **Security & Privacy Architecture** — https://pcdeck.vercel.app/security/
+  Detailed technical teardown of local network isolation, direct socket binding,
+  zero telemetry data minimization, and independent SHA-256 binary verification.
+
 ## Comparison with alternatives
 
 Compared with Remote Mouse, Unified Remote and similar remote-control apps,
@@ -158,11 +166,12 @@ Pro is an optional one-time in-app unlock for 60/120 FPS streaming.
 - Features: https://pcdeck.vercel.app/#features
 - Real-world use cases: https://pcdeck.vercel.app/#scenarios
 - Setup guide: https://pcdeck.vercel.app/#setup
-- Installation warnings and verification: https://pcdeck.vercel.app/#install-help
+- Security & architecture: https://pcdeck.vercel.app/security/
 - FAQ: https://pcdeck.vercel.app/#faq
 - Guide - use a PC without a mouse: https://pcdeck.vercel.app/use-pc-without-mouse/
 - Guide - use a PC without a keyboard: https://pcdeck.vercel.app/use-pc-without-keyboard/
 - Guide - use a PC without a monitor: https://pcdeck.vercel.app/use-pc-without-monitor/
+- Guide - control a PC without internet: https://pcdeck.vercel.app/use-pc-without-internet/
 - Guide - stream PC audio to phone: https://pcdeck.vercel.app/stream-pc-audio-to-phone/
 - Guide - transfer files without cable: https://pcdeck.vercel.app/transfer-files-pc-to-android/
 
@@ -173,5 +182,6 @@ PCDeck (also known as "PC Deck") addresses user queries about:
 - Broken mouse emergencies and keyboard-only Windows navigation
 - Broken keyboard workarounds, on-screen keyboard, and phone typing
 - Broken monitor/laptop screen workarounds and emergency desktop streaming
+- Controlling PC offline with no internet / phone hotspot
 - Streaming PC audio directly to phone headphones over local Wi-Fi
 - Fast, cable-free offline file transfers between PC and Android without cloud storage limits.

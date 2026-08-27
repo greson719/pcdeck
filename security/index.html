@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCDeck Security & Privacy Architecture — Local Network Verification</title>
+<meta name="description" content="Technical architecture, local network isolation, zero-telemetry proof, SHA-256 checksums, and neutral Windows SmartScreen explanation for PCDeck.">
+<meta name="keywords" content="PCDeck security, offline local wifi, open source verification, smartscreen warning explanation, SHA-256 hash, virus total check, PCDeck privacy">
+<link rel="canonical" href="https://pcdeck.vercel.app/security/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://pcdeck.vercel.app/security/">
+<meta property="og:title" content="PCDeck Security & Privacy Architecture">
+<meta property="og:description" content="Technical teardown: LAN isolation, zero telemetry, SHA-256 verification, and Windows SmartScreen explanation.">
+<meta property="og:image" content="https://pcdeck.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PCDeck Security & Privacy Architecture">
+<meta name="twitter:description" content="Technical verification and local network isolation details for PCDeck.">
+<meta name="twitter:image" content="https://pcdeck.vercel.app/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://pcdeck.vercel.app/security/#article",
+      "headline": "PCDeck Security & Privacy Architecture",
+      "description": "Comprehensive security and privacy analysis of PCDeck: local network isolation, zero telemetry, Windows SmartScreen reputation context, and binary verification.",
+      "url": "https://pcdeck.vercel.app/security/",
+      "inLanguage": "en",
+      "datePublished": "2026-08-27",
+      "dateModified": "2026-08-27",
+      "author": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "publisher": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "proficiencyLevel": "Intermediate",
+      "about": [
+        { "@type": "Thing", "name": "Application security" },
+        { "@type": "Thing", "name": "Local network isolation" },
+        { "@type": "Thing", "name": "Binary verification" }
+      ],
+      "mainEntityOfPage": { "@id": "https://pcdeck.vercel.app/security/#webpage" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
+        { "@type": "ListItem", "position": 2, "name": "Security & Architecture", "item": "https://pcdeck.vercel.app/security/" }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://pcdeck.vercel.app/security/#webpage",
+      "url": "https://pcdeck.vercel.app/security/",
+      "name": "PCDeck Security & Privacy Architecture",
+      "isPartOf": { "@type": "WebSite", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav>
+      <a href="/#features">What it does</a>
+      <a href="/#scenarios">Use cases</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <a class="btn sm" href="/#download">Download</a>
+  </div>
+</header>
+
+<nav class="shell crumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/">PCDeck</a></li>
+    <li>Security & Architecture</li>
+  </ol>
+</nav>
+
+<main id="main">
+  <div class="shell lede-block">
+    <h1>Security & Privacy Architecture</h1>
+    <p class="sub">How PCDeck communicates strictly over your local Wi-Fi network, why it requires zero internet access or accounts, and how to verify binary integrity independently.</p>
+    <p class="updated tag">Updated 27 August 2026 · Technical documentation · Zero cloud relay</p>
+  </div>
+
+  <div class="shell guide">
+
+    <h2>1. Local Network Isolation (LAN Only)</h2>
+    <p>PCDeck is built from the ground up to operate exclusively within your private local network (LAN) or direct phone Wi-Fi hotspot. It does not route screen frames, mouse coordinates, audio packets, or files through external cloud servers or third-party relays.</p>
+    <ul>
+      <li><strong>Direct Socket Binding:</strong> The PC server binds locally to your private subnet IP (e.g., <span class="nb">192.168.x.x</span> or <span class="nb">10.x.x.x</span>).</li>
+      <li><strong>No Cloud Servers:</strong> Video frames and input events travel directly from device to device across your home router.</li>
+      <li><strong>Internet Independence:</strong> You can disconnect your router from the internet or use an isolated phone hotspot, and all PCDeck functions continue to work without disruption.</li>
+    </ul>
+
+    <h2>2. Zero Telemetry & Data Collection</h2>
+    <p>Many remote utilities bundle analytics SDKs, session loggers, or mandatory cloud logins. PCDeck enforces strict data minimization:</p>
+    <ul>
+      <li><strong>No User Accounts:</strong> No email, password, or profile registration is ever required.</li>
+      <li><strong>No Telemetry SDKs:</strong> Zero tracking beacons, crash uploaders, or usage profiling in either the Android APK or Windows executable.</li>
+      <li><strong>Zero Outbound Pings:</strong> The app never reports device fingerprints or activity logs to any remote endpoint.</li>
+    </ul>
+
+    <h2>3. Understanding Windows SmartScreen & Defender Warnings</h2>
+    <p>When running the executable for the first time, Windows Defender SmartScreen may display a warning stating <em>"Windows protected your PC"</em>. Understanding why this happens helps distinguish genuine threats from code-signing reputation mechanics:</p>
+
+    <div class="limit">
+      <p class="tag">Why the warning appears</p>
+      <p>Microsoft SmartScreen uses an automated reputation system. Software that is newly released or distributed directly without an expensive commercial EV (Extended Validation) code-signing certificate starts with zero reputation by default, triggering a cautionary screen until enough users run it.</p>
+    </div>
+
+    <p>A wireless trackpad and display tool naturally uses OS APIs to capture the desktop buffer, synthesise mouse/keyboard input, and open a local network port. To heuristic scanners without signature reputation, this combination resembles remote administration tools.</p>
+    <p>Rather than blindly bypassing warnings, we encourage verifying the software's binary hash independently before running it.</p>
+
+    <h2>4. Independent Binary Verification (SHA-256)</h2>
+    <p>You can verify that the binary you received is authentic and unmodified by checking its SHA-256 cryptographic hash against our official release.</p>
+
+    <h3>Verifying in Windows PowerShell:</h3>
+    <table class="keys">
+      <caption>PowerShell verification command</caption>
+      <thead><tr><th scope="col">Command</th><th scope="col">Purpose</th></tr></thead>
+      <tbody>
+        <tr>
+          <th scope="row"><span class="nb">Get-FileHash PCDeck.exe</span></th>
+          <td>Computes the SHA-256 hash of your downloaded file. Compare the output hash with the published release hash on our GitHub repository.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>You can also upload <span class="nb">PCDeck.exe</span> or <span class="nb">PCDeck.apk</span> to <a href="https://www.virustotal.com" target="_blank" rel="noopener">VirusTotal</a> to inspect analysis from over 70 independent antivirus engines.</p>
+
+    <div class="pitch">
+      <h2>100% Offline, Privacy-First PC Companion</h2>
+      <p>PCDeck delivers mouse, keyboard, screen streaming, audio, and file transfers over your own local network with zero accounts and zero telemetry.</p>
+      <div class="row">
+        <a class="btn" href="/#download">Download PCDeck</a>
+        <a class="btn ghost" href="/#features">Explore features</a>
+      </div>
+      <p class="fine">Windows 10 / 11 · Android 5.0+ · Independent software</p>
+    </div>
+
+    <div class="next">
+      <h2>Explore Problem-Solving Guides</h2>
+      <p><a href="/use-pc-without-mouse/">How to use a PC without a mouse</a> · <a href="/use-pc-without-keyboard/">How to use a PC without a keyboard</a></p>
+      <p><a href="/use-pc-without-monitor/">How to use a PC without a monitor</a> · <a href="/use-pc-without-internet/">How to control a PC without internet</a></p>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides">
+      <a href="/security/">Security & Privacy</a> · 
+      <a href="/use-pc-without-mouse/">Without a mouse</a> · 
+      <a href="/use-pc-without-keyboard/">Without a keyboard</a> · 
+      <a href="/use-pc-without-monitor/">Without a monitor</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+</body>
+</html>
