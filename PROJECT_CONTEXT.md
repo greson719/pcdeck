@@ -109,6 +109,11 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 
 ## 6. Lemon Squeezy Pro Licensing Architecture
 
+### Live Store & Checkout Details
+- **Store Domain**: `pcdeck.lemonsqueezy.com`
+- **Product Name**: `PCDeck Pro — Lifetime License` ($3.99 one-time)
+- **Live Checkout URL**: `https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3`
+
 ### Official Lemon Squeezy License API Endpoints
 Direct, public client-safe endpoints that require zero private API keys or custom backend:
 - **Activation**: `POST https://api.lemonsqueezy.com/v1/licenses/activate` (`license_key`, `instance_name`).
