@@ -727,13 +727,17 @@ footer{padding:44px 0 56px}
 
         <div class="get" id="get">
           <div class="get-row">
-            <a class="btn" id="hero-apk" href="PCDeck.apk" download>
+            <a class="btn" id="hero-playstore" href="https://play.google.com/store/apps/details?id=com.neontrack.mouse" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="flex:none;"><path d="M3.609 1.814L13.792 12 3.61 22.186c-.352-.366-.56-.88-.56-1.486V3.3c0-.606.208-1.12.56-1.486zm11.24 11.24l2.58 2.58-12.016 6.892 9.436-9.472zm2.58-2.58l-2.58 2.58-9.436-9.472 12.016 6.892zm1.096 1.096l3.18 1.824c.732.42.732 1.108 0 1.528l-3.18 1.824-2.228-2.228 2.228-2.228z"/></svg>
+              <span>Google Play<small>Install on Phone</small></span>
+            </a>
+            <a class="btn ghost" id="hero-apk" href="PCDeck.apk" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span>Android app<small>APK · 1.6 MB</small></span>
+              <span>Direct APK<small>APK · 1.6 MB</small></span>
             </a>
             <a class="btn" id="hero-exe" href="PCDeck.exe" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span>Windows Portable<small>EXE · 58 MB</small></span>
+              <span>Windows Server<small>EXE · 58 MB</small></span>
             </a>
             <a class="btn ghost" id="hero-zip" href="PCDeck_Package.zip" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -742,14 +746,11 @@ footer{padding:44px 0 56px}
           </div>
 
           <p class="get-alt">
-            You need both: the app on your phone, the server on your PC. Download them separately above or together in the <a href="PCDeck_Package.zip" download>full offline ZIP bundle</a>.
+            You need both: the app on your phone (from Google Play or direct APK) and the server on your PC. Download them separately above or together in the <a href="PCDeck_Package.zip" download>full offline ZIP bundle</a>.
           </p>
 
           <p class="get-note">
-            <b>Heads up:</b> PCDeck is not in the Microsoft Store or Google Play, so Windows will
-            show a SmartScreen prompt and Android will ask for install permission — once, on first
-            run. <a href="#install-help">Here is exactly what you will see and why</a>, plus
-            checksums to verify the file yourself.
+            <b>Setup:</b> Install PCDeck on your phone and launch the portable Windows client on your PC. Both connect automatically over your local Wi-Fi / Hotspot with zero cloud sign-in. <a href="#install-help">View setup guide &amp; checksums</a>.
           </p>
         </div>
 
@@ -1158,10 +1159,16 @@ footer{padding:44px 0 56px}
           <p>The phone side: trackpad, keyboard, screen view, audio and files.</p>
           <ul class="spec">
             <li>Android 5.0 or newer</li>
-            <li>APK · about 1.6 MB</li>
-            <li>Needs unknown-sources permission once</li>
+            <li>Get from Google Play or Direct APK (1.6 MB)</li>
+            <li>Zero cloud accounts needed</li>
           </ul>
-          <a class="btn" id="dl-apk" href="PCDeck.apk" download>Download APK</a>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <a class="btn" id="dl-playstore" href="https://play.google.com/store/apps/details?id=com.neontrack.mouse" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186c-.352-.366-.56-.88-.56-1.486V3.3c0-.606.208-1.12.56-1.486zm11.24 11.24l2.58 2.58-12.016 6.892 9.436-9.472zm2.58-2.58l-2.58 2.58-9.436-9.472 12.016 6.892zm1.096 1.096l3.18 1.824c.732.42.732 1.108 0 1.528l-3.18 1.824-2.228-2.228 2.228-2.228z"/></svg>
+              <span>Get on Google Play</span>
+            </a>
+            <a class="btn ghost" id="dl-apk" href="PCDeck.apk" download>Download Direct APK</a>
+          </div>
         </div>
 
         <div class="card" id="card-exe">
@@ -1201,12 +1208,12 @@ footer{padding:44px 0 56px}
              run the tool after every rebuild. A checksum that silently goes stale is worse
              than none, because it tells honest users their good download is corrupt. -->
         <dl class="sumrow">
-          <dt>PCDeck.apk<span>1,694,320 BYTES</span></dt>
-          <dd>164dbb0f9d38438698c6de058016f56e54d93f5a5623ddb98157996912ff6747</dd>
+          <dt>PCDeck.apk<span>1,698,416 BYTES</span></dt>
+          <dd>87517a24763f345dfd91724c94e9c5f634ad240854433c585a148f6cf6f2d771</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck.aab<span>1,688,154 BYTES</span></dt>
-          <dd>e287644d9416be2a583db01e447ba6141c5eb013a141cc6e2db9134244aa8aa5</dd>
+          <dt>PCDeck.aab<span>1,690,727 BYTES</span></dt>
+          <dd>62cd1c7c8d5b63de4e2c5e8ac2a595fe02acdc553728b19095f86f64145f61a5</dd>
         </dl>
         <dl class="sumrow">
           <dt>PCDeck.exe<span>60,767,554 BYTES</span></dt>
@@ -1217,8 +1224,8 @@ footer{padding:44px 0 56px}
           <dd>cde8647d92f0a5406acfe3a2b1a35eed9ec8d81c16913bb5f2000af0a6aadc7c</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck_Package.zip<span>61,915,340 BYTES</span></dt>
-          <dd>db5a2368bbef17b5779a3e3392e1630942ff72a2275a3a985dc42cb44c14ccf8</dd>
+          <dt>PCDeck_Package.zip<span>61,920,390 BYTES</span></dt>
+          <dd>cbbc9fce29e5bc623c55e794a3d43d420bd4e735cc65a7135793a3852a864c32</dd>
         </dl>
         <!-- CHECKSUMS:END -->
 
