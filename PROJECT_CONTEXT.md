@@ -75,6 +75,13 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 - `media,action` — Media control (`play_pause`, `next`, `prev`, `vol_up`, `vol_down`, `mute`).
 - `cfg,quality,scale,fps` — Dynamically reconfigure screen stream encoder parameters on the fly.
 
+### Universal Smart QR & Gateway Routing:
+- The PC companion app displays a single unified QR code encoding:
+  `https://pcdeck.vercel.app/connect?ip={LOCAL_IP}:{SERVER_PORT}`
+- **Scanned inside PCDeck App**: In-app scanner parses `?ip=` parameter and connects immediately over local LAN.
+- **Scanned by Phone Camera (New User)**: Opens the `/connect` gateway offering 1-tap APK download (`/PCDeck.apk`) or instant zero-install Web Remote (`http://{LOCAL_IP}:{SERVER_PORT}`).
+- **Android App Links**: `AndroidManifest.xml` registers `<intent-filter>` for `https://pcdeck.vercel.app/connect` to launch the native companion directly from system camera scans.
+
 ---
 
 ## 4. File Transfer Architecture (High-Speed Local Streaming)
