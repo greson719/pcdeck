@@ -1,0 +1,8 @@
+﻿{
+  "versionCode": 264,
+  "versionName": "2.6.4",
+  "apkUrl": "https://pcdeck.vercel.app/PCDeck.apk",
+  "releaseNotes": "• In-App OTA Auto-Updater system\n• Universal 1-line Linux PC server\n• Enhanced Wi-Fi auto-reconnect & multi-touch",
+  "minVersionCode": 1,
+  "publishedAt": "2026-09-01"
+}
