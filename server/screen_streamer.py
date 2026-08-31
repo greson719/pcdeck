@@ -93,6 +93,38 @@ if _USE_WIN32_GDI:
             ("biClrUsed", wintypes.DWORD),
             ("biClrImportant", wintypes.DWORD),
         ]
+
+    class POINT(Structure):
+        _fields_ = [("x", wintypes.LONG), ("y", wintypes.LONG)]
+
+    class CURSORINFO(Structure):
+        _fields_ = [
+            ("cbSize", wintypes.DWORD),
+            ("flags", wintypes.DWORD),
+            ("hCursor", wintypes.HANDLE),
+            ("ptScreenPos", POINT),
+        ]
+
+    class ICONINFO(Structure):
+        _fields_ = [
+            ("fIcon", wintypes.BOOL),
+            ("xHotspot", wintypes.DWORD),
+            ("yHotspot", wintypes.DWORD),
+            ("hbmMask", wintypes.HBITMAP),
+            ("hbmColor", wintypes.HBITMAP),
+        ]
+
+    user32.GetCursorInfo.restype = wintypes.BOOL
+    user32.GetCursorInfo.argtypes = [ctypes.POINTER(CURSORINFO)]
+
+    user32.GetIconInfo.restype = wintypes.BOOL
+    user32.GetIconInfo.argtypes = [wintypes.HICON, ctypes.POINTER(ICONINFO)]
+
+    user32.DrawIconEx.restype = wintypes.BOOL
+    user32.DrawIconEx.argtypes = [
+        c_void_p, c_int, c_int, wintypes.HICON, c_int, c_int,
+        wintypes.UINT, c_void_p, wintypes.UINT
+    ]
 else:
     def _attach_desktop():
         pass
@@ -108,7 +140,7 @@ class ScreenStreamer:
         self._width: int = 1920
         self._height: int = 1080
         self._monitor_idx: int = 1
-        self.quality: int = 95
+        self.quality: int = 90
         self.scale: float = 1.0
         self.fps_limit: int = 30
         self._thread: Optional[threading.Thread] = None
@@ -146,8 +178,25 @@ class ScreenStreamer:
             hbm = gdi32.CreateCompatibleBitmap(hdc_screen, w, h)
             old_bm = gdi32.SelectObject(hdc_mem, hbm)
 
-            # SRCCOPY | CAPTUREBLT (0x00CC0020 | 0x40000000)
-            gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x40CC0020)
+            # SRCCOPY (0x00CC0020) - Fast hardware GPU blit without CAPTUREBLT to prevent PC cursor flicker
+            gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x00CC0020)
+
+            # Draw cursor into stream image
+            try:
+                ci = CURSORINFO()
+                ci.cbSize = sizeof(CURSORINFO)
+                if user32.GetCursorInfo(byref(ci)) and (ci.flags & 1) and ci.hCursor:
+                    ii = ICONINFO()
+                    if user32.GetIconInfo(ci.hCursor, byref(ii)):
+                        cx = ci.ptScreenPos.x - ii.xHotspot
+                        cy = ci.ptScreenPos.y - ii.yHotspot
+                        user32.DrawIconEx(hdc_mem, cx, cy, ci.hCursor, 0, 0, 0, None, 3)
+                        if ii.hbmMask:
+                            gdi32.DeleteObject(ii.hbmMask)
+                        if ii.hbmColor:
+                            gdi32.DeleteObject(ii.hbmColor)
+            except Exception:
+                pass
 
             bmi = BITMAPINFOHEADER()
             bmi.biSize = sizeof(BITMAPINFOHEADER)
@@ -174,7 +223,7 @@ class ScreenStreamer:
                 img = img.resize((target_w, target_h), Image.Resampling.BILINEAR)
 
             out = io.BytesIO()
-            img.save(out, format="JPEG", quality=quality, subsampling=2, optimize=False)
+            img.save(out, format="JPEG", quality=quality, subsampling=1, optimize=False)
             return out.getvalue(), orig_w, orig_h
         else:
             import mss
@@ -188,7 +237,7 @@ class ScreenStreamer:
                 target_h = int(orig_h * scale)
                 img = img.resize((target_w, target_h), Image.Resampling.BILINEAR)
             out = io.BytesIO()
-            img.save(out, format="JPEG", quality=quality, subsampling=2, optimize=False)
+            img.save(out, format="JPEG", quality=quality, subsampling=1, optimize=False)
             return out.getvalue(), orig_w, orig_h
 
     def _capture_loop(self, generation: int):
@@ -249,18 +298,38 @@ class ScreenStreamer:
                         bmi.biCompression = 0
                         buf = (ctypes.c_char * (target_w * target_h * 4))()
 
-                    # Blit/Stretch desktop directly to target memory DC using hardware GPU raster
+                    # Blit/Stretch desktop directly to target memory DC using zero-flicker SRCCOPY (0x00CC0020)
                     if target_w != w or target_h != h:
-                        gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, 0x40CC0020)
+                        gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, 0x00CC0020)
                     else:
-                        gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x40CC0020)
+                        gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x00CC0020)
+
+                    # Smoothly draw the mouse cursor into the offscreen buffer with zero PC physical monitor flicker
+                    try:
+                        ci = CURSORINFO()
+                        ci.cbSize = sizeof(CURSORINFO)
+                        if user32.GetCursorInfo(byref(ci)) and (ci.flags & 1) and ci.hCursor:
+                            ii = ICONINFO()
+                            if user32.GetIconInfo(ci.hCursor, byref(ii)):
+                                cx = ci.ptScreenPos.x - ii.xHotspot
+                                cy = ci.ptScreenPos.y - ii.yHotspot
+                                if target_w != w:
+                                    cx = int(cx * (target_w / w))
+                                    cy = int(cy * (target_h / h))
+                                user32.DrawIconEx(hdc_mem, cx, cy, ci.hCursor, 0, 0, 0, None, 3)
+                                if ii.hbmMask:
+                                    gdi32.DeleteObject(ii.hbmMask)
+                                if ii.hbmColor:
+                                    gdi32.DeleteObject(ii.hbmColor)
+                    except Exception:
+                        pass
 
                     gdi32.GetDIBits(hdc_mem, hbm, 0, target_h, buf, byref(bmi), 0)
 
                     img = Image.frombuffer("RGB", (target_w, target_h), buf, "raw", "BGRX", 0, 1)
 
                     out = io.BytesIO()
-                    # subsampling=0 (4:4:4 RGB) ensures desktop text, code, and UI fonts remain razor-sharp
+                    # subsampling=0 (4:4:4 RGB) ensures razor-sharp text & UI fonts with ultra-fast encoding
                     img.save(out, format="JPEG", quality=self.quality, subsampling=0, optimize=False)
                     jpeg = out.getvalue()
 

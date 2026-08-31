@@ -768,14 +768,14 @@
           const effectiveZoom = (state.zoomScale && state.zoomScale > 0.1) ? state.zoomScale : 1.0;
 
           // True 1:1 Physical PC Screen Tracking:
-          // The visual delta on PC matches the physical finger distance on the phone display.
-          // On Windows, 120 units ≈ 100-120 PC pixels, so 1.0 unit ≈ 1 PC pixel.
+          // Matches native mobile touch scrolling in folders, browsers, and documents.
           const scrollFactor = state.invertScroll ? -1 : 1;
+          const scrollMultiplier = 3.5;
           const scaleY = (canvasH / rectH) / effectiveZoom;
           const scaleX = (canvasW / rectW) / effectiveZoom;
 
-          const wheelDy = dy * scaleY * state.scrollSpeed * scrollFactor;
-          const wheelDx = dx * scaleX * state.scrollSpeed * scrollFactor;
+          const wheelDy = dy * scaleY * state.scrollSpeed * scrollFactor * scrollMultiplier;
+          const wheelDx = dx * scaleX * state.scrollSpeed * scrollFactor * scrollMultiplier;
 
           if (Math.abs(wheelDy) >= 0.2 || Math.abs(wheelDx) >= 0.2) {
             sendScreenCommand(`ts,${norm.x.toFixed(4)},${norm.y.toFixed(4)},${wheelDx.toFixed(1)},${wheelDy.toFixed(1)}`);
@@ -878,8 +878,9 @@
             const stepDy = momentumVy * dt;
             const stepDx = momentumVx * dt;
 
-            const wheelDy = stepDy * scaleY * state.scrollSpeed * scrollFactor;
-            const wheelDx = stepDx * scaleX * state.scrollSpeed * scrollFactor;
+            const scrollMultiplier = 3.5;
+            const wheelDy = stepDy * scaleY * state.scrollSpeed * scrollFactor * scrollMultiplier;
+            const wheelDx = stepDx * scaleX * state.scrollSpeed * scrollFactor * scrollMultiplier;
 
             if (Math.abs(wheelDy) >= 0.2 || Math.abs(wheelDx) >= 0.2) {
               sendScreenCommand(`ts,${lastNorm.x.toFixed(4)},${lastNorm.y.toFixed(4)},${wheelDx.toFixed(1)},${wheelDy.toFixed(1)}`);
