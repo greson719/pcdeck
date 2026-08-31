@@ -1,0 +1,86 @@
+# -*- mode: python ; coding: utf-8 -*-
+
+
+a = Analysis(
+    ['server\\gui.py'],
+    pathex=['.', 'server'],
+    binaries=[],
+    datas=[('static', 'static'), ('scrcpy_bin', 'scrcpy_bin'), ('app_icon.ico', '.'), ('PCDeck.ico', '.'), ('icon.ico', '.'), ('PCDeck_Mouse_Logo.png', '.'), ('icon.png', '.')],
+    hiddenimports=[
+        'uvicorn.logging',
+        'uvicorn.loops',
+        'uvicorn.loops.auto',
+        'uvicorn.protocols',
+        'uvicorn.protocols.http',
+        'uvicorn.protocols.http.auto',
+        'uvicorn.protocols.websockets',
+        'uvicorn.protocols.websockets.auto',
+        'uvicorn.lifespan',
+        'uvicorn.lifespan.on',
+        'pydantic',
+        'pydantic_core',
+        'python_multipart',
+        'multipart',
+        'starlette',
+        'starlette.middleware',
+        'starlette.middleware.errors',
+        'starlette.middleware.cors',
+        'fastapi',
+        'fastapi.staticfiles',
+        'fastapi.responses',
+        'pyaudiowpatch',
+        '_portaudiowpatch',
+        'sounddevice',
+        '_sounddevice',
+        'cffi',
+        '_cffi_backend',
+        'PIL._tkinter_finder',
+        'email.mime.multipart',
+        'email.mime.nonmultipart',
+        'email.mime.text',
+        'server.wifi_manager',
+        'wifi_manager'
+    ],
+    hookspath=['pyi_hooks'],
+    hooksconfig={},
+    runtime_hooks=['pyi_early_rthook.py'],
+    excludes=[
+        'numpy',
+        'scipy',
+        'matplotlib',
+        'pandas',
+        'pip',
+        'unittest',
+        'pytest',
+        'tkinter.test',
+    ],
+    noarchive=False,
+    optimize=0,
+)
+
+# Remove problematic pkg_resources runtime hooks that conflict with PyInstaller 6.11.1 / Python 3.12
+a.scripts = [s for s in a.scripts if 'pyi_rth_pkgres' not in str(s)]
+
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    name='PCDeck',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=['app_icon.ico'],
+)

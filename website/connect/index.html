@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect Phone to PC — PCDeck</title>
+<meta name="description" content="Connect your smartphone to your Windows PC with PCDeck. Download the Android APK or launch instant web remote control over local Wi-Fi.">
+<link rel="canonical" href="https://pcdeck.vercel.app/connect">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0d1117">
+
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0a0e17;
+  --surface: #131926;
+  --surface-2: #1c2436;
+  --border: #26334d;
+  --cyan: #00f0ff;
+  --lime: #00ff66;
+  --yellow: #ffe600;
+  --text: #f0f4fc;
+  --text-muted: #8c9cb8;
+  --display: 'Archivo', system-ui, sans-serif;
+  --body: 'Instrument Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.12) 0%, transparent 60%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.logo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 99px;
+  margin-bottom: 16px;
+}
+
+.logo-badge img {
+  width: 24px;
+  height: 24px;
+}
+
+.logo-badge span {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+h1 {
+  font-family: var(--display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+h1 .accent {
+  color: var(--cyan);
+}
+
+p.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.pc-status-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pc-status-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 10px var(--lime);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.pc-ip-text {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cyan);
+}
+
+.action-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.action-card:hover {
+  border-color: rgba(0, 240, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.action-card.hero {
+  border: 2px solid var(--cyan);
+  background: linear-gradient(180deg, rgba(0, 240, 255, 0.06) 0%, var(--surface) 100%);
+  box-shadow: 0 8px 30px rgba(0, 240, 255, 0.12);
+}
+
+.card-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 99px;
+  margin-bottom: 12px;
+}
+
+.badge-cyan {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.badge-lime {
+  background: rgba(0, 255, 102, 0.15);
+  color: var(--lime);
+  border: 1px solid rgba(0, 255, 102, 0.3);
+}
+
+.card-title {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+
+.feature-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.chip {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-cyan {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 4px 16px rgba(0, 240, 255, 0.3);
+}
+
+.btn-lime {
+  background: var(--lime);
+  color: #000;
+  box-shadow: 0 4px 16px rgba(0, 255, 102, 0.25);
+}
+
+.btn-dark {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+
+.footer a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="logo-badge">
+      <img src="/favicon.png" alt="PCDeck">
+      <span>PCDeck</span>
+    </div>
+    <h1>Pair Phone with <span class="accent">PC Server</span></h1>
+    <p class="subtitle">Scan complete! Choose how you want to control your computer.</p>
+  </div>
+
+  <div class="pc-status-card" id="status-card">
+    <div class="pc-status-left">
+      <span class="status-dot"></span>
+      <div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-family: var(--mono);">PC Server Ready</div>
+        <div class="pc-ip-text" id="target-ip-display">Connecting...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 1: Native Android APK (Recommended) -->
+  <div class="action-card hero">
+    <span class="card-badge badge-cyan">Recommended</span>
+    <div class="card-title">📱 Download Android APK</div>
+    <div class="card-desc">Install the native mobile companion for ultra-smooth 60 FPS desktop mirroring, physical haptic taps, immersive fullscreen, and persistent background connection.</div>
+    
+    <div class="feature-chips">
+      <span class="chip">⚡ 60 FPS Mirroring</span>
+      <span class="chip">📳 Haptic Touch</span>
+      <span class="chip">🔋 Screen Always-On</span>
+      <span class="chip">📁 Local File Deck</span>
+    </div>
+
+    <a href="/PCDeck.apk" download id="btn-download-apk" class="btn btn-cyan">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>DOWNLOAD ANDROID APP (1.6 MB)</span>
+    </a>
+  </div>
+
+  <!-- Option 2: Instant Web Remote (Zero Install) -->
+  <div class="action-card">
+    <span class="card-badge badge-lime">Instant • No Install</span>
+    <div class="card-title">⚡ Launch Web Remote</div>
+    <div class="card-desc">Start controlling your PC trackpad, virtual keyboard, and desktop screen immediately right inside your mobile browser.</div>
+
+    <a href="#" id="btn-launch-web" class="btn btn-lime">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span>LAUNCH INSTANT WEB REMOTE</span>
+    </a>
+  </div>
+
+  <div class="footer">
+    100% Offline Local Wi-Fi • Zero Cloud Accounts • <a href="https://pcdeck.vercel.app">Official Website</a>
+  </div>
+</div>
+
+<script>
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  let ip = params.get('ip') || '';
+
+  // Fallback to current host if opened on local port
+  if (!ip && window.location.port === '8000') {
+    ip = window.location.host;
+  }
+
+  const ipDisplay = document.getElementById('target-ip-display');
+  const btnLaunchWeb = document.getElementById('btn-launch-web');
+  const btnDownloadApk = document.getElementById('btn-download-apk');
+
+  if (ip) {
+    const cleanIp = ip.replace(/^https?:\/\//, '');
+    ipDisplay.textContent = cleanIp;
+
+    const targetUrl = 'http://' + cleanIp;
+    btnLaunchWeb.href = targetUrl;
+    btnDownloadApk.href = 'https://pcdeck.vercel.app/PCDeck.apk';
+  } else {
+    ipDisplay.textContent = 'Local Wi-Fi Network';
+    btnLaunchWeb.href = 'http://192.168.1.100:8000';
+    btnDownloadApk.href = 'https://pcdeck.vercel.app/PCDeck.apk';
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[project]
+name = "neontrack-pc-mouse"
+version = "1.0.0"
+description = "Ultra-low latency Mobile Trackpad, Keyboard & Remote Controller for PC"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.28.0",
+    "websockets>=12.0",
+    "qrcode[pil]>=7.4.2",
+    "pillow>=10.2.0",
+    "colorama>=0.4.6",
+    "mss>=9.0.1",
+    "python-multipart>=0.0.32",
+    "pyinstaller>=6.22.1",
+    "pynput>=1.8.2",
+    "psutil>=7.2.2",
+    "pytest>=9.1.1",
+    "httpx>=0.28.1",
+]

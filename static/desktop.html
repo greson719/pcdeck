@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCDeck - PC Server Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0a0e17;
+      --bg-surface: #131926;
+      --bg-surface-elevated: #1c2436;
+      --bg-input: #0e131f;
+
+      --neo-cyan: #00f0ff;
+      --neo-yellow: #ffe600;
+      --neo-pink: #ff2a85;
+      --neo-lime: #00ff66;
+      --neo-dark: #000000;
+      --neo-white: #ffffff;
+
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+
+      --font-heading: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --shadow-md: 4px 4px 0px #000000;
+      --shadow-lg: 6px 6px 0px #000000;
+      --shadow-cyan: 5px 5px 0px var(--neo-cyan);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-heading);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header.hub-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+      border: 3px solid var(--neo-dark);
+      border-radius: 12px;
+      padding: 14px 20px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-box img {
+      width: 36px;
+      height: 36px;
+      border: 2px solid var(--neo-dark);
+      border-radius: 6px;
+      box-shadow: 2px 2px 0px var(--neo-dark);
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--neo-cyan);
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      text-shadow: 2px 2px 0px var(--neo-dark);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--neo-lime);
+      color: var(--neo-dark);
+      border: 2px solid var(--neo-dark);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      box-shadow: 2px 2px 0px var(--neo-dark);
+    }
+
+    .grid-hub {
+      display: grid;
+      grid-template-columns: 1.1fr 1.3fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-hub { grid-template-columns: 1fr; }
+    }
+
+    .neo-card {
+      background: var(--bg-surface);
+      border: 3px solid var(--neo-dark);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-badge {
+      display: inline-flex;
+      align-self: flex-start;
+      background: var(--neo-yellow);
+      color: var(--neo-dark);
+      border: 2px solid var(--neo-dark);
+      border-radius: 4px;
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      box-shadow: 2px 2px 0px var(--neo-dark);
+    }
+
+    /* QR Code Display */
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 10px;
+      background: var(--bg-surface-elevated);
+      border: 2.5px solid var(--neo-dark);
+      border-radius: 10px;
+    }
+
+    .qr-image {
+      width: 200px;
+      height: 200px;
+      border: 3px solid var(--neo-dark);
+      border-radius: 8px;
+      background: #000;
+      box-shadow: 4px 4px 0px var(--neo-cyan);
+    }
+
+    .ip-display-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      background: var(--bg-input);
+      border: 2px solid var(--neo-dark);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .ip-text {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--neo-cyan);
+    }
+
+    .neo-btn {
+      height: 42px;
+      background: var(--neo-cyan);
+      color: var(--neo-dark);
+      border: 2px solid var(--neo-dark);
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 0 16px;
+      box-shadow: var(--shadow-md);
+      transition: all 0.08s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .neo-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px var(--neo-dark);
+    }
+
+    .btn-yellow { background: var(--neo-yellow); }
+    .btn-pink { background: var(--neo-pink); color: #fff; }
+    .btn-lime { background: var(--neo-lime); }
+
+    /* Radio Setting Option Group */
+    .setting-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1.5px dashed rgba(255, 255, 255, 0.12);
+      padding-bottom: 12px;
+    }
+
+    .setting-group:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .group-label {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .radio-pill-deck {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .radio-card {
+      position: relative;
+    }
+
+    .radio-card input {
+      position: absolute;
+      opacity: 0;
+    }
+
+    .radio-card label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface-elevated);
+      border: 2px solid var(--neo-dark);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      box-shadow: 2px 2px 0px var(--neo-dark);
+      transition: all 0.08s;
+    }
+
+    .radio-card input:checked + label {
+      background: var(--neo-cyan);
+      color: var(--neo-dark);
+      border-color: var(--neo-dark);
+      box-shadow: 3px 3px 0px var(--neo-dark);
+      transform: translateY(-1px);
+    }
+
+    .radio-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1.5px solid var(--neo-dark);
+      background: var(--bg-input);
+    }
+
+    .radio-card input:checked + label .radio-dot {
+      background: var(--neo-pink);
+    }
+
+    /* Diagnostics Table */
+    .diag-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      background: var(--bg-input);
+      border: 2px solid var(--neo-dark);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .diag-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .diag-table tr:last-child td { border-bottom: none; }
+    .diag-key { color: var(--text-muted); font-weight: 700; }
+    .diag-val { color: var(--neo-cyan); font-family: var(--font-mono); font-weight: 800; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hub-header">
+      <div class="brand-box">
+        <img src="icon.png" alt="PCDeck">
+        <div>
+          <span class="brand-title">PCDeck Server Hub</span>
+          <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">PC Remote Control &amp; Low-Latency Display Server</div>
+        </div>
+      </div>
+      <div class="status-badge">
+        <span style="display:inline-block; width:8px; height:8px; background:#000; border-radius:50%;"></span>
+        <span>SERVER ONLINE</span>
+      </div>
+    </header>
+
+    <div class="grid-hub">
+      <!-- Left Column: QR Code & Connection -->
+      <div class="neo-card">
+        <span class="card-badge">📱 Connect Mobile App</span>
+        <div class="qr-container">
+          <img src="/api/qr" alt="Connection QR Code" class="qr-image" id="qr-img">
+          <div class="ip-display-bar">
+            <span class="ip-text" id="ip-text">Loading IP...</span>
+            <button class="neo-btn btn-yellow" id="btn-copy-ip" style="height: 32px; padding: 0 10px; font-size: 0.75rem;">COPY</button>
+          </div>
+        </div>
+
+        <p style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-align: center;">
+          ⚡ Open the PCDeck app on your Android phone and scan this QR code to connect instantly.
+        </p>
+
+        <!-- System Diagnostics Info -->
+        <table class="diag-table">
+          <tr>
+            <td class="diag-key">Connected Clients</td>
+            <td class="diag-val" id="diag-clients">0 Active</td>
+          </tr>
+          <tr>
+            <td class="diag-key">Screen Resolution</td>
+            <td class="diag-val" id="diag-screen">Detecting...</td>
+          </tr>
+          <tr>
+            <td class="diag-key">Local LAN IP</td>
+            <td class="diag-val" id="diag-ip">...</td>
+          </tr>
+          <tr>
+            <td class="diag-key">Port</td>
+            <td class="diag-val">8000 (WebSocket)</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Right Column: Radio Settings & Controls -->
+      <div class="neo-card">
+        <span class="card-badge" style="background: var(--neo-pink); color: #fff;">⚙️ PC Server Preferences</span>
+
+        <!-- Setting 1: Start with Windows -->
+        <div class="setting-group">
+          <div class="group-label">⚡ Start With Windows Boot</div>
+          <div class="radio-pill-deck">
+            <div class="radio-card">
+              <input type="radio" id="boot-enabled" name="win-boot" value="true" checked>
+              <label for="boot-enabled">
+                <span class="radio-dot"></span>
+                <span>Auto-Start on Boot</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="boot-disabled" name="win-boot" value="false">
+              <label for="boot-disabled">
+                <span class="radio-dot"></span>
+                <span>Manual Launch Only</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Setting 2: Reconnection Policy -->
+        <div class="setting-group">
+          <div class="group-label">🔄 Reconnect to Previous Phone</div>
+          <div class="radio-pill-deck">
+            <div class="radio-card">
+              <input type="radio" id="reconn-auto" name="reconn-policy" value="auto" checked>
+              <label for="reconn-auto">
+                <span class="radio-dot"></span>
+                <span>Auto-Accept Saved</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="reconn-prompt" name="reconn-policy" value="prompt">
+              <label for="reconn-prompt">
+                <span class="radio-dot"></span>
+                <span>Require Confirmation</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Setting 3: Screen Stream FPS Engine -->
+        <div class="setting-group">
+          <div class="group-label">🎮 Screen Streaming Frame Rate</div>
+          <div class="radio-pill-deck">
+            <div class="radio-card">
+              <input type="radio" id="fps-60" name="fps-mode" value="60">
+              <label for="fps-60">
+                <span class="radio-dot"></span>
+                <span>Ultra (60 FPS)</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="fps-30" name="fps-mode" value="30" checked>
+              <label for="fps-30">
+                <span class="radio-dot"></span>
+                <span>Balanced (30 FPS)</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="fps-20" name="fps-mode" value="20">
+              <label for="fps-20">
+                <span class="radio-dot"></span>
+                <span>Eco (20 FPS)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 4px;">
+          <button class="neo-btn btn-lime" id="btn-save-pc-settings" style="flex: 1;">
+            <span>💾</span>
+            <span>SAVE PC SETTINGS</span>
+          </button>
+          <button class="neo-btn btn-pink" id="btn-restart-stream" style="flex: 1;">
+            <span>🔄</span>
+            <span>RESTART STREAM</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchInfo() {
+      try {
+        const res = await fetch('/api/info');
+        const data = await res.json();
+        document.getElementById('ip-text').textContent = data.url || `${data.ip}:${data.port}`;
+        document.getElementById('diag-ip').textContent = data.ip;
+        document.getElementById('diag-clients').textContent = `${data.clients_connected} Active`;
+        document.getElementById('diag-screen').textContent = `${data.screen.width} x ${data.screen.height}`;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    document.getElementById('btn-copy-ip').onclick = () => {
+      const text = document.getElementById('ip-text').textContent;
+      navigator.clipboard.writeText(text);
+      const btn = document.getElementById('btn-copy-ip');
+      btn.textContent = 'COPIED!';
+      setTimeout(() => btn.textContent = 'COPY', 2000);
+    };
+
+    document.getElementById('btn-save-pc-settings').onclick = () => {
+      const btn = document.getElementById('btn-save-pc-settings');
+      btn.innerHTML = '<span>✅</span><span>SAVED!</span>';
+      setTimeout(() => btn.innerHTML = '<span>💾</span><span>SAVE PC SETTINGS</span>', 2000);
+    };
+
+    fetchInfo();
+    setInterval(fetchInfo, 3000);
+  </script>
+</body>
+</html>

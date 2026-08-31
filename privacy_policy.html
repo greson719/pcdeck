@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - PCDeck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e17;
+      --card-bg: #131926;
+      --card-border: rgba(45, 60, 90, 0.7);
+      --accent-cyan: #00f0ff;
+      --accent-lime: #00ff66;
+      --text-main: #f0f4fc;
+      --text-muted: #a5b4cd;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.65;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 840px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 48px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 240, 255, 0.05);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      color: var(--accent-cyan);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+    }
+    .badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+    }
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .meta {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.45rem;
+      color: var(--accent-cyan);
+      margin-top: 36px;
+      margin-bottom: 16px;
+    }
+    h3 {
+      font-size: 1.15rem;
+      color: #fff;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    ul {
+      margin-left: 24px;
+      margin-bottom: 20px;
+      color: var(--text-muted);
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    strong {
+      color: var(--text-main);
+    }
+    .highlight-card {
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+    .highlight-card p {
+      margin: 0;
+      color: #e0f8ff;
+      font-weight: 500;
+    }
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--card-border);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="badge">LEGAL COMPLIANCE</div>
+    <h1>Privacy Policy for PCDeck</h1>
+    <div class="meta">Last Updated & Effective: August 29, 2026</div>
+
+    <div class="highlight-card">
+      <p>💡 <strong>Summary:</strong> PCDeck is a 100% offline, local Wi-Fi utility suite. We do not collect, store, track, sell, or transmit any personal data, telemetry, or analytics to any cloud server. All communication remains strictly between your phone and your PC on your private local network.</p>
+    </div>
+
+    <h2>1. Core Principles: 100% Offline & Local-First</h2>
+    <p>PCDeck ("we," "our," or "the application") is built from the ground up as a private, local peer-to-peer utility suite for Windows and Android:</p>
+    <ul>
+      <li><strong>No Cloud Accounts:</strong> You are not required to create an account, log in, or provide an email address.</li>
+      <li><strong>No Telemetry or Tracking:</strong> We do not track, collect, or transmit crash logs, analytics, user behavior, or diagnostics to any external servers.</li>
+      <li><strong>No Advertisements:</strong> PCDeck contains no third-party advertisements or tracking SDKs.</li>
+      <li><strong>Local Subnet Only:</strong> All controls (trackpad motion, keyboard typing, screen mirroring, audio streaming, and file transfers) operate strictly inside your private local Wi-Fi or mobile hotspot LAN.</li>
+    </ul>
+
+    <h2>2. Device Permissions & How They Are Used</h2>
+    <p>PCDeck requests only the essential permissions required to deliver its core wireless features:</p>
+
+    <h3>A. Camera (<code>android.permission.CAMERA</code>)</h3>
+    <p><strong>Purpose:</strong> Used exclusively to scan the pairing QR code displayed on your PC Companion Server screen.</p>
+    <p><strong>Data Handling:</strong> Camera frames are processed on-device in temporary memory. No photos, videos, or visual recordings are ever stored on disk or transmitted over any network.</p>
+
+    <h3>B. Local Network & Wi-Fi (<code>INTERNET</code>, <code>ACCESS_NETWORK_STATE</code>, <code>ACCESS_WIFI_STATE</code>)</h3>
+    <p><strong>Purpose:</strong> Used to discover your PC companion server on your local Wi-Fi / hotspot network and establish direct peer-to-peer WebSocket and HTTP streaming connections.</p>
+    <p><strong>Data Handling:</strong> Packets remain strictly inside your private local subnet (e.g., <code>192.168.x.x</code>). No internet connectivity is used to send data externally.</p>
+
+    <h3>C. Storage & Files (Scoped Storage / Media Access)</h3>
+    <p><strong>Purpose:</strong> Used exclusively when you explicitly select files to upload to or download from your PC using the in-app File Transfer feature.</p>
+    <p><strong>Data Handling:</strong> Files are transferred directly point-to-point between your phone and PC over the local network. We never index, read, or inspect files without your direct action.</p>
+
+    <h3>D. Audio Playback</h3>
+    <p><strong>Purpose:</strong> Plays the real-time audio PCM stream relayed from your PC through your phone's earphones or speakers.</p>
+    <p><strong>Data Handling:</strong> Audio stream packets are buffered in volatile memory during live playback and immediately discarded.</p>
+
+    <h2>3. Data Collection, Storage & Sharing</h2>
+    <ul>
+      <li><strong>Personal Data Collected:</strong> None.</li>
+      <li><strong>Third-Party Sharing:</strong> None. We do not sell, rent, or share any data.</li>
+      <li><strong>Remote Cloud Storage:</strong> None.</li>
+    </ul>
+
+    <h2>4. Children’s Privacy (COPPA Compliance)</h2>
+    <p>PCDeck does not collect any personal information from any user, including children under the age of 13. The application is completely safe for all audiences.</p>
+
+    <h2>5. Security</h2>
+    <p>Because all traffic is confined to your private local Wi-Fi or encrypted mobile hotspot, your data never traverses public cloud routers or third-party servers.</p>
+
+    <h2>6. Contact</h2>
+    <p>For any questions, concerns, or inquiries regarding this Privacy Policy or PCDeck, please contact the developer directly:</p>
+    <ul>
+      <li><strong>Developer:</strong> Greshon Parichha</li>
+      <li><strong>Email:</strong> <a href="mailto:gresonparichha719@gmail.com" style="color: var(--accent-cyan); text-decoration: none;">gresonparichha719@gmail.com</a></li>
+    </ul>
+
+    <footer>
+      &copy; 2026 PCDeck. All rights reserved.
+    </footer>
+  </div>
+
+</body>
+</html>

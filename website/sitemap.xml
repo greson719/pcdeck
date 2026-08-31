@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <url>
+    <loc>https://pcdeck.vercel.app/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://pcdeck.vercel.app/og-image.png</image:loc>
+      <image:title>PCDeck - Use Your Android Phone as a Mouse, Keyboard &amp; PC Screen</image:title>
+      <image:caption>The mouse, keyboard and screen your PC is missing — trackpad, second screen, PC audio and cable-free file transfer over your own Wi-Fi.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Feature Landing Pages -->
+  <url>
+    <loc>https://pcdeck.vercel.app/use-phone-as-mouse/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/use-phone-as-keyboard/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/use-phone-as-second-monitor/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/control-windows-from-android/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Problem-Solving Emergency & Feature Guides -->
+  <url>
+    <loc>https://pcdeck.vercel.app/use-pc-without-monitor/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/use-pc-without-mouse/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/use-pc-without-keyboard/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/use-pc-without-internet/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/stream-pc-audio-to-phone/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/transfer-files-pc-to-android/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Security & Architecture -->
+  <url>
+    <loc>https://pcdeck.vercel.app/security/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>

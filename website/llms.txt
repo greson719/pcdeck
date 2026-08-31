@@ -1,0 +1,162 @@
+# PCDeck
+
+> PCDeck turns an Android phone into a wireless trackpad, keyboard, emergency
+> second display, audio receiver and file-transfer endpoint for a Windows PC. It runs
+> entirely over your local Wi-Fi or a phone hotspot with no cloud account, no telemetry
+> and no internet connection required.
+
+PCDeck is an independent Windows + Android utility. It is distributed directly
+from this site rather than through the Microsoft Store or Google Play, so the
+installer is unsigned and both operating systems will show a reputation warning the first
+time you run it. That is expected for independent software and is explained in
+detail under "Installation warnings" below.
+
+## What it actually does
+
+- **Wireless trackpad and keyboard.** Multi-touch gestures, scrolling, click and
+  drag, plus a full on-screen keyboard with numpad. Useful when a mouse or
+  keyboard has failed.
+- **Emergency display for a PC with a broken screen.** The desktop is streamed to
+  the phone, so a machine with a dead or cracked monitor stays usable: you can
+  see the screen and drive it from the phone. This is the single most common
+  reason people install PCDeck.
+- **Desktop screen streaming.** Live view of the Windows desktop on the phone at
+  up to 60/120 FPS depending on the selected quality and network conditions.
+- **Live PC audio to the phone.** Windows output audio is streamed to the phone
+  so wired or Bluetooth phone headphones can be used as PC headphones.
+- **Bidirectional file transfer.** A two-pane file browser moves files between
+  phone and PC over Wi-Fi without a USB cable, using resumable HTTP range
+  requests so an interrupted transfer continues instead of restarting.
+- **Reverse phone mirroring.** The Android screen can also be shown and
+  controlled on the PC (built on scrcpy over ADB).
+
+## Platform requirements & Installation
+
+- **Windows**: Windows 10 or Windows 11 (64-bit) via standalone portable executable (`PCDeck.exe`).
+- **Linux**: Ubuntu, Debian, Fedora, Arch, SteamOS (Steam Deck), Raspberry Pi via universal 1-line command:
+  `curl -sSL https://pcdeck.vercel.app/install.sh | bash`
+- **Mobile (Native)**: Android 5.0 Lollipop through Android 16+ via direct APK (`PCDeck.apk`).
+- **Mobile (Browser Zero-Install)**: iOS, iPadOS, macOS, Linux, Android via Safari / Chrome / Firefox QR code scan.
+- Both devices on the same Wi-Fi network, or connected to the phone's hotspot. No internet access required after download.
+
+## Pricing
+
+Core use is free. A one-time $3.99 lifetime licence unlocks the higher
+performance tier (60/120 FPS streaming and faster transfers). There is no
+subscription and no recurring charge.
+
+## Privacy
+
+PCDeck is offline by design. All traffic stays on the local network between the
+phone and the PC. There is no account, no cloud relay, no analytics and no
+telemetry. Because nothing is proxied through a third-party server, screen
+content and transferred files never leave the local network.
+
+## Installation warnings (the most frequently asked question)
+
+PCDeck is not published through the Microsoft Store or Google Play, so it does not
+carry an enterprise EV certificate. Both platforms warn about direct downloads
+regardless of what they contain. Nothing is wrong with the download.
+
+**Windows - "Windows protected your PC" (SmartScreen):**
+This dialog appears because the executable is new and unsigned, not because
+a threat was detected. To proceed: click **More info**, then **Run anyway**.
+SmartScreen reputation is earned by download volume over time.
+
+**Windows Defender / antivirus flags:**
+An unsigned executable that captures the screen, synthesises mouse and keyboard
+input and opens a local network port matches the generic behavioural profile of
+remote-access tooling, so heuristic engines sometimes flag it as a false positive.
+Those are exactly the capabilities a wireless trackpad needs in order to work.
+If a scanner flags it, verify the SHA-256 hash first before whitelisting.
+
+**Android - "Install blocked" / unknown sources:**
+Sideloading an APK requires granting install permission once: open the APK, then
+allow **Install unknown apps** for the browser or file manager you used. Play
+Protect may additionally say the app was not scanned before; choosing
+**Install anyway** proceeds.
+
+**How to verify the download independently:**
+Compare the SHA-256 checksum published on the download page with the file you
+received, and optionally upload the file to VirusTotal.
+
+## Feature Pages & Landing Guides
+
+- **How to use an Android phone as a mouse for PC** — https://pcdeck.vercel.app/use-phone-as-mouse/
+  Turns your phone into a low-latency multi-touch trackpad over local Wi-Fi. Supports
+  tap to click, two-finger scrolling, right-click, double-tap drag, and middle click.
+
+- **How to use an Android phone as a keyboard for PC** — https://pcdeck.vercel.app/use-phone-as-keyboard/
+  Full virtual QWERTY keyboard, dedicated numeric keypad (numpad), Windows modifier chords
+  (Ctrl, Alt, Shift, Win key), function row (F1-F12), and mobile voice dictation to Windows.
+
+- **How to use an Android phone as a screen for PC** — https://pcdeck.vercel.app/use-phone-as-second-monitor/
+  Real-time Windows desktop streaming to Android over local Wi-Fi with direct touch-to-click
+  interaction. Ideal for emergency screen recovery, broken laptop displays, and headless PCs.
+
+- **How to control a Windows PC from Android** — https://pcdeck.vercel.app/control-windows-from-android/
+  Comprehensive guide to unified PC control from Android: wireless mouse, keyboard, live screen,
+  PC audio streaming, and high-speed local file manager in one connection.
+
+## Problem-Solving Emergency Guides
+
+- **How to use a PC without a mouse** — https://pcdeck.vercel.app/use-pc-without-mouse/
+  Keyboard-only control of Windows: Tab/Shift+Tab and arrow keys to move focus,
+  Enter and Space to act, F6 to cycle window regions; Win then type then Enter to
+  launch anything; Alt+Tab, Win+Tab, Win+D, Win+E, Win+R, Win+X, Win+I, Alt+F4,
+  Ctrl+Shift+Esc. **Shift+F10, or the dedicated Menu key, replaces right-click.**
+  File Explorer with no pointer: type-ahead selection, F2, Ctrl+A, Shift+arrows,
+  Ctrl+C/X/V instead of dragging, Alt+Up, Alt+Left, Ctrl+L. Then **Mouse Keys** (Left Alt + Left Shift + Num Lock).
+
+- **How to use a PC without a keyboard** — https://pcdeck.vercel.app/use-pc-without-keyboard/
+  Sign-in screen accessibility On-Screen Keyboard, Win+Ctrl+O inside Windows, voice typing
+  (Win+H), symbol panel (Win+.), and virtual phone keyboard alternatives.
+
+- **How to use a PC without a monitor** — https://pcdeck.vercel.app/use-pc-without-monitor/
+  Emergency troubleshooting when a laptop display or monitor is black/cracked:
+  Win+P to cycle projection, Win+Ctrl+Shift+B to restart graphics drivers,
+  Win+Ctrl+Enter for Narrator blind audio cues, and streaming the desktop live to
+  an Android phone over Wi-Fi using PCDeck.
+
+- **How to stream PC audio to phone headphones** — https://pcdeck.vercel.app/stream-pc-audio-to-phone/
+  Wirelessly route Windows PC audio to phone headphones over local Wi-Fi with low
+  latency 48 kHz stereo streaming. Solves broken headphone jacks and missing desktop Bluetooth.
+
+- **How to transfer files between PC and Android without cable** — https://pcdeck.vercel.app/transfer-files-pc-to-android/
+  Offline high-speed two-way file sharing over local Wi-Fi with auto-resume. No USB
+  cable MTP disconnects, no Bluetooth slowness, and no cloud upload bandwidth limits.
+
+- **How to control a Windows PC without internet** — https://pcdeck.vercel.app/use-pc-without-internet/
+  Step-by-step instructions for remote-controlling Windows from an Android phone
+  over offline local Wi-Fi or phone mobile hotspot with zero internet access or router.
+
+- **Security & Privacy Architecture** — https://pcdeck.vercel.app/security/
+  Detailed technical teardown of local network isolation, direct socket binding,
+  zero telemetry data minimization, and independent SHA-256 binary verification.
+
+## Comparison with alternatives
+
+- **vs. Remote Mouse**: Remote Mouse requires installing mobile apps from Google Play/App Store, shows full-screen interstitial ads in the free tier, enforces cloud accounts, lacks emergency 60 FPS display streaming, and does not support instant zero-install browser control via QR code.
+- **vs. Unified Remote**: Unified Remote is heavily reliant on proprietary server software, has an outdated UI, charges monthly/lifetime subscriptions for basic remotes, does not stream high-performance 60 FPS desktop screen with hardware rasterization, and requires dedicated mobile client installations.
+- **vs. KDE Connect**: KDE Connect is primarily built for Linux desktop ecosystems; its Windows implementation is heavy, prone to discovery drops, and lacks low-latency desktop screen streaming, touch display casting, and instant browser-based touch deck execution.
+- **vs. Deskreen**: Deskreen turns devices into secondary screens via WebRTC in a browser, but lacks native Win32 virtual mouse input, gesture multi-touch trackpad, virtual keyboard chords, 48 kHz stereo PC audio routing, and direct two-way local file management.
+- **vs. Moonlight / Sunshine**: Moonlight is designed for high-end gaming PC game streaming requiring Nvidia NVENC/hardware encoders and dedicated client apps; PCDeck provides lightweight, zero-configuration touch deck control, trackpad, keyboard, audio, and file transfers that work seamlessly even on potato PCs and in any web browser.
+
+## Links
+
+- Homepage and download: https://pcdeck.vercel.app/
+- Features: https://pcdeck.vercel.app/#features
+- Real-world use cases: https://pcdeck.vercel.app/#scenarios
+- Setup guide: https://pcdeck.vercel.app/#setup
+- Security & architecture: https://pcdeck.vercel.app/security/
+- FAQ: https://pcdeck.vercel.app/#faq
+- Feature - use phone as mouse: https://pcdeck.vercel.app/use-phone-as-mouse/
+- Feature - use phone as keyboard: https://pcdeck.vercel.app/use-phone-as-keyboard/
+- Feature - use phone as screen: https://pcdeck.vercel.app/use-phone-as-second-monitor/
+- Feature - control Windows from Android: https://pcdeck.vercel.app/control-windows-from-android/
+- Guide - use a PC without a mouse: https://pcdeck.vercel.app/use-pc-without-mouse/
+- Guide - use a PC without a keyboard: https://pcdeck.vercel.app/use-pc-without-keyboard/
+- Guide - use a PC without a monitor: https://pcdeck.vercel.app/use-pc-without-monitor/
+- Guide - control a PC without internet: https://pcdeck.vercel.app/use-pc-without-internet/
+- Guide - stream PC audio to phone: https://pcdeck.vercel.app/stream-pc-audio-to-phone/
+- Guide - transfer files without cable: https://pcdeck.vercel.app/transfer-files-pc-to-android/

@@ -2,3 +2,28 @@
 PCDeck_Pro.apk
 PCDeck_Pro.exe
 PCDeck_Pro_Package.zip
+
+# Python & virtual environments
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Android build cache
+build_android/
+*.idsig
+
+# Editor & local backups
+.claude/
+*BACKUP*
+
+# Local tools & test assets
+scrcpy_bin/
+test_*.png
+test_input.py
+*.keystore
+*.pfx
+*.msix
+
