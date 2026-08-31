@@ -2222,30 +2222,75 @@ footer{padding:44px 0 56px}
 
 /* ==========================================================================
    2. Download links.
-   Direct download configuration for Android APK, Windows Portable EXE,
-   MSIX package, and full offline ZIP bundle.
+/* ==========================================================================
+   2. Automated Real-Time Version & Binary Size Auto-Detector
+   Fetches /version.json and real-time Content-Length headers to keep all
+   download buttons, version numbers, and file sizes 100% up-to-date automatically.
    ========================================================================== */
 (function () {
-  var BINARIES = {
-    apk: '/PCDeck.apk',
-    exe: '/PCDeck.exe',
-    zip: '/PCDeck_Package.zip'
-  };
+  function formatSize(bytes) {
+    if (!bytes || isNaN(bytes)) return null;
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
 
-  Object.keys(BINARIES).forEach(function (key) {
-    var url = BINARIES[key];
-    var targets = [
-      document.getElementById('dl-' + key),
-      document.getElementById('hero-' + key)
-    ].filter(Boolean);
+  function fetchFileSize(url, callback) {
+    try {
+      fetch(url, { method: 'HEAD', cache: 'no-cache' })
+        .then(function(res) {
+          var len = res.headers.get('content-length');
+          if (len) {
+            callback(parseInt(len, 10));
+          }
+        })
+        .catch(function() {});
+    } catch(e) {}
+  }
 
-    targets.forEach(function (el) {
-      if (el && !el.getAttribute('href')) {
-        el.setAttribute('href', url);
-        el.setAttribute('download', '');
-      }
-    });
-  });
+  fetch('/version.json?t=' + Date.now(), { cache: 'no-cache' })
+    .then(function(res) { return res.json(); })
+    .then(function(meta) {
+      var ver = meta.versionName ? 'v' + meta.versionName : 'v2.7.0';
+
+      var heroExe = document.querySelector('#hero-exe small');
+      if (heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · 59.4 MB';
+      var heroApk = document.querySelector('#hero-apk small');
+      if (heroApk) heroApk.textContent = ver + ' · Direct APK · 3.2 MB';
+      var heroLinux = document.querySelector('#hero-linux small');
+      if (heroLinux) heroLinux.textContent = ver + ' · 1-Line Terminal Install';
+      var heroZip = document.querySelector('#hero-zip small');
+      if (heroZip) heroZip.textContent = ver + ' · 62.1 MB · Win + Android';
+
+      var cardExeTitle = document.querySelector('#card-exe h3');
+      if (cardExeTitle) cardExeTitle.textContent = 'PCDeck for Windows (' + ver + ')';
+      var cardApkTitle = document.querySelector('#card-apk h3');
+      if (cardApkTitle) cardApkTitle.textContent = 'PCDeck for Android (' + ver + ')';
+      var cardLinuxTitle = document.querySelector('#card-linux h3');
+      if (cardLinuxTitle) cardLinuxTitle.textContent = 'PCDeck for Linux (' + ver + ')';
+      var cardZipTitle = document.querySelector('#card-zip h3');
+      if (cardZipTitle) cardZipTitle.textContent = 'Full Offline Bundle (' + ver + ')';
+
+      fetchFileSize('/PCDeck.exe', function(size) {
+        var str = formatSize(size);
+        if (str && heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · ' + str;
+        var btn = document.getElementById('dl-exe');
+        if (btn && str) btn.textContent = 'Download for Windows (' + ver + ' · ' + str + ')';
+      });
+
+      fetchFileSize('/PCDeck.apk', function(size) {
+        var str = formatSize(size);
+        if (str && heroApk) heroApk.textContent = ver + ' · Direct APK · ' + str;
+        var btn = document.querySelector('#dl-apk span');
+        if (btn && str) btn.textContent = 'Download for Android (' + ver + ' · ' + str + ')';
+      });
+
+      fetchFileSize('/PCDeck_Package.zip', function(size) {
+        var str = formatSize(size);
+        if (str && heroZip) heroZip.textContent = ver + ' · ' + str + ' · Win + Android';
+        var btn = document.getElementById('dl-zip');
+        if (btn && str) btn.textContent = 'Download Offline ZIP (' + str + ')';
+      });
+    })
+    .catch(function() {});
 })();
 
 /* ==========================================================================
