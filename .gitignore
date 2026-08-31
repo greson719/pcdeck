@@ -1,5 +1,4 @@
-﻿*.exe
-*.zip
-
-# Leftover from renaming the app to PCDeck; the build now emits PCDeck.apk only.
+# Deprecated legacy builds
 PCDeck_Pro.apk
+PCDeck_Pro.exe
+PCDeck_Pro_Package.zip
