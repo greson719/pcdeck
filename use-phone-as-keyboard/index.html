@@ -113,13 +113,40 @@
       <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
       <b>PCDeck</b>
     </a>
-    <nav>
+    <nav class="top-nav">
       <a href="/#features">What it does</a>
       <a href="/#scenarios">Use cases</a>
       <a href="/security/">Security</a>
       <a href="/#faq">FAQ</a>
     </nav>
-    <a class="btn sm" href="/#download">Download</a>
+    <div class="top-actions">
+      <a class="btn sm" href="/#download">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/#features" class="mob-link"><span>What it does</span><span>→</span></a>
+        <a href="/#scenarios" class="mob-link"><span>Use cases</span><span>→</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>→</span></a>
+        <a href="/#faq" class="mob-link"><span>FAQ</span><span>→</span></a>
+        <a href="/#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>↓</span></a>
+      </div>
+
+      <div class="mobile-guides-title">Guides & Troubleshooting</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/use-pc-without-mouse/" class="mob-link">Use PC without a mouse</a>
+        <a href="/use-pc-without-keyboard/" class="mob-link">Use PC without a keyboard</a>
+        <a href="/use-pc-without-monitor/" class="mob-link">Use PC without a monitor</a>
+        <a href="/stream-pc-audio-to-phone/" class="mob-link">Stream audio to phone</a>
+        <a href="/transfer-files-pc-to-android/" class="mob-link">Wi-Fi file transfer</a>
+        <a href="/use-pc-without-internet/" class="mob-link">Use PC without internet</a>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -217,5 +244,51 @@
     <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
   </div>
 </footer>
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    } else {
+      menu.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menu.addEventListener('click', function (e) {
+    if (e.target === menu) {
+      toggleMenu(false);
+    }
+  });
+
+  var links = menu.querySelectorAll('.mob-link');
+  for (var i = 0; i < links.length; i++) {
+    links[i].addEventListener('click', function () {
+      toggleMenu(false);
+    });
+  }
+
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 900 && menu.classList.contains('active')) {
+      toggleMenu(false);
+    }
+  });
+})();
+</script>
 </body>
 </html>

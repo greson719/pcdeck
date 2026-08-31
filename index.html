@@ -241,6 +241,10 @@
   --caution-wash:#fdf3e3;
   --caution-line:#e6cda2;
 
+  --accent:#1b44d8;
+  --fg:#12161c;
+  --bg:#ffffff;
+
   --display:'Archivo',system-ui,sans-serif;
   --body:'Instrument Sans',system-ui,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,monospace;
@@ -251,7 +255,7 @@
 
 *{box-sizing:border-box}
 
-html{-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 
 body{
   margin:0;
@@ -261,6 +265,7 @@ body{
   font-size:17px;
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
 }
 
 /* Faint engineering grid. Sits behind everything, never competes. */
@@ -294,24 +299,21 @@ a:hover{text-decoration:underline}
   letter-spacing:.14em;
   text-transform:uppercase;
   color:var(--muted);
+  overflow-wrap:break-word;
 }
 
 h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-.02em;font-weight:700}
 
 /* ==================== header ==================== */
 .top{
-  position:sticky;top:0;z-index:40;
-  background:color-mix(in srgb,var(--paper) 88%,transparent);
-  backdrop-filter:saturate(140%) blur(8px);
+  position:sticky;top:0;z-index:100;
+  background:color-mix(in srgb,var(--paper) 92%,transparent);
+  backdrop-filter:saturate(140%) blur(12px);
+  -webkit-backdrop-filter:saturate(140%) blur(12px);
   border-bottom:1px solid var(--grid);
 }
-.top-in{display:flex;align-items:center;gap:22px;height:62px}
-.brand{display:flex;align-items:center;gap:11px;margin-right:auto}
-/* The icon art is a dark render with feathered, partly transparent edges, so it
-   was drawn to sit on a dark ground. Composited straight onto the light paper it
-   washed out into a grey smudge and read as a broken image. Giving it its own
-   dark tile restores the contrast it was designed for and makes it read as an
-   app icon, which is what it is. */
+.top-in{display:flex;align-items:center;justify-content:space-between;gap:16px;height:62px}
+.brand{display:flex;align-items:center;gap:11px}
 .brand .mark{
   width:32px;height:32px;border-radius:7px;flex:none;
   background:linear-gradient(160deg,#243041,#0e1319);
@@ -320,9 +322,114 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 }
 .brand .mark img{width:30px;height:30px;display:block}
 .brand b{font-family:var(--display);font-size:19px;font-weight:800;letter-spacing:-.02em}
-.top nav{display:flex;gap:22px}
-.top nav a{font-size:14.5px;color:var(--graphite);font-weight:500}
-.top nav a:hover{color:var(--signal-ink)}
+.top nav.top-nav{display:flex;gap:22px}
+.top nav.top-nav a{font-size:14.5px;color:var(--graphite);font-weight:500}
+.top nav.top-nav a:hover{color:var(--signal-ink)}
+
+.top-actions{display:flex;align-items:center;gap:10px}
+
+/* Mobile Nav Toggle & Drawer */
+.nav-toggle{
+  display:none;
+  background:transparent;
+  border:1px solid var(--grid);
+  border-radius:var(--r);
+  width:38px;
+  height:38px;
+  padding:0;
+  cursor:pointer;
+  align-items:center;
+  justify-content:center;
+  color:var(--ink);
+  transition:background .15s ease,border-color .15s ease;
+}
+.nav-toggle:hover{background:var(--grid-soft)}
+.nav-toggle svg{width:20px;height:20px;display:block}
+
+.mobile-menu{
+  display:none;
+  position:fixed;
+  top:63px;
+  left:0;
+  right:0;
+  bottom:0;
+  background:rgba(18,22,28,0.45);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  z-index:99;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease;
+}
+.mobile-menu.active{
+  display:block;
+  opacity:1;
+  pointer-events:auto;
+}
+.mobile-menu-panel{
+  background:var(--panel);
+  border-bottom:1px solid var(--grid);
+  padding:18px 18px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  box-shadow:0 16px 32px rgba(18,22,28,0.15);
+  transform:translateY(-10px);
+  transition:transform .2s ease;
+  max-height:calc(100vh - 70px);
+  overflow-y:auto;
+}
+.mobile-menu.active .mobile-menu-panel{
+  transform:translateY(0);
+}
+.mobile-menu-links{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.mobile-menu-links a{
+  font-family:var(--display);
+  font-size:16px;
+  font-weight:600;
+  color:var(--ink);
+  padding:10px 12px;
+  border-radius:var(--r);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.mobile-menu-links a:hover,
+.mobile-menu-links a:active{
+  background:var(--signal-wash);
+  color:var(--signal-ink);
+  text-decoration:none;
+}
+.mobile-guides-title{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:8px 12px 2px;
+}
+.mobile-menu-sublinks{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:2px;
+  padding-left:4px;
+}
+.mobile-menu-sublinks a{
+  font-size:14px;
+  font-weight:500;
+  color:var(--graphite);
+  padding:8px 12px;
+  border-radius:var(--r);
+}
+.mobile-menu-sublinks a:hover{
+  background:var(--grid-soft);
+  color:var(--ink);
+  text-decoration:none;
+}
 
 .btn{
   display:inline-flex;align-items:center;gap:9px;
@@ -331,32 +438,24 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
   border:1px solid var(--ink);background:var(--ink);color:#fff;
   cursor:pointer;text-decoration:none;
   transition:background .15s ease,border-color .15s ease,color .15s ease;
+  min-height:42px;
 }
 .btn:hover{background:var(--signal);border-color:var(--signal);text-decoration:none}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.ghost:hover{background:var(--ink);color:#fff}
-.btn.sm{padding:9px 15px;font-size:14px}
+.btn.sm{padding:8px 14px;font-size:13.5px;min-height:36px}
 .btn svg{width:15px;height:15px;flex:none}
 
 /* ==================== hero ==================== */
 .hero{padding:74px 0 12px;border-bottom:1px solid var(--grid)}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,1fr);gap:64px;align-items:stretch}
 
-/* The demo panel is taller than the headline block. Rather than leave a hole
-   under the buttons, both columns stretch and the spec strip drops to the
-   bottom, so its hairline aligns with the panel's bottom edge. */
 .hero-col{display:flex;flex-direction:column}
 
-/* The headline is a full sentence naming three pieces of hardware, so it is
-   sized to land in three lines rather than the two the old short headline used.
-   Capping at 46px keeps "your PC is missing." on its own line as the payoff. */
-.hero h1{font-size:clamp(31px,3.55vw,46px);font-weight:800;letter-spacing:-.03em;line-height:1.08}
+.hero h1{font-size:clamp(30px,3.55vw,46px);font-weight:800;letter-spacing:-.03em;line-height:1.08}
 .hero h1 em{font-style:normal;display:block;color:var(--muted);font-weight:500}
 .lede{margin:24px 0 0;font-size:19px;color:var(--graphite);max-width:52ch}
 
-/* Downloads in the hero, not 6000px down the page. Two filled buttons, because
-   both halves are genuinely required, then the archive as a quiet third option:
-   three equal buttons would just stall the decision. */
 .get{margin:30px 0 0}
 .get-row{display:flex;flex-wrap:wrap;gap:12px}
 .get .btn{padding:13px 21px;font-size:15.5px}
@@ -365,7 +464,7 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
   letter-spacing:.09em;opacity:.68;margin-top:2px;text-transform:uppercase;
 }
 .get .btn span{display:block;text-align:left}
-.get-alt{margin:14px 0 0;font-size:14.5px;color:var(--muted)}
+.get-alt{margin:14px 0 0;font-size:14.5px;color:var(--muted);line-height:1.55}
 .get-alt a{color:var(--graphite);text-decoration:underline;text-decoration-color:var(--grid);text-underline-offset:3px}
 .get-alt a:hover{color:var(--signal-ink);text-decoration-color:var(--signal)}
 .get-note{
@@ -375,9 +474,7 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 }
 .get-note b{color:var(--caution)}
 .get-note a{color:var(--caution);text-decoration:underline;text-underline-offset:2px}
-/* A download that 404s is worse than one that is visibly not ready yet. */
 .get .btn[data-missing="1"]{background:var(--muted);border-color:var(--muted);pointer-events:none}
-/* The archive link is inline prose, so grey it out as text rather than as a slab. */
 .get-alt a[data-missing="1"]{color:var(--muted);text-decoration-line:line-through;pointer-events:none}
 .get-missing{display:none;margin:12px 0 0;font-family:var(--mono);font-size:12px;color:var(--caution)}
 .get[data-anymissing="1"] .get-missing{display:block}
@@ -387,10 +484,6 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .hero-meta span{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink)}
 
 /* ---------- SIGNATURE: the live trackpad ---------- */
-/* The two hero columns stretch to match each other, and the text column is the
-   taller one. The scene inside cannot stretch — monitor and phone both have
-   fixed aspect ratios or they stop looking like hardware — so .desk takes the
-   slack and centres them in it instead. */
 .rig{background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
 .rig-head{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -398,11 +491,7 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 }
 .rig-body{display:flex;flex-direction:column;flex:1;min-height:0}
 
-/* ---------- the desk scene ----------
-   A monitor and a phone, both recognisable at a glance. The monitor carries the
-   padding-bottom that the absolutely-positioned stand sits in; the phone
-   overhangs the monitor's lower-right corner, which sells the depth and costs
-   less of the desktop than centring it would. */
+/* ---------- the desk scene ---------- */
 .desk{
   border-top:1px solid var(--grid);background:#fbfcfd;
   padding:24px 24px 16px;flex:1;display:flex;flex-direction:column;justify-content:center;
@@ -410,7 +499,6 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .monitor{position:relative;padding-bottom:44px}
 .desk-lede{margin:0 0 22px;font-size:14.5px;line-height:1.5;color:var(--muted);max-width:38ch}
 
-/* mock desktop, now behind a bezel */
 .screen{
   position:relative;aspect-ratio:16/9;background:#20262f;overflow:hidden;
   border:9px solid #14181e;border-bottom-width:19px;border-radius:11px;
@@ -433,18 +521,10 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .taskbar{position:absolute;bottom:0;left:0;right:0;height:28px;background:#171c23;border-top:1px solid #2c333d;display:flex;align-items:center;gap:7px;padding:0 10px}
 .taskbar i{width:15px;height:15px;border-radius:2px;background:#333b45;display:block}
 
-/* monitor stand: tapered neck, wide foot */
 .stand{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
 .stand i{display:block;width:78px;height:30px;background:#1b2027;clip-path:polygon(30% 0,70% 0,100% 100%,0 100%)}
 .stand b{display:block;width:152px;height:10px;border-radius:2px 2px 4px 4px;background:#14181e}
 
-/* The cursor that the pad drives. Anchored at the screen's top-left, because
-   place() translates it by (fx x screenWidth, fy x screenHeight) — an absolute
-   position on the desktop, not an offset from wherever it started. It used to
-   sit at left/top 50%, which put the pointer in the middle of the screen when
-   your finger was at the top-left of the pad and drove it off the bottom-right
-   corner at the other end of the travel. overflow:hidden on .screen concealed
-   that, so the cursor just appeared to stall in the lower right. */
 .cursor{
   position:absolute;left:0;top:0;width:20px;height:20px;
   margin:-2px 0 0 -2px;pointer-events:none;z-index:5;
@@ -456,11 +536,6 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
   border:2px solid var(--signal);pointer-events:none;z-index:4;opacity:0;
 }
 
-/* ---------- the phone, and the pad that is its screen ----------
-   z-index 8 puts it in front of the cursor (5), so the pointer can slide behind
-   it — which is what a phone propped against a monitor actually does. The
-   overhang keeps that dead zone small, and .win sits far enough left to never
-   be covered. */
 .phone{
   position:absolute;right:1.5%;bottom:5px;z-index:8;
   width:26%;min-width:112px;max-width:138px;
@@ -470,11 +545,6 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 }
 .phone-ear{display:block;width:32%;height:3px;border-radius:2px;background:#2b323c;margin:0 auto}
 .phone-bar{display:block;width:38%;height:3px;border-radius:2px;background:#333b45;margin:0 auto}
-/* 9/14 rather than a true phone's 9/19.5. At the 520px-wide rig the desktop
-   layout gives it, a correctly-proportioned phone that is tall enough to drag
-   comfortably ends up taller than the monitor image itself. The frame — bezel,
-   earpiece slit, home bar — is what makes it read as a phone; the exact ratio
-   is not, so this is the axis to trade. */
 .pad{
   position:relative;aspect-ratio:9/14;border-radius:10px;cursor:crosshair;
   background:
@@ -487,14 +557,12 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
   display:grid;place-items:center;
   overflow:hidden;
 }
-/* --signal is too dark to see against the phone screen. */
 .pad:focus-visible{outline:2px solid #8ea6ff;outline-offset:3px}
-.pad-hint{font-family:var(--mono);font-size:10px;line-height:1.5;color:#8d97a4;letter-spacing:.13em;text-transform:uppercase;text-align:center;transition:opacity .2s ease}
+.pad-hint{font-family:var(--mono);font-size:10px;line-height:1.5;color:#8d97a4;letter-spacing:.13em;text-transform:uppercase;text-align:center;transition:opacity .2s ease;pointer-events:none}
 .pad.live .pad-hint{opacity:0}
 .touch{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(120,151,255,.22);border:1px solid #8ea6ff;opacity:0;pointer-events:none}
 .pad.live .touch{opacity:1}
 
-/* Two words carry the whole metaphor; the drawing alone stays ambiguous. */
 .desk-cap{
   display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:13px 0 0;
   font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
@@ -505,45 +573,24 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .readout div{display:flex;align-items:baseline;gap:7px}
 .readout var{font-family:var(--mono);font-size:13.5px;font-style:normal;font-weight:500;color:var(--ink);min-width:4ch}
 
-/* Below this width an overlapping phone leaves a drag target of about 66px —
-   unusable, and phones are the likeliest visitors to a page about phones. So the
-   phone steps out from in front of the monitor and stands below it instead:
-   same two devices, just not overlapping. */
-@media (max-width:600px){
-  .monitor{padding-bottom:0;display:flex;flex-direction:column;align-items:center}
-  .screen{align-self:stretch}
-  .stand{position:static;transform:none}
-  .phone{position:static;width:186px;max-width:56%;margin-top:18px;box-shadow:0 10px 26px rgba(10,14,20,.3)}
-  /* Detached, the phone is the largest thing on screen, so the squat ratio the
-     desktop layout forces starts to show. There is vertical room here — give it
-     back closer to a real phone's proportions. */
-  .pad{aspect-ratio:9/17}
-  .desk-cap{justify-content:center}
-  .cap-pc,.cap-ph{display:none}
-  .cap-mob{display:block}
-}
-
 /* ==================== generic section ==================== */
 .sec{padding:78px 0;border-bottom:1px solid var(--grid)}
 .sec-head{max-width:60ch;margin-bottom:44px}
-/* Balance headings so a two-line title never leaves one orphaned word. */
 .sec-head h2{font-size:clamp(27px,3.3vw,40px);margin-top:12px;text-wrap:balance}
 .sec-head p{margin:15px 0 0;color:var(--graphite);font-size:18px}
 
 /* ==================== capability list ==================== */
-.caps{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:1px;background:var(--grid);border:1px solid var(--grid);border-radius:var(--r);overflow:hidden}
+.caps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:1px;background:var(--grid);border:1px solid var(--grid);border-radius:var(--r);overflow:hidden}
 .cap{background:var(--panel);padding:26px 24px}
 .cap svg{width:21px;height:21px;stroke:var(--signal);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .cap h3{font-size:17.5px;margin:14px 0 8px;font-weight:700}
 .cap p{margin:0;font-size:15.5px;color:var(--graphite);line-height:1.55}
 
 /* ==================== scenarios ==================== */
-.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px}
 .case{background:var(--panel);border:1px solid var(--grid);border-left:2px solid var(--signal);border-radius:var(--r);padding:24px}
 .case h3{font-size:17px;margin:0 0 9px}
 .case p{margin:0;font-size:15.5px;color:var(--graphite)}
-/* One card leads somewhere — the broken-peripheral case has a full guide behind
-   it. .case p has no margin, so the follow-on link needs its own gap. */
 .case-more{margin:13px 0 0;font-size:14.5px;line-height:1.5}
 .case-more a{font-weight:500}
 
@@ -563,10 +610,11 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 kbd{
   font-family:var(--mono);font-size:13px;background:var(--paper);
   border:1px solid var(--grid);border-bottom-width:2px;border-radius:3px;padding:2px 6px;color:var(--ink);
+  word-break:break-word;overflow-wrap:anywhere;
 }
 
-/* ==================== setup — a real sequence, so numbered ==================== */
-.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:22px;counter-reset:s}
+/* ==================== setup ==================== */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:22px;counter-reset:s}
 .step{background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);padding:24px;counter-increment:s;position:relative}
 .step::before{
   content:counter(s,decimal-leading-zero);
@@ -577,7 +625,13 @@ kbd{
 .step p{margin:0;font-size:15.5px;color:var(--graphite)}
 
 /* ==================== comparison ==================== */
-.tbl-wrap{overflow-x:auto;border:1px solid var(--grid);border-radius:var(--r);background:var(--panel)}
+.tbl-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid var(--grid);
+  border-radius:var(--r);
+  background:var(--panel);
+}
 table{width:100%;border-collapse:collapse;min-width:620px}
 th,td{text-align:left;padding:14px 18px;border-bottom:1px solid var(--grid-soft);font-size:15.5px}
 thead th{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:500;background:#fbfcfd}
@@ -601,11 +655,10 @@ summary:hover{background:#fbfcfd}
 details p{margin:0 22px 20px;color:var(--graphite);font-size:15.5px;max-width:76ch}
 
 /* ==================== download ==================== */
-.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(292px,1fr));gap:20px}
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px}
 .card{background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);padding:26px;display:flex;flex-direction:column}
 .card h3{font-size:19px;margin:12px 0 7px}
 .card>p{margin:0 0 18px;font-size:15.5px;color:var(--graphite)}
-/* The app icon at the point of download, on the dark tile the art needs. */
 .card-icon{
   width:52px;height:52px;border-radius:11px;margin:0 0 15px;
   background:linear-gradient(160deg,#243041,#0e1319);border:1px solid #2b3646;
@@ -620,10 +673,7 @@ details p{margin:0 22px 20px;color:var(--graphite);font-size:15.5px;max-width:76
 .card[data-missing="1"] .unavail{display:block}
 .card[data-missing="1"] .btn{background:var(--muted);border-color:var(--muted);pointer-events:none}
 
-/* Checksums. The install-help section tells people to verify the download
-   against "the checksum published beside the download", so it has to actually
-   be here. Hashes are long: force wrapping rather than a horizontal scrollbar,
-   and break on any character so a 64-hex string reflows cleanly on a phone. */
+/* Checksums */
 .sums{margin-top:34px;border-top:1px solid var(--grid);padding-top:26px}
 .sums h3{font-size:17px;margin:10px 0 8px}
 .sums>p{font-size:15.5px;color:var(--graphite);margin:0 0 20px;max-width:64ch}
@@ -631,62 +681,135 @@ details p{margin:0 22px 20px;color:var(--graphite);font-size:15.5px;max-width:76
 .sumrow:last-of-type{border-bottom:0}
 .sumrow dt{font-weight:600;font-size:15px}
 .sumrow dt span{display:block;font-family:var(--mono);font-size:11.5px;font-weight:400;color:var(--muted);letter-spacing:.04em;margin-top:3px}
-.sumrow dd{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--graphite);word-break:break-all}
+.sumrow dd{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--graphite);word-break:break-all;overflow-wrap:anywhere}
 .sums .verify{margin:22px 0 0;font-size:15.5px;color:var(--graphite)}
-/* Keep the command on one line where there is room, so the flag does not get
-   split from its value. Below that it must wrap at the spaces instead: nowrap
-   pushed a 349px command through the 319px column and the text touched the
-   screen edge. */
-@media (min-width:520px){ .sums .verify kbd{white-space:nowrap} }
-@media (max-width:640px){
-  /* Two columns would leave ~120px for a 64-character hash. Stack instead. */
-  .sumrow{grid-template-columns:minmax(0,1fr);gap:6px}
-}
 
 /* ==================== footer ==================== */
 footer{padding:44px 0 56px}
 .foot{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
 .foot p{margin:0;font-size:14px;color:var(--muted)}
-/* The footer is now the third place the guides are reachable from, after the
-   use-case card and the FAQ. It carries them because a footer link is where
-   crawlers expect to find the rest of a small site. */
-.foot-guides a{color:var(--graphite);font-weight:500}
+.foot-guides{display:flex;flex-wrap:wrap;gap:10px 16px}
+.foot-guides a{color:var(--graphite);font-weight:500;padding:4px 0}
+.foot-guides a:hover{color:var(--signal-ink)}
 
 /* ==================== responsive ==================== */
 @media (max-width:900px){
-  .hero{padding-top:48px}
+  .hero{padding:48px 0 16px}
   .hero-grid{grid-template-columns:1fr;gap:40px}
-  /* Single column: nothing to bottom-align to, so restore a real gap. */
-  .hero-meta{margin-top:30px}
-  .top nav{display:none}
+  .hero-meta{margin-top:28px}
+  .top nav.top-nav{display:none}
+  .nav-toggle{display:flex}
   .strow{grid-template-columns:1fr;gap:12px}
   .sec{padding:56px 0}
   body{font-size:16px}
 }
 
-/* Phones. The whole point of the hero rewrite is that the two downloads are
-   reachable without scrolling, and on a phone that budget is roughly 640px of
-   usable height — a 667px-tall handset minus browser chrome. Measured at 375px,
-   the untightened hero put the Windows button at y=635, i.e. off-screen on any
-   phone smaller than the tallest ones. So the run-up above the buttons gets
-   compressed: less top padding, a smaller lede, tighter gaps. Nothing is cut —
-   the same words are there, just not costing seven lines before the ask. */
-@media (max-width:560px){
-  .hero{padding-top:30px}
-  /* At the clamp floor of 31px the headline broke as "Your phone is the /
-     mouse, keyboard and / screen", leaving one word alone on a line. 28px did not
-     fix it — "mouse," still overran by 4px. 26px is the first size where "Your
-     phone is the mouse," fits one line, giving two balanced lines plus the em. */
-  .hero h1{font-size:26px}
-  .lede{font-size:17px;margin-top:18px}
-  .get{margin-top:22px}
+@media (max-width:600px){
+  .shell{padding:0 16px}
+  .top-in{height:58px}
+  
+  .hero{padding:26px 0 12px}
+  .hero h1{font-size:clamp(24px,6.8vw,32px);line-height:1.15}
+  .hero h1 em{font-size:.9em;margin-top:4px}
+  .tag{letter-spacing:.09em;font-size:10.5px}
+  .lede{font-size:16px;line-height:1.55;margin-top:14px}
 
-  /* Two auto-width buttons wrapped to two rows at slightly different widths
-     (158px and 168px), which reads as a layout accident rather than two equal
-     choices. Full-width blocks are also a far bigger thumb target. */
-  .get-row{flex-direction:column;gap:10px}
-  .get .btn{width:100%;justify-content:flex-start;padding:14px 18px}
-  .get-note{margin-top:15px;padding:12px 13px}
+  .get{margin-top:20px}
+  .get-row{display:grid;grid-template-columns:1fr;gap:10px}
+  .get .btn{width:100%;justify-content:flex-start;padding:13px 16px;font-size:15px}
+  .get-note{margin-top:14px;padding:12px 14px;font-size:13.5px}
+
+  .hero-linux-box{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:8px!important;
+    padding:10px 12px!important;
+  }
+  .hero-linux-box>div{
+    overflow-x:auto!important;
+    max-width:100%!important;
+    white-space:nowrap!important;
+    padding-bottom:3px!important;
+  }
+  .hero-linux-box button{
+    align-self:flex-start!important;
+    padding:6px 14px!important;
+    font-size:12px!important;
+  }
+
+  .hero-meta{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    padding-top:16px;
+  }
+  .hero-meta div{gap:2px}
+  .hero-meta span{font-size:13px}
+
+  .desk{padding:16px 14px 14px}
+  .monitor{padding-bottom:0;display:flex;flex-direction:column;align-items:center}
+  .screen{align-self:stretch}
+  .stand{position:static;transform:none}
+  .phone{position:static;width:160px;max-width:54%;margin-top:14px;box-shadow:0 8px 20px rgba(10,14,20,.3)}
+  .pad{aspect-ratio:9/16}
+  .desk-cap{justify-content:center}
+  .cap-pc,.cap-ph{display:none}
+  .cap-mob{display:block}
+
+  .readout{padding:10px 14px;gap:12px;justify-content:space-around}
+
+  .sec{padding:46px 0}
+  .sec-head{margin-bottom:28px}
+  .sec-head h2{font-size:clamp(22px,5.8vw,28px)}
+  .sec-head p{font-size:15.5px;margin-top:10px}
+
+  .caps{grid-template-columns:1fr;gap:1px}
+  .cap{padding:20px 18px}
+  .cap h3{font-size:16.5px}
+
+  .cases{grid-template-columns:1fr;gap:14px}
+  .case{padding:18px 16px}
+
+  .warn{padding:18px 16px;margin-bottom:24px}
+  .warn h3{font-size:18px}
+  .warn p{font-size:14.5px}
+
+  .steps-t{gap:1px}
+  .strow{padding:18px 16px}
+  .strow h3{font-size:16px}
+  .strow p{font-size:14.5px}
+
+  .flow{grid-template-columns:1fr;gap:14px}
+  .step{padding:18px 16px}
+  .step h3{font-size:16px}
+
+  .tbl-wrap{position:relative}
+  .tbl-wrap::after{
+    content:"Scroll table horizontally →";
+    display:block;
+    padding:8px 12px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    background:#fbfcfd;
+    border-top:1px solid var(--grid-soft);
+    text-align:right;
+  }
+  table{min-width:540px}
+  th,td{padding:10px 12px;font-size:13.5px}
+
+  details summary{padding:15px 16px;font-size:15.5px}
+  details p{margin:0 16px 16px;font-size:14.5px}
+
+  .dl{grid-template-columns:1fr;gap:16px}
+  .card{padding:20px 18px}
+  .card h3{font-size:18px}
+
+  .sumrow{grid-template-columns:1fr;gap:4px;padding:12px 0}
+  .sumrow dd{font-size:11.5px}
+
+  .foot{flex-direction:column;align-items:flex-start;gap:18px}
+  .foot-guides{display:flex;flex-wrap:wrap;gap:8px 14px}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -703,13 +826,44 @@ footer{padding:44px 0 56px}
       <span class="mark"><img src="icon.png" alt="PCDeck icon" width="30" height="30"></span>
       <b>PCDeck</b>
     </a>
-    <nav>
+    <nav class="top-nav">
       <a href="#features">What it does</a>
       <a href="#scenarios">Use cases</a>
       <a href="/security/">Security</a>
+      <a href="#setup">Setup</a>
+      <a href="#comparison">Comparison</a>
       <a href="#faq">FAQ</a>
     </nav>
-    <a class="btn sm" href="#download">Download</a>
+    <div class="top-actions">
+      <a class="btn sm" href="#download">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="#features" class="mob-link"><span>What it does</span><span>→</span></a>
+        <a href="#scenarios" class="mob-link"><span>Use cases</span><span>→</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>→</span></a>
+        <a href="#setup" class="mob-link"><span>Setup Guide</span><span>→</span></a>
+        <a href="#comparison" class="mob-link"><span>Comparison Table</span><span>→</span></a>
+        <a href="#faq" class="mob-link"><span>FAQ</span><span>→</span></a>
+        <a href="#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>↓</span></a>
+      </div>
+
+      <div class="mobile-guides-title">Guides & Troubleshooting</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/use-pc-without-mouse/" class="mob-link">Use PC without a mouse</a>
+        <a href="/use-pc-without-keyboard/" class="mob-link">Use PC without a keyboard</a>
+        <a href="/use-pc-without-monitor/" class="mob-link">Use PC without a monitor</a>
+        <a href="/stream-pc-audio-to-phone/" class="mob-link">Stream audio to phone</a>
+        <a href="/transfer-files-pc-to-android/" class="mob-link">Wi-Fi file transfer</a>
+        <a href="/use-pc-without-internet/" class="mob-link">Use PC without internet</a>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -720,7 +874,7 @@ footer{padding:44px 0 56px}
     <div class="shell hero-grid">
 
       <div class="hero-col">
-        <p class="tag">Windows 10 / 11 &nbsp;·&nbsp; Linux (Ubuntu, Arch, SteamOS) &nbsp;·&nbsp; Android &nbsp;·&nbsp; iOS &amp; Mac</p>
+        <p class="tag">Windows 10 / 11 · Linux · Android · iOS &amp; Mac</p>
         <h1>Turn Your Phone or Browser Into a Mouse, Keyboard & Screen<em>for Windows &amp; Linux</em></h1>
         <p class="lede">
           Your phone is the mouse, keyboard and screen your PC is missing. Dead mouse, broken keyboard, black monitor — or just want a second screen, PC audio streaming, and cable-free file transfers over your own local Wi-Fi. <b>Instant zero-install web control supported on iPhone, iPad, Mac, Linux &amp; Windows.</b>
@@ -746,12 +900,12 @@ footer{padding:44px 0 56px}
             </a>
           </div>
 
-          <div class="hero-linux-box" style="margin-top: 14px; background: rgba(0,0,0,0.04); border: 1px solid var(--grid); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: monospace; font-size: 12.5px;">
+          <div class="hero-linux-box" style="margin-top: 14px; background: var(--panel); border: 1px solid var(--grid); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 12.5px;">
             <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              <span style="color: var(--accent); font-weight: 700;">🐧 Linux Terminal:</span>
-              <code style="color: var(--fg); user-select: all;">curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
+              <span style="color: var(--signal); font-weight: 700;">🐧 Linux Terminal:</span>
+              <code style="color: var(--ink); user-select: all;">curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
             </div>
-            <button onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--accent); color: var(--bg); border: 0; padding: 5px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
+            <button onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--signal); color: #fff; border: 0; padding: 5px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
           </div>
 
           <p class="get-alt">
@@ -1170,7 +1324,7 @@ footer{padding:44px 0 56px}
         <p class="tag">Download</p>
         <h2>Get PCDeck</h2>
         <p>You need both halves: the app on your phone and the server on your PC. Read the <a href="#install-help">install warnings</a> first so the prompts are not a surprise.</p>
-        <p>Everything below is free: trackpad, keyboard, 30 FPS screen streaming, PC audio and the two-way file manager. Pro is a <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" rel="noopener" style="color: var(--fg); text-decoration: underline; text-underline-offset: 3px;">one-time $3.99 lifetime unlock</a> <em>inside</em> the app for 60/120 FPS streaming and faster transfers — there is nothing extra to download and no subscription.</p>
+        <p>Everything below is free: trackpad, keyboard, 30 FPS screen streaming, PC audio and the two-way file manager. Pro is a <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" rel="noopener" style="color: var(--signal-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px;">one-time $3.99 lifetime unlock</a> <em>inside</em> the app for 60/120 FPS streaming and faster transfers — there is nothing extra to download and no subscription.</p>
       </div>
 
       <div class="dl">
@@ -1210,9 +1364,9 @@ footer{padding:44px 0 56px}
             <li>Zero configuration · Native X11/Wayland</li>
             <li>Automated dependency resolution</li>
           </ul>
-          <div style="background: var(--bg); border: 1px solid var(--grid); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: monospace; font-size: 11.5px; margin-bottom: 12px;">
-            <code style="color: var(--fg); user-select: all; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
-            <button onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--accent); color: var(--bg); border: 0; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
+          <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 11.5px; margin-bottom: 12px; flex-wrap: wrap;">
+            <code style="color: var(--ink); user-select: all; overflow-x: auto; max-width: 100%; white-space: nowrap;">curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
+            <button onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--signal); color: #fff; border: 0; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
           </div>
           <a class="btn ghost" id="dl-linux" href="run_linux.sh" download="run_linux.sh">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -1246,7 +1400,7 @@ footer{padding:44px 0 56px}
              than none, because it tells honest users their good download is corrupt. -->
         <dl class="sumrow">
           <dt>PCDeck.apk<span>3,406,641 BYTES</span></dt>
-          <dd>909ab60842fbf630f68ca8db59c487b7bce1096dadf70b200333b3be930aa96f</dd>
+          <dd>4555514b92da4bbe6aca79f54f54c6fbee4555dffa9991984edf0b26ae92f24d</dd>
         </dl>
         <dl class="sumrow">
           <dt>PCDeck.aab<span>1,690,703 BYTES</span></dt>
@@ -1424,9 +1578,51 @@ footer{padding:44px 0 56px}
       document.getElementById('hero-' + key)
     ].filter(Boolean);
 
-    targets.forEach(function (el) {
-      el.setAttribute('href', url);
+/* ==========================================================================
+   3. Mobile navigation drawer.
+   ========================================================================== */
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    } else {
+      menu.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menu.addEventListener('click', function (e) {
+    if (e.target === menu) {
+      toggleMenu(false);
+    }
+  });
+
+  var links = menu.querySelectorAll('.mob-link');
+  for (var i = 0; i < links.length; i++) {
+    links[i].addEventListener('click', function () {
+      toggleMenu(false);
     });
+  }
+
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 900 && menu.classList.contains('active')) {
+      toggleMenu(false);
+    }
   });
 })();
 </script>

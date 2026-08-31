@@ -1,8 +1,8 @@
-﻿{
-  "versionCode": 264,
-  "versionName": "2.6.4",
+{
+  "versionCode": 265,
+  "versionName": "2.6.5",
   "apkUrl": "https://pcdeck.vercel.app/PCDeck.apk",
-  "releaseNotes": "• In-App OTA Auto-Updater system\n• Universal 1-line Linux PC server\n• Enhanced Wi-Fi auto-reconnect & multi-touch",
+  "releaseNotes": "• Razor-sharp text & 4:4:4 lossless chroma for crystal-clear readable desktop text\n• 100% responsive corner & edge touches (Windows Close button & taskbar)\n• Zero-latency touch response bypassing video stream queues\n• Instant first-frame desktop streaming without loading delays",
   "minVersionCode": 1,
   "publishedAt": "2026-09-01"
 }
