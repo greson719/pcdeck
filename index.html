@@ -2149,6 +2149,15 @@ footer{padding:44px 0 56px}
       document.getElementById('hero-' + key)
     ].filter(Boolean);
 
+    targets.forEach(function (el) {
+      if (el && !el.getAttribute('href')) {
+        el.setAttribute('href', url);
+        el.setAttribute('download', '');
+      }
+    });
+  });
+})();
+
 /* ==========================================================================
    3. Mobile navigation drawer.
    ========================================================================== */
