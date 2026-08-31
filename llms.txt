@@ -30,14 +30,14 @@ detail under "Installation warnings" below.
 - **Reverse phone mirroring.** The Android screen can also be shown and
   controlled on the PC (built on scrcpy over ADB).
 
-## Platform requirements
+## Platform requirements & Installation
 
-- Windows 10 or Windows 11 (64-bit).
-- Android 5.0 or newer.
-- Both devices on the same Wi-Fi network, or the PC connected to the phone's
-  hotspot. No internet access is needed after download.
-- No Python, .NET or driver install: the PC side is a single self-contained
-  executable.
+- **Windows**: Windows 10 or Windows 11 (64-bit) via standalone portable executable (`PCDeck.exe`).
+- **Linux**: Ubuntu, Debian, Fedora, Arch, SteamOS (Steam Deck), Raspberry Pi via universal 1-line command:
+  `curl -sSL https://pcdeck.vercel.app/install.sh | bash`
+- **Mobile (Native)**: Android 5.0 Lollipop through Android 16+ via direct APK (`PCDeck.apk`).
+- **Mobile (Browser Zero-Install)**: iOS, iPadOS, macOS, Linux, Android via Safari / Chrome / Firefox QR code scan.
+- Both devices on the same Wi-Fi network, or connected to the phone's hotspot. No internet access required after download.
 
 ## Pricing
 

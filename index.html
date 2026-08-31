@@ -58,14 +58,14 @@
       "alternateName": ["PC Deck", "PC-Deck", "PCDeck Remote"],
       "keywords": "PCDeck, PC Deck, wireless trackpad, phone as mouse, phone as keyboard, emergency monitor, stream pc audio to phone, offline file transfer",
       "url": "https://pcdeck.vercel.app/",
-      "operatingSystem": "Windows 10, Windows 11 (64-bit), Android 5.0+, iOS, iPadOS, macOS, Linux (via Web Remote)",
+      "operatingSystem": "Windows 10, Windows 11 (64-bit), Linux (Ubuntu, Debian, Fedora, Arch, SteamOS), Android 5.0+, iOS, iPadOS, macOS",
       "applicationCategory": "UtilitiesApplication",
       "applicationSubCategory": "Remote control, touch deck and screen sharing",
       "downloadUrl": "https://pcdeck.vercel.app/",
       "softwareVersion": "2.6.4",
       "image": "https://pcdeck.vercel.app/og-image.png",
       "softwareHelp": { "@type": "CreativeWork", "url": "https://pcdeck.vercel.app/#install-help" },
-      "description": "PCDeck turns your phone, tablet or browser into a wireless trackpad, keyboard, 60 FPS emergency display, audio receiver and high-speed file transfer hub for Windows 10/11. Runs entirely on local Wi-Fi with zero cloud relay, no telemetry, and instant zero-install browser control for iOS/Mac/Linux.",
+      "description": "PCDeck turns your phone, tablet or browser into a wireless trackpad, keyboard, 60 FPS emergency display, audio receiver and high-speed file transfer hub for Windows and Linux. Runs entirely on local Wi-Fi with zero cloud relay, no telemetry, and instant zero-install browser control for iOS/Mac/Linux.",
       "offers": [
         { "@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "PCDeck Free" },
         { "@type": "Offer", "price": "3.99", "priceCurrency": "USD", "name": "PCDeck Pro — one-time lifetime licence" }
@@ -720,10 +720,10 @@ footer{padding:44px 0 56px}
     <div class="shell hero-grid">
 
       <div class="hero-col">
-        <p class="tag">Windows 10 / 11 &nbsp;·&nbsp; Android 5.0+ &nbsp;·&nbsp; Instant Browser Control for iOS, Mac &amp; Linux</p>
-        <h1>Turn Your Phone or Browser Into a Mouse, Keyboard & Screen<em>for Windows</em></h1>
+        <p class="tag">Windows 10 / 11 &nbsp;·&nbsp; Linux (Ubuntu, Arch, SteamOS) &nbsp;·&nbsp; Android &nbsp;·&nbsp; iOS &amp; Mac</p>
+        <h1>Turn Your Phone or Browser Into a Mouse, Keyboard & Screen<em>for Windows &amp; Linux</em></h1>
         <p class="lede">
-          Your phone is the mouse, keyboard and screen your PC is missing. Dead mouse, broken keyboard, black monitor — or just want a second screen, PC audio streaming, and cable-free file transfers over your own local Wi-Fi. <b>Instant zero-install web control supported on iPhone, iPad, Mac &amp; Linux.</b>
+          Your phone is the mouse, keyboard and screen your PC is missing. Dead mouse, broken keyboard, black monitor — or just want a second screen, PC audio streaming, and cable-free file transfers over your own local Wi-Fi. <b>Instant zero-install web control supported on iPhone, iPad, Mac, Linux &amp; Windows.</b>
         </p>
 
         <div class="get" id="get">
@@ -1132,8 +1132,12 @@ footer{padding:44px 0 56px}
           <p>Yes! PCDeck features a built-in <strong>Zero-Install Web Remote</strong>. When you launch PCDeck on your Windows PC, simply point your iPhone or iPad camera at the on-screen QR code (or navigate to your PC's local IP address in any browser). Safari or Chrome immediately opens the full touch controller with multi-touch gestures, on-screen keyboard, 60 FPS desktop streaming, PC audio receiver, and file manager — with zero app installation required.</p>
         </details>
         <details>
-          <summary>Which Windows and Android versions are supported?</summary>
-          <p>Windows 10 and Windows 11 on the PC, as one self-contained executable with no Python or .NET to install first. On the mobile side, any Android 5.0+ device natively, plus all iOS, iPadOS, macOS, and Linux devices via the instant Zero-Install Web Controller.</p>
+          <summary>Does PCDeck support Linux and Steam Deck?</summary>
+          <p>Yes! PCDeck runs natively on Ubuntu, Debian, Fedora, Arch, Raspberry Pi OS, and SteamOS (Steam Deck). Simply run <code>curl -sSL https://pcdeck.vercel.app/install.sh | bash</code> in your Linux terminal to launch it immediately with multi-touch trackpad, keyboard, and screen streaming support.</p>
+        </details>
+        <details>
+          <summary>Which Windows, Linux and Android versions are supported?</summary>
+          <p>Windows 10 and Windows 11 as a standalone executable; Linux (Ubuntu, Debian, Fedora, Arch, SteamOS, Raspberry Pi) via universal 1-line script or binary; Android 5.0+ natively; and iOS/iPadOS/macOS via the instant Zero-Install Web Controller.</p>
         </details>
         <details>
           <summary>How does tapping the streamed screen click the right place?</summary>
@@ -1191,11 +1195,25 @@ footer{padding:44px 0 56px}
           <h3>Full Offline Package</h3>
           <p>Executable plus the APK and setup notes in one archive.</p>
           <ul class="spec">
-            <li>ZIP archive</li>
-            <li>Includes EXE & Android APK</li>
+            <li>ZIP archive (48.5 MB)</li>
+            <li>Includes EXE &amp; Android APK</li>
             <li>Useful for offline recovery</li>
           </ul>
           <a class="btn ghost" id="dl-zip" href="PCDeck_Package.zip" download>Download ZIP</a>
+        </div>
+
+        <div class="card" id="card-linux">
+          <p class="tag">PC · Linux &amp; Steam Deck</p>
+          <h3>PCDeck for Linux</h3>
+          <p>Universal 1-line install for Ubuntu, Debian, Arch, Fedora &amp; SteamOS.</p>
+          <ul class="spec">
+            <li>Zero configuration · Native X11/Wayland</li>
+            <li>Automated dependency resolution</li>
+          </ul>
+          <div style="background: var(--bg); border: 1px solid var(--grid); border-radius: 6px; padding: 10px 12px; font-family: monospace; font-size: 11.5px; margin-bottom: 12px; word-break: break-all; color: var(--fg); user-select: all;">
+            curl -sSL https://pcdeck.vercel.app/install.sh | bash
+          </div>
+          <a class="btn ghost" id="dl-linux" href="https://raw.githubusercontent.com/greson719/pcdeck-pro/main/run_linux.sh" target="_blank" rel="noopener">View Linux Launcher</a>
         </div>
       </div>
 
