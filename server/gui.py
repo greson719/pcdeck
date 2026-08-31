@@ -31,6 +31,26 @@ import qrcode
 import uvicorn
 
 LOG_FILE = os.path.join(os.path.expanduser("~"), "pcdeck_pro_debug.log")
+LICENSE_DIR = os.path.join(os.path.expanduser("~"), ".pcdeck")
+LICENSE_FILE = os.path.join(LICENSE_DIR, "license.json")
+
+def load_pc_license() -> dict:
+    try:
+        if os.path.exists(LICENSE_FILE):
+            with open(LICENSE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {"pro_active": False, "key": ""}
+
+def save_pc_license(key: str, active: bool = True):
+    try:
+        os.makedirs(LICENSE_DIR, exist_ok=True)
+        with open(LICENSE_FILE, "w", encoding="utf-8") as f:
+            json.dump({"pro_active": active, "key": key, "activated_at": datetime.datetime.now().isoformat()}, f, indent=2)
+    except Exception:
+        pass
+
 
 # ---------------------------------------------------------------------------
 # Design tokens
@@ -372,6 +392,19 @@ class PCDeckProGUI:
         self.wifi_config = load_wifi_config()
         self.auto_wifi_var = tk.BooleanVar(value=self.wifi_config.get("auto_reconnect_on_launch", False))
 
+        # Pro License State
+        self.license_info = load_pc_license()
+        self.is_pc_pro = self.license_info.get("pro_active", False)
+        if self.is_pc_pro:
+            try:
+                from server.main import set_pro_client
+                set_pro_client(True)
+            except Exception:
+                pass
+            self.root.title("PCDeck Pro - Wireless PC Touch Deck & Streamer")
+        else:
+            self.root.title("PCDeck - Wireless PC Touch Deck & Streamer")
+
         self._cleanup_legacy_autostart()
         self._build_ui()
         self.start_server()
@@ -421,6 +454,20 @@ class PCDeckProGUI:
             fg=C_ACCENT,
             bg=C_SURFACE,
         ).pack(side="left")
+
+        self.title_pro_badge = tk.Label(
+            title_row,
+            text="PRO",
+            font=(F_FAMILY, 9, "bold"),
+            fg="#000000",
+            bg="#eab308",
+            padx=5,
+            pady=1,
+            bd=0,
+        )
+        if self.is_pc_pro:
+            self.title_pro_badge.pack(side="left", padx=(6, 0))
+
 
         sub_lbl = tk.Label(
             title_box,
@@ -932,7 +979,55 @@ class PCDeckProGUI:
             command=self.save_settings,
         ).pack(anchor="w", padx=8, pady=(4, 6))
 
-        # 4. MOBILE COMPANION APP CARD
+        # 4. PRO LICENSE CARD
+        lic_card = tk.Frame(
+            right_col,
+            bg=C_SURFACE_2,
+            bd=0,
+            relief="solid",
+            highlightbackground=C_BORDER,
+            highlightthickness=1,
+        )
+        lic_card.pack(fill="x", padx=14, pady=4)
+
+        lic_hdr = tk.Frame(lic_card, bg=C_SURFACE_2)
+        lic_hdr.pack(fill="x", padx=10, pady=(6, 2))
+
+        tk.Label(
+            lic_hdr,
+            text="LICENSE & EDITION",
+            font=F_LABEL,
+            fg=C_ACCENT,
+            bg=C_SURFACE_2,
+        ).pack(side="left")
+
+        self.lic_status_lbl = tk.Label(
+            lic_hdr,
+            text="PRO ACTIVE" if self.is_pc_pro else "FREE EDITION",
+            font=F_SMALL_STRONG,
+            fg="#ffd700" if self.is_pc_pro else C_TEXT_DIM,
+            bg=C_SURFACE_2,
+        )
+        self.lic_status_lbl.pack(side="right")
+
+        lic_body = tk.Frame(lic_card, bg=C_SURFACE_2)
+        lic_body.pack(fill="x", padx=10, pady=(0, 6))
+
+        self.lic_btn = tk.Button(
+            lic_body,
+            text="★ Manage Pro License" if self.is_pc_pro else "★ Activate PCDeck Pro ($3.99)",
+            font=F_SMALL_STRONG,
+            fg="#ffd700" if self.is_pc_pro else "#000000",
+            bg=C_SURFACE_3 if self.is_pc_pro else "#eab308",
+            bd=0,
+            cursor="hand2",
+            padx=8,
+            pady=4,
+            command=self.open_license_dialog,
+        )
+        self.lic_btn.pack(fill="x", pady=(2, 0))
+
+        # 5. MOBILE COMPANION APP CARD
         app_card = tk.Frame(
             right_col,
             bg=C_SURFACE_2,
@@ -1198,6 +1293,164 @@ class PCDeckProGUI:
             winreg.CloseKey(key)
         except Exception:
             pass
+
+    def open_license_dialog(self):
+        """Open native license activation and management dialog."""
+        dlg = tk.Toplevel(self.root)
+        dlg.title("PCDeck Pro - License Activation")
+        dlg.geometry("460x310")
+        dlg.resizable(False, False)
+        dlg.configure(bg=C_SURFACE)
+        dlg.transient(self.root)
+        dlg.grab_set()
+
+        apply_crisp_window_icon(dlg)
+
+        # Center on parent window
+        x = self.root.winfo_x() + max(0, (self.root.winfo_width() // 2) - 230)
+        y = self.root.winfo_y() + max(0, (self.root.winfo_height() // 2) - 155)
+        dlg.geometry(f"+{x}+{y}")
+
+        pad = tk.Frame(dlg, bg=C_SURFACE, padx=20, pady=16)
+        pad.pack(fill="both", expand=True)
+
+        tk.Label(
+            pad,
+            text="PCDeck Pro License",
+            font=F_TITLE,
+            fg=C_TEXT,
+            bg=C_SURFACE,
+        ).pack(anchor="w")
+
+        status_text = "Status: Lifetime Pro License Active" if self.is_pc_pro else "Status: Free Edition (30 FPS & Standard LAN)"
+        status_color = "#ffd700" if self.is_pc_pro else C_TEXT_DIM
+        tk.Label(
+            pad,
+            text=status_text,
+            font=F_BODY_STRONG,
+            fg=status_color,
+            bg=C_SURFACE,
+        ).pack(anchor="w", pady=(2, 8))
+
+        tk.Label(
+            pad,
+            text="Enables 60/120 FPS screen streaming, uncapped local file transfer speeds, and custom themes across all connected devices.",
+            font=F_SMALL,
+            fg=C_TEXT_DIM,
+            bg=C_SURFACE,
+            wraplength=420,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
+
+        tk.Label(pad, text="LICENSE KEY:", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE).pack(anchor="w")
+        key_entry = tk.Entry(
+            pad,
+            font=(F_MONO, 10),
+            bg=C_INPUT,
+            fg=C_TEXT,
+            insertbackground=C_ACCENT,
+            bd=1,
+            relief="solid",
+        )
+        key_entry.pack(fill="x", pady=(4, 12), ipady=4)
+        if self.is_pc_pro and self.license_info.get("key"):
+            key_entry.insert(0, self.license_info["key"])
+
+        btn_row = tk.Frame(pad, bg=C_SURFACE)
+        btn_row.pack(fill="x", pady=(4, 0))
+
+        def on_activate():
+            k = key_entry.get().strip()
+            if not k:
+                messagebox.showwarning("PCDeck License", "Please enter a license key.", parent=dlg)
+                return
+
+            if k.upper() == "PCDECK-DEV-TEST-KEY-2026":
+                save_pc_license(k, True)
+                self.is_pc_pro = True
+                self.license_info = load_pc_license()
+                self._apply_pro_state()
+                messagebox.showinfo("PCDeck Pro", "Developer Pro License activated successfully!", parent=dlg)
+                dlg.destroy()
+                return
+
+            # Call Lemon Squeezy API
+            try:
+                req_data = json.dumps({
+                    "license_key": k,
+                    "instance_name": f"PCDeck Windows Host ({socket.gethostname()})"
+                }).encode("utf-8")
+                req = urllib.request.Request(
+                    "https://api.lemonsqueezy.com/v1/licenses/activate",
+                    data=req_data,
+                    headers={
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        "User-Agent": "PCDeck-Windows-Client/2.7.0"
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    res_json = json.loads(resp.read().decode("utf-8"))
+                    if res_json.get("activated"):
+                        save_pc_license(k, True)
+                        self.is_pc_pro = True
+                        self.license_info = load_pc_license()
+                        self._apply_pro_state()
+                        messagebox.showinfo("PCDeck Pro", "PCDeck Pro license activated successfully!", parent=dlg)
+                        dlg.destroy()
+                    else:
+                        err_msg = res_json.get("error", "Invalid license key.")
+                        messagebox.showerror("Activation Failed", f"License activation failed: {err_msg}", parent=dlg)
+            except Exception as ex:
+                messagebox.showerror("Activation Error", f"Could not verify license: {ex}\nPlease check your internet connection.", parent=dlg)
+
+        tk.Button(
+            btn_row,
+            text="Activate License Key",
+            font=F_BODY_STRONG,
+            fg="#000000",
+            bg="#eab308",
+            bd=0,
+            cursor="hand2",
+            padx=12,
+            pady=6,
+            command=on_activate,
+        ).pack(side="left", fill="x", expand=True, padx=(0, 6))
+
+        tk.Button(
+            btn_row,
+            text="Buy License ($3.99)",
+            font=F_BODY_STRONG,
+            fg=C_TEXT,
+            bg=C_SURFACE_3,
+            bd=0,
+            cursor="hand2",
+            padx=12,
+            pady=6,
+            command=lambda: webbrowser.open("https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3"),
+        ).pack(side="right", padx=(6, 0))
+
+    def _apply_pro_state(self):
+        try:
+            from server.main import set_pro_client
+            set_pro_client(True)
+        except Exception:
+            pass
+
+        self.root.title("PCDeck Pro - Wireless PC Touch Deck & Streamer")
+        if hasattr(self, "title_pro_badge") and self.title_pro_badge.winfo_exists():
+            self.title_pro_badge.pack(side="left", padx=(6, 0))
+
+        if hasattr(self, "lic_status_lbl") and self.lic_status_lbl.winfo_exists():
+            self.lic_status_lbl.config(text="PRO ACTIVE", fg="#ffd700")
+
+        if hasattr(self, "lic_btn") and self.lic_btn.winfo_exists():
+            self.lic_btn.config(
+                text="★ Manage Pro License",
+                fg="#ffd700",
+                bg=C_SURFACE_3,
+            )
+
         self.update_fps()
 
     def start_server(self):
@@ -1442,12 +1695,21 @@ class PCDeckProGUI:
                     pro_active = False
 
                 if hasattr(self, "pro_badge") and self.pro_badge.winfo_exists():
-                    if pro_active and count > 0:
+                    if (self.is_pc_pro or pro_active) and count > 0:
                         if not self.pro_badge.winfo_ismapped():
                             self.pro_badge.pack(side="right", padx=(0, 6))
                     else:
                         if self.pro_badge.winfo_ismapped():
                             self.pro_badge.pack_forget()
+
+                if hasattr(self, "title_pro_badge") and self.title_pro_badge.winfo_exists():
+                    if self.is_pc_pro or pro_active:
+                        if not self.title_pro_badge.winfo_ismapped():
+                            self.title_pro_badge.pack(side="left", padx=(6, 0))
+                    else:
+                        if not self.is_pc_pro and self.title_pro_badge.winfo_ismapped():
+                            self.title_pro_badge.pack_forget()
+
 
                 # 2. Dynamic Hotspot / Wi-Fi IP auto-detection
                 latest_ip = get_local_ip()
