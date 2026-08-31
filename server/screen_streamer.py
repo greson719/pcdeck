@@ -141,8 +141,8 @@ class ScreenStreamer:
         self._width: int = 1920
         self._height: int = 1080
         self._monitor_idx: int = 1
-        self.quality: int = 85
-        self.scale: float = 1.0
+        self.quality: int = 75
+        self.scale: float = 0.85
         self.fps_limit: int = 30
         self._thread: Optional[threading.Thread] = None
         self._generation: int = 0
@@ -330,8 +330,8 @@ class ScreenStreamer:
                     img = Image.frombuffer("RGB", (target_w, target_h), buf, "raw", "BGRX", 0, 1)
 
                     out = io.BytesIO()
-                    # subsampling=0 (4:4:4 RGB) ensures razor-sharp text & UI fonts with ultra-fast encoding
-                    img.save(out, format="JPEG", quality=self.quality, subsampling=0, optimize=False)
+                    # subsampling=2 (4:2:0 standard fast JPEG) ensures ultra-low bandwidth & instant ~3ms encoding
+                    img.save(out, format="JPEG", quality=self.quality, subsampling=2, optimize=False)
                     jpeg = out.getvalue()
 
                     with self._lock:

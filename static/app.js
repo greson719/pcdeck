@@ -57,8 +57,8 @@
     // Screen stream encoder settings, pushed to the server as "cfg,quality,scale,fps".
     // The server clamps fps to 10-60, so 60 is the effective maximum.
     streamFps: 30,
-    streamQuality: 95,
-    streamScale: 1.0,
+    streamQuality: 75,
+    streamScale: 0.85,
     zoomSens: 1.0,
     activeTab: 'tab-screen',
     screenMode: 'touch', // 'touch', 'mouse', or 'rclick'
