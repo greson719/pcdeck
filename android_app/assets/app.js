@@ -4851,7 +4851,7 @@
       statusTitle.style.color = isPro ? '#ffd700' : '#fff';
     }
     if (statusDesc) {
-      statusDesc.textContent = isPro ? '60 FPS Ultra Screen, Turbo Transfers & Chroma Themes Unlocked' : 'Standard 30 FPS screen streaming & 10 MB/s file sharing';
+      statusDesc.textContent = isPro ? '60/120 FPS High-Refresh Streaming, Uncapped Bandwidth & OLED Themes Active' : 'Standard 30 FPS screen streaming & 10 MB/s file sharing';
     }
     if (btnUpgrade) {
       btnUpgrade.style.display = isPro ? 'none' : 'block';
@@ -5074,7 +5074,7 @@
         if ((selFps.value === '60' || selFps.value === '120') && !window.isProUnlocked()) {
           selFps.value = '30';
           window.openProUpgradeModal();
-          showToast('60 FPS Ultra Streaming requires PCDeck Pro', 'warn', '⭐');
+          showToast('60 FPS High-Refresh Streaming requires PCDeck Pro', 'info', '⭐');
           return;
         }
         window.setStreamFps(selFps.value === '30' ? 30 : 60);
@@ -5133,7 +5133,7 @@
         if (selSpeed.value === 'turbo' && !window.isProUnlocked()) {
           selSpeed.value = 'standard';
           window.showProCornerCard();
-          showToast('Turbo File Acceleration requires PCDeck Pro ⭐', 'info', '⭐');
+          showToast('Uncapped LAN File Bandwidth requires PCDeck Pro', 'info', '⭐');
         }
       };
     }
@@ -5146,7 +5146,7 @@
           selTheme.value = 'default';
           applyChromaTheme('default');
           window.showProCornerCard();
-          showToast('Chroma Themes require PCDeck Pro ⭐', 'info', '⭐');
+          showToast('Custom Accent Themes require PCDeck Pro', 'info', '⭐');
         } else {
           applyChromaTheme(selTheme.value);
         }
