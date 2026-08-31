@@ -1235,8 +1235,8 @@
   }
 
   // --- High-Performance Hardware-Accelerated Zero-Lag Screen Frame Renderer ---
-  let pendingFrameData = null;
-  let isFrameProcessing = false;
+  let isDecodingScreen = false;
+  let nextFrameBuffer = null;
   let cachedScreenImg = new Image();
   let activeBlobUrl = null;
 
@@ -1248,25 +1248,21 @@
       return;
     }
     lastScreenFrameReceivedTime = Date.now();
-    pendingFrameData = data;
-    if (!isFrameProcessing) {
-      isFrameProcessing = true;
-      requestAnimationFrame(processLatestScreenFrame);
+    nextFrameBuffer = data;
+    if (!isDecodingScreen) {
+      processNextScreenFrame();
     }
   }
 
-  async function processLatestScreenFrame() {
-    if (!pendingFrameData) {
-      isFrameProcessing = false;
+  async function processNextScreenFrame() {
+    if (!nextFrameBuffer || !el.screenCanvas) {
+      isDecodingScreen = false;
       return;
     }
-    const data = pendingFrameData;
-    pendingFrameData = null;
+    isDecodingScreen = true;
+    const data = nextFrameBuffer;
+    nextFrameBuffer = null;
 
-    if (!el.screenCanvas) {
-      isFrameProcessing = false;
-      return;
-    }
     if (!screenCtx) {
       screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
       if (screenCtx) {
@@ -1340,10 +1336,10 @@
     } catch (e) {
       console.warn('Frame render error:', e);
     } finally {
-      if (pendingFrameData) {
-        requestAnimationFrame(processLatestScreenFrame);
+      if (nextFrameBuffer) {
+        setTimeout(processNextScreenFrame, 0);
       } else {
-        isFrameProcessing = false;
+        isDecodingScreen = false;
       }
     }
   }

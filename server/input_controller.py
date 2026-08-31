@@ -268,9 +268,6 @@ class WindowsInputController:
         px = int(round(clamped_x * (w - 1)))
         py = int(round(clamped_y * (h - 1)))
         user32.SetCursorPos(px, py)
-        x = int(round(clamped_x * 65535))
-        y = int(round(clamped_y * 65535))
-        self._send_mouse(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK, x, y)
 
     def set_cursor_normalized(self, norm_x: float, norm_y: float):
         """Set cursor position using normalized coordinates [0.0 - 1.0]."""

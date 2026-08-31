@@ -1622,9 +1622,13 @@ async def websocket_screen_endpoint(websocket: WebSocket):
     async def send_frames():
         last_sent_id = initial_id if initial_jpeg else -1
         last_keepalive_at = time.time()
+        loop = asyncio.get_running_loop()
         while True:
             try:
-                jpeg, frame_id = streamer.get_latest_frame()
+                # Wait for the exact moment a new frame is captured (0ms latency!)
+                jpeg, frame_id = await loop.run_in_executor(
+                    None, streamer.wait_next_frame, last_sent_id, 0.8
+                )
                 now = time.time()
                 if jpeg and frame_id != last_sent_id:
                     last_sent_id = frame_id
@@ -1635,11 +1639,6 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     # Lightweight keepalive ping to keep connection and watchdog alive without flooding video pipe
                     await websocket.send_text("h")
             except (asyncio.CancelledError, WebSocketDisconnect, Exception):
-                break
-            try:
-                interval = 1.0 / max(10, min(60, streamer.fps_limit))
-                await asyncio.sleep(interval)
-            except (asyncio.CancelledError, Exception):
                 break
 
     async def receive_cmds():

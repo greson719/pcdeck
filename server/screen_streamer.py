@@ -135,12 +135,13 @@ class ScreenStreamer:
 
     def __init__(self):
         self._lock = threading.Lock()
+        self._frame_event = threading.Event()
         self.running = False
         self._latest_jpeg: Optional[bytes] = None
         self._width: int = 1920
         self._height: int = 1080
         self._monitor_idx: int = 1
-        self.quality: int = 90
+        self.quality: int = 85
         self.scale: float = 1.0
         self.fps_limit: int = 30
         self._thread: Optional[threading.Thread] = None
@@ -338,6 +339,7 @@ class ScreenStreamer:
                             break
                         self._latest_jpeg = jpeg
                         self._frame_id += 1
+                        self._frame_event.set()
                     prev_jpeg = jpeg
 
                 except Exception as e:
@@ -396,6 +398,7 @@ class ScreenStreamer:
                         self._latest_jpeg = jpeg
                         if jpeg != prev_jpeg:
                             self._frame_id += 1
+                            self._frame_event.set()
                     prev_jpeg = jpeg
 
                 except Exception:
@@ -500,6 +503,22 @@ class ScreenStreamer:
 
     def get_latest_frame(self) -> Tuple[Optional[bytes], int]:
         """Returns the newest frame together with its id, so callers can skip resends."""
+        with self._lock:
+            return self._latest_jpeg, self._frame_id
+
+    def wait_next_frame(self, last_id: int, timeout: float = 0.5) -> Tuple[Optional[bytes], int]:
+        """Waits for a new frame event to fire, delivering frames instantly with 0ms polling delay."""
+        with self._lock:
+            if self._frame_id != last_id and self._latest_jpeg:
+                return self._latest_jpeg, self._frame_id
+
+        self._frame_event.clear()
+
+        with self._lock:
+            if self._frame_id != last_id and self._latest_jpeg:
+                return self._latest_jpeg, self._frame_id
+
+        self._frame_event.wait(timeout=timeout)
         with self._lock:
             return self._latest_jpeg, self._frame_id
 
