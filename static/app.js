@@ -59,6 +59,7 @@
     streamFps: 30,
     streamQuality: 75,
     streamScale: 0.85,
+    autoQualityMode: 'auto',
     zoomSens: 1.0,
     activeTab: 'tab-screen',
     screenMode: 'touch', // 'touch', 'mouse', or 'rclick'
@@ -445,13 +446,12 @@
       if (savedQuality !== null) state.streamQuality = parseInt(savedQuality, 10);
       const savedScale = localStorage.getItem('neontrack_stream_scale');
       if (savedScale !== null) state.streamScale = parseFloat(savedScale);
+      const savedAutoMode = localStorage.getItem('neontrack_stream_auto_mode');
+      if (savedAutoMode) state.autoQualityMode = savedAutoMode;
 
       const selClarity = document.getElementById('setting-stream-clarity');
       if (selClarity) {
-        if (state.streamScale >= 0.99 && state.streamQuality >= 90) selClarity.value = 'ultrahd';
-        else if (state.streamScale >= 0.99 && state.streamQuality >= 80) selClarity.value = 'sharp';
-        else if (state.streamScale >= 0.80) selClarity.value = 'balanced';
-        else selClarity.value = 'speed';
+        selClarity.value = state.autoQualityMode || 'auto';
       }
 
       const titlebarHidden = localStorage.getItem('neontrack_titlebar_hidden');
@@ -480,6 +480,7 @@
       localStorage.setItem('neontrack_stream_fps', state.streamFps.toString());
       localStorage.setItem('neontrack_stream_quality', state.streamQuality.toString());
       localStorage.setItem('neontrack_stream_scale', state.streamScale.toString());
+      localStorage.setItem('neontrack_stream_auto_mode', state.autoQualityMode || 'auto');
       localStorage.setItem('neontrack_titlebar_hidden', state.titleBarHidden.toString());
 
       if (showToastNotify) {
@@ -1026,11 +1027,88 @@
   function sendStreamConfig() {
     if (!screenWs || screenWs.readyState !== WebSocket.OPEN) return;
     const fps = Math.max(10, Math.min(60, parseInt(state.streamFps, 10) || 30));
-    const quality = Math.max(20, Math.min(100, parseInt(state.streamQuality, 10) || 95));
-    const scale = Math.max(0.3, Math.min(1.0, parseFloat(state.streamScale) || 1.0));
+    const quality = Math.max(20, Math.min(100, parseInt(state.streamQuality, 10) || 75));
+    const scale = Math.max(0.3, Math.min(1.0, parseFloat(state.streamScale) || 0.85));
     try {
       screenWs.send(`cfg,${quality},${scale.toFixed(2)},${fps}`);
     } catch (e) {}
+  }
+
+  // --- Intelligent Dynamic Adaptive Quality & Latency Controller (Auto ABR) ---
+  let smoothedRtt = 25; // ms
+  let stableTicks = 0;
+  let currentAppliedQuality = 75;
+  let currentAppliedScale = 0.85;
+  let lastAutoBandwidthClass = '';
+
+  function updateAdaptiveQuality(currentRtt) {
+    if (state.autoQualityMode !== 'auto') return;
+
+    // Exponential moving average for jitter-resistant smoothed RTT
+    smoothedRtt = Math.round(smoothedRtt * 0.65 + currentRtt * 0.35);
+
+    let targetQuality = 75;
+    let targetScale = 0.85;
+    let bandwidthLabel = '';
+
+    if (smoothedRtt < 22) {
+      // 5 GHz / 6 GHz / USB Tethering / Wi-Fi 6 Ultra-Fast
+      targetQuality = 88;
+      targetScale = 1.0;
+      bandwidthLabel = '5GHz/6G ⚡';
+    } else if (smoothedRtt <= 48) {
+      // Clean 5 GHz or strong 2.4 GHz
+      targetQuality = 78;
+      targetScale = 0.90;
+      bandwidthLabel = '5GHz 📶';
+    } else if (smoothedRtt <= 90) {
+      // Standard 2.4 GHz / Mobile Hotspot / USB Dongle
+      targetQuality = 70;
+      targetScale = 0.78;
+      bandwidthLabel = '2.4GHz 📶';
+    } else if (smoothedRtt <= 150) {
+      // Congested 2.4 GHz / Weak signal
+      targetQuality = 58;
+      targetScale = 0.65;
+      bandwidthLabel = '2.4G Slow ⚠️';
+    } else {
+      // High packet loss / Severe interference spike
+      targetQuality = 45;
+      targetScale = 0.50;
+      bandwidthLabel = 'Lag Guard 🛡️';
+    }
+
+    // Fast-drop on latency spike (immediate drop to prevent queue backlog)
+    const isDegrading = (targetQuality < currentAppliedQuality);
+    if (isDegrading) {
+      stableTicks = 0;
+      currentAppliedQuality = targetQuality;
+      currentAppliedScale = targetScale;
+      state.streamQuality = currentAppliedQuality;
+      state.streamScale = currentAppliedScale;
+      sendStreamConfig();
+    } else if (targetQuality > currentAppliedQuality) {
+      // Hysteresis: Require 3 consecutive stable checks (4.5 seconds) before stepping up quality
+      stableTicks++;
+      if (stableTicks >= 3) {
+        stableTicks = 0;
+        currentAppliedQuality = targetQuality;
+        currentAppliedScale = targetScale;
+        state.streamQuality = currentAppliedQuality;
+        state.streamScale = currentAppliedScale;
+        sendStreamConfig();
+      }
+    } else {
+      stableTicks = 0;
+    }
+
+    // Update status label or latency pill
+    if (lastAutoBandwidthClass !== bandwidthLabel) {
+      lastAutoBandwidthClass = bandwidthLabel;
+      if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
+        el.statusLabel.textContent = `${bandwidthLabel} ${smoothedRtt}ms`;
+      }
+    }
   }
 
   function connectScreenWs() {
@@ -1116,7 +1194,7 @@
       if (mainWs && mainWs.readyState === WebSocket.OPEN) {
         mainWs.send(`p,${Date.now()}`);
       }
-    }, 2500);
+    }, 1500);
 
     // Refresh Places & Current Directory
     loadFsPlaces();
@@ -1134,6 +1212,7 @@
       const sentTime = parseInt(data.split(',')[1], 10);
       state.latency = Math.max(1, Date.now() - sentTime);
       if (el.latencyVal) el.latencyVal.textContent = `${state.latency}ms`;
+      updateAdaptiveQuality(state.latency);
       return;
     }
 
@@ -5002,29 +5081,36 @@
       };
     }
 
-    // Text Sharpness & Clarity Selector
+    // Adaptive Stream Quality Selector
     const selClarity = document.getElementById('setting-stream-clarity');
     if (selClarity) {
       selClarity.onchange = () => {
         const val = selClarity.value;
-        if (val === 'ultrahd') {
-          state.streamQuality = 95;
+        state.autoQualityMode = val;
+        if (val === 'auto') {
+          showToast('✨ Auto Dynamic Quality Enabled (2.4G/5G/6G AI-Tuned)', 'success', '✨');
+          updateAdaptiveQuality(state.latency || 25);
+        } else if (val === 'ultrahd') {
+          state.streamQuality = 90;
           state.streamScale = 1.0;
-          showToast('Ultra HD Crystal Clear Enabled (100% · 95Q)', 'success', '✨');
+          showToast('Ultra HD Crystal Enabled (100% Native · 90Q · 5GHz/6GHz)', 'success', '✨');
+          sendStreamConfig();
         } else if (val === 'sharp') {
-          state.streamQuality = 85;
-          state.streamScale = 1.0;
-          showToast('High Clarity Mode Enabled (100% · 85Q)', 'success', '🔍');
+          state.streamQuality = 80;
+          state.streamScale = 0.90;
+          showToast('High Clarity Fixed (90% Scale · 80Q)', 'success', '🔍');
+          sendStreamConfig();
         } else if (val === 'speed') {
-          state.streamQuality = 60;
-          state.streamScale = 0.70;
-          showToast('High Speed Stream Enabled (70% · 60Q)', 'info', '⚡');
+          state.streamQuality = 55;
+          state.streamScale = 0.65;
+          showToast('Low Latency Speed (65% Scale · 55Q · 2.4GHz)', 'info', '⚡');
+          sendStreamConfig();
         } else {
-          state.streamQuality = 75;
-          state.streamScale = 0.85;
-          showToast('Balanced Speed Enabled (85% · 75Q)', 'success', '🔍');
+          state.streamQuality = 70;
+          state.streamScale = 0.80;
+          showToast('Balanced Fast (80% Scale · 70Q)', 'success', '🔍');
+          sendStreamConfig();
         }
-        sendStreamConfig();
         saveAllSettings(false);
       };
     }
