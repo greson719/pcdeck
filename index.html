@@ -736,18 +736,30 @@ footer{padding:44px 0 56px}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
               <span>Windows Server<small>EXE · 47.2 MB</small></span>
             </a>
+            <a class="btn ghost" id="hero-linux" href="#card-linux">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="m8 21 8 0"/><path d="m12 17 0 4"/><path d="m7 8 3 3-3 3"/><path d="m13 14 4 0"/></svg>
+              <span>Linux Server<small>1-Line Terminal Install</small></span>
+            </a>
             <a class="btn ghost" id="hero-zip" href="PCDeck_Package.zip" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span>Full Package<small>ZIP · 48.5 MB</small></span>
             </a>
           </div>
 
+          <div class="hero-linux-box" style="margin-top: 14px; background: rgba(0,0,0,0.04); border: 1px solid var(--grid); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: monospace; font-size: 12.5px;">
+            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span style="color: var(--accent); font-weight: 700;">🐧 Linux:</span>
+              <code style="color: var(--fg); user-select: all;">curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
+            </div>
+            <button onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--accent); color: var(--bg); border: 0; padding: 5px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
+          </div>
+
           <p class="get-alt">
-            <b>Two easy ways to connect:</b> Download the native Android APK above, or launch the Windows Server and scan the on-screen QR code with <b>any iPhone, iPad, Mac, Linux or Android browser</b> for instant zero-install control. Also available in the <a href="PCDeck_Package.zip" download>offline ZIP bundle</a>.
+            <b>Easy setup on all platforms:</b> Download for Windows or Linux above. For <b>iPhone, iPad, Mac, and Linux browsers</b>, simply scan the on-screen QR code for instant zero-install Web Remote.
           </p>
 
           <p class="get-note">
-            <b>Setup:</b> Launch the portable Windows client on your PC. Both connect automatically over your local Wi-Fi / Hotspot with zero cloud sign-in. <a href="#install-help">View setup guide &amp; checksums</a>.
+            <b>Setup:</b> Launch the portable server on your PC. It connects automatically over your local Wi-Fi / Hotspot with zero cloud sign-in. <a href="#install-help">View setup guide &amp; checksums</a>.
           </p>
         </div>
 
