@@ -483,7 +483,7 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .hero-meta div{display:flex;flex-direction:column;gap:3px}
 .hero-meta span{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink)}
 
-/* ---------- SIGNATURE: the live trackpad ---------- */
+/* ---------- SIGNATURE: the live trackpad & interactive mock desktop ---------- */
 .rig{background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
 .rig-head{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -497,29 +497,184 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
   padding:24px 24px 16px;flex:1;display:flex;flex-direction:column;justify-content:center;
 }
 .monitor{position:relative;padding-bottom:44px}
-.desk-lede{margin:0 0 22px;font-size:14.5px;line-height:1.5;color:var(--muted);max-width:38ch}
+.desk-lede{margin:0 0 18px;font-size:14px;line-height:1.5;color:var(--muted);max-width:44ch}
 
 .screen{
-  position:relative;aspect-ratio:16/9;background:#20262f;overflow:hidden;
+  position:relative;aspect-ratio:16/9;background:#10151f;overflow:hidden;
   border:9px solid #14181e;border-bottom-width:19px;border-radius:11px;
   box-shadow:0 20px 34px -20px rgba(12,16,22,.5);
+  user-select:none;
 }
-.screen-bar{height:26px;background:#171c23;display:flex;align-items:center;gap:6px;padding:0 9px;border-bottom:1px solid #2c333d}
-.dot{width:8px;height:8px;border-radius:50%;background:#39414c}
+.screen-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 30%, #1c2637 0%, #0c1017 100%);
+}
+.screen-bg::after{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                   linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size:24px 24px;
+}
+
+/* Desktop Shortcuts */
+.desk-icons{
+  position:absolute;left:10px;top:10px;display:flex;flex-direction:column;gap:8px;z-index:2;
+}
+.d-icon{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  width:46px;padding:3px;border-radius:4px;cursor:pointer;
+  transition:background .12s ease;
+}
+.d-icon.mock-hover, .d-icon:hover{
+  background:rgba(255,255,255,0.18);
+}
+.d-icon-art{
+  font-size:17px;line-height:1;display:grid;place-items:center;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+}
+.d-icon span{
+  font-family:var(--mono);font-size:8px;font-weight:600;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,0.9);
+}
+
+/* Windows */
 .win{
-  position:absolute;left:9%;top:16%;width:62%;
-  background:#f7f8fa;border:1px solid #454e5a;border-radius:3px;
-  box-shadow:0 12px 34px rgba(0,0,0,.34);
+  position:absolute;left:16%;top:10%;width:58%;
+  background:#f7f8fa;border:1px solid #454e5a;border-radius:5px;
+  box-shadow:0 12px 34px rgba(0,0,0,.45);
+  z-index:4;
+  transition:transform .18s cubic-bezier(0.16, 1, 0.3, 1), opacity .18s ease;
 }
-.win-bar{height:24px;background:#e7eaee;border-bottom:1px solid #cfd5dd;display:flex;align-items:center;padding:0 8px;gap:5px}
-.win-bar i{width:7px;height:7px;border-radius:50%;background:#b9c0c9;display:block}
-.win-bar b{font-family:var(--mono);font-size:9.5px;color:#59616c;font-weight:500;margin-left:4px}
-.win-body{padding:11px 12px}
-.bar{height:6px;border-radius:3px;background:#dfe3e9;margin-bottom:7px}
+.win.hidden{
+  transform:scale(0.92);
+  opacity:0;
+  pointer-events:none;
+}
+.win.focused{
+  z-index:6;
+  box-shadow:0 16px 40px rgba(0,0,0,.6);
+}
+.win-dark{
+  left:20%;top:16%;width:56%;
+  background:#0e1319;border-color:#2a3648;color:#d5dde6;
+}
+.win-player{
+  left:24%;top:20%;width:52%;
+  background:#121620;border-color:#2b3648;color:#fff;
+}
+.win-bar{
+  height:24px;background:#e7eaee;border-bottom:1px solid #cfd5dd;
+  display:flex;align-items:center;justify-content:space-between;padding:0 8px;
+}
+.win-dark .win-bar, .win-player .win-bar{
+  background:#18202c;border-bottom-color:#253140;color:#e1e7f0;
+}
+.win-btns{
+  display:flex;align-items:center;gap:4px;
+}
+.win-btn{
+  width:10px;height:10px;border-radius:50%;border:1px solid transparent;
+  display:grid;place-items:center;font-size:7px;font-family:sans-serif;
+  color:transparent;cursor:pointer;padding:0;line-height:1;transition:transform .1s ease, filter .1s ease;
+}
+.win-btn.close{background:#ff5f56;border-color:#e0443e}
+.win-btn.min{background:#ffbd2e;border-color:#dea123}
+.win-btn.max{background:#27c93f;border-color:#1aab29}
+.win-btn.mock-hover, .win-btn:hover{
+  transform:scale(1.25);
+  color:#fff;
+  filter:brightness(1.15);
+}
+.win-bar b{
+  font-family:var(--mono);font-size:9.5px;color:#59616c;font-weight:600;
+  flex:1;text-align:center;padding-right:20px;
+}
+.win-dark .win-bar b, .win-player .win-bar b{
+  color:#b0bccb;
+}
+.win-body{padding:9px 11px}
+.win-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.sig-pill{font-family:var(--mono);font-size:8px;font-weight:700;background:var(--signal);color:#fff;padding:2px 5px;border-radius:3px}
+.dim-txt{font-family:var(--mono);font-size:8px;color:#8894a4}
+.bar{height:5px;border-radius:3px;background:#dfe3e9;margin-bottom:6px}
 .bar.w40{width:40%}.bar.w70{width:70%}.bar.w55{width:55%}
-.bar.sig{background:var(--signal);opacity:.75}
-.taskbar{position:absolute;bottom:0;left:0;right:0;height:28px;background:#171c23;border-top:1px solid #2c333d;display:flex;align-items:center;gap:7px;padding:0 10px}
-.taskbar i{width:15px;height:15px;border-radius:2px;background:#333b45;display:block}
+.bar.sig{background:var(--signal);opacity:.85}
+
+.win-actions{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.win-click-btn{
+  background:var(--ink);color:#fff;border:0;border-radius:3px;
+  font-family:var(--mono);font-size:8.5px;font-weight:600;padding:3px 7px;cursor:pointer;
+  transition:background .12s ease, transform .12s ease;
+}
+.win-click-btn.mock-hover, .win-click-btn:hover{
+  background:var(--signal);
+  transform:scale(1.05);
+}
+.win-status-badge{font-family:var(--mono);font-size:8px;color:#27c93f;font-weight:600}
+
+/* Terminal window body */
+.term-body{padding:8px 10px;font-family:var(--mono);font-size:8.5px;line-height:1.4}
+.term-line{margin:0 0 3px}
+.term-line.prompt{color:#64b5f6}
+.term-line.ok{color:#4caf50}
+.term-line.blink{color:#fff;animation:term-blink 1s infinite}
+@keyframes term-blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Player window body */
+.player-body{padding:8px 10px;text-align:center}
+.eq-bars{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:22px;margin-bottom:6px}
+.eq-bar{width:4px;background:linear-gradient(to top, var(--signal), #00e5ff);border-radius:2px;animation:eq-anim .6s ease-in-out infinite alternate}
+.eq-bar:nth-child(1){height:40%;animation-delay:0.1s}
+.eq-bar:nth-child(2){height:80%;animation-delay:0.3s}
+.eq-bar:nth-child(3){height:60%;animation-delay:0.2s}
+.eq-bar:nth-child(4){height:100%;animation-delay:0.4s}
+.eq-bar:nth-child(5){height:75%;animation-delay:0.15s}
+.eq-bar:nth-child(6){height:50%;animation-delay:0.35s}
+.eq-bar:nth-child(7){height:90%;animation-delay:0.25s}
+@keyframes eq-anim{0%{height:20%}100%{height:100%}}
+.player-info{font-family:var(--mono);font-size:8px;color:#8fa1b8}
+
+/* Start Menu Popover */
+.start-popover{
+  position:absolute;left:4px;bottom:30px;width:145px;
+  background:#141b24;border:1px solid #2d3a4d;border-radius:5px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.6);z-index:10;
+  padding:6px;transition:opacity .15s ease, transform .15s ease;
+}
+.start-popover.hidden{
+  opacity:0;pointer-events:none;transform:translateY(6px);
+}
+.start-head{
+  display:flex;align-items:center;gap:6px;padding:4px 6px 6px;border-bottom:1px solid #263344;
+}
+.start-head b{font-family:var(--display);font-size:9.5px;color:#fff;font-weight:700}
+.start-items{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.start-item{
+  font-family:var(--mono);font-size:8px;color:#c0ccd9;padding:4px 6px;border-radius:3px;cursor:pointer;
+}
+.start-item.mock-hover, .start-item:hover{
+  background:var(--signal);color:#fff;
+}
+
+/* Taskbar */
+.taskbar{
+  position:absolute;bottom:0;left:0;right:0;height:26px;
+  background:#0f141c;border-top:1px solid #222c3a;
+  display:flex;align-items:center;justify-content:space-between;padding:0 6px;z-index:7;
+}
+.tb-left{display:flex;align-items:center;gap:3px;height:100%}
+.tb-btn{
+  height:20px;padding:0 5px;background:transparent;border:0;border-radius:3px;
+  font-family:var(--mono);font-size:9px;color:#c8d3e0;cursor:pointer;
+  display:flex;align-items:center;gap:3px;
+  transition:background .12s ease;
+}
+.tb-start{background:#1f2937;font-weight:700;color:#fff}
+.tb-start.mock-hover, .tb-start:hover{background:var(--signal)}
+.tb-app.active{background:rgba(255,255,255,0.16);box-shadow:inset 0 -2px 0 var(--signal)}
+.tb-btn.mock-hover, .tb-btn:hover{background:rgba(255,255,255,0.22)}
+.tb-right{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:8px;color:#8595a8}
+.tb-clock{font-weight:600;color:#c5d2e0}
 
 .stand{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
 .stand i{display:block;width:78px;height:30px;background:#1b2027;clip-path:polygon(30% 0,70% 0,100% 100%,0 100%)}
@@ -527,21 +682,26 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 
 .cursor{
   position:absolute;left:0;top:0;width:20px;height:20px;
-  margin:-2px 0 0 -2px;pointer-events:none;z-index:5;
-  transition:transform .04s linear;
+  margin:-2px 0 0 -2px;pointer-events:none;z-index:20;
+  transition:transform .03s linear;
 }
-.cursor svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.cursor svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 3px rgba(0,0,0,.7))}
+.cursor.pointer svg path{fill:#38ef7d}
 .ping{
-  position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;
-  border:2px solid var(--signal);pointer-events:none;z-index:4;opacity:0;
+  position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;
+  border:2px solid var(--signal);pointer-events:none;z-index:15;opacity:0;
 }
 
 .phone{
   position:absolute;right:1.5%;bottom:5px;z-index:8;
   width:26%;min-width:112px;max-width:138px;
   background:#0d1116;border:1px solid #2b323c;border-radius:19px;
-  padding:10px 6px;display:flex;flex-direction:column;gap:6px;
+  padding:8px 6px;display:flex;flex-direction:column;gap:5px;
   box-shadow:0 18px 40px rgba(10,14,20,.45);
+}
+.phone-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 3px 2px;font-family:var(--mono);font-size:7.5px;color:#6b798c;
 }
 .phone-ear{display:block;width:32%;height:3px;border-radius:2px;background:#2b323c;margin:0 auto}
 .phone-bar{display:block;width:38%;height:3px;border-radius:2px;background:#333b45;margin:0 auto}
@@ -562,6 +722,18 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .pad.live .pad-hint{opacity:0}
 .touch{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(120,151,255,.22);border:1px solid #8ea6ff;opacity:0;pointer-events:none}
 .pad.live .touch{opacity:1}
+
+.pad-buttons{
+  position:absolute;bottom:0;left:0;right:0;height:20px;
+  display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#202834;
+  border-top:1px solid #2b3544;
+}
+.pad-btn{
+  background:#141a23;color:#8897aa;border:0;font-family:var(--mono);
+  font-size:8px;font-weight:600;cursor:pointer;
+  transition:background .1s ease, color .1s ease;
+}
+.pad-btn:active, .pad-btn.active{background:var(--signal);color:#fff}
 
 .desk-cap{
   display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:13px 0 0;
@@ -1019,30 +1191,117 @@ footer{padding:44px 0 56px}
       <div class="rig">
         <div class="rig-head">
           <span class="tag">Live demo · this page</span>
-          <span class="tag" id="mode">Idle</span>
+          <span class="tag" id="mode" style="color:var(--signal);font-weight:700;">Idle · Ready</span>
         </div>
 
         <div class="rig-body">
           <div class="desk">
-            <!-- The rig stretches to match the taller text column, and the scene
-                 inside is aspect-ratio-locked, so there is spare height at
-                 desktop widths. It goes to the one sentence that gets people to
-                 try the demo instead of scrolling past it. -->
-            <p class="desk-lede">Drag on the phone's screen. The cursor moves on the desktop behind it — that is the whole product.</p>
+            <p class="desk-lede">Drag on the phone's trackpad below. Move the cursor, click desktop icons, or close the window with the ✕ button — completely live!</p>
 
             <div class="monitor">
               <div class="screen" id="screen">
-                <div class="screen-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
-                <div class="win">
-                  <div class="win-bar"><i></i><i></i><i></i><b>Documents</b></div>
+                <div class="screen-bg"></div>
+
+                <!-- Desktop Shortcuts -->
+                <div class="desk-icons">
+                  <div class="d-icon" id="d-doc" data-action="open-doc" title="Click to open Notes">
+                    <div class="d-icon-art">📄</div>
+                    <span>Notes</span>
+                  </div>
+                  <div class="d-icon" id="d-term" data-action="open-term" title="Click to open Terminal">
+                    <div class="d-icon-art">🐧</div>
+                    <span>Terminal</span>
+                  </div>
+                  <div class="d-icon" id="d-audio" data-action="open-player" title="Click to open Audio Streamer">
+                    <div class="d-icon-art">🎵</div>
+                    <span>Audio</span>
+                  </div>
+                </div>
+
+                <!-- App Window 1: Notes -->
+                <div class="win" id="win-doc">
+                  <div class="win-bar">
+                    <div class="win-btns">
+                      <button class="win-btn close" data-action="close-doc" title="Close Window">✕</button>
+                      <button class="win-btn min" data-action="min-doc" title="Minimize">−</button>
+                      <button class="win-btn max" data-action="max-doc" title="Maximize">+</button>
+                    </div>
+                    <b>📄 Notes.txt</b>
+                  </div>
                   <div class="win-body">
+                    <div class="win-row"><span class="sig-pill">PCDeck</span> <span class="dim-txt">Offline Local Bridge</span></div>
                     <div class="bar w70"></div>
                     <div class="bar w40 sig"></div>
                     <div class="bar w55"></div>
-                    <div class="bar w40"></div>
+                    <div class="win-actions">
+                      <button class="win-click-btn" data-action="ping-action">⚡ Send Ping</button>
+                      <span class="win-status-badge" id="win-status">0.4ms LAN</span>
+                    </div>
                   </div>
                 </div>
-                <div class="taskbar"><i></i><i></i><i></i><i></i></div>
+
+                <!-- App Window 2: Terminal -->
+                <div class="win win-dark hidden" id="win-term">
+                  <div class="win-bar">
+                    <div class="win-btns">
+                      <button class="win-btn close" data-action="close-term" title="Close Terminal">✕</button>
+                      <button class="win-btn min" data-action="min-term">−</button>
+                    </div>
+                    <b>🐧 PCDeck Terminal</b>
+                  </div>
+                  <div class="win-body term-body">
+                    <p class="term-line prompt">&gt; pcdeck-service --offline</p>
+                    <p class="term-line ok">✓ Wi-Fi Trackpad: CONNECTED</p>
+                    <p class="term-line ok">✓ Zero latency · 0 accounts</p>
+                    <p class="term-line blink">&gt; _</p>
+                  </div>
+                </div>
+
+                <!-- App Window 3: Audio Streamer -->
+                <div class="win win-player hidden" id="win-player">
+                  <div class="win-bar">
+                    <div class="win-btns">
+                      <button class="win-btn close" data-action="close-player" title="Close Player">✕</button>
+                    </div>
+                    <b>🎵 Audio Streamer</b>
+                  </div>
+                  <div class="win-body player-body">
+                    <div class="eq-bars">
+                      <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+                    </div>
+                    <div class="player-info">Streaming PC Audio → Phone (0 latency)</div>
+                  </div>
+                </div>
+
+                <!-- Start Menu Popover -->
+                <div class="start-popover hidden" id="start-menu">
+                  <div class="start-head">
+                    <span style="font-size:12px;">⚡</span>
+                    <b>PCDeck Menu</b>
+                  </div>
+                  <div class="start-items">
+                    <div class="start-item" data-action="open-doc">📄 Open Notes.txt</div>
+                    <div class="start-item" data-action="open-term">🐧 Open Terminal</div>
+                    <div class="start-item" data-action="open-player">🎵 Stream Audio</div>
+                    <div class="start-item" data-action="ping-action">📶 Test LAN Signal</div>
+                  </div>
+                </div>
+
+                <!-- Taskbar -->
+                <div class="taskbar">
+                  <div class="tb-left">
+                    <button class="tb-btn tb-start" data-action="toggle-start" title="Start Menu">🪟 <span>Start</span></button>
+                    <button class="tb-btn tb-app active" id="tb-doc" data-action="toggle-doc" title="Notes">📄</button>
+                    <button class="tb-btn tb-app" id="tb-term" data-action="toggle-term" title="Terminal">🐧</button>
+                    <button class="tb-btn tb-app" id="tb-player" data-action="toggle-player" title="Audio Player">🎵</button>
+                  </div>
+                  <div class="tb-right">
+                    <span title="Offline LAN">📶</span>
+                    <span title="Audio Stream">🔊</span>
+                    <span class="tb-clock" id="tb-time">12:00</span>
+                  </div>
+                </div>
+
                 <div class="ping" id="ping"></div>
                 <div class="cursor" id="cursor">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2l14 9-6.5 1.2L15 20l-3 1.2-2.4-7L5 18z" fill="#fff" stroke="#12161c" stroke-width="1.2"/></svg>
@@ -1051,14 +1310,20 @@ footer{padding:44px 0 56px}
 
               <div class="stand" aria-hidden="true"><i></i><b></b></div>
 
-              <!-- The phone body is decoration; #pad is the live surface and keeps
-                   every hook the hero script relies on. -->
               <div class="phone">
-                <span class="phone-ear" aria-hidden="true"></span>
+                <div class="phone-topbar">
+                  <span id="phone-time">12:00</span>
+                  <span class="phone-ear" aria-hidden="true"></span>
+                  <span>📶 🔋</span>
+                </div>
                 <div class="pad" id="pad" role="application"
                      aria-label="Interactive trackpad demonstration. Move your pointer or finger across this phone screen to move the cursor on the mock desktop behind it.">
                   <div class="touch" id="touch"></div>
-                  <p class="pad-hint">Drag<br>here</p>
+                  <p class="pad-hint">Drag to move<br>Tap to click</p>
+                  <div class="pad-buttons">
+                    <button class="pad-btn" data-pad-action="left-click">Left Click</button>
+                    <button class="pad-btn" data-pad-action="right-click">Right Click</button>
+                  </div>
                 </div>
                 <span class="phone-bar" aria-hidden="true"></span>
               </div>
@@ -1525,9 +1790,9 @@ footer{padding:44px 0 56px}
 
 <script>
 /* ==========================================================================
-   1. Signature element: the hero trackpad.
-   Pointer Events cover mouse, pen and touch with one code path, so the demo
-   behaves the same on a phone as on a desktop.
+   1. Signature element: interactive trackpad & live desktop simulation.
+   Handles cursor tracking, hover detection, clicking windows/icons,
+   closing windows, opening apps, and dual-button phone controls.
    ========================================================================== */
 (function () {
   var pad = document.getElementById('pad');
@@ -1541,40 +1806,204 @@ footer{padding:44px 0 56px}
   var ry = document.getElementById('ry');
   var rn = document.getElementById('rn');
   var mode = document.getElementById('mode');
+  var tbTime = document.getElementById('tb-time');
+  var phoneTime = document.getElementById('phone-time');
 
   var events = 0;
+  var lastCx = 0, lastCy = 0;
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var CURSOR = 20;   // .cursor is 20x20; keep this in step with the CSS.
+  var CURSOR = 20;
+
+  // Live system clocks
+  function updateClocks() {
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    var timeStr = (h % 12 || 12) + ':' + (m < 10 ? '0' + m : m);
+    if (tbTime) tbTime.textContent = timeStr;
+    if (phoneTime) phoneTime.textContent = timeStr;
+  }
+  updateClocks();
+  setInterval(updateClocks, 10000);
+
+  // Element collision detection under mock cursor
+  function getElementUnderCursor(cx, cy) {
+    if (!screen) return null;
+    var screenRect = screen.getBoundingClientRect();
+    var clientX = screenRect.left + (screen.clientLeft || 0) + cx;
+    var clientY = screenRect.top + (screen.clientTop || 0) + cy;
+
+    cursor.style.visibility = 'hidden';
+    if (ping) ping.style.visibility = 'hidden';
+    var el = document.elementFromPoint(clientX, clientY);
+    cursor.style.visibility = '';
+    if (ping) ping.style.visibility = '';
+    return el;
+  }
+
+  // Update hover highlights
+  function updateHover(cx, cy) {
+    var prev = screen.querySelectorAll('.mock-hover');
+    for (var i = 0; i < prev.length; i++) {
+      prev[i].classList.remove('mock-hover');
+    }
+
+    var target = getElementUnderCursor(cx, cy);
+    if (target) {
+      var actionEl = target.closest('[data-action]');
+      if (actionEl && screen.contains(actionEl)) {
+        actionEl.classList.add('mock-hover');
+        cursor.classList.add('pointer');
+        return actionEl;
+      }
+    }
+    cursor.classList.remove('pointer');
+    return null;
+  }
+
+  function handleAction(action) {
+    var winDoc = document.getElementById('win-doc');
+    var winTerm = document.getElementById('win-term');
+    var winPlayer = document.getElementById('win-player');
+    var startMenu = document.getElementById('start-menu');
+    var tbDoc = document.getElementById('tb-doc');
+    var tbTerm = document.getElementById('tb-term');
+    var tbPlayer = document.getElementById('tb-player');
+
+    function focusWin(win) {
+      if (!win) return;
+      var wins = [winDoc, winTerm, winPlayer];
+      wins.forEach(function(w){ if (w) w.classList.remove('focused'); });
+      win.classList.add('focused');
+      win.classList.remove('hidden');
+    }
+
+    if (action === 'close-doc') {
+      if (winDoc) winDoc.classList.add('hidden');
+      if (tbDoc) tbDoc.classList.remove('active');
+      mode.textContent = 'Closed Notes.txt';
+    } else if (action === 'min-doc') {
+      if (winDoc) winDoc.classList.add('hidden');
+      if (tbDoc) tbDoc.classList.remove('active');
+      mode.textContent = 'Minimized Notes';
+    } else if (action === 'max-doc') {
+      mode.textContent = 'Resized Notes';
+    } else if (action === 'open-doc' || action === 'toggle-doc') {
+      if (winDoc) {
+        if (action === 'toggle-doc' && !winDoc.classList.contains('hidden') && winDoc.classList.contains('focused')) {
+          winDoc.classList.add('hidden');
+          if (tbDoc) tbDoc.classList.remove('active');
+          mode.textContent = 'Minimized Notes';
+        } else {
+          focusWin(winDoc);
+          if (tbDoc) tbDoc.classList.add('active');
+          mode.textContent = 'Opened Notes.txt';
+        }
+      }
+      if (startMenu) startMenu.classList.add('hidden');
+    } else if (action === 'close-term' || action === 'min-term') {
+      if (winTerm) winTerm.classList.add('hidden');
+      if (tbTerm) tbTerm.classList.remove('active');
+      mode.textContent = 'Closed Terminal';
+    } else if (action === 'open-term' || action === 'toggle-term') {
+      if (winTerm) {
+        if (action === 'toggle-term' && !winTerm.classList.contains('hidden') && winTerm.classList.contains('focused')) {
+          winTerm.classList.add('hidden');
+          if (tbTerm) tbTerm.classList.remove('active');
+          mode.textContent = 'Minimized Terminal';
+        } else {
+          focusWin(winTerm);
+          if (tbTerm) tbTerm.classList.add('active');
+          mode.textContent = 'Opened Terminal';
+        }
+      }
+      if (startMenu) startMenu.classList.add('hidden');
+    } else if (action === 'close-player') {
+      if (winPlayer) winPlayer.classList.add('hidden');
+      if (tbPlayer) tbPlayer.classList.remove('active');
+      mode.textContent = 'Closed Audio';
+    } else if (action === 'open-player' || action === 'toggle-player') {
+      if (winPlayer) {
+        if (action === 'toggle-player' && !winPlayer.classList.contains('hidden') && winPlayer.classList.contains('focused')) {
+          winPlayer.classList.add('hidden');
+          if (tbPlayer) tbPlayer.classList.remove('active');
+          mode.textContent = 'Minimized Audio';
+        } else {
+          focusWin(winPlayer);
+          if (tbPlayer) tbPlayer.classList.add('active');
+          mode.textContent = 'Opened Audio Streamer';
+        }
+      }
+      if (startMenu) startMenu.classList.add('hidden');
+    } else if (action === 'toggle-start') {
+      if (startMenu) {
+        startMenu.classList.toggle('hidden');
+        mode.textContent = startMenu.classList.contains('hidden') ? 'Closed Start' : 'Opened Start Menu';
+      }
+    } else if (action === 'ping-action') {
+      var statusBadge = document.getElementById('win-status');
+      if (statusBadge) {
+        statusBadge.textContent = 'Ping: 0.2ms OK!';
+        statusBadge.style.color = '#38ef7d';
+        setTimeout(function(){ statusBadge.textContent = '0.4ms LAN'; statusBadge.style.color = ''; }, 1600);
+      }
+      mode.textContent = 'Ping Sent · 0.2ms';
+    }
+  }
+
+  function triggerClick(cx, cy) {
+    if (!reduce && ping) {
+      ping.style.left = cx + 'px';
+      ping.style.top  = cy + 'px';
+      ping.animate(
+        [ { opacity: .9, transform: 'scale(.35)' }, { opacity: 0, transform: 'scale(1.6)' } ],
+        { duration: 400, easing: 'ease-out' }
+      );
+    }
+
+    var target = getElementUnderCursor(cx, cy);
+    if (target) {
+      var actionEl = target.closest('[data-action]');
+      if (actionEl && screen.contains(actionEl)) {
+        var action = actionEl.getAttribute('data-action');
+        handleAction(action);
+        return;
+      }
+    }
+    mode.textContent = 'Clicked (' + Math.round(cx) + ', ' + Math.round(cy) + ')';
+    setTimeout(function () {
+      if (pad.classList.contains('live')) mode.textContent = 'Tracking';
+    }, 600);
+  }
 
   function place(e) {
     var b = pad.getBoundingClientRect();
-    // Clamp to the pad so the cursor cannot leave the mock desktop.
-    var fx = Math.min(Math.max((e.clientX - b.left) / b.width, 0), 1);
-    var fy = Math.min(Math.max((e.clientY - b.top) / b.height, 0), 1);
+    var clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : b.left + b.width/2);
+    var clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : b.top + b.height/2);
 
-    // Map the pad onto the desktop minus one cursor glyph. Mapping onto the full
-    // width instead put the glyph's own origin on the far corner at the end of
-    // the travel, so .screen's overflow:hidden clipped the arrow away entirely
-    // and the pointer looked like it had vanished at the edges.
-    //
-    // clientWidth/clientHeight, not getBoundingClientRect(): the monitor bezel is
-    // a border, and absolutely-positioned children are laid out against the
-    // padding box. Measuring the border box overshot by the bezel width and
-    // pushed the cursor back under the frame on the right and bottom edges.
+    var fx = Math.min(Math.max((clientX - b.left) / b.width, 0), 1);
+    var fy = Math.min(Math.max((clientY - b.top) / b.height, 0), 1);
+
     var cx = fx * Math.max(screen.clientWidth  - CURSOR, 0);
     var cy = fy * Math.max(screen.clientHeight - CURSOR, 0);
+    lastCx = cx;
+    lastCy = cy;
+
     cursor.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
 
-    touch.style.left = (fx * b.width) + 'px';
-    touch.style.top  = (fy * b.height) + 'px';
+    if (touch) {
+      touch.style.left = (fx * b.width) + 'px';
+      touch.style.top  = (fy * b.height) + 'px';
+    }
     pad.style.setProperty('--px', (fx * 100) + '%');
     pad.style.setProperty('--py', (fy * 100) + '%');
 
-    // Report coordinates as if against a 1920x1200 desktop.
     rx.textContent = Math.round(fx * 1920);
     ry.textContent = Math.round(fy * 1200);
     events++;
     rn.textContent = events;
+
+    updateHover(cx, cy);
     return { cx: cx, cy: cy };
   }
 
@@ -1585,75 +2014,95 @@ footer{padding:44px 0 56px}
 
   pad.addEventListener('pointerleave', function () {
     pad.classList.remove('live');
-    mode.textContent = 'Idle';
+    mode.textContent = 'Idle · Ready';
+    cursor.classList.remove('pointer');
+    var prev = screen.querySelectorAll('.mock-hover');
+    for (var i = 0; i < prev.length; i++) prev[i].classList.remove('mock-hover');
   });
 
   pad.addEventListener('pointermove', function (e) {
+    // Avoid triggering drag if interacting with phone buttons
+    if (e.target && e.target.classList.contains('pad-btn')) return;
     place(e);
   }, { passive: true });
 
   pad.addEventListener('pointerdown', function (e) {
-    // Capture keeps tracking alive if the finger slides off the pad mid-drag.
-    // Guarded: a browser that rejects the id must not abort the click feedback.
+    if (e.target && e.target.classList.contains('pad-btn')) return;
     try { pad.setPointerCapture(e.pointerId); } catch (err) {}
     pad.classList.add('live');
     var p = place(e);
-    mode.textContent = 'Click sent';
-
-    if (!reduce) {
-      // Same coordinates as the cursor, so the ring lands on the pointer tip.
-      ping.style.left = p.cx + 'px';
-      ping.style.top  = p.cy + 'px';
-      ping.animate(
-        [ { opacity: .9, transform: 'scale(.35)' }, { opacity: 0, transform: 'scale(1.5)' } ],
-        { duration: 420, easing: 'ease-out' }
-      );
-    }
-    setTimeout(function () {
-      if (pad.classList.contains('live')) mode.textContent = 'Tracking';
-    }, 520);
+    triggerClick(p.cx, p.cy);
   });
 
-  // Explicit mobile touch support
+  // Mobile Touch Support
   pad.addEventListener('touchstart', function (e) {
+    if (e.target && e.target.classList.contains('pad-btn')) return;
     if (e.touches && e.touches.length > 0) {
       e.preventDefault();
       pad.classList.add('live');
       mode.textContent = 'Tracking';
       var p = place(e.touches[0]);
-      if (!reduce) {
-        ping.style.left = p.cx + 'px';
-        ping.style.top  = p.cy + 'px';
-        ping.animate(
-          [ { opacity: .9, transform: 'scale(.35)' }, { opacity: 0, transform: 'scale(1.5)' } ],
-          { duration: 420, easing: 'ease-out' }
-        );
-      }
+      triggerClick(p.cx, p.cy);
     }
   }, { passive: false });
 
   pad.addEventListener('touchmove', function (e) {
+    if (e.target && e.target.classList.contains('pad-btn')) return;
     if (e.touches && e.touches.length > 0) {
       e.preventDefault();
       place(e.touches[0]);
     }
   }, { passive: false });
 
-  pad.addEventListener('touchend', function () {
+  pad.addEventListener('touchend', function (e) {
+    if (e.target && e.target.classList.contains('pad-btn')) return;
     pad.classList.remove('live');
-    mode.textContent = 'Idle';
+    mode.textContent = 'Idle · Ready';
   });
 
-  // Keyboard parity: the demo should not be mouse-only.
+  // Phone Left/Right Click Buttons
+  var padBtns = document.querySelectorAll('.pad-btn');
+  padBtns.forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      btn.classList.add('active');
+      setTimeout(function () { btn.classList.remove('active'); }, 150);
+      var action = btn.getAttribute('data-pad-action');
+      if (action === 'left-click') {
+        triggerClick(lastCx, lastCy);
+      } else if (action === 'right-click') {
+        mode.textContent = 'Right Clicked';
+        var startMenu = document.getElementById('start-menu');
+        if (startMenu) startMenu.classList.toggle('hidden');
+      }
+    });
+  });
+
+  // Keyboard Parity
   pad.tabIndex = 0;
   var kx = 0.5, ky = 0.5;
   pad.addEventListener('keydown', function (e) {
-    var step = 0.06, moved = true;
+    var step = 0.05, moved = true;
     if (e.key === 'ArrowLeft') kx -= step;
     else if (e.key === 'ArrowRight') kx += step;
     else if (e.key === 'ArrowUp') ky -= step;
     else if (e.key === 'ArrowDown') ky += step;
-    else moved = false;
+    else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      triggerClick(lastCx, lastCy);
+      return;
+    } else moved = false;
+
+    if (!moved) return;
+    e.preventDefault();
+    kx = Math.min(Math.max(kx, 0), 1);
+    ky = Math.min(Math.max(ky, 0), 1);
+    var b = pad.getBoundingClientRect();
+    pad.classList.add('live');
+    mode.textContent = 'Tracking';
+    place({ clientX: b.left + kx * b.width, clientY: b.top + ky * b.height });
+  });
+})();
     if (!moved) return;
     e.preventDefault();
     kx = Math.min(Math.max(kx, 0), 1);
