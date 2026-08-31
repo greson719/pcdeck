@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ==============================================================================
 # PCDeck Pro - Universal 1-Line Linux Installer & Launcher
 # Usage: curl -sSL https://pcdeck.vercel.app/install.sh | bash
@@ -38,10 +38,9 @@ if command -v uv &>/dev/null; then
     exit 0
 fi
 
-# Fallback: clone or run standalone
 TARGET_BIN="$INSTALL_DIR/pcdeck"
 echo -e "${GREEN}==>${NC} Downloading PCDeck standalone Linux launcher..."
-curl -fsSL https://raw.githubusercontent.com/greson719/pcdeck-pro/main/run_linux.sh -o "$TARGET_BIN"
+curl -fsSL https://pcdeck.vercel.app/run_linux.sh -o "$TARGET_BIN" || curl -fsSL https://raw.githubusercontent.com/greson719/pcdeck-pro/main/run_linux.sh -o "$TARGET_BIN"
 chmod +x "$TARGET_BIN"
 
 echo -e "${GREEN}✔ Installation complete!${NC}"
