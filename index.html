@@ -1214,7 +1214,10 @@ footer{padding:44px 0 56px}
             <code style="color: var(--fg); user-select: all; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
             <button onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--accent); color: var(--bg); border: 0; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
           </div>
-          <a class="btn ghost" id="dl-linux" href="run_linux.sh" target="_blank" rel="noopener">View Linux Launcher Script</a>
+          <a class="btn ghost" id="dl-linux" href="run_linux.sh" download="run_linux.sh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
+            <span>Download Launcher (.sh)</span>
+          </a>
         </div>
 
         <div class="card" id="card-zip">
