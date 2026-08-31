@@ -1,10 +1,10 @@
 {
-  "versionCode": 266,
-  "versionName": "2.6.6",
+  "versionCode": 270,
+  "versionName": "2.7.0",
   "apkUrl": "https://pcdeck.vercel.app/PCDeck.apk",
   "websiteUrl": "https://pcdeck.vercel.app",
   "playStoreUrl": "",
-  "releaseNotes": "• 100% Full Native 1.0x Resolution for razor-sharp, crystal-clear desktop text\n• Hardware-accelerated zero-backlog streaming pipeline (instant 60 FPS)\n• Screen quick toolbar: 1x/1.5x/2x/3x Quick Zoom & Landscape Rotation\n• Ultra-fast 1ms direct touch response",
+  "releaseNotes": "• Dynamic AI-Adaptive Bitrate & Quality (Auto-adapts to 2.4GHz / 5GHz / 6GHz Wi-Fi / Dongle latency)\n• Event-driven zero-delay frame streaming engine\n• Hardware-accelerated desynchronized screen renderer\n• Zero physical PC cursor flicker & fluid 1:1 touch scrolling\n• Cross-platform Linux & Windows standalone server support",
   "minVersionCode": 1,
   "publishedAt": "2026-09-01"
 }

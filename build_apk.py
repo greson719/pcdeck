@@ -46,12 +46,15 @@ def main():
     # Sync web assets from static/ into android_app/assets/
     print("\n[+] Syncing static assets into android_app/assets/...")
     os.makedirs("android_app/assets", exist_ok=True)
+    ignore_exts = {".apk", ".exe", ".zip", ".aab", ".idsig", ".msix"}
     for fname in os.listdir("static"):
+        if any(fname.lower().endswith(ext) for ext in ignore_exts):
+            continue
         src = os.path.join("static", fname)
         dst = os.path.join("android_app/assets", fname)
         if os.path.isfile(src):
             shutil.copy2(src, dst)
-    print("    OK: Static assets synced.")
+    print("    OK: Static assets synced without binary artifacts.")
 
     # Ensure build directories exist
     os.makedirs(BUILD_DIR, exist_ok=True)
