@@ -728,38 +728,38 @@ footer{padding:44px 0 56px}
 
         <div class="get" id="get">
           <div class="get-row">
+            <a class="btn" id="hero-exe" href="PCDeck.exe" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+              <span>Download for Windows<small>Windows 10 / 11 · 47.2 MB</small></span>
+            </a>
             <a class="btn" id="hero-apk" href="PCDeck.apk" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span>Download Direct APK<small>Android · 1.6 MB</small></span>
-            </a>
-            <a class="btn" id="hero-exe" href="PCDeck.exe" download>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span>Windows Server<small>EXE · 47.2 MB</small></span>
+              <span>Download for Android<small>Direct APK · 1.6 MB</small></span>
             </a>
             <a class="btn ghost" id="hero-linux" href="#card-linux">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="m8 21 8 0"/><path d="m12 17 0 4"/><path d="m7 8 3 3-3 3"/><path d="m13 14 4 0"/></svg>
-              <span>Linux Server<small>1-Line Terminal Install</small></span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 8 3 3-3 3"/><path d="m13 14 4 0"/><rect width="20" height="14" x="2" y="3" rx="2"/></svg>
+              <span>Download for Linux<small>1-Line Terminal Install</small></span>
             </a>
             <a class="btn ghost" id="hero-zip" href="PCDeck_Package.zip" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Full Package<small>ZIP · 48.5 MB</small></span>
+              <span>Offline ZIP Bundle<small>Windows + Android</small></span>
             </a>
           </div>
 
           <div class="hero-linux-box" style="margin-top: 14px; background: rgba(0,0,0,0.04); border: 1px solid var(--grid); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: monospace; font-size: 12.5px;">
             <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              <span style="color: var(--accent); font-weight: 700;">🐧 Linux:</span>
+              <span style="color: var(--accent); font-weight: 700;">🐧 Linux Terminal:</span>
               <code style="color: var(--fg); user-select: all;">curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
             </div>
             <button onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--accent); color: var(--bg); border: 0; padding: 5px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
           </div>
 
           <p class="get-alt">
-            <b>Easy setup on all platforms:</b> Download for Windows or Linux above. For <b>iPhone, iPad, Mac, and Linux browsers</b>, simply scan the on-screen QR code for instant zero-install Web Remote.
+            <b>Zero-Install on iPhone, iPad, Mac &amp; Browser:</b> Just launch PCDeck on your computer and point your phone camera at the on-screen QR code to open the Web Remote instantly in your browser.
           </p>
 
           <p class="get-note">
-            <b>Setup:</b> Launch the portable server on your PC. It connects automatically over your local Wi-Fi / Hotspot with zero cloud sign-in. <a href="#install-help">View setup guide &amp; checksums</a>.
+            <b>Setup:</b> Launch PCDeck on your computer. It pairs instantly over your local Wi-Fi / Hotspot with zero cloud account or sign-in. <a href="#install-help">View setup guide &amp; checksums</a>.
           </p>
         </div>
 
@@ -1174,11 +1174,23 @@ footer{padding:44px 0 56px}
       </div>
 
       <div class="dl">
+        <div class="card" id="card-exe">
+          <p class="tag">PC · Windows</p>
+          <h3>PCDeck for Windows</h3>
+          <p>The PC app for Windows 10 &amp; 11. Standalone executable, runs immediately with no install.</p>
+          <ul class="spec">
+            <li>Windows 10 or 11 (64-bit)</li>
+            <li>Standalone .exe (47.2 MB) · No Python needed</li>
+            <li>Unsigned — SmartScreen prompts once</li>
+          </ul>
+          <a class="btn" id="dl-exe" href="PCDeck.exe" download>Download for Windows (.exe)</a>
+        </div>
+
         <div class="card" id="card-apk">
           <span class="card-icon"><img src="icon.png" alt="PCDeck app icon" width="48" height="48"></span>
-          <p class="tag">Phone · Android</p>
+          <p class="tag">Phone · Android App</p>
           <h3>PCDeck for Android</h3>
-          <p>The phone side: trackpad, keyboard, screen view, audio and files.</p>
+          <p>The companion app: multi-touch trackpad, keyboard, screen view, audio and files.</p>
           <ul class="spec">
             <li>Android 5.0 or newer</li>
             <li>Direct APK download (1.6 MB)</li>
@@ -1186,32 +1198,8 @@ footer{padding:44px 0 56px}
           </ul>
           <a class="btn" id="dl-apk" href="PCDeck.apk" download>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-            <span>Download Direct APK</span>
+            <span>Download for Android (.apk)</span>
           </a>
-        </div>
-
-        <div class="card" id="card-exe">
-          <p class="tag">PC · Windows Portable</p>
-          <h3>PCDeck Portable (EXE)</h3>
-          <p>The PC side. Standalone executable, runs immediately without install.</p>
-          <ul class="spec">
-            <li>Windows 10 or 11, 64-bit</li>
-            <li>Self-contained · no Python or .NET</li>
-            <li>Unsigned — SmartScreen prompts once</li>
-          </ul>
-          <a class="btn" id="dl-exe" href="PCDeck.exe" download>Download Portable EXE</a>
-        </div>
-
-        <div class="card" id="card-zip">
-          <p class="tag">PC · Windows</p>
-          <h3>Full Offline Package</h3>
-          <p>Executable plus the APK and setup notes in one archive.</p>
-          <ul class="spec">
-            <li>ZIP archive (48.5 MB)</li>
-            <li>Includes EXE &amp; Android APK</li>
-            <li>Useful for offline recovery</li>
-          </ul>
-          <a class="btn ghost" id="dl-zip" href="PCDeck_Package.zip" download>Download ZIP</a>
         </div>
 
         <div class="card" id="card-linux">
@@ -1226,6 +1214,18 @@ footer{padding:44px 0 56px}
             curl -sSL https://pcdeck.vercel.app/install.sh | bash
           </div>
           <a class="btn ghost" id="dl-linux" href="https://raw.githubusercontent.com/greson719/pcdeck-pro/main/run_linux.sh" target="_blank" rel="noopener">View Linux Launcher</a>
+        </div>
+
+        <div class="card" id="card-zip">
+          <p class="tag">PC + Phone · Offline Bundle</p>
+          <h3>Full Offline Bundle</h3>
+          <p>Windows executable plus the Android APK and setup notes in one archive.</p>
+          <ul class="spec">
+            <li>ZIP archive (48.5 MB)</li>
+            <li>Includes Windows EXE &amp; Android APK</li>
+            <li>Useful for offline recovery</li>
+          </ul>
+          <a class="btn ghost" id="dl-zip" href="PCDeck_Package.zip" download>Download Offline ZIP</a>
         </div>
       </div>
 
