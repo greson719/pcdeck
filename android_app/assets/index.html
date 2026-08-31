@@ -1271,64 +1271,60 @@
 
   <!-- ================= PRO UPGRADE & UNLOCK MODAL ================= -->
   <div id="pro-upgrade-modal" class="modal-backdrop">
-    <div class="modal-card pro-modal-card">
-      <div class="pro-modal-header">
-        <img src="PCDeck_Master_Logo.png" alt="PCDeck Pro" style="width: 48px; height: 48px; object-fit: contain; margin: 0 auto 10px; display: block;">
-        <div class="pro-modal-title">PCDeck Pro Lifetime License</div>
-        <div class="pro-modal-sub">Unlock 60/120 FPS high-refresh display streaming and uncapped local file transfer speeds.</div>
-      </div>
-
-      <div class="pro-benefits-list">
-        <div class="pro-benefit-row">
-          <div class="pro-benefit-text">
-            <strong>⚡ 60 FPS &amp; 120 FPS High-Refresh Streaming</strong>
-            <span>Double or quadruple the screen refresh rate for ultra-low latency desktop monitoring, fluid window dragging, and gaming.</span>
-          </div>
-        </div>
-
-        <div class="pro-benefit-row">
-          <div class="pro-benefit-text">
-            <strong>📁 Uncapped Local LAN Transfer Bandwidth</strong>
-            <span>Removes the 10 MB/s speed limiter to transfer large 4K videos, folders, and archives at your router's full Wi-Fi/Gigabit capacity.</span>
-          </div>
-        </div>
-
-        <div class="pro-benefit-row">
-          <div class="pro-benefit-text">
-            <strong>🎨 OLED Black &amp; Custom Cyber Themes</strong>
-            <span>Full access to battery-saving OLED Pure Black, Matrix Lime, Solar Gold, and Synthwave Purple interfaces.</span>
-          </div>
-        </div>
-
-        <div class="pro-benefit-row">
-          <div class="pro-benefit-text">
-            <strong>🛡️ Permanent License · Zero Subscriptions</strong>
-            <span>One-time purchase of $3.99. No recurring fees, no cloud account needed, and activates 100% offline on your local network.</span>
-          </div>
+    <div class="modal-card pro-modal-card" style="padding: 22px;">
+      <div class="pro-modal-header" style="text-align: left; margin-bottom: 16px;">
+        <div class="pro-modal-title" style="font-size: 1.25rem; font-weight: 800; color: #fff;">PCDeck Pro License</div>
+        <div class="pro-modal-sub" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+          One-time payment of $3.99. No subscriptions. Works offline.
         </div>
       </div>
 
-      <!-- Trust Badges -->
-      <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 8px 12px; margin: 14px 0; font-size: 0.72rem; color: #94a3b8; text-align: center; line-height: 1.4;">
-        🔒 <b>Instant License Key Delivery</b> • Activates Directly In-App • 100% Local Privacy
+      <div class="pro-benefits-list" style="gap: 10px;">
+        <div class="pro-benefit-row">
+          <div class="pro-benefit-text">
+            <strong>60 FPS &amp; 120 FPS Screen Streaming</strong>
+            <span>Higher refresh rate for lower latency screen monitoring.</span>
+          </div>
+        </div>
+
+        <div class="pro-benefit-row">
+          <div class="pro-benefit-text">
+            <strong>Uncapped Local File Transfers</strong>
+            <span>Removes the 10 MB/s speed limit on local Wi-Fi transfers.</span>
+          </div>
+        </div>
+
+        <div class="pro-benefit-row">
+          <div class="pro-benefit-text">
+            <strong>OLED &amp; Accent Themes</strong>
+            <span>Access to OLED Black and custom interface color themes.</span>
+          </div>
+        </div>
+
+        <div class="pro-benefit-row">
+          <div class="pro-benefit-text">
+            <strong>Lifetime License</strong>
+            <span>Activates in-app with a license key. Zero accounts or sign-in.</span>
+          </div>
+        </div>
       </div>
 
       <!-- Action Button -->
-      <button id="modal-btn-buy-pro" class="pro-action-btn-main">
-        <span>GET LIFETIME LICENSE — $3.99</span>
+      <button id="modal-btn-buy-pro" class="pro-action-btn-main" style="margin-top: 16px;">
+        <span>Buy License — $3.99</span>
       </button>
 
       <!-- License Key Entry Box -->
       <div style="margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 12px;">
-        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">ALREADY HAVE A LICENSE KEY?</div>
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">ENTER LICENSE KEY</div>
         <div class="pro-key-input-box">
           <input type="text" id="modal-pro-key-input" class="pro-key-input" placeholder="PCDK-XXXX-YYYY-ZZZZ">
           <button id="modal-btn-activate-key" class="neo-btn btn-yellow" style="padding: 0 14px; font-weight: 800; font-size: 0.78rem;">ACTIVATE</button>
         </div>
       </div>
 
-      <button id="modal-btn-close-pro" class="neo-btn btn-dark" style="width: 100%; margin-top: 14px;">
-        CLOSE
+      <button id="modal-btn-close-pro" class="neo-btn btn-dark" style="width: 100%; margin-top: 12px;">
+        Close
       </button>
     </div>
   </div>
@@ -1336,16 +1332,16 @@
   <!-- ================= PRO CORNER POPUP NOTIFICATION (BOTTOM-RIGHT) ================= -->
   <div id="pro-corner-card" class="pro-corner-card">
     <div class="pro-corner-header">
-      <span class="pro-corner-badge">PCDECK PRO</span>
+      <span class="pro-corner-badge">PRO</span>
       <button id="btn-close-pro-corner" class="pro-corner-close" title="Dismiss">✕</button>
     </div>
-    <div class="pro-corner-title">Unlock 60 FPS Streaming</div>
+    <div class="pro-corner-title">Feature requires PCDeck Pro</div>
     <div class="pro-corner-desc">
-      Free edition includes full trackpad, keyboard, and 30 FPS streaming. Upgrade to Pro for high-refresh 60/120 FPS and uncapped LAN transfer bandwidth.
+      60/120 FPS and uncapped transfers require a Pro license. Free version includes trackpad, keyboard, and 30 FPS streaming.
     </div>
     <div class="pro-corner-actions">
       <button id="btn-corner-buy-pro" class="pro-corner-btn-gold">
-        <span>Unlock Pro — $3.99</span>
+        <span>Buy ($3.99)</span>
       </button>
       <button id="btn-corner-open-modal" class="pro-corner-btn-secondary">
         <span>Enter Key</span>
