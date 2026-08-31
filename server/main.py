@@ -1608,6 +1608,11 @@ async def websocket_screen_endpoint(websocket: WebSocket):
 
     # Instantly deliver the latest frame so the client renders in <10ms without a black/loading screen
     initial_jpeg, initial_id = streamer.get_latest_frame()
+    if not initial_jpeg:
+        try:
+            initial_jpeg, _, _ = streamer.grab_single_frame(quality=streamer.quality, scale=streamer.scale)
+        except Exception:
+            pass
     if initial_jpeg:
         try:
             await websocket.send_bytes(initial_jpeg)

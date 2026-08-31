@@ -1274,25 +1274,35 @@
       }
     }
 
+    let renderedOk = false;
     try {
       const blob = (data instanceof Blob) ? data : new Blob([data], { type: 'image/jpeg' });
 
+      // Primary Decoder: Hardware-Accelerated createImageBitmap
       if (window.createImageBitmap) {
-        const bmp = await createImageBitmap(blob);
-        if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
-          el.screenCanvas.width = bmp.width;
-          el.screenCanvas.height = bmp.height;
-          screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
-          if (screenCtx) {
-            screenCtx.imageSmoothingEnabled = true;
-            screenCtx.imageSmoothingQuality = 'high';
+        try {
+          const bmp = await createImageBitmap(blob);
+          if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
+            el.screenCanvas.width = bmp.width;
+            el.screenCanvas.height = bmp.height;
+            screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
+            if (screenCtx) {
+              screenCtx.imageSmoothingEnabled = true;
+              screenCtx.imageSmoothingQuality = 'high';
+            }
           }
+          if (screenCtx) {
+            screenCtx.drawImage(bmp, 0, 0);
+            renderedOk = true;
+          }
+          if (bmp.close) bmp.close();
+        } catch (bmpErr) {
+          console.warn('createImageBitmap failed, falling back to Image element:', bmpErr);
         }
-        if (screenCtx) {
-          screenCtx.drawImage(bmp, 0, 0);
-        }
-        if (bmp.close) bmp.close();
-      } else {
+      }
+
+      // Secondary Decoder: HTML5 Image element fallback
+      if (!renderedOk) {
         await new Promise((resolve) => {
           if (activeBlobUrl) URL.revokeObjectURL(activeBlobUrl);
           activeBlobUrl = URL.createObjectURL(blob);
@@ -1308,18 +1318,24 @@
             }
             if (screenCtx) {
               screenCtx.drawImage(cachedScreenImg, 0, 0);
+              renderedOk = true;
             }
             resolve();
           };
-          cachedScreenImg.onerror = () => resolve();
+          cachedScreenImg.onerror = (err) => {
+            console.warn('Image element render error:', err);
+            resolve();
+          };
           cachedScreenImg.src = activeBlobUrl;
         });
       }
 
-      if (el.screenLoader && el.screenLoader.style.display !== 'none') {
-        el.screenLoader.style.display = 'none';
+      if (renderedOk || screenFirstFrameSeen) {
+        if (el.screenLoader && el.screenLoader.style.display !== 'none') {
+          el.screenLoader.style.display = 'none';
+        }
+        screenFirstFrameSeen = true;
       }
-      screenFirstFrameSeen = true;
     } catch (e) {
       console.warn('Frame render error:', e);
     } finally {
