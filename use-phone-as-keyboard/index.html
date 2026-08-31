@@ -90,7 +90,8 @@
       "@type": "BreadcrumbList",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
-        { "@type": "ListItem", "position": 2, "name": "Use Phone as Keyboard", "item": "https://pcdeck.vercel.app/use-phone-as-keyboard/" }
+        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://pcdeck.vercel.app/guides/" },
+        { "@type": "ListItem", "position": 3, "name": "Use Phone as Keyboard", "item": "https://pcdeck.vercel.app/use-phone-as-keyboard/" }
       ]
     },
     {
@@ -139,6 +140,7 @@
 
       <div class="mobile-guides-title">Guides & Troubleshooting</div>
       <div class="mobile-menu-sublinks">
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
         <a href="/use-pc-without-mouse/" class="mob-link">Use PC without a mouse</a>
         <a href="/use-pc-without-keyboard/" class="mob-link">Use PC without a keyboard</a>
         <a href="/use-pc-without-monitor/" class="mob-link">Use PC without a monitor</a>
@@ -153,7 +155,8 @@
 <nav class="shell crumbs" aria-label="Breadcrumb">
   <ol>
     <li><a href="/">PCDeck</a></li>
-    <li>Use phone as keyboard</li>
+    <li><a href="/guides/">Guides</a></li>
+    <li aria-current="page">Use phone as keyboard</li>
   </ol>
 </nav>
 
@@ -166,9 +169,14 @@
 
   <div class="shell guide">
 
+    <div class="direct-answer">
+      <span class="tag">Direct Answer</span>
+      <p><strong>Yes.</strong> An Android phone can function as a wireless keyboard and numeric keypad for Windows. PCDeck provides a virtual mechanical keyboard with function keys (F1–F12), Windows shortcut chords (Win, Ctrl, Alt), and dedicated numpad keys, transmitting input over local Wi-Fi directly to the PC without cloud accounts or third-party drivers.</p>
+    </div>
+
     <div class="quick-card">
       <p class="tag">Direct Local Keyboard</p>
-      <p><a href="/#download">PCDeck</a> sends raw key codes directly over local Wi-Fi to Windows. It supports regular typing, Android voice dictation, modifier chords (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Del</kbd>), and a full numeric keypad.</p>
+      <p><a href="/#download">PCDeck</a> sends key codes directly over local Wi-Fi to Windows. It supports regular typing, Android voice dictation, modifier chords (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Esc</kbd>, <kbd>Alt</kbd>+<kbd>Tab</kbd>), and a full numeric keypad.</p>
     </div>
 
     <h2>Why turn your phone into a PC keyboard?</h2>
@@ -195,11 +203,16 @@
       </tbody>
     </table>
 
+    <div class="limit">
+      <p class="tag">Windows Security Note</p>
+      <p>Due to Windows operating system security isolation (Secure Attention Sequence / SAS), user-mode software cannot inject <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Del</kbd>. To access the Windows Task Manager directly, use <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Esc</kbd>.</p>
+    </div>
+
     <h2>Step-by-step setup</h2>
     <ol class="steps">
       <li>
         <b>Launch PCDeck on your Windows PC</b>
-        <p>Run <a href="/#download">PCDeck.exe</a>. The status panel confirms the local input server is active on your local network port (default 5000/5001).</p>
+        <p>Run <a href="/#download">PCDeck.exe</a>. The status panel confirms the local input server is active on your local network port (port 8000).</p>
       </li>
       <li>
         <b>Connect your phone to the same network</b>
@@ -241,6 +254,19 @@
 <footer>
   <div class="shell foot">
     <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides">
+      <a href="/guides/">All Guides Hub</a> · 
+      <a href="/security/">Security &amp; Privacy</a> · 
+      <a href="/use-phone-as-mouse/">Phone as mouse</a> · 
+      <a href="/use-phone-as-keyboard/">Phone as keyboard</a> · 
+      <a href="/use-phone-as-second-monitor/">Phone as PC screen</a> · 
+      <a href="/use-pc-without-mouse/">Without a mouse</a> · 
+      <a href="/use-pc-without-keyboard/">Without a keyboard</a> · 
+      <a href="/use-pc-without-monitor/">Without a monitor</a> · 
+      <a href="/use-pc-without-internet/">Without internet</a> · 
+      <a href="/stream-pc-audio-to-phone/">Stream audio</a> · 
+      <a href="/transfer-files-pc-to-android/">Cable-free transfers</a>
+    </p>
     <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
   </div>
 </footer>

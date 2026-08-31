@@ -90,7 +90,8 @@
       "@type": "BreadcrumbList",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
-        { "@type": "ListItem", "position": 2, "name": "Control Windows from Android", "item": "https://pcdeck.vercel.app/control-windows-from-android/" }
+        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://pcdeck.vercel.app/guides/" },
+        { "@type": "ListItem", "position": 3, "name": "Control Windows from Android", "item": "https://pcdeck.vercel.app/control-windows-from-android/" }
       ]
     },
     {
@@ -139,6 +140,7 @@
 
       <div class="mobile-guides-title">Guides & Troubleshooting</div>
       <div class="mobile-menu-sublinks">
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
         <a href="/use-pc-without-mouse/" class="mob-link">Use PC without a mouse</a>
         <a href="/use-pc-without-keyboard/" class="mob-link">Use PC without a keyboard</a>
         <a href="/use-pc-without-monitor/" class="mob-link">Use PC without a monitor</a>
@@ -153,7 +155,8 @@
 <nav class="shell crumbs" aria-label="Breadcrumb">
   <ol>
     <li><a href="/">PCDeck</a></li>
-    <li>Control Windows from Android</li>
+    <li><a href="/guides/">Guides</a></li>
+    <li aria-current="page">Control Windows from Android</li>
   </ol>
 </nav>
 
@@ -189,11 +192,11 @@
     <h2>Architecture: Why local Wi-Fi beats cloud remote desktop</h2>
     <p>Traditional remote desktop software (TeamViewer, AnyDesk, Chrome Remote Desktop) routes your screen and keyboard input through centralized cloud servers on the internet. This introduces several drawbacks:</p>
     <ul>
-      <li><strong>Internet Latency:</strong> Input packets must travel to a remote cloud datacenter and back, causing noticeable pointer lag (60–150 ms).</li>
+      <li><strong>Internet Latency:</strong> Input packets must travel to a remote cloud datacenter and back, introducing extra network hops and latency.</li>
       <li><strong>Privacy Concerns:</strong> Your screen images and keystrokes leave your premises and traverse commercial infrastructure.</li>
       <li><strong>Outage Fragility:</strong> If your ISP connection drops or the cloud service suffers downtime, you cannot control a PC sitting two feet in front of you.</li>
     </ul>
-    <p><strong>PCDeck's Local Architecture:</strong> All packets travel directly between your phone and PC over your router or hotspot using raw local TCP/UDP sockets. Latency stays under 10–20 ms, and control continues uninterrupted even if your internet connection is unplugged.</p>
+    <p><strong>PCDeck's Local Architecture:</strong> All packets travel directly between your phone and PC over your router or hotspot using direct local TCP WebSocket connections. Control stays responsive and continues uninterrupted even if your internet connection is unplugged.</p>
 
     <h2>Step-by-step connection guide</h2>
     <ol class="steps">
@@ -247,6 +250,19 @@
 <footer>
   <div class="shell foot">
     <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides">
+      <a href="/guides/">All Guides Hub</a> · 
+      <a href="/security/">Security &amp; Privacy</a> · 
+      <a href="/use-phone-as-mouse/">Phone as mouse</a> · 
+      <a href="/use-phone-as-keyboard/">Phone as keyboard</a> · 
+      <a href="/use-phone-as-second-monitor/">Phone as PC screen</a> · 
+      <a href="/use-pc-without-mouse/">Without a mouse</a> · 
+      <a href="/use-pc-without-keyboard/">Without a keyboard</a> · 
+      <a href="/use-pc-without-monitor/">Without a monitor</a> · 
+      <a href="/use-pc-without-internet/">Without internet</a> · 
+      <a href="/stream-pc-audio-to-phone/">Stream audio</a> · 
+      <a href="/transfer-files-pc-to-android/">Cable-free transfers</a>
+    </p>
     <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
   </div>
 </footer>

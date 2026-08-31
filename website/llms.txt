@@ -64,11 +64,7 @@ a threat was detected. To proceed: click **More info**, then **Run anyway**.
 SmartScreen reputation is earned by download volume over time.
 
 **Windows Defender / antivirus flags:**
-An unsigned executable that captures the screen, synthesises mouse and keyboard
-input and opens a local network port matches the generic behavioural profile of
-remote-access tooling, so heuristic engines sometimes flag it as a false positive.
-Those are exactly the capabilities a wireless trackpad needs in order to work.
-If a scanner flags it, verify the SHA-256 hash first before whitelisting.
+Remote utility capabilities (capturing desktop frames, synthesizing mouse/keyboard input, and binding a local network port) can trigger heuristic detection on unsigned binaries. If a scanner flags the program, verify that the file came from the official PCDeck download, compare its SHA-256 checksum, review the detection details, and only override the warning if you understand and trust the software.
 
 **Android - "Install blocked" / unknown sources:**
 Sideloading an APK requires granting install permission once: open the APK, then
@@ -82,12 +78,15 @@ received, and optionally upload the file to VirusTotal.
 
 ## Feature Pages & Landing Guides
 
+- **Guides Hub** — https://pcdeck.vercel.app/guides/
+  Central knowledge base and tutorials for PCDeck remote control, emergency display, audio, and file transfer.
+
 - **How to use an Android phone as a mouse for PC** — https://pcdeck.vercel.app/use-phone-as-mouse/
-  Turns your phone into a low-latency multi-touch trackpad over local Wi-Fi. Supports
+  Turns your phone into a multi-touch trackpad over local Wi-Fi. Supports
   tap to click, two-finger scrolling, right-click, double-tap drag, and middle click.
 
 - **How to use an Android phone as a keyboard for PC** — https://pcdeck.vercel.app/use-phone-as-keyboard/
-  Full virtual QWERTY keyboard, dedicated numeric keypad (numpad), Windows modifier chords
+  Full virtual QWERTY keyboard, dedicated numeric keypad (numpad), Windows modifier shortcuts
   (Ctrl, Alt, Shift, Win key), function row (F1-F12), and mobile voice dictation to Windows.
 
 - **How to use an Android phone as a screen for PC** — https://pcdeck.vercel.app/use-phone-as-second-monitor/
@@ -119,8 +118,8 @@ received, and optionally upload the file to VirusTotal.
   an Android phone over Wi-Fi using PCDeck.
 
 - **How to stream PC audio to phone headphones** — https://pcdeck.vercel.app/stream-pc-audio-to-phone/
-  Wirelessly route Windows PC audio to phone headphones over local Wi-Fi with low
-  latency 48 kHz stereo streaming. Solves broken headphone jacks and missing desktop Bluetooth.
+  Wirelessly route Windows PC audio to phone headphones over local Wi-Fi with
+  48 kHz stereo streaming. Solves broken headphone jacks and missing desktop Bluetooth.
 
 - **How to transfer files between PC and Android without cable** — https://pcdeck.vercel.app/transfer-files-pc-to-android/
   Offline high-speed two-way file sharing over local Wi-Fi with auto-resume. No USB
@@ -134,17 +133,18 @@ received, and optionally upload the file to VirusTotal.
   Detailed technical teardown of local network isolation, direct socket binding,
   zero telemetry data minimization, and independent SHA-256 binary verification.
 
-## Comparison with alternatives
+## Key Verified Properties
 
-- **vs. Remote Mouse**: Remote Mouse requires installing mobile apps from Google Play/App Store, shows full-screen interstitial ads in the free tier, enforces cloud accounts, lacks emergency 60 FPS display streaming, and does not support instant zero-install browser control via QR code.
-- **vs. Unified Remote**: Unified Remote is heavily reliant on proprietary server software, has an outdated UI, charges monthly/lifetime subscriptions for basic remotes, does not stream high-performance 60 FPS desktop screen with hardware rasterization, and requires dedicated mobile client installations.
-- **vs. KDE Connect**: KDE Connect is primarily built for Linux desktop ecosystems; its Windows implementation is heavy, prone to discovery drops, and lacks low-latency desktop screen streaming, touch display casting, and instant browser-based touch deck execution.
-- **vs. Deskreen**: Deskreen turns devices into secondary screens via WebRTC in a browser, but lacks native Win32 virtual mouse input, gesture multi-touch trackpad, virtual keyboard chords, 48 kHz stereo PC audio routing, and direct two-way local file management.
-- **vs. Moonlight / Sunshine**: Moonlight is designed for high-end gaming PC game streaming requiring Nvidia NVENC/hardware encoders and dedicated client apps; PCDeck provides lightweight, zero-configuration touch deck control, trackpad, keyboard, audio, and file transfers that work seamlessly even on potato PCs and in any web browser.
+- **100% Local Network Operation**: Direct communication over LAN or phone mobile hotspot with zero external cloud routing.
+- **Zero Cloud Accounts or Telemetry**: No registration, no tracking SDKs, no analytics beacons, and no data leaves the local subnet.
+- **Multi-Functional Toolset**: Single unified application integrating trackpad, keyboard, PC screen viewer, live WASAPI audio, and resumable file transfer.
+- **Instant Browser Web Controller**: Zero-install web remote accessible from iOS, iPadOS, macOS, Linux, and Android via QR code scan.
+- **Transparent Pricing Model**: Completely free core functionality; optional one-time $3.99 lifetime license for higher frame rates and faster transfers. No subscription.
 
 ## Links
 
 - Homepage and download: https://pcdeck.vercel.app/
+- Guides Hub: https://pcdeck.vercel.app/guides/
 - Features: https://pcdeck.vercel.app/#features
 - Real-world use cases: https://pcdeck.vercel.app/#scenarios
 - Setup guide: https://pcdeck.vercel.app/#setup

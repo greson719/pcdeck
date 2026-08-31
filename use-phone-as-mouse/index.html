@@ -90,7 +90,8 @@
       "@type": "BreadcrumbList",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
-        { "@type": "ListItem", "position": 2, "name": "Use Phone as Mouse", "item": "https://pcdeck.vercel.app/use-phone-as-mouse/" }
+        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://pcdeck.vercel.app/guides/" },
+        { "@type": "ListItem", "position": 3, "name": "Use Phone as Mouse", "item": "https://pcdeck.vercel.app/use-phone-as-mouse/" }
       ]
     },
     {
@@ -139,6 +140,7 @@
 
       <div class="mobile-guides-title">Guides & Troubleshooting</div>
       <div class="mobile-menu-sublinks">
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
         <a href="/use-pc-without-mouse/" class="mob-link">Use PC without a mouse</a>
         <a href="/use-pc-without-keyboard/" class="mob-link">Use PC without a keyboard</a>
         <a href="/use-pc-without-monitor/" class="mob-link">Use PC without a monitor</a>
@@ -153,7 +155,8 @@
 <nav class="shell crumbs" aria-label="Breadcrumb">
   <ol>
     <li><a href="/">PCDeck</a></li>
-    <li>Use phone as mouse</li>
+    <li><a href="/guides/">Guides</a></li>
+    <li aria-current="page">Use phone as mouse</li>
   </ol>
 </nav>
 
@@ -166,14 +169,19 @@
 
   <div class="shell guide">
 
+    <div class="direct-answer">
+      <span class="tag">Direct Answer</span>
+      <p><strong>Yes.</strong> An Android phone can work as a mouse for Windows using a local-network remote-control application. PCDeck turns your phone touchscreen into a multi-touch trackpad and sends cursor movements, clicks, and scroll gestures directly to your Windows PC over local Wi-Fi or a phone mobile hotspot without requiring a cloud account.</p>
+    </div>
+
     <div class="quick-card">
       <p class="tag">Direct Local Setup</p>
       <p><a href="/#download">PCDeck</a> turns your Android phone into an offline multi-touch trackpad and keyboard. Packets travel straight between devices over your local Wi-Fi router or phone hotspot with no cloud relay.</p>
     </div>
 
     <h2>How smartphone trackpad emulation works</h2>
-    <p>Modern capacitive phone touchscreens sample finger positions at 120 Hz to 240 Hz with sub-millimeter precision. When you run <strong>PCDeck</strong>, the Android app captures these touch coordinates, calculates relative displacement deltas, and transmits low-overhead UDP packets directly to the Windows server running on your computer.</p>
-    <p>Windows receives the coordinates and synthesizes native mouse events via the Windows Input API (`SendInput`). Because all transmission occurs over your local network rather than traversing the internet, input latency is typically under 10 milliseconds on standard 5 GHz Wi-Fi.</p>
+    <p>Capacitive smartphone touchscreens provide high-fidelity multi-touch tracking. When you run <strong>PCDeck</strong>, the Android app captures touch coordinates, applies ballistic curve smoothing and tremor filtering, and transmits lightweight commands over a local TCP WebSocket connection directly to the Windows server on port 8000.</p>
+    <p>Windows receives the coordinates and synthesizes native mouse events via Win32 input simulation (<code>SendInput</code> and <code>mouse_event</code>). Because all communication occurs over your local network rather than traversing third-party cloud servers, pointer movement feels immediate and fluid on standard local Wi-Fi or phone mobile hotspots.</p>
 
     <h2>Multi-touch gestures supported in PCDeck</h2>
     <p>PCDeck maps standard smartphone gestures directly to Windows pointer and click operations:</p>
@@ -246,6 +254,19 @@
 <footer>
   <div class="shell foot">
     <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides">
+      <a href="/guides/">All Guides Hub</a> · 
+      <a href="/security/">Security &amp; Privacy</a> · 
+      <a href="/use-phone-as-mouse/">Phone as mouse</a> · 
+      <a href="/use-phone-as-keyboard/">Phone as keyboard</a> · 
+      <a href="/use-phone-as-second-monitor/">Phone as PC screen</a> · 
+      <a href="/use-pc-without-mouse/">Without a mouse</a> · 
+      <a href="/use-pc-without-keyboard/">Without a keyboard</a> · 
+      <a href="/use-pc-without-monitor/">Without a monitor</a> · 
+      <a href="/use-pc-without-internet/">Without internet</a> · 
+      <a href="/stream-pc-audio-to-phone/">Stream audio</a> · 
+      <a href="/transfer-files-pc-to-android/">Cable-free transfers</a>
+    </p>
     <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
   </div>
 </footer>

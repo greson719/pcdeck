@@ -10,8 +10,16 @@
     <image:image>
       <image:loc>https://pcdeck.vercel.app/og-image.png</image:loc>
       <image:title>PCDeck - Use Your Android Phone as a Mouse, Keyboard &amp; PC Screen</image:title>
-      <image:caption>The mouse, keyboard and screen your PC is missing — trackpad, second screen, PC audio and cable-free file transfer over your own Wi-Fi.</image:caption>
+      <image:caption>The mouse, keyboard and screen your PC is missing — trackpad, screen viewer, PC audio and cable-free file transfer over your own Wi-Fi.</image:caption>
     </image:image>
+  </url>
+
+  <!-- Central Guides Hub -->
+  <url>
+    <loc>https://pcdeck.vercel.app/guides/</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
 
   <!-- Feature Landing Pages -->
