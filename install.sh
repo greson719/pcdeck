@@ -34,13 +34,13 @@ fi
 # If uv is installed, launch immediately with uv
 if command -v uv &>/dev/null; then
     echo -e "${GREEN}==>${NC} Launching PCDeck via high-speed uv engine..."
-    uvx --from git+https://github.com/greson719/pcdeck-pro.git pcdeck || true
+    uvx --from git+https://github.com/greson719/pcdeck.git pcdeck || true
     exit 0
 fi
 
 TARGET_BIN="$INSTALL_DIR/pcdeck"
 echo -e "${GREEN}==>${NC} Downloading PCDeck standalone Linux launcher..."
-curl -fsSL https://pcdeck.vercel.app/run_linux.sh -o "$TARGET_BIN" || curl -fsSL https://raw.githubusercontent.com/greson719/pcdeck-pro/main/run_linux.sh -o "$TARGET_BIN"
+curl -fsSL https://pcdeck.vercel.app/run_linux.sh -o "$TARGET_BIN" || curl -fsSL https://raw.githubusercontent.com/greson719/pcdeck/main/run_linux.sh -o "$TARGET_BIN"
 chmod +x "$TARGET_BIN"
 
 echo -e "${GREEN}✔ Installation complete!${NC}"
