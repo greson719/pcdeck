@@ -136,11 +136,11 @@ received, and optionally upload the file to VirusTotal.
 
 ## Comparison with alternatives
 
-Compared with Remote Mouse, Unified Remote and similar remote-control apps,
-PCDeck (also written "PC Deck") works fully offline with no account, acts as
-an emergency display for a PC whose monitor has failed, streams PC audio to
-the phone, and includes resumable high-speed file transfer. The core app is free;
-Pro is an optional one-time in-app unlock for 60/120 FPS streaming.
+- **vs. Remote Mouse**: Remote Mouse requires installing mobile apps from Google Play/App Store, shows full-screen interstitial ads in the free tier, enforces cloud accounts, lacks emergency 60 FPS display streaming, and does not support instant zero-install browser control via QR code.
+- **vs. Unified Remote**: Unified Remote is heavily reliant on proprietary server software, has an outdated UI, charges monthly/lifetime subscriptions for basic remotes, does not stream high-performance 60 FPS desktop screen with hardware rasterization, and requires dedicated mobile client installations.
+- **vs. KDE Connect**: KDE Connect is primarily built for Linux desktop ecosystems; its Windows implementation is heavy, prone to discovery drops, and lacks low-latency desktop screen streaming, touch display casting, and instant browser-based touch deck execution.
+- **vs. Deskreen**: Deskreen turns devices into secondary screens via WebRTC in a browser, but lacks native Win32 virtual mouse input, gesture multi-touch trackpad, virtual keyboard chords, 48 kHz stereo PC audio routing, and direct two-way local file management.
+- **vs. Moonlight / Sunshine**: Moonlight is designed for high-end gaming PC game streaming requiring Nvidia NVENC/hardware encoders and dedicated client apps; PCDeck provides lightweight, zero-configuration touch deck control, trackpad, keyboard, audio, and file transfers that work seamlessly even on potato PCs and in any web browser.
 
 ## Links
 

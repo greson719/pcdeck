@@ -58,25 +58,26 @@
       "alternateName": ["PC Deck", "PC-Deck", "PCDeck Remote"],
       "keywords": "PCDeck, PC Deck, wireless trackpad, phone as mouse, phone as keyboard, emergency monitor, stream pc audio to phone, offline file transfer",
       "url": "https://pcdeck.vercel.app/",
-      "operatingSystem": "Windows 10, Windows 11, Android 5.0+",
+      "operatingSystem": "Windows 10, Windows 11 (64-bit), Android 5.0+, iOS, iPadOS, macOS, Linux (via Web Remote)",
       "applicationCategory": "UtilitiesApplication",
-      "applicationSubCategory": "Remote control and screen sharing",
+      "applicationSubCategory": "Remote control, touch deck and screen sharing",
       "downloadUrl": "https://pcdeck.vercel.app/",
-      "softwareVersion": "2.1",
+      "softwareVersion": "2.6.4",
       "image": "https://pcdeck.vercel.app/og-image.png",
       "softwareHelp": { "@type": "CreativeWork", "url": "https://pcdeck.vercel.app/#install-help" },
-      "description": "PCDeck turns an Android phone into a wireless trackpad, keyboard, emergency display, audio receiver and file-transfer endpoint for a Windows PC. It runs entirely on the local Wi-Fi network with no account, no cloud relay and no telemetry.",
+      "description": "PCDeck turns your phone, tablet or browser into a wireless trackpad, keyboard, 60 FPS emergency display, audio receiver and high-speed file transfer hub for Windows 10/11. Runs entirely on local Wi-Fi with zero cloud relay, no telemetry, and instant zero-install browser control for iOS/Mac/Linux.",
       "offers": [
         { "@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "PCDeck Free" },
         { "@type": "Offer", "price": "3.99", "priceCurrency": "USD", "name": "PCDeck Pro — one-time lifetime licence" }
       ],
       "featureList": [
         "Wireless multi-touch trackpad with gestures and clicking",
-        "Full on-screen keyboard including numpad",
+        "Full on-screen keyboard including numpad and Windows shortcut chords",
+        "Instant Zero-Install Web Controller for iPhone, iPad, Mac, and Linux via QR Code",
+        "Hardware GPU StretchBlt 60 FPS ultra-low latency desktop screen streaming",
         "Emergency display for a PC whose monitor is broken or disconnected",
-        "Live desktop screen streaming to the phone",
-        "48 kHz stereo PC audio streamed to phone headphones",
-        "Resumable two-way file transfer over Wi-Fi without a cable",
+        "48 kHz stereo PC audio streamed to phone headphones over Wi-Fi",
+        "Resumable two-way chunked file transfer over Wi-Fi without a cable",
         "Reverse Android screen mirroring and control on the PC",
         "Fully offline operation with no cloud account or telemetry"
       ],
@@ -719,10 +720,10 @@ footer{padding:44px 0 56px}
     <div class="shell hero-grid">
 
       <div class="hero-col">
-        <p class="tag">Windows 10 / 11 &nbsp;·&nbsp; Android 5.0+</p>
-        <h1>Turn Your Android Phone Into a Mouse, Keyboard & Screen<em>for Windows</em></h1>
+        <p class="tag">Windows 10 / 11 &nbsp;·&nbsp; Android 5.0+ &nbsp;·&nbsp; Instant Browser Control for iOS, Mac &amp; Linux</p>
+        <h1>Turn Your Phone or Browser Into a Mouse, Keyboard & Screen<em>for Windows</em></h1>
         <p class="lede">
-          Your phone is the mouse, keyboard and screen your PC is missing. Dead mouse, broken keyboard, black monitor — or just want a second screen, PC audio streaming, and cable-free file transfers over your own local Wi-Fi.
+          Your phone is the mouse, keyboard and screen your PC is missing. Dead mouse, broken keyboard, black monitor — or just want a second screen, PC audio streaming, and cable-free file transfers over your own local Wi-Fi. <b>Instant zero-install web control supported on iPhone, iPad, Mac &amp; Linux.</b>
         </p>
 
         <div class="get" id="get">
@@ -733,20 +734,20 @@ footer{padding:44px 0 56px}
             </a>
             <a class="btn" id="hero-exe" href="PCDeck.exe" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span>Windows Server<small>EXE · 58 MB</small></span>
+              <span>Windows Server<small>EXE · 47.2 MB</small></span>
             </a>
             <a class="btn ghost" id="hero-zip" href="PCDeck_Package.zip" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Full Package<small>ZIP · 59 MB</small></span>
+              <span>Full Package<small>ZIP · 48.5 MB</small></span>
             </a>
           </div>
 
           <p class="get-alt">
-            You need both: the app on your phone (Direct APK) and the server on your PC. Download them separately above or together in the <a href="PCDeck_Package.zip" download>full offline ZIP bundle</a>.
+            <b>Two easy ways to connect:</b> Download the native Android APK above, or launch the Windows Server and scan the on-screen QR code with <b>any iPhone, iPad, Mac, Linux or Android browser</b> for instant zero-install control. Also available in the <a href="PCDeck_Package.zip" download>offline ZIP bundle</a>.
           </p>
 
           <p class="get-note">
-            <b>Setup:</b> Install PCDeck on your phone and launch the portable Windows client on your PC. Both connect automatically over your local Wi-Fi / Hotspot with zero cloud sign-in. <a href="#install-help">View setup guide &amp; checksums</a>.
+            <b>Setup:</b> Launch the portable Windows client on your PC. Both connect automatically over your local Wi-Fi / Hotspot with zero cloud sign-in. <a href="#install-help">View setup guide &amp; checksums</a>.
           </p>
         </div>
 
@@ -844,8 +845,8 @@ footer{padding:44px 0 56px}
     <div class="shell">
       <div class="sec-head">
         <p class="tag">What it does</p>
-        <h2>Six jobs, one local connection</h2>
-        <p>Every feature runs between your phone and your PC on the same network. Nothing is relayed through a server.</p>
+        <h2>Seven jobs, one local connection</h2>
+        <p>Every feature runs between your phone and your PC on the same network. Nothing is relayed through a cloud server.</p>
       </div>
 
       <div class="caps">
@@ -858,6 +859,11 @@ footer{padding:44px 0 56px}
           <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
           <h3>Keyboard</h3>
           <p>Full on-screen keyboard with numpad, typing synced directly to Windows. <a href="/use-phone-as-keyboard/">Phone keyboard guide &rarr;</a></p>
+        </div>
+        <div class="cap">
+          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <h3>Zero-Install Web Remote</h3>
+          <p>Instant browser control on iPhone, iPad, Mac &amp; Linux via QR code with 0 app installs. <a href="#setup">Setup guide &rarr;</a></p>
         </div>
         <div class="cap">
           <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
@@ -1027,22 +1033,22 @@ footer{padding:44px 0 56px}
     <div class="shell">
       <div class="sec-head">
         <p class="tag">Setup</p>
-        <h2>Three steps, about three minutes</h2>
-        <p>Do step one while the PC still has a working display, if you have the choice.</p>
+        <h2>Connect in seconds — zero configuration</h2>
+        <p>Choose instant zero-install browser control or install the native Android companion app.</p>
       </div>
 
       <div class="flow">
         <div class="step">
-          <h3>Run it on the PC</h3>
-          <p>Start PCDeck on Windows. It shows a QR code and a local address, and asks the firewall for network access.</p>
+          <h3>1. Run PCDeck on PC</h3>
+          <p>Start the standalone Windows executable. It immediately displays a QR code, local IP address, and active connection diagnostics.</p>
         </div>
         <div class="step">
-          <h3>Install the phone app</h3>
-          <p>Install the APK on your Android phone, allowing installation from unknown sources once when prompted.</p>
+          <h3>2. Instant Web Remote (Zero-Install)</h3>
+          <p>Open the camera on your iPhone, iPad, Mac, Linux, or Android device and scan the QR code. You get full touch trackpad, keyboard, 60 FPS screen stream, audio and files in Safari or Chrome with 0 app downloads.</p>
         </div>
         <div class="step">
-          <h3>Scan to pair</h3>
-          <p>With both devices on one Wi-Fi network or the phone's hotspot, scan the QR code. Trackpad, screen, audio and files are all available straight away.</p>
+          <h3>3. Optional: Native Android APK</h3>
+          <p>For dedicated hardware volume key control and background wake-lock, install the optional Android APK and scan the QR code to pair.</p>
         </div>
       </div>
     </div>
@@ -1122,8 +1128,12 @@ footer{padding:44px 0 56px}
           <p>Pro unlocks inside the app you already downloaded — there is no separate Pro build to hunt for. The APK below is the full app, free features first.</p>
         </details>
         <details>
+          <summary>Can I control my PC from an iPhone, iPad, Mac or Linux?</summary>
+          <p>Yes! PCDeck features a built-in <strong>Zero-Install Web Remote</strong>. When you launch PCDeck on your Windows PC, simply point your iPhone or iPad camera at the on-screen QR code (or navigate to your PC's local IP address in any browser). Safari or Chrome immediately opens the full touch controller with multi-touch gestures, on-screen keyboard, 60 FPS desktop streaming, PC audio receiver, and file manager — with zero app installation required.</p>
+        </details>
+        <details>
           <summary>Which Windows and Android versions are supported?</summary>
-          <p>Windows 10 and Windows 11 on the PC, as one self-contained executable with no Python or .NET to install first. On the phone, Android 5.0 Lollipop through Android 16 and later.</p>
+          <p>Windows 10 and Windows 11 on the PC, as one self-contained executable with no Python or .NET to install first. On the mobile side, any Android 5.0+ device natively, plus all iOS, iPadOS, macOS, and Linux devices via the instant Zero-Install Web Controller.</p>
         </details>
         <details>
           <summary>How does tapping the streamed screen click the right place?</summary>
@@ -1209,16 +1219,12 @@ footer{padding:44px 0 56px}
           <dd>0d6de5ac3d09791e70299a2a8d95f33ceac1397d67564b1a573d76a48dfa0ad3</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck.exe<span>49,536,208 BYTES</span></dt>
-          <dd>350a0e357eddf13f0cf8f321d2af769d0f97706be63b1bfa23ea2b071c684c2f</dd>
+          <dt>PCDeck.exe<span>49,539,203 BYTES</span></dt>
+          <dd>4a96f8c91f5c4e61a934457a139270f518e77be0a03d2ac42e0f7478a130a5c2</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck.msix<span>51,108,707 BYTES</span></dt>
-          <dd>c65defdbf77ea582ecbdf116977e7a7bdefcafd7a33a85cf6514dc39c0f8671e</dd>
-        </dl>
-        <dl class="sumrow">
-          <dt>PCDeck_Package.zip<span>50,844,585 BYTES</span></dt>
-          <dd>a00478cf99a7f399c7a2779229583c8a713a0f99d1fa77ad561e06384a400753</dd>
+          <dt>PCDeck_Package.zip<span>50,849,389 BYTES</span></dt>
+          <dd>9382f55d99696900d846b29138c4a03e7290693b3ec123790b6579b3e71417fc</dd>
         </dl>
         <!-- CHECKSUMS:END -->
 
