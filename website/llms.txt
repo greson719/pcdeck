@@ -81,6 +81,16 @@ received, and optionally upload the file to VirusTotal.
 - **Guides Hub** — https://pcdeck.vercel.app/guides/
   Central knowledge base and tutorials for PCDeck remote control, emergency display, audio, and file transfer.
 
+- **Control PC From Phone Browser (Zero-Install)** — https://pcdeck.vercel.app/browser-pc-remote/
+  Instant zero-install web remote: control Windows and Linux from Safari, Chrome, or Firefox on iOS, iPadOS, macOS, Android, and Linux via QR code scan.
+
+- **How to Control a Linux PC or Steam Deck From Phone** — https://pcdeck.vercel.app/control-linux-pc-from-phone/
+  Step-by-step guide for Ubuntu, Debian, Fedora, Arch Linux, and SteamOS (Steam Deck in Desktop Mode) remote control over local Wi-Fi.
+
+- **Linux Installation & Security Documentation** — https://pcdeck.vercel.app/linux-install/
+  Complete technical breakdown of the 1-line install.sh script, package dependencies, user permissions, and clean uninstall commands.
+
+
 - **How to use an Android phone as a mouse for PC** — https://pcdeck.vercel.app/use-phone-as-mouse/
   Turns your phone into a multi-touch trackpad over local Wi-Fi. Supports
   tap to click, two-finger scrolling, right-click, double-tap drag, and middle click.

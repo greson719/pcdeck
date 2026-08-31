@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Installation & Security Documentation — PCDeck</title>
+<meta name="description" content="Full technical transparency for PCDeck Linux installation: see the complete install.sh script breakdown, package dependencies, system permissions, and clean uninstall commands.">
+<meta name="keywords" content="PCDeck linux install, linux install.sh documentation, pcdeck ubuntu install, pcdeck steamos, pcdeck arch linux, linux remote control security">
+<link rel="canonical" href="https://pcdeck.vercel.app/linux-install/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://pcdeck.vercel.app/linux-install/">
+<meta property="og:title" content="PCDeck Linux Installation & Security Documentation">
+<meta property="og:description" content="Technical audit of the PCDeck Linux installer: dependencies, file locations, permissions, and clean uninstall instructions.">
+<meta property="og:image" content="https://pcdeck.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PCDeck Linux Installation & Security Documentation">
+<meta name="twitter:description" content="Complete technical breakdown of the PCDeck Linux installer and local daemon service.">
+<meta name="twitter:image" content="https://pcdeck.vercel.app/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://pcdeck.vercel.app/linux-install/#article",
+      "headline": "PCDeck for Linux: Installation & Security Documentation",
+      "description": "Exhaustive technical documentation detailing the PCDeck Linux installation script, package prerequisites, systemd daemon execution, and complete uninstallation steps.",
+      "url": "https://pcdeck.vercel.app/linux-install/",
+      "inLanguage": "en",
+      "datePublished": "2026-09-01",
+      "dateModified": "2026-09-01",
+      "author": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "publisher": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "proficiencyLevel": "Advanced",
+      "about": [
+        { "@type": "Thing", "name": "Linux shell script security" },
+        { "@type": "Thing", "name": "Systemd user service" },
+        { "@type": "Thing", "name": "PCDeck Linux architecture" }
+      ],
+      "mainEntityOfPage": { "@id": "https://pcdeck.vercel.app/linux-install/#webpage" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
+        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://pcdeck.vercel.app/guides/" },
+        { "@type": "ListItem", "position": 3, "name": "Linux Installation Docs", "item": "https://pcdeck.vercel.app/linux-install/" }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://pcdeck.vercel.app/linux-install/#webpage",
+      "url": "https://pcdeck.vercel.app/linux-install/",
+      "name": "Linux Installation & Security Documentation — PCDeck",
+      "isPartOf": { "@type": "WebSite", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/guides/">Guides</a>
+      <a href="/#features">What it does</a>
+      <a href="/#scenarios">Use cases</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/#download">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/guides/" class="mob-link"><span>Guides Hub</span><span>→</span></a>
+        <a href="/#features" class="mob-link"><span>What it does</span><span>→</span></a>
+        <a href="/#scenarios" class="mob-link"><span>Use cases</span><span>→</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>→</span></a>
+        <a href="/#faq" class="mob-link"><span>FAQ</span><span>→</span></a>
+        <a href="/#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>↓</span></a>
+      </div>
+
+      <div class="mobile-guides-title">Guides & Troubleshooting</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
+        <a href="/linux-install/" class="mob-link">Linux Install & Security Docs</a>
+        <a href="/control-linux-pc-from-phone/" class="mob-link">Control Linux from Phone</a>
+        <a href="/browser-pc-remote/" class="mob-link">Browser Web Remote</a>
+        <a href="/security/" class="mob-link">Security Architecture</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="shell crumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/">PCDeck</a></li>
+    <li><a href="/guides/">Guides</a></li>
+    <li aria-current="page">Linux Installation Docs</li>
+  </ol>
+</nav>
+
+<main id="main">
+  <div class="shell lede-block">
+    <h1>PCDeck for Linux: Installation & Security Documentation</h1>
+    <p class="sub">Security-conscious Linux users should never run piped shell scripts without auditing what they do. This page provides an exhaustive technical breakdown of <code>install.sh</code>, its dependencies, file destinations, network bindings, and clean uninstall instructions.</p>
+    <p class="updated tag">Audited 1 September 2026 · Bash Script Transparency · Zero Telemetry</p>
+  </div>
+
+  <div class="shell guide">
+
+    <div class="direct-answer">
+      <span class="tag">Security Summary</span>
+      <p><strong>Safe &amp; Minimal.</strong> The PCDeck Linux installer (<code>install.sh</code>) operates strictly within user space (<code>~/.local/share/pcdeck</code>). It does not require root privileges for daily execution, installs standard open-source Python dependencies (FastAPI, Uvicorn, Pillow, PyAudio), binds exclusively to port 8000 on your local network, and contains zero analytics, trackers, or external cloud telemetry.</p>
+    </div>
+
+    <h2>1. The 1-Line Command</h2>
+    <div style="background: var(--panel); border: 1px solid var(--grid); border-radius: 4px; padding: 12px 16px; font-family: var(--mono); font-size: 14px; margin-bottom: 20px;">
+      <code>curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
+    </div>
+    <p>You can also inspect the raw script directly in your browser or terminal prior to execution: <a href="https://pcdeck.vercel.app/install.sh" target="_blank" rel="noopener">https://pcdeck.vercel.app/install.sh</a>.</p>
+
+    <h2>2. What the script actually does</h2>
+    <p>The installation script executes the following discrete steps:</p>
+    <ol class="steps">
+      <li>
+        <b>Environment &amp; Architecture Check</b>
+        <p>Verifies the system is running Linux (x86_64, aarch64 / ARM64, or armv7l) and confirms Python 3.8+ is installed.</p>
+      </li>
+      <li>
+        <b>Dependency Resolution</b>
+        <p>Detects the host package manager (<code>apt</code>, <code>pacman</code>, <code>dnf</code>) and installs required system utilities if missing: <code>python3-pip</code>, <code>python3-venv</code>, and X11/Wayland input support tools.</p>
+      </li>
+      <li>
+        <b>Isolated User Space Installation</b>
+        <p>Creates an isolated directory at <code>~/.local/share/pcdeck</code> with a dedicated Python virtual environment (<code>~/.local/share/pcdeck/venv</code>), preventing conflicts with system Python libraries.</p>
+      </li>
+      <li>
+        <b>Downloads Core PCDeck Server</b>
+        <p>Fetches the lightweight PCDeck server module and static Web Remote assets into the local directory.</p>
+      </li>
+      <li>
+        <b>Desktop Entry &amp; Launcher</b>
+        <p>Adds an executable shortcut to <code>~/.local/bin/pcdeck</code> and an optional <code>.desktop</code> entry in <code>~/.local/share/applications/</code> so you can launch PCDeck from your application menu.</p>
+      </li>
+    </ol>
+
+    <h2>3. File system locations</h2>
+    <table class="keys">
+      <caption>Files and directories created by PCDeck Linux</caption>
+      <thead><tr><th scope="col">Path</th><th scope="col">Purpose</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><code>~/.local/share/pcdeck/</code></th><td>Application root directory, virtual environment, and server scripts.</td></tr>
+        <tr><th scope="row"><code>~/.local/bin/pcdeck</code></th><td>User-executable launch script.</td></tr>
+        <tr><th scope="row"><code>~/.local/share/applications/pcdeck.desktop</code></th><td>Desktop menu shortcut.</td></tr>
+        <tr><th scope="row"><code>~/.config/systemd/user/pcdeck.service</code></th><td>Optional systemd user service for background launch.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>4. Network &amp; Security Profile</h2>
+    <ul>
+      <li><strong>Port Binding:</strong> Binds to local port <code>8000</code> over TCP.</li>
+      <li><strong>Network Isolation:</strong> All WebSockets (<code>/ws</code>, <code>/ws/screen</code>, <code>/ws/audio</code>) communicate strictly across the local subnet. No traffic is routed through cloud proxies or external servers.</li>
+      <li><strong>Permissions:</strong> Runs entirely under your current standard user account. Does not require setuid, sudo at runtime, or kernel modules.</li>
+    </ul>
+
+    <h2>5. How to uninstall cleanly</h2>
+    <p>To completely remove PCDeck and all associated files from your Linux system, run this single cleanup command in terminal:</p>
+    <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 4px; padding: 10px 14px; font-family: var(--mono); font-size: 13px; margin: 12px 0;">
+      <code>rm -rf ~/.local/share/pcdeck ~/.local/bin/pcdeck ~/.local/share/applications/pcdeck.desktop</code>
+    </div>
+
+    <div class="pitch" id="phone-solution">
+      <h2>Read the Full Security Architecture</h2>
+      <p>Learn more about PCDeck's zero-telemetry local network security model and SHA-256 binary validation.</p>
+      <div class="row">
+        <a class="btn" href="/security/">Read Security Architecture</a>
+        <a class="btn ghost" href="/control-linux-pc-from-phone/">Control Linux from Phone Guide</a>
+      </div>
+    </div>
+
+    <div class="next">
+      <h2>Explore More Guides</h2>
+      <p><a href="/control-linux-pc-from-phone/">How to control a Linux PC or Steam Deck from your phone</a></p>
+      <p><a href="/browser-pc-remote/">Instant zero-install browser PC remote</a> · <a href="/guides/">All Guides Hub</a></p>
+      <p><a href="/security/">PCDeck security teardown</a> · <a href="/#download">Download PCDeck</a></p>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides">
+      <a href="/guides/">All Guides Hub</a> · 
+      <a href="/linux-install/">Linux Install Docs</a> · 
+      <a href="/control-linux-pc-from-phone/">Control Linux from Phone</a> · 
+      <a href="/browser-pc-remote/">Browser Web Remote</a> · 
+      <a href="/security/">Security &amp; Privacy</a> · 
+      <a href="/#download">Downloads</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      menu.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+    } else {
+      menu.classList.remove('active');
+      menu.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+  document.addEventListener('click', function (e) {
+    if (menu.classList.contains('active') && !menu.contains(e.target) && e.target !== toggle) {
+      toggleMenu(false);
+    }
+  });
+})();
+</script>
+</body>
+</html>

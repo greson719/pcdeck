@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Control a Linux PC or Steam Deck From Your Phone | PCDeck</title>
+<meta name="description" content="Control Ubuntu, Debian, Fedora, Arch Linux, and SteamOS (Steam Deck) from your Android phone or mobile browser over local Wi-Fi. Multi-touch mouse, keyboard, audio and screen streaming.">
+<meta name="keywords" content="control linux pc from phone, android remote control linux, control ubuntu from phone, phone as mouse for linux, steam deck remote control, linux wireless trackpad, PCDeck linux">
+<link rel="canonical" href="https://pcdeck.vercel.app/control-linux-pc-from-phone/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://pcdeck.vercel.app/control-linux-pc-from-phone/">
+<meta property="og:title" content="How to Control a Linux PC or Steam Deck From Your Phone">
+<meta property="og:description" content="Step-by-step guide to controlling Linux (Ubuntu, Debian, Fedora, Arch, SteamOS) from an Android phone or browser over local Wi-Fi.">
+<meta property="og:image" content="https://pcdeck.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How to Control a Linux PC or Steam Deck From Your Phone">
+<meta name="twitter:description" content="Control Ubuntu, Debian, Arch Linux, and SteamOS from your smartphone over local Wi-Fi. Wireless trackpad, keyboard, and screen streaming.">
+<meta name="twitter:image" content="https://pcdeck.vercel.app/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://pcdeck.vercel.app/control-linux-pc-from-phone/#article",
+      "headline": "How to Control a Linux PC or Steam Deck From Your Phone",
+      "description": "Step-by-step technical guide to controlling Linux systems (Ubuntu, Debian, Fedora, Arch Linux, Raspberry Pi OS, and SteamOS on Steam Deck) using an Android phone or mobile web browser over local Wi-Fi.",
+      "url": "https://pcdeck.vercel.app/control-linux-pc-from-phone/",
+      "inLanguage": "en",
+      "datePublished": "2026-09-01",
+      "dateModified": "2026-09-01",
+      "author": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "publisher": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "proficiencyLevel": "Intermediate",
+      "about": [
+        { "@type": "Thing", "name": "Linux remote control" },
+        { "@type": "Thing", "name": "Steam Deck remote trackpad" },
+        { "@type": "Thing", "name": "Ubuntu phone mouse" }
+      ],
+      "mainEntityOfPage": { "@id": "https://pcdeck.vercel.app/control-linux-pc-from-phone/#webpage" }
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://pcdeck.vercel.app/control-linux-pc-from-phone/#howto",
+      "name": "How to Install and Run PCDeck on Linux",
+      "description": "Install PCDeck on Ubuntu, Debian, Fedora, Arch, or SteamOS using a single terminal command and connect your phone over local Wi-Fi.",
+      "totalTime": "PT3M",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Run the 1-line installer on Linux",
+          "text": "Open your Linux terminal and execute: curl -sSL https://pcdeck.vercel.app/install.sh | bash"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Launch PCDeck service",
+          "text": "The installer configures dependencies and starts the PCDeck server, displaying your local IP and QR pairing code in terminal."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Connect from your phone",
+          "text": "Scan the QR code with your phone camera to open the instant Web Remote in your browser, or connect via the PCDeck Android APK."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Control Linux desktop",
+          "text": "Enjoy multi-touch trackpad control, keyboard typing, audio streaming, and desktop viewer on X11 or Wayland."
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
+        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://pcdeck.vercel.app/guides/" },
+        { "@type": "ListItem", "position": 3, "name": "Control Linux From Phone", "item": "https://pcdeck.vercel.app/control-linux-pc-from-phone/" }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://pcdeck.vercel.app/control-linux-pc-from-phone/#webpage",
+      "url": "https://pcdeck.vercel.app/control-linux-pc-from-phone/",
+      "name": "How to Control a Linux PC or Steam Deck From Your Phone | PCDeck",
+      "isPartOf": { "@type": "WebSite", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/guides/">Guides</a>
+      <a href="/#features">What it does</a>
+      <a href="/#scenarios">Use cases</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/#download">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/guides/" class="mob-link"><span>Guides Hub</span><span>→</span></a>
+        <a href="/#features" class="mob-link"><span>What it does</span><span>→</span></a>
+        <a href="/#scenarios" class="mob-link"><span>Use cases</span><span>→</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>→</span></a>
+        <a href="/#faq" class="mob-link"><span>FAQ</span><span>→</span></a>
+        <a href="/#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>↓</span></a>
+      </div>
+
+      <div class="mobile-guides-title">Guides & Troubleshooting</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
+        <a href="/control-linux-pc-from-phone/" class="mob-link">Control Linux / Steam Deck</a>
+        <a href="/linux-install/" class="mob-link">Linux Install & Security Docs</a>
+        <a href="/browser-pc-remote/" class="mob-link">Browser Web Remote</a>
+        <a href="/use-phone-as-mouse/" class="mob-link">Use phone as mouse</a>
+        <a href="/use-phone-as-keyboard/" class="mob-link">Use phone as keyboard</a>
+        <a href="/use-phone-as-second-monitor/" class="mob-link">Use phone as screen</a>
+        <a href="/stream-pc-audio-to-phone/" class="mob-link">Stream audio to phone</a>
+        <a href="/transfer-files-pc-to-android/" class="mob-link">Wi-Fi file transfer</a>
+        <a href="/use-pc-without-internet/" class="mob-link">Use PC without internet</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="shell crumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/">PCDeck</a></li>
+    <li><a href="/guides/">Guides</a></li>
+    <li aria-current="page">Control Linux from Phone</li>
+  </ol>
+</nav>
+
+<main id="main">
+  <div class="shell lede-block">
+    <h1>How to Control a Linux PC or Steam Deck From Your Phone</h1>
+    <p class="sub">Whether you're running Ubuntu on a desktop, managing a headless Raspberry Pi home server, or using a Valve Steam Deck in desktop mode, PCDeck turns your phone into an offline wireless trackpad, keyboard, and screen viewer.</p>
+    <p class="updated tag">Updated 1 September 2026 · Ubuntu, Debian, Fedora, Arch Linux, SteamOS & Raspberry Pi · X11 & Wayland</p>
+  </div>
+
+  <div class="shell guide">
+
+    <div class="direct-answer">
+      <span class="tag">Direct Answer</span>
+      <p><strong>Yes.</strong> You can control any Linux PC or Valve Steam Deck from an Android phone or mobile web browser over local Wi-Fi. PCDeck runs on Linux via a single terminal install command, binding an input and streaming server on port 8000. It translates mobile touch gestures into native Linux pointer and keyboard events (via X11 / Wayland input subsystems) and streams audio and screen frames with zero cloud configuration.</p>
+    </div>
+
+    <div class="quick-card">
+      <p class="tag">Universal 1-Line Linux Install</p>
+      <p>Run this command in any Linux terminal to install and start PCDeck:</p>
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 4px; padding: 10px 14px; font-family: var(--mono); font-size: 13px; margin: 8px 0; word-break: break-all;">
+        <code>curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
+      </div>
+      <p style="font-size: 13px; color: var(--muted); margin: 0;">Inspect the script or read full technical documentation: <a href="/linux-install/">Linux Installation &amp; Security Docs &rarr;</a></p>
+    </div>
+
+    <h2>Supported Linux distributions and platforms</h2>
+    <p>PCDeck is engineered to run seamlessly across major Linux distributions:</p>
+    <ul>
+      <li><strong>Ubuntu &amp; Debian:</strong> Full support for Ubuntu 20.04+, Debian 11+, Linux Mint, Pop!_OS, and Elementary OS.</li>
+      <li><strong>Arch Linux &amp; Manjaro:</strong> Native compatibility with rolling-release Arch environments.</li>
+      <li><strong>Fedora &amp; RHEL:</strong> Automatic package resolution on RPM-based distributions.</li>
+      <li><strong>SteamOS (Valve Steam Deck):</strong> Perfect for controlling Steam Deck in Desktop Mode without docking a physical keyboard and mouse.</li>
+      <li><strong>Raspberry Pi OS:</strong> Lightweight resource footprint ideal for Raspberry Pi 4/5 home servers and media boxes.</li>
+    </ul>
+
+    <h2>Step-by-step setup on Linux</h2>
+    <ol class="steps">
+      <li>
+        <b>Run the installer command in terminal</b>
+        <p>Open your Linux terminal (or switch to Desktop Mode on Steam Deck and open Konsole) and run:</p>
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 4px; padding: 8px 12px; font-family: var(--mono); font-size: 13px; margin: 8px 0;">
+          <code>curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
+        </div>
+        <p>The installer verifies Python 3, sets up the local user environment, and starts the PCDeck server.</p>
+      </li>
+      <li>
+        <b>Pair your phone via QR code or local IP</b>
+        <p>The terminal displays a clean ASCII QR code and your Linux machine's local IP address (e.g. <code>192.168.1.100:8000</code>). Scan the QR code with your phone camera or enter the URL into your browser.</p>
+      </li>
+      <li>
+        <b>Navigate and control Linux</b>
+        <p>Your phone screen becomes an active multi-touch trackpad and keyboard. Move your finger to steer the mouse pointer in GNOME, KDE Plasma, XFCE, or i3.</p>
+      </li>
+    </ol>
+
+    <h2>Steam Deck in Desktop Mode: The ultimate couch companion</h2>
+    <p>When you switch your Valve Steam Deck to Desktop Mode to install emulators, configure ModOrganizer, or browse files, navigating with the built-in trackpads can feel cramped. Running PCDeck on your Steam Deck gives you a spacious multi-touch trackpad and smartphone keyboard right from your couch—no Bluetooth pairing glitches or bulky USB hubs needed.</p>
+
+    <div class="limit">
+      <p class="tag">Firewall Note for Linux Users</p>
+      <p>If you have <code>ufw</code> or <code>firewalld</code> enabled, ensure port 8000 is permitted for incoming local network connections: <code>sudo ufw allow 8000/tcp</code>.</p>
+    </div>
+
+    <div class="pitch" id="phone-solution">
+      <h2>Get PCDeck for Linux — Free Local Remote Control</h2>
+      <p>Control Linux and Windows PCs from your smartphone or browser over local Wi-Fi with zero telemetry.</p>
+      <div class="row">
+        <a class="btn" href="/linux-install/">View Linux Install Docs</a>
+        <a class="btn ghost" href="/#download">Download Windows / Android</a>
+      </div>
+      <p class="fine">Ubuntu · Debian · Fedora · Arch · SteamOS · Raspberry Pi · 100% Offline LAN</p>
+    </div>
+
+    <div class="next">
+      <h2>Explore More Guides</h2>
+      <p><a href="/linux-install/">PCDeck Linux installation &amp; security architecture</a></p>
+      <p><a href="/browser-pc-remote/">Control PC from mobile browser without app downloads</a></p>
+      <p><a href="/use-phone-as-mouse/">How to use phone as mouse</a> · <a href="/use-phone-as-keyboard/">Use phone as keyboard</a></p>
+      <p><a href="/use-pc-without-monitor/">Use PC with broken or headless monitor</a> · <a href="/guides/">All Guides Hub</a></p>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides">
+      <a href="/guides/">All Guides Hub</a> · 
+      <a href="/control-linux-pc-from-phone/">Control Linux from Phone</a> · 
+      <a href="/linux-install/">Linux Install Docs</a> · 
+      <a href="/browser-pc-remote/">Browser Web Remote</a> · 
+      <a href="/security/">Security &amp; Privacy</a> · 
+      <a href="/#download">Downloads</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      menu.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+    } else {
+      menu.classList.remove('active');
+      menu.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+  document.addEventListener('click', function (e) {
+    if (menu.classList.contains('active') && !menu.contains(e.target) && e.target !== toggle) {
+      toggleMenu(false);
+    }
+  });
+})();
+</script>
+</body>
+</html>
