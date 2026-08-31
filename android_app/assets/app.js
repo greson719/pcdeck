@@ -1199,6 +1199,12 @@
     // Refresh Places & Current Directory
     loadFsPlaces();
 
+    // Send Pro status to PC Server
+    const isProActive = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+    if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      mainWs.send(`pro_status,${isProActive ? '1' : '0'}`);
+    }
+
     // Auto-enable PC audio streaming if enabled in preferences.
     // Never override a manual stop, or every auto-reconnect would revive the stream.
     if (state.autoAudioStream && !audioStreamActive && !userManuallyStoppedAudio) {
@@ -4858,6 +4864,9 @@
     }
     if (keyRow) {
       keyRow.style.display = isPro ? 'none' : 'flex';
+    }
+    if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      mainWs.send(`pro_status,${isPro ? '1' : '0'}`);
     }
   }
 

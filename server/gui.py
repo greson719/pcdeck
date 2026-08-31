@@ -460,6 +460,18 @@ class PCDeckProGUI:
         )
         self.client_badge.pack(side="right")
 
+        self.pro_badge = tk.Label(
+            header_right,
+            text="★ PRO ACTIVE",
+            font=F_SMALL_STRONG,
+            fg="#ffd700",
+            bg="#221e10",
+            bd=1,
+            relief="solid",
+            padx=8,
+            pady=3,
+        )
+
         # 2. Main 2-Column Content Layout
         content = tk.Frame(self.root, bg=C_BG)
         content.pack(fill="both", expand=True, padx=16, pady=4)
@@ -1418,6 +1430,24 @@ class PCDeckProGUI:
                 count = len(active_connections) + len(screen_connections)
                 if hasattr(self, "client_badge") and self.client_badge.winfo_exists():
                     self.client_badge.config(text=f"{count} Client{'s' if count != 1 else ''}")
+
+                # Pro License Badge sync
+                try:
+                    try:
+                        from server.main import is_pro_client
+                    except ImportError:
+                        from main import is_pro_client
+                    pro_active = is_pro_client()
+                except Exception:
+                    pro_active = False
+
+                if hasattr(self, "pro_badge") and self.pro_badge.winfo_exists():
+                    if pro_active and count > 0:
+                        if not self.pro_badge.winfo_ismapped():
+                            self.pro_badge.pack(side="right", padx=(0, 6))
+                    else:
+                        if self.pro_badge.winfo_ismapped():
+                            self.pro_badge.pack_forget()
 
                 # 2. Dynamic Hotspot / Wi-Fi IP auto-detection
                 latest_ip = get_local_ip()

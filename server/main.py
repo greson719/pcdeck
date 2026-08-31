@@ -239,6 +239,18 @@ else:
     STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 
 
+# Global connected client Pro status
+client_is_pro = False
+
+def is_pro_client() -> bool:
+    global client_is_pro
+    return client_is_pro
+
+def set_pro_client(active: bool):
+    global client_is_pro
+    client_is_pro = active
+
+
 @app.get("/api/info")
 async def get_info():
     """Return server system info and connection state."""
@@ -252,6 +264,7 @@ async def get_info():
         "url": f"http://{live_ip}:{SERVER_PORT}",
         "transfer_dir": TRANSFER_DIR,
         "clients_connected": len(active_connections) + len(screen_connections),
+        "pro_active": client_is_pro,
         "screen": {
             "width": mon["width"],
             "height": mon["height"],
@@ -1107,6 +1120,10 @@ def dispatch_command(data: str):
 
         elif cmd == "media" and len(parts) >= 2:
             controller.media(parts[1])
+
+        elif cmd == "pro_status" and len(parts) >= 2:
+            global client_is_pro
+            client_is_pro = (parts[1] == "1" or parts[1].lower() == "true")
 
 
 # ================= REVERSE PHONE REMOTE & ADB ENGINE =================
