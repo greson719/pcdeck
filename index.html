@@ -564,30 +564,28 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 }
 .win-bar{
   height:24px;background:#e7eaee;border-bottom:1px solid #cfd5dd;
-  display:flex;align-items:center;justify-content:space-between;padding:0 8px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 0 0 8px;
 }
 .win-dark .win-bar, .win-player .win-bar{
   background:#18202c;border-bottom-color:#253140;color:#e1e7f0;
 }
 .win-btns{
-  display:flex;align-items:center;gap:4px;
+  display:flex;align-items:center;gap:0;height:100%;margin-left:auto;
 }
 .win-btn{
-  width:10px;height:10px;border-radius:50%;border:1px solid transparent;
-  display:grid;place-items:center;font-size:7px;font-family:sans-serif;
-  color:transparent;cursor:pointer;padding:0;line-height:1;transition:transform .1s ease, filter .1s ease;
+  width:28px;height:100%;border-radius:0;border:0;background:transparent;
+  display:grid;place-items:center;font-size:9px;font-family:sans-serif;
+  color:#5a6370;cursor:pointer;padding:0;line-height:1;transition:background .1s ease, color .1s ease;
 }
-.win-btn.close{background:#ff5f56;border-color:#e0443e}
-.win-btn.min{background:#ffbd2e;border-color:#dea123}
-.win-btn.max{background:#27c93f;border-color:#1aab29}
-.win-btn.mock-hover, .win-btn:hover{
-  transform:scale(1.25);
-  color:#fff;
-  filter:brightness(1.15);
-}
+.win-btn.close:hover, .win-btn.close.mock-hover{background:#e81123;color:#fff}
+.win-btn.min:hover, .win-btn.min.mock-hover, .win-btn.max:hover, .win-btn.max.mock-hover{background:rgba(0,0,0,.08)}
+.win-dark .win-btn{color:#8a99aa}
+.win-dark .win-btn.min:hover, .win-dark .win-btn.min.mock-hover,
+.win-dark .win-btn.max:hover, .win-dark .win-btn.max.mock-hover{background:rgba(255,255,255,.12)}
+.win-dark .win-btn.close:hover, .win-dark .win-btn.close.mock-hover{background:#e81123;color:#fff}
 .win-bar b{
   font-family:var(--mono);font-size:9.5px;color:#59616c;font-weight:600;
-  flex:1;text-align:center;padding-right:20px;
+  flex:1;text-align:left;padding-left:2px;
 }
 .win-dark .win-bar b, .win-player .win-bar b{
   color:#b0bccb;
@@ -656,7 +654,25 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
   background:var(--signal);color:#fff;
 }
 
-/* Taskbar */
+/* Right-Click Windows Context Menu */
+.ctx-menu{
+  position:absolute;left:50px;top:50px;width:130px;
+  background:#1a2330;border:1px solid #33445c;border-radius:6px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.65);z-index:15;
+  padding:4px;display:flex;flex-direction:column;gap:2px;
+  transition:opacity .12s ease, transform .12s ease;
+}
+.ctx-menu.hidden{
+  opacity:0;pointer-events:none;transform:scale(0.95);
+}
+.ctx-item{
+  font-family:var(--mono);font-size:8px;color:#d0dce8;padding:4px 6px;border-radius:3px;cursor:pointer;
+  display:flex;align-items:center;gap:4px;
+}
+.ctx-item.mock-hover, .ctx-item:hover{
+  background:var(--signal);color:#fff;
+}
+.ctx-divider{height:1px;background:#2a384c;margin:2px 0}
 .taskbar{
   position:absolute;bottom:0;left:0;right:0;height:26px;
   background:#0f141c;border-top:1px solid #222c3a;
@@ -1234,8 +1250,8 @@ footer{padding:44px 0 56px}
                     <div class="d-icon-art">📄</div>
                     <span>Notes</span>
                   </div>
-                  <div class="d-icon" id="d-term" data-action="open-term" title="Click to open Terminal">
-                    <div class="d-icon-art">🐧</div>
+                  <div class="d-icon" id="d-term" data-action="open-term" title="Click to open Cmd Prompt">
+                    <div class="d-icon-art">💻</div>
                     <span>Terminal</span>
                   </div>
                   <div class="d-icon" id="d-audio" data-action="open-player" title="Click to open Audio Streamer">
@@ -1247,15 +1263,15 @@ footer{padding:44px 0 56px}
                 <!-- App Window 1: Notes -->
                 <div class="win" id="win-doc">
                   <div class="win-bar">
-                    <div class="win-btns">
-                      <button class="win-btn close" data-action="close-doc" title="Close Window">✕</button>
-                      <button class="win-btn min" data-action="min-doc" title="Minimize">−</button>
-                      <button class="win-btn max" data-action="max-doc" title="Maximize">+</button>
-                    </div>
                     <b>📄 Notes.txt</b>
+                    <div class="win-btns">
+                      <button class="win-btn min" data-action="min-doc" title="Minimize">─</button>
+                      <button class="win-btn max" data-action="max-doc" title="Maximize">□</button>
+                      <button class="win-btn close" data-action="close-doc" title="Close Window">✕</button>
+                    </div>
                   </div>
                   <div class="win-body">
-                    <div class="win-row"><span class="sig-pill">PCDeck</span> <span class="dim-txt">Offline Local Bridge</span></div>
+                    <div class="win-row"><span class="sig-pill">PCDeck</span> <span class="dim-txt">Offline Windows Bridge</span></div>
                     <div class="bar w70"></div>
                     <div class="bar w40 sig"></div>
                     <div class="bar w55"></div>
@@ -1266,30 +1282,32 @@ footer{padding:44px 0 56px}
                   </div>
                 </div>
 
-                <!-- App Window 2: Terminal -->
+                <!-- App Window 2: Windows Command Prompt -->
                 <div class="win win-dark hidden" id="win-term">
                   <div class="win-bar">
+                    <b>💻 Command Prompt</b>
                     <div class="win-btns">
+                      <button class="win-btn min" data-action="min-term" title="Minimize">─</button>
+                      <button class="win-btn max" data-action="max-term" title="Maximize">□</button>
                       <button class="win-btn close" data-action="close-term" title="Close Terminal">✕</button>
-                      <button class="win-btn min" data-action="min-term">−</button>
                     </div>
-                    <b>🐧 PCDeck Terminal</b>
                   </div>
                   <div class="win-body term-body">
-                    <p class="term-line prompt">&gt; pcdeck-service --offline</p>
-                    <p class="term-line ok">✓ Wi-Fi Trackpad: CONNECTED</p>
+                    <p class="term-line prompt">C:\Users\PCDeck&gt; pcdeck-service.exe</p>
+                    <p class="term-line ok">✓ Windows Wi-Fi Bridge: CONNECTED</p>
                     <p class="term-line ok">✓ Zero latency · 0 accounts</p>
-                    <p class="term-line blink">&gt; _</p>
+                    <p class="term-line blink">C:\Users\PCDeck&gt; _</p>
                   </div>
                 </div>
 
                 <!-- App Window 3: Audio Streamer -->
                 <div class="win win-player hidden" id="win-player">
                   <div class="win-bar">
+                    <b>🎵 Audio Streamer</b>
                     <div class="win-btns">
+                      <button class="win-btn min" data-action="min-player" title="Minimize">─</button>
                       <button class="win-btn close" data-action="close-player" title="Close Player">✕</button>
                     </div>
-                    <b>🎵 Audio Streamer</b>
                   </div>
                   <div class="win-body player-body">
                     <div class="eq-bars">
@@ -1302,15 +1320,25 @@ footer{padding:44px 0 56px}
                 <!-- Start Menu Popover -->
                 <div class="start-popover hidden" id="start-menu">
                   <div class="start-head">
-                    <span style="font-size:12px;">⚡</span>
-                    <b>PCDeck Menu</b>
+                    <span style="font-size:12px;">🪟</span>
+                    <b>Windows Start Menu</b>
                   </div>
                   <div class="start-items">
-                    <div class="start-item" data-action="open-doc">📄 Open Notes.txt</div>
-                    <div class="start-item" data-action="open-term">🐧 Open Terminal</div>
-                    <div class="start-item" data-action="open-player">🎵 Stream Audio</div>
-                    <div class="start-item" data-action="ping-action">📶 Test LAN Signal</div>
+                    <div class="start-item" data-action="open-doc">📄 Notes.txt</div>
+                    <div class="start-item" data-action="open-term">💻 Command Prompt</div>
+                    <div class="start-item" data-action="open-player">🎵 Audio Streamer</div>
+                    <div class="start-item" data-action="ping-action">⚡ Test LAN Speed</div>
                   </div>
+                </div>
+
+                <!-- Right-Click Windows Context Menu -->
+                <div class="ctx-menu hidden" id="ctx-menu">
+                  <div class="ctx-item" data-action="open-doc">📄 Open Notes</div>
+                  <div class="ctx-item" data-action="open-term">💻 Open Terminal</div>
+                  <div class="ctx-item" data-action="open-player">🎵 Stream Audio</div>
+                  <div class="ctx-divider"></div>
+                  <div class="ctx-item" data-action="ping-action">⚡ Send Ping</div>
+                  <div class="ctx-item" data-action="toggle-start">🪟 Toggle Start Menu</div>
                 </div>
 
                 <!-- Taskbar -->
@@ -1318,7 +1346,7 @@ footer{padding:44px 0 56px}
                   <div class="tb-left">
                     <button class="tb-btn tb-start" data-action="toggle-start" title="Start Menu">🪟 <span>Start</span></button>
                     <button class="tb-btn tb-app active" id="tb-doc" data-action="toggle-doc" title="Notes">📄</button>
-                    <button class="tb-btn tb-app" id="tb-term" data-action="toggle-term" title="Terminal">🐧</button>
+                    <button class="tb-btn tb-app" id="tb-term" data-action="toggle-term" title="Cmd Prompt">💻</button>
                     <button class="tb-btn tb-app" id="tb-player" data-action="toggle-player" title="Audio Player">🎵</button>
                   </div>
                   <div class="tb-right">
@@ -1338,9 +1366,7 @@ footer{padding:44px 0 56px}
 
               <div class="phone">
                 <div class="phone-topbar">
-                  <span id="phone-time">12:00</span>
                   <span class="phone-ear" aria-hidden="true"></span>
-                  <span>📶 🔋</span>
                 </div>
                 <div class="pad" id="pad" role="application"
                      aria-label="Interactive trackpad demonstration. Move your pointer or finger across this phone screen to move the cursor on the mock desktop behind it.">
@@ -1887,14 +1913,35 @@ footer{padding:44px 0 56px}
     return null;
   }
 
+  function triggerRightClick(cx, cy) {
+    var ctxMenu = document.getElementById('ctx-menu');
+    var startMenu = document.getElementById('start-menu');
+    if (startMenu) startMenu.classList.add('hidden');
+    if (ctxMenu) {
+      // Position context menu at cursor location (clamped inside screen)
+      var sWidth = screen.clientWidth || 300;
+      var sHeight = screen.clientHeight || 200;
+      var menuW = 130, menuH = 120;
+      var left = Math.min(Math.max(cx, 10), sWidth - menuW - 10);
+      var top = Math.min(Math.max(cy, 10), sHeight - menuH - 30);
+      ctxMenu.style.left = left + 'px';
+      ctxMenu.style.top = top + 'px';
+      ctxMenu.classList.remove('hidden');
+    }
+    mode.textContent = 'Right-Clicked (' + Math.round(cx) + ', ' + Math.round(cy) + ')';
+  }
+
   function handleAction(action) {
     var winDoc = document.getElementById('win-doc');
     var winTerm = document.getElementById('win-term');
     var winPlayer = document.getElementById('win-player');
     var startMenu = document.getElementById('start-menu');
+    var ctxMenu = document.getElementById('ctx-menu');
     var tbDoc = document.getElementById('tb-doc');
     var tbTerm = document.getElementById('tb-term');
     var tbPlayer = document.getElementById('tb-player');
+
+    if (ctxMenu) ctxMenu.classList.add('hidden');
 
     function focusWin(win) {
       if (!win) return;
@@ -1930,21 +1977,21 @@ footer{padding:44px 0 56px}
     } else if (action === 'close-term' || action === 'min-term') {
       if (winTerm) winTerm.classList.add('hidden');
       if (tbTerm) tbTerm.classList.remove('active');
-      mode.textContent = 'Closed Terminal';
+      mode.textContent = 'Closed Command Prompt';
     } else if (action === 'open-term' || action === 'toggle-term') {
       if (winTerm) {
         if (action === 'toggle-term' && !winTerm.classList.contains('hidden') && winTerm.classList.contains('focused')) {
           winTerm.classList.add('hidden');
           if (tbTerm) tbTerm.classList.remove('active');
-          mode.textContent = 'Minimized Terminal';
+          mode.textContent = 'Minimized Command Prompt';
         } else {
           focusWin(winTerm);
           if (tbTerm) tbTerm.classList.add('active');
-          mode.textContent = 'Opened Terminal';
+          mode.textContent = 'Opened Command Prompt';
         }
       }
       if (startMenu) startMenu.classList.add('hidden');
-    } else if (action === 'close-player') {
+    } else if (action === 'close-player' || action === 'min-player') {
       if (winPlayer) winPlayer.classList.add('hidden');
       if (tbPlayer) tbPlayer.classList.remove('active');
       mode.textContent = 'Closed Audio';
@@ -1964,7 +2011,7 @@ footer{padding:44px 0 56px}
     } else if (action === 'toggle-start') {
       if (startMenu) {
         startMenu.classList.toggle('hidden');
-        mode.textContent = startMenu.classList.contains('hidden') ? 'Closed Start' : 'Opened Start Menu';
+        mode.textContent = startMenu.classList.contains('hidden') ? 'Closed Start' : 'Opened Windows Start';
       }
     } else if (action === 'ping-action') {
       var statusBadge = document.getElementById('win-status');
@@ -1974,10 +2021,22 @@ footer{padding:44px 0 56px}
         setTimeout(function(){ statusBadge.textContent = '0.4ms LAN'; statusBadge.style.color = ''; }, 1600);
       }
       mode.textContent = 'Ping Sent · 0.2ms';
+    } else if (action === 'refresh-screen') {
+      if (winDoc) winDoc.classList.remove('hidden');
+      if (winTerm) winTerm.classList.add('hidden');
+      if (winPlayer) winPlayer.classList.add('hidden');
+      if (startMenu) startMenu.classList.add('hidden');
+      if (ctxMenu) ctxMenu.classList.add('hidden');
+      mode.textContent = 'Desktop Refreshed';
     }
   }
 
   function triggerClick(cx, cy) {
+    var ctxMenu = document.getElementById('ctx-menu');
+    if (ctxMenu && !ctxMenu.classList.contains('hidden')) {
+      ctxMenu.classList.add('hidden');
+    }
+
     if (!reduce && ping) {
       ping.style.left = cx + 'px';
       ping.style.top  = cy + 'px';
@@ -2047,7 +2106,6 @@ footer{padding:44px 0 56px}
   });
 
   pad.addEventListener('pointermove', function (e) {
-    // Avoid triggering drag if interacting with phone buttons
     if (e.target && e.target.classList.contains('pad-btn')) return;
     place(e);
   }, { passive: true });
@@ -2057,7 +2115,21 @@ footer{padding:44px 0 56px}
     try { pad.setPointerCapture(e.pointerId); } catch (err) {}
     pad.classList.add('live');
     var p = place(e);
-    triggerClick(p.cx, p.cy);
+    if (e.button === 2) {
+      triggerRightClick(p.cx, p.cy);
+    } else {
+      triggerClick(p.cx, p.cy);
+    }
+  });
+
+  // Intercept real right click on demo elements to open mock Windows context menu
+  [pad, screen].forEach(function(el) {
+    if (el) {
+      el.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        triggerRightClick(lastCx, lastCy);
+      });
+    }
   });
 
   // Mobile Touch Support
@@ -2097,9 +2169,7 @@ footer{padding:44px 0 56px}
       if (action === 'left-click') {
         triggerClick(lastCx, lastCy);
       } else if (action === 'right-click') {
-        mode.textContent = 'Right Clicked';
-        var startMenu = document.getElementById('start-menu');
-        if (startMenu) startMenu.classList.toggle('hidden');
+        triggerRightClick(lastCx, lastCy);
       }
     });
   });
