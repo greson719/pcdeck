@@ -977,10 +977,34 @@ footer{padding:44px 0 56px}
   .desk-lede{font-size:13.5px;margin-bottom:14px;line-height:1.45}
   .monitor{position:relative;padding-bottom:38px;width:100%}
   .screen{
-    position:relative;width:100%;aspect-ratio:16/9;background:#20262f;
+    position:relative;width:100%;aspect-ratio:16/9;background:#10151f;
     border:7px solid #14181e;border-bottom-width:15px;border-radius:9px;
     box-shadow:0 14px 28px -12px rgba(12,16,22,.5);overflow:hidden;
   }
+  .d-icon{width:36px;padding:2px}
+  .d-icon-art{font-size:14px}
+  .d-icon span{font-size:7px}
+  .win{left:14%;top:8%;width:66%}
+  .win-dark{left:18%;top:12%;width:62%}
+  .win-player{left:20%;top:16%;width:58%}
+  .win-bar{height:20px;padding:0 6px}
+  .win-btn{width:8px;height:8px;font-size:6px}
+  .win-bar b{font-size:8px;padding-right:14px}
+  .win-body{padding:6px 8px}
+  .bar{height:4px;margin-bottom:4px}
+  .win-click-btn{font-size:7.5px;padding:2px 5px}
+  .win-status-badge{font-size:7px}
+  .term-body{padding:6px 8px;font-size:7.5px}
+  .player-body{padding:6px 8px}
+  .eq-bars{height:16px;margin-bottom:4px}
+  .eq-bar{width:3px}
+  .player-info{font-size:7px}
+  .start-popover{width:125px;bottom:26px;left:2px}
+  .start-item{font-size:7.5px;padding:3px 5px}
+  .taskbar{height:22px;padding:0 4px}
+  .tb-btn{height:17px;font-size:7.5px;padding:0 3px}
+  .tb-clock{font-size:7px}
+
   .stand{
     position:absolute;left:50%;bottom:0;transform:translateX(-50%);
     display:flex;flex-direction:column;align-items:center;
@@ -989,12 +1013,14 @@ footer{padding:44px 0 56px}
   .stand b{display:block;width:110px;height:8px;border-radius:2px 2px 4px 4px;background:#14181e}
   .phone{
     position:absolute;right:2%;bottom:5px;z-index:8;
-    width:28%;min-width:98px;max-width:125px;
+    width:29%;min-width:102px;max-width:130px;
     background:#0d1116;border:1px solid #2b323c;border-radius:15px;
-    padding:7px 5px;display:flex;flex-direction:column;gap:5px;
+    padding:6px 4px;display:flex;flex-direction:column;gap:4px;
     box-shadow:0 12px 30px rgba(10,14,20,.45);
   }
+  .phone-topbar{font-size:6.5px;padding:0 2px}
   .pad{aspect-ratio:9/14;border-radius:8px;touch-action:none;cursor:crosshair}
+  .pad-btn{font-size:7px;height:18px}
   .desk-cap{
     display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:10px 0 0;
     font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
@@ -2093,16 +2119,6 @@ footer{padding:44px 0 56px}
       return;
     } else moved = false;
 
-    if (!moved) return;
-    e.preventDefault();
-    kx = Math.min(Math.max(kx, 0), 1);
-    ky = Math.min(Math.max(ky, 0), 1);
-    var b = pad.getBoundingClientRect();
-    pad.classList.add('live');
-    mode.textContent = 'Tracking';
-    place({ clientX: b.left + kx * b.width, clientY: b.top + ky * b.height });
-  });
-})();
     if (!moved) return;
     e.preventDefault();
     kx = Math.min(Math.max(kx, 0), 1);
