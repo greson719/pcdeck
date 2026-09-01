@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Automated MSIX Packager for PCDeck.
 Generates all high-DPI Store logo assets, AppxManifest.xml, packages PCDeck.msix,
@@ -30,7 +30,7 @@ APPX_MANIFEST = """<?xml version="1.0" encoding="utf-8"?>
             ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>PCDeck: Wireless Trackpad, Screen Mirror &amp; Remote</DisplayName>
+    <DisplayName>PCDeck: Wireless Trackpad, Screen Mirror &amp; Remote Mouse</DisplayName>
     <PublisherDisplayName>Greshon Parichha</PublisherDisplayName>
     <Logo>Assets\\StoreLogo.png</Logo>
     <Description>Turn your smartphone into a wireless multi-touch trackpad, 60 FPS desktop screen mirror, live mechanical keyboard, audio loopback streamer, and cable-free file manager for Windows 10/11 over local Wi-Fi.</Description>

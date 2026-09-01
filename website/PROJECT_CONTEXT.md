@@ -184,12 +184,55 @@ Direct, public client-safe endpoints that require zero private API keys or custo
 
 ---
 
-## 9. Verification, Build & Release Protocol
+## 9. Microsoft Store (MSIX) & Store Distribution Standards
+
+- **Package Identity & Capability Model**:
+  - Package Name: `PCDeck`
+  - Display Name: `PCDeck: Wireless Trackpad, Screen Mirror & Remote Mouse`
+  - Restricted Capability: `runFullTrust` declared in `AppxManifest.xml` for Win32 input simulation (`user32.dll`), WASAPI loopback audio capture, and local WebSocket server binding.
+- **Packaging Pipeline**:
+  - Automated Terminal Packager: `build_msix.bat` executing `tools/build_msix.py` (assembles layout, high-DPI assets, and invokes Windows SDK `makeappx` or zip container).
+  - GUI Fallback Route: Fully compatible with the official Microsoft Store **MSIX Packaging Tool** using `PCDeck.exe` as the source executable.
+- **Visual Assets & Store Artwork**:
+  - 1:1 App Logo: `msstore_assets/StoreLogo_300x300.png`
+  - Spotlight Hero (2:1): `msstore_assets/StoreHero_2400x1200.png`
+  - Promotional Hero (16:9): `msstore_assets/StoreHero_1920x1080.png`
+  - Promotional Poster: `msstore_assets/StorePoster_1240x600.png`
+  - High-DPI Manifest Tiles: 46 scaled assets generated in `msstore_assets/Manifest_Assets/`.
+  - 7 Desktop Screenshots (1920x1080): Located in `msstore_assets/`.
+- **Multi-Channel Syndication & Discovery**:
+  - Windows Package Manager (`winget`): Automatically indexes the store submission for CLI installs (`winget install PCDeck`).
+  - Search Engine Crawlers: Google & Bing index Microsoft's high-authority web storefront (`apps.microsoft.com`).
+
+---
+
+## 10. SEO, ASO & Semantic Competitor Positioning Strategy
+
+- **Master ASO Title**: `PCDeck: Wireless Trackpad, Screen Mirror & Remote Mouse`
+- **Semantic Keyword Clusters**:
+  1. *Input Utility*: `wireless trackpad`, `remote mouse`, `virtual keyboard`, `touchpad replacement`, `gesture control`.
+  2. *Low-Latency Display*: `screen mirror`, `desktop streaming`, `low latency screen sharing`, `mobile display`.
+  3. *Audio & Media*: `stream pc audio to phone`, `wasapi loopback`, `wireless earphones pc`, `media remote`.
+  4. *Local Storage/Data*: `local wifi file transfer`, `cable-free file sharing`, `lan file manager`.
+  5. *Situational / Emergency*: `broken mouse alternative`, `offline pc remote`, `couch pc control`, `presentation remote`.
+- **Competitor Pain-Point Attack Vectors**:
+  - *Vs Remote Mouse / Monect*: Highlight zero in-app ads, zero subscriptions, zero account logins, and zero telemetry.
+  - *Vs Unified Remote*: Modern Cyber-Neon UI, integrated 60 FPS screen mirror, real-time WASAPI audio streaming, and 3-second instant QR network pairing.
+  - *Zero-Install Advantage*: Instant browser-based Web Remote fallback without requiring mandatory mobile app installation.
+- **Product Roadmap & Monetization Alignment**:
+  - Free Tier (100% Functional, Zero Ads): Full Trackpad, Mechanical Keyboard, 30/60 FPS Screen Mirror, WASAPI Audio, File Transfer, and Standard Gamepad.
+  - Pro Tier ($3.99 One-Time Lifetime): In-Display on-screen HUD Layout Customizer (PUBG-style button drag/resize/opacity), custom game keymapping presets, high-bitrate streaming, and neon chroma themes.
+
+---
+
+## 11. Verification, Build & Release Protocol
 
 Before committing or releasing updates:
 1. **Verify Input & Controller Tests**: Run `python test_input.py` to confirm all Win32 cursor, click, and wheel accumulators pass.
 2. **Sync Client Assets**: Ensure `static/app.js` and `android_app/assets/app.js` remain bit-for-bit identical.
 3. **Compile & Sign Android APK**: Run `python build_apk.py` to compile Java sources, convert to DEX, align, and sign `PCDeck.apk`.
-4. **Regenerate Checksums**: Run `python tools/update_checksums.py` to calculate exact SHA-256 digests and update the download table in `website/index.html`.
-5. **Keep Context Synchronized**: Update `PROJECT_CONTEXT.md` in root and `website/` to reflect every architecture change.
-6. **Commit & Push to GitHub**: Commit verified changes and push to `origin main` on `greson719/pcdeck`.
+4. **Compile MSIX Package**: Run `.\build_msix.bat` to refresh `PCDeck.msix` and `msstore_assets/PCDeck.msix`.
+5. **Regenerate Checksums**: Run `python tools/update_checksums.py` to calculate exact SHA-256 digests and update the download table in `website/index.html`.
+6. **Keep Context Synchronized**: Update `PROJECT_CONTEXT.md` in root and `website/` to reflect every architecture change.
+7. **Commit & Push to GitHub**: Commit verified changes and push to `origin main` on `greson719/pcdeck`.
+
