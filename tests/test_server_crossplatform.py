@@ -1,4 +1,4 @@
-﻿"""
+"""
 Comprehensive Cross-Platform Integration Test Suite for PCDeck Server
 Tests file transfers, chunked range requests, screen capture, input controller, and WebSockets.
 """
@@ -78,3 +78,18 @@ def test_linux_input_dispatch():
     ctrl.scroll(0, 3)
     ctrl.type_text("Hello PCDeck")
     ctrl.hotkey(["ctrl", "c"])
+
+
+def test_websocket_reconnection_lifecycle(client):
+    """Test connecting, ping/pong, and reconnecting WebSocket."""
+    with client.websocket_connect("/ws") as ws1:
+        ws1.send_text("p,1000")
+        msg = ws1.receive_text()
+        assert msg == "pong,1000"
+
+    # Reconnect immediately
+    with client.websocket_connect("/ws") as ws2:
+        ws2.send_text("p,2000")
+        msg = ws2.receive_text()
+        assert msg == "pong,2000"
+

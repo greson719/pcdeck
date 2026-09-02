@@ -236,3 +236,18 @@ Before committing or releasing updates:
 6. **Keep Context Synchronized**: Update `PROJECT_CONTEXT.md` in root and `website/` to reflect every architecture change.
 7. **Commit & Push to GitHub**: Commit verified changes and push to `origin main` on `greson719/pcdeck`.
 
+---
+
+## 12. Wireless Debugging & Persistent Device Profile
+
+- **Primary Test Device**: `Motorola moto g35 5G` (`manila_g` / `manila`)
+- **Paired Hostname**: `greson@surma`
+- **Device LAN IP**: `10.23.32.178` (Subnet `10.23.32.0/24`)
+- **Pairing Key / GUID**: `adb-ZD222QY2JF-Cnk1ww`
+- **Active Wireless ADB Port**: `36589`
+- **Persistent Port Target**: `5555`
+- **Standard One-Click Wireless Deploy Command**:
+  ```powershell
+  adb connect 10.23.32.178:36589; adb push PCDeck.apk /data/local/tmp/PCDeck.apk; adb shell pm install -r -d /data/local/tmp/PCDeck.apk; adb shell am start -n com.neontrack.mouse/.MainActivity
+  ```
+

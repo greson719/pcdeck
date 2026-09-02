@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="style.css?v=2.6.4">
   <script src="jsqr.js"></script>
 </head>
-<body>
+<body class="on-screen-tab">
   <div class="glow-orb orb-1"></div>
   <div class="glow-orb orb-2"></div>
 
@@ -243,6 +243,18 @@
           <span class="tool-tile-name">Rotate Screen</span>
           <span class="tool-tile-sub">Portrait / Landscape</span>
         </button>
+
+        <button id="tool-mic-quick" class="tool-tile">
+          <span class="tool-tile-icon" style="color: var(--neo-lime);">🎙️</span>
+          <span class="tool-tile-name">PC Mic</span>
+          <span id="tool-mic-status" class="tool-tile-sub">Offline</span>
+        </button>
+
+        <button id="tool-cam-quick" class="tool-tile">
+          <span class="tool-tile-icon" style="color: var(--neo-cyan);">📹</span>
+          <span class="tool-tile-name">HD Webcam</span>
+          <span id="tool-cam-status" class="tool-tile-sub">Offline</span>
+        </button>
       </div>
     </div>
   </div>
@@ -264,14 +276,32 @@
       </div>
 
       <div class="nav-actions">
-        <!-- Radio-style Segmented FPS Toggle in Title Bar -->
+        <!-- Radio-style Segmented FPS Toggle in Title Bar (Screen Streaming) -->
         <div class="titlebar-fps-group" id="titlebar-fps-group" title="Screen Streaming Refresh Rate">
           <button type="button" class="fps-radio-btn active" id="btn-fps-30">30 FPS</button>
           <button type="button" class="fps-radio-btn" id="btn-fps-60">60 FPS</button>
         </div>
 
-        <!-- Hide Title Bar Button for Gaming / Fullscreen -->
-        <button id="btn-toggle-titlebar" class="neo-header-btn btn-header-hide" title="Hide Title Bar for Gaming & Video">
+        <!-- Kinetic Fast File Transfer Capsule in Title Bar (File Sharing Tab) -->
+        <button type="button" class="titlebar-fast-transfer-pill" id="titlebar-transfer-group" style="display: none;" title="Fast File Transfer (Local Wi-Fi)">
+          <!-- Aerodynamic Kinetic File Transfer Vector -->
+          <svg class="kinetic-file-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <path d="M10 13l4 0m-2 -2l2 2l-2 2" stroke-width="2.4"></path>
+            <line x1="1" y1="10" x2="3" y2="10" stroke-width="1.8" class="trail-line"></line>
+            <line x1="1" y1="14" x2="3" y2="14" stroke-width="1.8" class="trail-line"></line>
+          </svg>
+          <span id="fast-transfer-label" class="fast-transfer-label">Fast File Transfer</span>
+        </button>
+
+        <!-- Gamepad HUD In-Display Overlay Toggle -->
+        <button type="button" id="btn-screen-gamepad-hud" class="neo-header-btn btn-header-gamepad" style="display: none;" title="Toggle On-Screen Gaming Controller HUD (PUBG/Console Style)">
+          <span>🎮</span> <span class="gamepad-btn-label">HUD</span>
+        </button>
+
+        <!-- Hide Title Bar Button for Full View -->
+        <button id="btn-toggle-titlebar" class="neo-header-btn btn-header-hide" title="Hide Title Bar (Full View)">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
         </button>
       </div>
@@ -279,7 +309,7 @@
 
     <!-- Floating Unhide Title Bar Button (Shown when header is collapsed) -->
     <button id="btn-unhide-titlebar" class="floating-unhide-btn" style="display: none;" title="Show Title Bar">
-      <span>TOP BAR</span>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
 
     <!-- ================= TAB 1: 📺 SCREEN (TOUCH DISPLAY) ================= -->
@@ -294,12 +324,138 @@
           </div>
         </div>
 
+        <!-- ================= IN-DISPLAY GAMING CONTROLLER HUD OVERLAY (PUBG / CONSOLE STYLE) ================= -->
+        <div id="screen-gamepad-overlay" class="screen-gamepad-overlay" style="display: none;">
+          <!-- Top HUD Control Bar -->
+          <div class="hud-top-bar" id="hud-top-bar">
+            <div class="hud-badge-group">
+              <span class="hud-badge">🎮 GAME HUD</span>
+              <button type="button" id="btn-hud-emulation-mode" class="hud-chip-btn" title="Toggle XInput / PC Keyboard Mode">Mode: XInput</button>
+            </div>
+
+            <div class="hud-actions-group">
+              <button type="button" id="btn-hud-edit-layout" class="hud-chip-btn btn-hud-edit" title="Customize & Drag Layout (PUBG Style)">✏️ Edit Layout</button>
+              <button type="button" id="btn-hud-close" class="hud-chip-btn btn-hud-exit" title="Exit Gaming HUD">✕</button>
+            </div>
+          </div>
+
+          <!-- Layout Customizer Toolbar (Visible during Edit Mode) -->
+          <div class="hud-editor-toolbar" id="hud-editor-toolbar" style="display: none;">
+            <div class="hud-editor-selected-wrap">
+              <span class="hud-editor-label">KEY:</span>
+              <span id="hud-selected-elem-label" class="hud-selected-chip">Tap a Key</span>
+            </div>
+            
+            <div class="hud-editor-group">
+              <span class="hud-editor-label">SIZE</span>
+              <div class="hud-quick-pills">
+                <button type="button" class="hud-pill-btn" data-hud-size="75">S</button>
+                <button type="button" class="hud-pill-btn active" data-hud-size="100">M</button>
+                <button type="button" class="hud-pill-btn" data-hud-size="130">L</button>
+                <button type="button" class="hud-pill-btn" data-hud-size="160">XL</button>
+              </div>
+              <button type="button" id="btn-hud-size-dec" class="hud-mini-btn" title="Decrease Size">-</button>
+              <input type="range" id="hud-size-slider" min="50" max="220" value="100" class="hud-slider" title="Resize Selected Element">
+              <button type="button" id="btn-hud-size-inc" class="hud-mini-btn" title="Increase Size">+</button>
+              <span id="hud-size-val" class="hud-val-text">100%</span>
+            </div>
+
+            <div class="hud-editor-group">
+              <span class="hud-editor-label">OPACITY</span>
+              <div class="hud-quick-pills">
+                <button type="button" class="hud-pill-btn" data-hud-opacity="30">30%</button>
+                <button type="button" class="hud-pill-btn active" data-hud-opacity="65">65%</button>
+                <button type="button" class="hud-pill-btn" data-hud-opacity="95">95%</button>
+              </div>
+              <input type="range" id="hud-opacity-slider" min="15" max="100" value="65" class="hud-slider" title="Controller Transparency">
+              <span id="hud-opacity-val" class="hud-val-text">65%</span>
+            </div>
+
+            <div class="hud-editor-actions">
+              <button type="button" id="btn-hud-delete-selected" class="hud-editor-btn btn-danger" title="Remove Selected Button" style="display: none;">🗑️ Delete</button>
+              <button type="button" id="btn-hud-add-btn" class="hud-editor-btn btn-cyan" title="Add New Draggable Button">➕ Add Key</button>
+              <button type="button" id="btn-hud-reset" class="hud-editor-btn btn-warn" title="Reset to Default Layout">↺ Reset</button>
+              <button type="button" id="btn-hud-save" class="hud-editor-btn btn-primary" title="Save & Lock Layout">💾 Save</button>
+              <button type="button" id="btn-hud-exit-editor" class="hud-editor-btn btn-exit" title="Exit Editor">✓ Done</button>
+            </div>
+          </div>
+
+          <!-- Dynamic HUD Interactive Container (Contains all draggable gaming buttons) -->
+          <div id="hud-elements-container" class="hud-elements-container">
+            <!-- 🕹️ Left Virtual Analog Joystick -->
+            <div id="hud-elem-joystick" class="hud-elem hud-joystick-zone" data-elem-id="joystick" style="left: 6%; bottom: 18%;">
+              <div class="hud-joystick-base">
+                <div class="hud-joystick-stick" id="hud-joystick-thumb"></div>
+                <span class="hud-joystick-label">LS / WASD</span>
+              </div>
+            </div>
+
+            <!-- 🎯 Shoulder Triggers & Bumpers -->
+            <div id="hud-elem-lt" class="hud-elem hud-trigger-btn hud-trigger-lt" data-elem-id="lt" data-gp="lt" style="left: 6%; top: 14%;">
+              <span class="hud-btn-text">LT</span>
+              <span class="hud-btn-sub">AIM</span>
+            </div>
+
+            <div id="hud-elem-lb" class="hud-elem hud-trigger-btn hud-trigger-lb" data-elem-id="lb" data-gp="lb" style="left: 20%; top: 14%;">
+              <span class="hud-btn-text">LB</span>
+              <span class="hud-btn-sub">SPRINT</span>
+            </div>
+
+            <div id="hud-elem-rt" class="hud-elem hud-trigger-btn hud-trigger-rt" data-elem-id="rt" data-gp="rt" style="right: 6%; top: 14%;">
+              <span class="hud-btn-text">RT</span>
+              <span class="hud-btn-sub">FIRE</span>
+            </div>
+
+            <div id="hud-elem-rb" class="hud-elem hud-trigger-btn hud-trigger-rb" data-elem-id="rb" data-gp="rb" style="right: 20%; top: 14%;">
+              <span class="hud-btn-text">RB</span>
+              <span class="hud-btn-sub">PRONE</span>
+            </div>
+
+            <!-- 🎮 Action Diamond Buttons (Right Thumb) -->
+            <div id="hud-elem-btn-a" class="hud-elem hud-action-circle btn-hud-a" data-elem-id="btn-a" data-gp="a" style="right: 14%; bottom: 12%;">
+              <span class="hud-circle-glyph">A</span>
+              <span class="hud-circle-sub">JUMP</span>
+            </div>
+
+            <div id="hud-elem-btn-b" class="hud-elem hud-action-circle btn-hud-b" data-elem-id="btn-b" data-gp="b" style="right: 5%; bottom: 22%;">
+              <span class="hud-circle-glyph">B</span>
+              <span class="hud-circle-sub">CROUCH</span>
+            </div>
+
+            <div id="hud-elem-btn-x" class="hud-elem hud-action-circle btn-hud-x" data-elem-id="btn-x" data-gp="x" style="right: 23%; bottom: 22%;">
+              <span class="hud-circle-glyph">X</span>
+              <span class="hud-circle-sub">RELOAD</span>
+            </div>
+
+            <div id="hud-elem-btn-y" class="hud-elem hud-action-circle btn-hud-y" data-elem-id="btn-y" data-gp="y" style="right: 14%; bottom: 32%;">
+              <span class="hud-circle-glyph">Y</span>
+              <span class="hud-circle-sub">USE</span>
+            </div>
+
+            <!-- ⚡ Auxiliary Tactical Keys -->
+            <div id="hud-elem-btn-1" class="hud-elem hud-tactical-pill" data-elem-id="btn-1" data-gp="1" style="right: 33%; bottom: 12%;">
+              <span>1 • PRI</span>
+            </div>
+
+            <div id="hud-elem-btn-2" class="hud-elem hud-tactical-pill" data-elem-id="btn-2" data-gp="2" style="right: 33%; bottom: 24%;">
+              <span>2 • SEC</span>
+            </div>
+
+            <div id="hud-elem-btn-tab" class="hud-elem hud-tactical-pill" data-elem-id="btn-tab" data-gp="back" style="left: 33%; bottom: 12%;">
+              <span>TAB</span>
+            </div>
+
+            <div id="hud-elem-btn-esc" class="hud-elem hud-tactical-pill" data-elem-id="btn-esc" data-gp="start" style="left: 33%; bottom: 24%;">
+              <span>ESC</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Floating quick-type keyboard trigger (bottom-right of the live screen) -->
         <button type="button" id="btn-screen-keyboard" class="screen-kbd-fab" aria-label="Open keyboard to type on PC" title="Type on PC">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M3 6h18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm2 3v2h2V9H5zm3.5 0v2h2V9h-2zM12 9v2h2V9h-2zm3.5 0v2h2V9h-2zM19 9v2h2V9h-2zM5 12.5v2h2v-2H5zm3.5 0v2h7v-2h-7zm8.5 0v2h2v-2h-2z"/>
           </svg>
-          <span>TYPE</span>
         </button>
 
         <!-- Slide-up typing bar: keeps the live screen visible while typing to the PC -->
@@ -316,45 +472,356 @@
     <!-- ================= TAB 2: 🖱️ TRACKPAD ================= -->
     <section id="tab-trackpad" class="tab-view">
       <div class="trackpad-options-strip">
-        <button id="btn-speed-quick" class="neo-chip-toggle" style="background: var(--neo-yellow); color: #000; font-weight: 900;">1.5x</button>
+        <button id="btn-speed-quick" class="neo-chip-toggle" style="background: var(--neo-yellow); color: #000; font-weight: 900;">1.0x</button>
         <button id="tool-drag-lock" class="neo-chip-toggle">🔒 Drag: Off</button>
         <button id="btn-esc-quick" class="neo-chip-toggle">ESC</button>
         <button id="btn-desktop-quick" class="neo-chip-toggle" data-hotkey="win+d">Desktop</button>
+        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle" style="background: var(--neo-cyan); color: #000; font-weight: 800;">🎮 Gamepad</button>
+        <button id="btn-quick-mic-toggle" class="neo-chip-toggle" style="background: var(--neo-lime); color: #000; font-weight: 800;">🎙️ Mic</button>
+        <button id="btn-quick-cam-toggle" class="neo-chip-toggle" style="background: var(--neo-cyan); color: #000; font-weight: 800;">📹 Cam</button>
         <button id="btn-kbd-quick" class="neo-chip-toggle" style="background: var(--neo-pink); color: #fff;">⌨️ Keys</button>
       </div>
 
-      <div class="trackpad-arena">
-        <div id="trackpad-surface" class="trackpad-surface">
-          <div class="trackpad-center-hud">
-            <svg class="hud-mouse-icon" viewBox="0 0 24 24">
-              <path d="M12 2C8.13 2 5 5.13 5 9v6c0 3.87 3.13 7 7 7s7-3.13 7-7V9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5v1H7V9c0-2.76 2.24-5 5-5zm-5 8h10v3c0 2.76-2.24 5-5 5s-5-2.24-5-5v-3z"/>
-            </svg>
-            <span class="hud-label">Glide &amp; Tap</span>
+      <!-- Standard Touchpad Surface -->
+      <div id="standard-trackpad-view">
+        <div class="trackpad-arena">
+          <div id="trackpad-surface" class="trackpad-surface">
+            <div class="trackpad-center-hud">
+              <svg class="hud-mouse-icon" viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9v6c0 3.87 3.13 7 7 7s7-3.13 7-7V9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5v1H7V9c0-2.76 2.24-5 5-5zm-5 8h10v3c0 2.76-2.24 5-5 5s-5-2.24-5-5v-3z"/>
+              </svg>
+              <span class="hud-label">Glide &amp; Tap</span>
+            </div>
+          </div>
+
+          <div id="scroll-strip" class="scroll-strip">
+            <span class="scroll-arrow">▲</span>
+            <div class="scroll-spine"></div>
+            <span class="scroll-arrow">▼</span>
           </div>
         </div>
 
-        <div id="scroll-strip" class="scroll-strip">
-          <span class="scroll-arrow">▲</span>
-          <div class="scroll-spine"></div>
-          <span class="scroll-arrow">▼</span>
+        <div class="mouse-actions-bar">
+          <button id="btn-left-click" class="action-mouse-btn btn-left">
+            <span class="btn-main-label">LEFT CLICK</span>
+            <span class="btn-sub-label">Tap / Select</span>
+          </button>
+
+          <button id="btn-middle-click" class="action-mouse-btn">
+            <span class="btn-main-label">MIDDLE</span>
+            <span class="btn-sub-label">Wheel</span>
+          </button>
+
+          <button id="btn-right-click" class="action-mouse-btn btn-right">
+            <span class="btn-main-label">RIGHT CLICK</span>
+            <span class="btn-sub-label">Context Menu</span>
+          </button>
         </div>
       </div>
 
-      <div class="mouse-actions-bar">
-        <button id="btn-left-click" class="action-mouse-btn btn-left">
-          <span class="btn-main-label">LEFT CLICK</span>
-          <span class="btn-sub-label">Tap / Select</span>
-        </button>
+      <!-- ================= STANDALONE FULL-DECK CONTROLLER (GAMEPAD) ================= -->
+      <div id="gamepad-container" class="gamepad-main-layout" style="display: none;">
+        <!-- Top Shoulder Triggers & System Header Bar -->
+        <div class="gp-top-shoulder-bar" id="gp-top-shoulder-bar">
+          <!-- Back to Trackpad Button (Top Left) -->
+          <button type="button" id="btn-gp-top-back-trackpad" class="gp-top-action-btn gp-top-back-btn" title="Exit Gamepad & Return to Trackpad">
+            <span class="gp-top-back-icon">←</span>
+            <span>🖱️ Trackpad</span>
+          </button>
 
-        <button id="btn-middle-click" class="action-mouse-btn">
-          <span class="btn-main-label">MIDDLE</span>
-          <span class="btn-sub-label">Wheel</span>
-        </button>
+          <!-- Left Triggers: LT & LB -->
+          <div class="gp-shoulder-cluster gp-shoulder-left">
+            <div class="gp-control-pod gp-trigger-pod" data-elem-id="elem-lt">
+              <div class="gp-trigger-wrapper">
+                <button type="button" class="gp-btn gp-trigger-btn" data-gp="lt" title="Left Trigger (Aim / Brake)">
+                  <span class="trigger-title" id="lt-btn-title">LT</span>
+                  <span class="trigger-sub" id="lt-btn-sub">AIM</span>
+                </button>
+                <div class="trigger-meter-gauge"><div class="trigger-fill" id="lt-meter-fill"></div></div>
+              </div>
+            </div>
+            <div class="gp-control-pod gp-bumper-pod" data-elem-id="elem-lb">
+              <button type="button" class="gp-btn gp-bumper-btn" data-gp="lb" title="Left Bumper (Sprint / Alt)">
+                <span class="bumper-title" id="lb-btn-title">LB</span>
+              </button>
+            </div>
+          </div>
 
-        <button id="btn-right-click" class="action-mouse-btn btn-right">
-          <span class="btn-main-label">RIGHT CLICK</span>
-          <span class="btn-sub-label">Context Menu</span>
-        </button>
+          <!-- Center System Hub & Guide Orb (Console Menu Switcher) -->
+          <div class="gp-system-hub" data-elem-id="elem-sys">
+            <div class="gp-menu-buttons">
+              <button type="button" class="gp-sys-pill" id="btn-gp-view-mode" data-gp="back" title="View / Select / Back">VIEW ⧉</button>
+              <button type="button" class="gp-guide-orb" id="btn-gp-guide-orb" data-gp="guide" title="Console Options & Presets (Xbox / PlayStation / Racing / WASD)">
+                <div class="guide-orb-inner">🎮</div>
+              </button>
+              <button type="button" class="gp-sys-pill gp-sys-menu-highlight" id="btn-gp-top-menu" data-gp="start" title="Console Layout Options (Xbox, PlayStation, Racing, WASD)">MENU ☰</button>
+            </div>
+            <button type="button" class="gp-driver-status-chip" id="gp-driver-badge" title="Tap to Switch Console Layouts (Xbox / PlayStation / Racing / WASD)">
+              <span class="pulse-dot"></span>
+              <span id="gp-driver-text">Virtual Xbox 360: Active</span>
+              <span class="gp-driver-arrow">▼</span>
+            </button>
+          </div>
+
+          <!-- Right Triggers: RB & RT -->
+          <div class="gp-shoulder-cluster gp-shoulder-right">
+            <div class="gp-control-pod gp-bumper-pod" data-elem-id="elem-rb">
+              <button type="button" class="gp-btn gp-bumper-btn" data-gp="rb" title="Right Bumper (Melee / Skill)">
+                <span class="bumper-title" id="rb-btn-title">RB</span>
+              </button>
+            </div>
+            <div class="gp-control-pod gp-trigger-pod" data-elem-id="elem-rt">
+              <div class="gp-trigger-wrapper">
+                <button type="button" class="gp-btn gp-trigger-btn" data-gp="rt" title="Right Trigger (Fire / Gas)">
+                  <span class="trigger-title" id="rt-btn-title">RT</span>
+                  <span class="trigger-sub" id="rt-btn-sub">FIRE</span>
+                </button>
+                <div class="trigger-meter-gauge"><div class="trigger-fill" id="rt-meter-fill"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Body Deck: Left Pod (Movement Stick + D-Pad) | Center Spine | Right Pod (Actions Diamond + Look Stick) -->
+        <div class="gp-body-layout" id="gp-body-layout">
+          <!-- Left Column: Primary Movement Stick (Top) + D-Pad (Bottom) -->
+          <div class="gp-col gp-col-left">
+            <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-left-stick">
+              <span class="gp-pod-label" id="gp-left-stick-label">🕹️ MOVE (LEFT STICK)</span>
+              <div class="gp-stick-zone" id="gp-left-stick-zone">
+                <div class="gp-stick-base">
+                  <div class="gp-stick-ticks">
+                    <span></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="gp-stick-thumb" id="gp-left-thumb">
+                    <div class="thumb-grip-ring"></div>
+                    <div class="thumb-center-dot"></div>
+                  </div>
+                </div>
+                <button type="button" class="gp-stick-click-btn" data-gp="ls_click" title="Left Stick Click (L3 / Sprint)">LS (L3 🔘)</button>
+              </div>
+            </div>
+
+            <div class="gp-control-pod gp-dpad-pod" data-elem-id="elem-dpad">
+              <span class="gp-pod-label">➕ D-PAD</span>
+              <div class="gp-dpad-cross-deck">
+                <button type="button" class="gp-dpad-btn gp-dpad-up" data-gp="dpad_up" title="D-Pad Up">
+                  <svg viewBox="0 0 24 24"><polygon points="12,5 4,19 20,19" fill="currentColor"/></svg>
+                </button>
+                <div class="gp-dpad-mid-row">
+                  <button type="button" class="gp-dpad-btn gp-dpad-left" data-gp="dpad_left" title="D-Pad Left">
+                    <svg viewBox="0 0 24 24"><polygon points="5,12 19,4 19,20" fill="currentColor"/></svg>
+                  </button>
+                  <div class="gp-dpad-core"></div>
+                  <button type="button" class="gp-dpad-btn gp-dpad-right" data-gp="dpad_right" title="D-Pad Right">
+                    <svg viewBox="0 0 24 24"><polygon points="19,12 5,4 5,20" fill="currentColor"/></svg>
+                  </button>
+                </div>
+                <button type="button" class="gp-dpad-btn gp-dpad-down" data-gp="dpad_down" title="D-Pad Down">
+                  <svg viewBox="0 0 24 24"><polygon points="12,19 4,5 20,5" fill="currentColor"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center Column: Helpful Status & Guide -->
+          <div class="gp-col gp-col-center" data-elem-id="elem-center-spine">
+            <div class="gp-center-emblem">
+              <span class="gp-emblem-text">PCDECK PRO GAMEPAD</span>
+            </div>
+            <div class="gp-center-instructions">
+              <span>Left: Move &amp; Steer • Right: Aim &amp; Actions</span>
+            </div>
+          </div>
+
+          <!-- Right Column: Action Buttons Diamond (Top) + Look/Aim Stick (Bottom) -->
+          <div class="gp-col gp-col-right">
+            <div class="gp-control-pod gp-action-pod" data-elem-id="elem-actions">
+              <span class="gp-pod-label" id="gp-action-diamond-label">🎯 ACTION BUTTONS</span>
+              <div class="gp-abxy-diamond" id="gp-action-diamond">
+                <button type="button" class="gp-action-btn btn-y" data-gp="y" title="Y / Use / Switch Weapon">
+                  <span class="gp-btn-jewel">Y</span>
+                  <span class="gp-action-sublabel" id="sub-y">USE</span>
+                </button>
+                <div class="gp-abxy-mid-row">
+                  <button type="button" class="gp-action-btn btn-x" data-gp="x" title="X / Reload / Interact">
+                    <span class="gp-btn-jewel">X</span>
+                    <span class="gp-action-sublabel" id="sub-x">RELOAD</span>
+                  </button>
+                  <button type="button" class="gp-action-btn btn-b" data-gp="b" title="B / Crouch / Cancel">
+                    <span class="gp-btn-jewel">B</span>
+                    <span class="gp-action-sublabel" id="sub-b">CROUCH</span>
+                  </button>
+                </div>
+                <button type="button" class="gp-action-btn btn-a" data-gp="a" title="A / Jump / Accept">
+                  <span class="gp-btn-jewel">A</span>
+                  <span class="gp-action-sublabel" id="sub-a">JUMP</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-right-stick">
+              <span class="gp-pod-label" id="gp-right-stick-label">🕹️ AIM / CAMERA (RIGHT STICK)</span>
+              <div class="gp-stick-zone" id="gp-right-stick-zone">
+                <div class="gp-stick-base gp-look-base">
+                  <div class="gp-stick-ticks">
+                    <span></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="gp-stick-thumb" id="gp-right-thumb">
+                    <div class="thumb-grip-ring"></div>
+                    <div class="thumb-center-dot"></div>
+                  </div>
+                </div>
+                <button type="button" class="gp-stick-click-btn" data-gp="rs_click" title="Right Stick Click (R3 / Melee)">RS (R3 🔘)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Container for dynamically placed / moved custom buttons -->
+        <div id="gp-custom-elements-container" class="gp-custom-elements-container"></div>
+
+        <!-- Interactive Layout Editor Floating Toolbar -->
+        <div id="gp-editor-toolbar" class="gp-editor-toolbar" style="display: none;">
+          <div class="gp-toolbar-sec gp-toolbar-title-sec">
+            <span class="gp-toolbar-badge" id="gp-edit-selected-title">Tap a Control</span>
+          </div>
+          <div class="gp-toolbar-sec gp-toolbar-size-sec">
+            <span class="gp-tool-label">Size:</span>
+            <div class="hud-quick-pills gp-quick-size-pills">
+              <button type="button" class="gp-pill-btn" data-gp-size="75">S</button>
+              <button type="button" class="gp-pill-btn active" data-gp-size="100">M</button>
+              <button type="button" class="gp-pill-btn" data-gp-size="125">L</button>
+              <button type="button" class="gp-pill-btn" data-gp-size="150">XL</button>
+            </div>
+            <button type="button" class="gp-tool-btn" id="btn-gp-size-dec" title="Decrease Size">➖</button>
+            <input type="range" id="gp-size-slider" min="60" max="220" value="100" class="gp-tool-slider">
+            <button type="button" class="gp-tool-btn" id="btn-gp-size-inc" title="Increase Size">➕</button>
+            <span class="gp-tool-val" id="gp-size-val">100%</span>
+          </div>
+          <div class="gp-toolbar-sec gp-toolbar-actions-sec">
+            <button type="button" class="gp-tool-btn gp-tool-warn" id="btn-gp-delete-selected" style="display: none;" title="Remove Selected Control">🗑️ Remove</button>
+            <button type="button" class="gp-tool-btn gp-tool-accent" id="btn-gp-open-add-modal" title="Add Control / Button">➕ Add</button>
+            <button type="button" class="gp-tool-btn" id="btn-gp-reset-layout" title="Reset to Factory Defaults">🔄 Reset</button>
+            <button type="button" class="gp-tool-btn gp-tool-save" id="btn-gp-save-layout" title="Save Custom Setup">💾 Save</button>
+            <button type="button" class="gp-tool-btn gp-tool-exit" id="btn-gp-exit-editor" title="Exit Edit Mode">✓ Done</button>
+          </div>
+        </div>
+
+        <!-- Bottom Console Mode Selection & Quick Settings Bar -->
+        <div class="gp-bottom-preset-bar" id="gp-bottom-preset-bar">
+          <div class="gp-preset-selector">
+            <button type="button" class="gp-preset-chip active" data-preset="xbox" title="Xbox 360 / Series X Layout">🎮 XBOX 360</button>
+            <button type="button" class="gp-preset-chip" data-preset="ps" title="PlayStation DualShock / DualSense Layout">🎮 PLAYSTATION</button>
+            <button type="button" class="gp-preset-chip" data-preset="racing" title="Racing Wheel & Pedals Layout">🏎️ RACING</button>
+            <button type="button" class="gp-preset-chip" data-preset="wasd" title="PC Keyboard WASD & Mouse Layout">⌨️ WASD/FPS</button>
+          </div>
+          <div class="gp-quick-settings">
+            <button type="button" id="btn-gp-edit-layout" class="gp-mini-chip" style="background: rgba(0, 240, 255, 0.18); border-color: var(--neo-cyan); color: #fff;" title="Customize & Edit Gamepad Layout">✏️ Edit Layout</button>
+            <button type="button" id="btn-gp-sens-toggle" class="gp-mini-chip" title="Stick Sensitivity (1.0x / 1.5x / 2.0x)">Sens: 1.0x</button>
+            <button type="button" id="btn-gp-haptic-toggle" class="gp-mini-chip active" title="Vibration Feedback">📳 Haptics: ON</button>
+            <button type="button" id="btn-return-trackpad" class="gp-mini-chip gp-exit-chip" title="Exit Gamepad & Return to Trackpad">🖱️ Trackpad</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= ADD CONTROL / BUTTON MODAL ================= -->
+      <div id="gp-add-control-modal" class="cyber-modal-backdrop" style="display: none;">
+        <div class="cyber-modal-card gp-add-modal-card">
+          <div class="modal-header">
+            <h3>➕ Add Gamepad Control</h3>
+            <button type="button" class="modal-close-btn" id="btn-gp-modal-close">✕</button>
+          </div>
+          <div class="gp-add-tabs">
+            <button type="button" class="gp-tab-btn active" data-tab="presets">🎮 Quick Controls</button>
+            <button type="button" class="gp-tab-btn" data-tab="keys">⌨️ PC Keys</button>
+            <button type="button" class="gp-tab-btn" data-tab="custom">⚙️ Custom Key</button>
+          </div>
+
+          <!-- Tab 1: Quick Controls -->
+          <div class="gp-add-tab-content active" id="gp-add-tab-presets">
+            <div class="gp-add-grid">
+              <button type="button" class="gp-add-item-card" data-add-type="left-stick">
+                <span class="item-icon">🕹️</span>
+                <span class="item-name">Left Stick</span>
+                <span class="item-sub">Movement (WASD)</span>
+              </button>
+              <button type="button" class="gp-add-item-card" data-add-type="right-stick">
+                <span class="item-icon">🕹️</span>
+                <span class="item-name">Right Stick</span>
+                <span class="item-sub">Aim / Camera</span>
+              </button>
+              <button type="button" class="gp-add-item-card" data-add-type="dpad">
+                <span class="item-icon">➕</span>
+                <span class="item-name">3D D-Pad</span>
+                <span class="item-sub">Directional Cross</span>
+              </button>
+              <button type="button" class="gp-add-item-card" data-add-type="actions">
+                <span class="item-icon">🎯</span>
+                <span class="item-name">ABXY Diamond</span>
+                <span class="item-sub">4 Action Buttons</span>
+              </button>
+              <button type="button" class="gp-add-item-card" data-add-type="lt">
+                <span class="item-icon">🎯</span>
+                <span class="item-name">Left Trigger</span>
+                <span class="item-sub">LT (Aim / Brake)</span>
+              </button>
+              <button type="button" class="gp-add-item-card" data-add-type="rt">
+                <span class="item-icon">🔥</span>
+                <span class="item-name">Right Trigger</span>
+                <span class="item-sub">RT (Fire / Gas)</span>
+              </button>
+              <button type="button" class="gp-add-item-card" data-add-type="lb">
+                <span class="item-icon">⚡</span>
+                <span class="item-name">Left Bumper</span>
+                <span class="item-sub">LB (Sprint / Alt)</span>
+              </button>
+              <button type="button" class="gp-add-item-card" data-add-type="rb">
+                <span class="item-icon">💥</span>
+                <span class="item-name">Right Bumper</span>
+                <span class="item-sub">RB (Melee / Skill)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab 2: PC Key Buttons -->
+          <div class="gp-add-tab-content" id="gp-add-tab-keys" style="display: none;">
+            <div class="gp-key-grid">
+              <button type="button" class="gp-key-item" data-key="space" data-label="SPACE (JUMP)">Space ␣</button>
+              <button type="button" class="gp-key-item" data-key="shift" data-label="SHIFT (SPRINT)">Shift ⇧</button>
+              <button type="button" class="gp-key-item" data-key="ctrl" data-label="CTRL (CROUCH)">Ctrl</button>
+              <button type="button" class="gp-key-item" data-key="alt" data-label="ALT">Alt</button>
+              <button type="button" class="gp-key-item" data-key="enter" data-label="ENTER">Enter ↵</button>
+              <button type="button" class="gp-key-item" data-key="tab" data-label="TAB (BAG)">Tab ⇥</button>
+              <button type="button" class="gp-key-item" data-key="escape" data-label="ESC (MENU)">Esc</button>
+              <button type="button" class="gp-key-item" data-key="e" data-label="E (USE)">E</button>
+              <button type="button" class="gp-key-item" data-key="f" data-label="F (INTERACT)">F</button>
+              <button type="button" class="gp-key-item" data-key="r" data-label="R (RELOAD)">R</button>
+              <button type="button" class="gp-key-item" data-key="c" data-label="C (CROUCH)">C</button>
+              <button type="button" class="gp-key-item" data-key="z" data-label="Z (PRONE)">Z</button>
+              <button type="button" class="gp-key-item" data-key="m" data-label="M (MAP)">M</button>
+              <button type="button" class="gp-key-item" data-key="1" data-label="1 (PRIMARY)">1</button>
+              <button type="button" class="gp-key-item" data-key="2" data-label="2 (SECONDARY)">2</button>
+              <button type="button" class="gp-key-item" data-key="3" data-label="3 (SIDEARM)">3</button>
+              <button type="button" class="gp-key-item" data-key="4" data-label="4 (GRENADE)">4</button>
+              <button type="button" class="gp-key-item" data-key="mouse_left" data-label="L-CLICK (FIRE)">L-Click 🖱️</button>
+              <button type="button" class="gp-key-item" data-key="mouse_right" data-label="R-CLICK (AIM)">R-Click 🖱️</button>
+            </div>
+          </div>
+
+          <!-- Tab 3: Custom Key / Letter -->
+          <div class="gp-add-tab-content" id="gp-add-tab-custom" style="display: none;">
+            <div class="custom-key-form" style="display: flex; flex-direction: column; gap: 8px; text-align: left;">
+              <label style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700;">Enter Key Name or Letter (e.g. g, v, h, f1, backspace):</label>
+              <input type="text" id="gp-custom-key-name" class="cyber-input" placeholder="e.g. g" maxlength="15">
+              <label style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-top: 4px;">Button Display Label (e.g. G (GRENADE)):</label>
+              <input type="text" id="gp-custom-key-label" class="cyber-input" placeholder="e.g. G (GRENADE)" maxlength="18">
+              <button type="button" class="neo-btn btn-accent" id="btn-gp-add-custom-confirm" style="margin-top: 10px; width: 100%;">
+                <span>➕ Add Custom Button to Screen</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -828,26 +1295,106 @@
       </div>
     </section>
 
-    <!-- ================= TAB 5: 🎛️ MEDIA & WINDOWS ================= -->
+    <!-- ================= TAB 5: 🎛️ MEDIA, MIC & WEBCAM ================= -->
     <section id="tab-media" class="tab-view">
       <div class="scroll-container">
-        <!-- Real-Time PC Audio Streaming to Phone Card -->
-        <div class="neo-card" style="border-color: var(--neo-cyan); box-shadow: 4px 4px 0px var(--neo-cyan);">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span class="card-header-badge" style="background: var(--neo-cyan); color: #000; margin-bottom: 0;">🔊 Live PC Audio</span>
-              <span style="font-size: 0.65rem; color: var(--neo-cyan); font-family: var(--font-mono); font-weight: 700;">48kHz PCM</span>
+        <!-- ================= WIRELESS PC MICROPHONE CARD ================= -->
+        <div class="neo-card" style="border-color: var(--neo-lime); box-shadow: 4px 4px 0px var(--neo-lime);">
+          <div class="card-header-with-status">
+            <span class="card-header-badge" style="background: var(--neo-lime); color: #000;">🎙️ Wireless PC Microphone</span>
+            <span id="mic-status-badge" class="mini-status-chip offline">OFFLINE</span>
+          </div>
+          <p class="card-caption" style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 8px 0;">
+            Turns your phone into a studio microphone on Windows (Discord, Zoom, OBS, in-game voice chat).
+          </p>
+
+          <div class="vu-meter-container">
+            <div class="vu-meter-labels">
+              <span>MIC INPUT LEVEL</span>
+              <span id="vu-meter-db">0 dB</span>
             </div>
-            <span id="audio-status-pill" class="status-badge" style="font-size: 0.65rem; background: var(--bg-surface-elevated); color: var(--text-muted); border: 1.5px solid var(--neo-dark); padding: 2px 6px; border-radius: var(--radius-xs); font-weight: 800;">OFFLINE</span>
+            <div class="vu-meter-bar">
+              <div id="vu-meter-fill" class="vu-meter-fill"></div>
+            </div>
           </div>
 
-          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin: 2px 0;">
-            Hear all games, YouTube, Spotify, and PC sound stream directly to your phone speakers or headphones!
+          <div class="tools-control-row">
+            <button id="btn-toggle-mic" class="neo-btn btn-lime" style="flex: 1;">
+              <span id="mic-btn-icon">🎙️</span>
+              <span id="mic-btn-text">START TRANSMITTING</span>
+            </button>
+            <button id="btn-mute-mic" class="neo-btn btn-dark" style="display: none; padding: 0 14px;">
+              <span>🔇 MUTE</span>
+            </button>
+          </div>
+
+          <div class="gain-control-row" style="margin-top: 10px;">
+            <label style="font-size: 0.75rem; color: #fff;">Input Gain: <span id="mic-gain-val">100%</span></label>
+            <input type="range" id="mic-gain-slider" min="0" max="200" value="100" class="cyber-slider">
+          </div>
+        </div>
+
+        <!-- ================= WIRELESS HD WEBCAM CARD ================= -->
+        <div class="neo-card" style="border-color: var(--neo-cyan); box-shadow: 4px 4px 0px var(--neo-cyan);">
+          <div class="card-header-with-status">
+            <span class="card-header-badge" style="background: var(--neo-cyan); color: #000;">📷 Wireless HD Webcam</span>
+            <span id="cam-status-badge" class="mini-status-chip offline">OFFLINE</span>
+          </div>
+          <p class="card-caption" style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 8px 0;">
+            Exposes your phone’s camera as a virtual DirectShow webcam in OBS Studio, Teams, and Google Meet.
+          </p>
+
+          <div class="webcam-preview-box">
+            <video id="webcam-preview-video" autoplay playsinline muted></video>
+            <div id="cam-idle-placeholder" class="cam-placeholder">
+              <span>📷</span>
+              <p>Camera is currently idle</p>
+            </div>
+          </div>
+
+          <div class="cam-lens-select-row" style="margin: 6px 0; display: flex; gap: 6px;">
+            <select id="cam-device-select" class="cyber-input" style="flex: 1; padding: 6px 8px; font-size: 0.75rem; font-weight: 700;">
+              <option value="environment">Rear Main Camera (Back)</option>
+              <option value="user">Front Selfie Camera</option>
+            </select>
+          </div>
+
+          <div class="tools-control-row">
+            <button id="btn-toggle-cam" class="neo-btn btn-cyan" style="flex: 1.5;">
+              <span id="cam-btn-icon">📹</span>
+              <span id="cam-btn-text">START WEBCAM</span>
+            </button>
+            <button id="btn-switch-cam-lens" class="neo-btn btn-dark" title="Switch Next Lens / Sensor" style="display: none; padding: 0 10px;">
+              <span>🔄 LENS</span>
+            </button>
+            <button id="btn-toggle-torch" class="neo-btn btn-yellow" title="Toggle Flash Torch" style="display: none; padding: 0 10px; color: #000; font-weight: 900;">
+              <span>💡 TORCH</span>
+            </button>
+          </div>
+
+          <div class="cam-res-selector">
+            <button class="neo-chip-toggle" data-res="480">480p (60 FPS)</button>
+            <button class="neo-chip-toggle active" data-res="720">720p HD (30 FPS)</button>
+            <button class="neo-chip-toggle" data-res="1080" style="color: #ffd700; border-color: #ffd700;">1080p (60 FPS Pro)</button>
+          </div>
+        </div>
+
+        <!-- ================= PC AUDIO RECEIVER CARD ================= -->
+        <div class="neo-card" style="border-color: var(--neo-yellow); box-shadow: 4px 4px 0px var(--neo-yellow);">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="card-header-badge" style="background: var(--neo-yellow); color: #000;">📻 Live PC Audio</span>
+              <span id="audio-stream-status-badge" class="mini-status-chip offline">OFFLINE</span>
+            </div>
+          </div>
+
+          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin: 4px 0 8px 0;">
+            Hear your Windows PC sound directly on your phone earphones with zero lag.
           </p>
 
           <!-- Primary Stream Controls Action Row -->
           <div style="display: flex; gap: 8px;">
-            <button id="btn-toggle-audio-stream" class="neo-btn btn-lime" style="flex: 1; height: 48px; font-size: 0.9rem; gap: 8px;">
+            <button id="btn-toggle-audio-stream" class="neo-btn btn-yellow" style="flex: 1; height: 48px; font-size: 0.9rem; gap: 8px; color: #000; font-weight: 900;">
               <span id="audio-btn-icon">🔊</span>
               <span id="audio-btn-label">START HEARING PC AUDIO</span>
             </button>
@@ -880,6 +1427,7 @@
           </div>
         </div>
 
+        <!-- ================= MEDIA PLAYBACK CARD ================= -->
         <div class="neo-card">
           <span class="card-header-badge">Media Playback</span>
           <div class="media-deck">
@@ -904,7 +1452,8 @@
           </div>
         </div>
 
-        <div class="neo-card">
+        <!-- ================= WINDOWS SHORTCUTS CARD ================= -->
+        <div class="neo-card card-full-span">
           <span class="card-header-badge">Windows Shortcuts</span>
           <div class="shortcuts-deck">
             <div class="shortcut-tile" data-hotkey="win+d">
@@ -976,6 +1525,17 @@
           </div>
         </div>
 
+        <!-- Wi-Fi Network & 2.4 GHz / 5 GHz Performance Advisor Card -->
+        <div class="neo-card">
+          <span class="card-header-badge">Wi-Fi &amp; Latency Advisor</span>
+          <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 8px;">
+            <strong style="color: var(--neo-cyan);">2.4 GHz Wi-Fi / Dongles:</strong> Input controls (touch &amp; gamepad) are 100% smooth (&lt;10ms). For screen streaming on 2.4 GHz, use <strong style="color: #fff;">30 FPS</strong> for maximum stability.
+          </div>
+          <div style="background: rgba(0, 240, 255, 0.08); border-left: 3px solid var(--neo-cyan); padding: 8px 10px; border-radius: 4px; font-size: 0.72rem; color: #fff;">
+            🚀 <strong>60 FPS Esports Streaming:</strong> Connect to <strong>5 GHz Wi-Fi</strong> or turn on <strong>Phone Mobile Hotspot (5 GHz)</strong> for ultra-low latency (&lt;8ms).
+          </div>
+        </div>
+
         <!-- Display & Pinch-to-Zoom Settings -->
         <div class="neo-card">
           <span class="card-header-badge">Display &amp; Pinch Zoom</span>
@@ -987,6 +1547,17 @@
             <button id="settings-btn-rotate" class="neo-btn btn-yellow" style="height: 38px; padding: 0 12px; font-size: 0.8rem;">
               🔄 Rotate
             </button>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="item-title">Gaming Controller HUD</div>
+              <div class="item-desc">Show on-screen gamepad HUD button on screen streaming</div>
+            </div>
+            <label class="switch-toggle">
+              <input type="checkbox" id="setting-gamepad-hud">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
 
           <div class="setting-item">
@@ -1084,10 +1655,9 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
+        </div>
 
-          <div class="setting-item">
-            <div>
-                  <!-- Performance & Refresh Rate (FPS) -->
+        <!-- Performance & Refresh Rate (FPS) -->
         <div class="neo-card">
           <span class="card-header-badge">Performance &amp; Refresh Rate</span>
           <div class="setting-item">
@@ -1105,14 +1675,14 @@
           <div class="setting-item">
             <div>
               <div class="item-title">Adaptive Stream Quality</div>
-              <div class="item-desc">Auto-adjusts according to Wi-Fi latency (2.4G / 5G / 6G / Dongle)</div>
+              <div class="item-desc">Auto-adjusts according to real-time network latency &amp; stability</div>
             </div>
             <select id="setting-stream-clarity" class="cyber-input" style="width: auto; padding: 6px 10px; font-size: 0.8rem; font-weight: 700;">
-              <option value="auto" selected>✨ Auto Dynamic (2.4G / 5G / 6G AI-Tuned)</option>
-              <option value="ultrahd">Ultra HD Crystal (100% Native · 90Q · 5GHz/6GHz)</option>
+              <option value="auto" selected>✨ Auto Dynamic (Real-Time AI-Tuned)</option>
+              <option value="ultrahd">Ultra HD Crystal (100% Native · 90Q)</option>
               <option value="sharp">High Clarity (90% Scale · 80Q)</option>
               <option value="balanced">Balanced Fast (80% Scale · 70Q)</option>
-              <option value="speed">Low Latency Speed (65% Scale · 55Q · 2.4GHz)</option>
+              <option value="speed">Low Latency Speed (65% Scale · 55Q)</option>
             </select>
           </div>
 
@@ -1282,8 +1852,8 @@
       <div class="pro-benefits-list" style="gap: 10px;">
         <div class="pro-benefit-row">
           <div class="pro-benefit-text">
-            <strong>60 FPS &amp; 120 FPS Screen Streaming</strong>
-            <span>Higher refresh rate for lower latency screen monitoring.</span>
+            <strong>60 FPS &amp; 120 FPS Screen &amp; 1080p Webcam Streaming</strong>
+            <span>Ultra high refresh screen monitoring and crystal clear 1080p (60 FPS) wireless camera broadcast.</span>
           </div>
         </div>
 
@@ -1337,7 +1907,7 @@
     </div>
     <div class="pro-corner-title">Feature requires PCDeck Pro</div>
     <div class="pro-corner-desc">
-      60/120 FPS and uncapped transfers require a Pro license. Free version includes trackpad, keyboard, and 30 FPS streaming.
+      60/120 FPS screen, 1080p 60fps webcam, and uncapped transfers require a Pro license. Free version includes trackpad, keyboard, and 720p/30 FPS streaming.
     </div>
     <div class="pro-corner-actions">
       <button id="btn-corner-buy-pro" class="pro-corner-btn-gold">
@@ -1355,11 +1925,129 @@
       <div style="font-size: 0.72rem; font-weight: 800; color: #ffd700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;">LICENSE ACTIVATED</div>
       <div style="font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 0.3px; margin-bottom: 6px;">PCDeck Pro Unlocked</div>
       <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.45;">
-        60 FPS Ultra Screen Streaming, Turbo LAN Transfers, and Chroma Themes are now permanently active.
+        60 FPS Ultra Screen Streaming, 1080p 60 FPS Wireless Webcam, Turbo LAN Transfers, and Chroma Themes are now permanently active.
       </div>
-      <button id="btn-close-celebration" class="neo-btn" style="background: linear-gradient(90deg, #ffd700, #ff9100); color: #000; font-weight: 800; width: 100%; padding: 10px;">
-        CONTINUE
-      </button>
+    </div>
+  </div>
+  <!-- ================= HIGH-TRUST VIRTUAL CONTROLLER DRIVER MODAL ================= -->
+  <div id="driver-trust-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card pro-modal-card" style="padding: 22px; max-width: 440px;">
+      <div class="pro-modal-header" style="text-align: left; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.5rem;">🎮</span>
+          <div class="pro-modal-title" style="font-size: 1.2rem; font-weight: 800; color: #fff;">Virtual Xbox Controller Setup</div>
+        </div>
+        <div class="pro-modal-sub" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+          Enables PC games (Steam, Xbox Game Pass, Epic Games, Emulators) to recognize your phone as a genuine Xbox 360 controller.
+        </div>
+      </div>
+
+      <div class="trust-credential-card" style="background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span style="color: var(--neo-lime); font-weight: 900; font-size: 1rem;">✓</span>
+          <strong style="color: #fff; font-size: 0.88rem;">Microsoft WHQL Certified Driver</strong>
+        </div>
+        <ul style="font-size: 0.76rem; color: #cbd5e1; line-height: 1.5; margin: 0; padding-left: 18px;">
+          <li>Driver: <strong>ViGEmBus</strong> by Nefarius Software Solutions</li>
+          <li>100% Open-Source &amp; trusted by millions in DS4Windows and Steam tools</li>
+          <li>Silent 2-second background setup • No PC restart required</li>
+        </ul>
+      </div>
+
+      <div id="driver-install-status-box" style="display: none; padding: 10px; margin-bottom: 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-align: center;"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="btn-modal-install-driver" class="neo-btn btn-cyan" style="width: 100%; font-weight: 900; padding: 12px;">
+          <span>⚡</span>
+          <span>INSTALL ON PC (1-CLICK SETUP)</span>
+        </button>
+        <button id="btn-modal-skip-driver" class="neo-btn btn-dark" style="width: 100%; font-size: 0.78rem;">
+          Use Basic Mode (Keyboard/WASD Only • No Driver Needed)
+        </button>
+      </div>
+
+      <div style="text-align: center; margin-top: 14px;">
+        <a href="https://github.com/nefarius/ViGEmBus" target="_blank" rel="noopener" style="font-size: 0.72rem; color: var(--neo-cyan); text-decoration: underline;">
+          View ViGEmBus open-source code on GitHub ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL FOR ADDING CUSTOM BUTTON IN HUD ================= -->
+  <div id="hud-add-btn-modal" class="modal-backdrop" style="display: none; z-index: 10000;">
+    <div class="modal-card pro-modal-card" style="padding: 16px; max-width: 440px; width: 92%; max-height: 85vh; display: flex; flex-direction: column; text-align: center;">
+      <div style="font-size: 1.1rem; font-weight: 900; color: var(--neo-cyan); margin-bottom: 4px;">➕ ADD GAMING BUTTON</div>
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Select a button or enter a key to add to your on-screen HUD:</p>
+
+      <!-- Category Filter Tabs -->
+      <div class="hud-add-filter-tabs" id="hud-add-filter-tabs" style="display: flex; gap: 4px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap;">
+        <button type="button" class="hud-filter-tab active" data-filter="all">ALL</button>
+        <button type="button" class="hud-filter-tab" data-filter="actions">ACTIONS</button>
+        <button type="button" class="hud-filter-tab" data-filter="combat">COMBAT</button>
+        <button type="button" class="hud-filter-tab" data-filter="weapons">NUMBERS</button>
+        <button type="button" class="hud-filter-tab" data-filter="gamepad">GAMEPAD</button>
+      </div>
+
+      <!-- Scrollable Presets Grid -->
+      <div id="hud-add-presets-list" class="hud-key-preset-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; overflow-y: auto; max-height: 220px; padding: 4px;">
+        <!-- Actions & Mouse -->
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_left" data-label="FIRE" data-gp="rt">FIRE 💥</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_right" data-label="AIM" data-gp="lt">AIM 🎯</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_middle" data-label="M-CLICK" data-gp="rs">M-CLICK</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="space" data-label="SPACE" data-gp="a">SPACE</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="shift" data-label="SHIFT" data-gp="lb">SHIFT</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="ctrl" data-label="CTRL" data-gp="rb">CTRL</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="alt" data-label="ALT" data-gp="x">ALT</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="enter" data-label="ENTER" data-gp="start">ENTER ⏎</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="tab" data-label="TAB" data-gp="back">TAB 🎒</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="escape" data-label="ESC" data-gp="start">ESC ⚙️</button>
+
+        <!-- Combat / Movement -->
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="e" data-label="E (USE)" data-gp="y">E (USE)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="r" data-label="R (RELOAD)" data-gp="x">R (RELOAD)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="f" data-label="F (LOOT)" data-gp="f">F (LOOT)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="c" data-label="C (CROUCH)" data-gp="b">C (CROUCH)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="z" data-label="Z (PRONE)" data-gp="z">Z (PRONE)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="x" data-label="X (HEAL)" data-gp="x">X (HEAL)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="q" data-label="Q (PEEK L)" data-gp="q">Q (PEEK L)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="g" data-label="G (NADE)" data-gp="g">G (NADE)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="v" data-label="V (MELEE)" data-gp="v">V (MELEE)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="m" data-label="MAP" data-gp="m">MAP 🗺️</button>
+
+        <!-- Weapons / Numbers -->
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="1" data-label="1" data-gp="1">1 (PRIMARY)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="2" data-label="2" data-gp="2">2 (SECONDARY)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="3" data-label="3" data-gp="3">3 (SIDEARM)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="4" data-label="4" data-gp="4">4 (GRENADE)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="5" data-label="5" data-gp="5">5</button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="6" data-label="6" data-gp="6">6</button>
+
+        <!-- Gamepad Triggers & D-Pad -->
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="space" data-label="A (JUMP)" data-gp="a">A 🟢</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="c" data-label="B (CROUCH)" data-gp="b">B 🔴</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="r" data-label="X (RELOAD)" data-gp="x">X 🔵</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="e" data-label="Y (USE)" data-gp="y">Y 🟡</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="mouse_right" data-label="LT" data-gp="lt">LT (AIM)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="shift" data-label="LB" data-gp="lb">LB (SPRINT)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="mouse_left" data-label="RT" data-gp="rt">RT (FIRE)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="ctrl" data-label="RB" data-gp="rb">RB (PRONE)</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="up" data-label="D-UP" data-gp="dpad_up">DPAD ⬆️</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="down" data-label="D-DOWN" data-gp="dpad_down">DPAD ⬇️</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="left" data-label="D-LEFT" data-gp="dpad_left">DPAD ⬅️</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="right" data-label="D-RIGHT" data-gp="dpad_right">DPAD ➡️</button>
+      </div>
+
+      <!-- Custom Key Input Row -->
+      <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 12px; background: var(--bg-surface-elevated); padding: 6px 10px; border-radius: var(--radius-xs); border: 1px solid var(--neo-dark);">
+        <span style="font-size: 0.7rem; font-weight: 800; color: var(--neo-yellow); white-space: nowrap;">CUSTOM:</span>
+        <input type="text" id="hud-custom-key-input" placeholder="e.g. F5, J, K, G, CAPS" style="flex: 1; background: var(--neo-black); color: #fff; border: 1px solid var(--neo-dark); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;">
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button type="button" id="btn-hud-modal-add-selected" class="neo-btn btn-cyan" style="flex: 1; font-weight: 900;">➕ ADD TO SCREEN</button>
+        <button type="button" id="btn-hud-modal-cancel" class="neo-btn btn-dark" style="width: 80px;">Cancel</button>
+      </div>
     </div>
   </div>
 

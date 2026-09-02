@@ -1,11 +1,21 @@
 @echo off
 setlocal enabledelayedexpansion
-title NeonTrack - Wireless Debugging APK Installer
+title PCDeck - Wireless Debugging APK Installer
 cls
 echo ====================================================================
-echo        NEONTRACK - WIRELESS DEBUGGING APK INSTALLER
+echo          PCDECK - WIRELESS DEBUGGING APK INSTALLER
 echo ====================================================================
 echo.
+
+REM 1. Quick check for existing ADB device or persistent port 5555
+echo [*] Checking for connected ADB devices...
+adb connect 10.23.32.178:5555 >nul 2>&1
+adb devices | findstr /i "device$" >nul
+if %errorlevel% equ 0 (
+    echo [+] Connected device detected!
+    goto DO_INSTALL
+)
+
 echo Please ensure your phone is on the SAME WI-FI network as this PC.
 echo.
 echo On your Android phone:
@@ -13,7 +23,8 @@ echo   1. Go to Settings -^> Developer options
 echo   2. Enable "Wireless debugging"
 echo.
 
-set /p HAS_PAIRED="Have you paired this PC with the phone before? (y/n) [Default: n]: "
+set /p HAS_PAIRED="Have you paired this PC with the phone before? (y/n) [Default: y]: "
+if /i "%HAS_PAIRED%"=="" goto CONNECT_DIRECT
 if /i "%HAS_PAIRED%"=="y" goto CONNECT_DIRECT
 
 :PAIR_FLOW
@@ -52,17 +63,20 @@ echo [*] Connecting to %CONN_ADDR%...
 adb connect %CONN_ADDR%
 timeout /t 2 >nul
 
+:DO_INSTALL
 adb devices
 echo.
-echo [*] Installing NeonTrack.apk wirelessly...
-adb install -r -d "NeonTrack.apk"
+echo [*] Installing PCDeck.apk wirelessly...
+adb push PCDeck.apk /data/local/tmp/PCDeck.apk
+adb shell pm install -r -d /data/local/tmp/PCDeck.apk
 if %errorlevel% equ 0 (
     echo.
     echo ====================================================================
-    echo [OK] SUCCESS: NeonTrack installed wirelessly on your phone!
+    echo [OK] SUCCESS: PCDeck installed wirelessly on your phone!
     echo ====================================================================
-    echo [*] Launching NeonTrack...
+    echo [*] Launching PCDeck...
     adb shell am start -n com.neontrack.mouse/.MainActivity
+    adb tcpip 5555 >nul 2>&1
 ) else (
     echo.
     echo [-] Wireless installation failed. Please check if device is authorized.

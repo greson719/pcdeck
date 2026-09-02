@@ -201,53 +201,118 @@ except ImportError:
     )
 
 
+def get_asset_search_dirs():
+    """Return all valid directories where application assets might be located."""
+    dirs = []
+    
+    # 1. PyInstaller _MEIPASS directory (extracted bundle)
+    meipass = getattr(sys, "_MEIPASS", "")
+    if meipass:
+        dirs.append(meipass)
+        dirs.append(os.path.join(meipass, "static"))
+        dirs.append(os.path.join(meipass, "assets"))
+
+    # 2. Executable directory (for frozen or standard runs)
+    if getattr(sys, "frozen", False) and sys.executable:
+        exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+        dirs.append(exe_dir)
+        dirs.append(os.path.join(exe_dir, "static"))
+        dirs.append(os.path.join(exe_dir, "assets"))
+
+    # 3. Source script directory & parent directory
+    file_dir = os.path.dirname(os.path.abspath(__file__))
+    dirs.append(file_dir)
+    dirs.append(os.path.join(file_dir, "static"))
+    dirs.append(os.path.join(file_dir, "assets"))
+
+    parent = os.path.dirname(file_dir)
+    dirs.append(parent)
+    dirs.append(os.path.join(parent, "static"))
+    dirs.append(os.path.join(parent, "assets"))
+
+    # 4. Current working directory
+    try:
+        cwd = os.getcwd()
+        dirs.append(cwd)
+        dirs.append(os.path.join(cwd, "static"))
+        dirs.append(os.path.join(cwd, "assets"))
+    except Exception:
+        pass
+
+    # Deduplicate while preserving order
+    seen = set()
+    valid_dirs = []
+    for d in dirs:
+        try:
+            norm = os.path.normpath(d)
+            if norm not in seen and os.path.isdir(norm):
+                seen.add(norm)
+                valid_dirs.append(norm)
+        except Exception:
+            pass
+    return valid_dirs
+
+
+def find_asset(*candidate_names):
+    """Find the first existing asset matching any of the candidate filenames."""
+    for d in get_asset_search_dirs():
+        for name in candidate_names:
+            try:
+                candidate_path = os.path.join(d, name)
+                if os.path.isfile(candidate_path):
+                    return os.path.abspath(candidate_path)
+            except Exception:
+                pass
+    return None
+
+
 def apply_crisp_window_icon(window):
     """
     Sets high-DPI crystal-sharp icon for Window title bar, Alt+Tab switcher, and Windows Taskbar.
     Directly interfaces with Win32 WM_SETICON, SetClassLongPtrW (with 64-bit ctypes argtypes),
-    and SetWindowPos on all native HWNDs (frame + child) to ensure Windows 11 Taskbar never shows Tk feather.
+    and SetWindowPos on all native HWNDs (frame + child + ancestors) to ensure Windows 11 Taskbar never shows Tk feather.
     """
     try:
-        meipass_dir = getattr(sys, "_MEIPASS", "")
-        icon_candidates = [
-            os.path.join(meipass_dir, "app_icon.ico"),
-            os.path.join(meipass_dir, "PCDeck.ico"),
-            os.path.join(meipass_dir, "icon.ico"),
-            os.path.join(parent_dir, "app_icon.ico"),
-            os.path.join(current_dir, "app_icon.ico"),
-            os.path.join(parent_dir, "PCDeck.ico"),
-            os.path.join(current_dir, "PCDeck.ico"),
-            os.path.join(parent_dir, "icon.ico"),
-            os.path.join(current_dir, "icon.ico"),
-        ]
-        ico_file = next((p for p in icon_candidates if p and os.path.exists(p)), None)
+        # Ensure Tkinter geometry / wrapper frame is initialized
+        try:
+            window.update_idletasks()
+        except Exception:
+            pass
+
+        ico_file = find_asset(
+            "app_icon.ico",
+            "PCDeck.ico",
+            "icon.ico",
+            "favicon.ico",
+        )
         if ico_file:
             ico_abs = os.path.abspath(ico_file)
             try:
                 window.iconbitmap(default=ico_abs)
             except Exception:
-                try:
-                    window.iconbitmap(ico_abs)
-                except Exception:
-                    pass
+                pass
+            try:
+                window.iconbitmap(ico_abs)
+            except Exception:
+                pass
 
         # Load multi-res PNG photos for Tkinter window iconphoto (Alt+Tab & Window manager)
-        png_candidates = [
-            os.path.join(meipass_dir, "PCDeck_Mouse_Logo.png"),
-            os.path.join(meipass_dir, "icon.png"),
-            os.path.join(parent_dir, "PCDeck_Mouse_Logo.png"),
-            os.path.join(current_dir, "PCDeck_Mouse_Logo.png"),
-            os.path.join(parent_dir, "icon.png"),
-            os.path.join(current_dir, "icon.png"),
-        ]
-        png_file = next((p for p in png_candidates if p and os.path.exists(p)), None)
+        png_file = find_asset(
+            "PCDeck_Mouse_Logo.png",
+            "PCDeck_Master_Logo.png",
+            "PCDeck_Logo.png",
+            "icon-512.png",
+            "icon.png",
+            "favicon.png",
+        )
         if png_file:
             try:
                 base_img = Image.open(png_file)
                 photos = []
-                for s in [16, 24, 32, 48, 64, 128, 256]:
-                    photos.append(ImageTk.PhotoImage(base_img.resize((s, s), Image.Resampling.LANCZOS)))
-                window.iconphoto(False, *photos)
+                for s in [16, 20, 24, 32, 40, 48, 64, 128, 256]:
+                    resized = base_img.resize((s, s), Image.Resampling.LANCZOS)
+                    photos.append(ImageTk.PhotoImage(resized))
+                window.iconphoto(True, *photos)
                 window._crisp_icons = photos
             except Exception as e:
                 log_debug(f"iconphoto setting error: {e}")
@@ -269,9 +334,14 @@ def apply_crisp_window_icon(window):
                     except Exception:
                         hwnd_frame = None
 
-                    hwnd_ancestor = None
+                    hwnd_ancestor_root = None
+                    hwnd_ancestor_owner = None
                     try:
-                        hwnd_ancestor = user32.GetAncestor(hwnd_child, 2)  # GA_ROOT = 2
+                        hwnd_ancestor_root = user32.GetAncestor(hwnd_child, 2)   # GA_ROOT = 2
+                    except Exception:
+                        pass
+                    try:
+                        hwnd_ancestor_owner = user32.GetAncestor(hwnd_child, 3)  # GA_ROOTOWNER = 3
                     except Exception:
                         pass
 
@@ -281,7 +351,7 @@ def apply_crisp_window_icon(window):
                     except Exception:
                         pass
 
-                    hwnds = {h for h in [hwnd_frame, hwnd_child, hwnd_ancestor, hwnd_parent] if h}
+                    hwnds = {h for h in [hwnd_frame, hwnd_child, hwnd_ancestor_root, hwnd_ancestor_owner, hwnd_parent] if h}
 
                     IMAGE_ICON = 1
                     LR_LOADFROMFILE = 0x00000010
@@ -337,8 +407,14 @@ def apply_crisp_window_icon(window):
                     log_debug(f"Win32 icon injection warning: {e}")
 
             _inject_win32_icons()
+            window.after(10, _inject_win32_icons)
             window.after(50, _inject_win32_icons)
-            window.after(300, _inject_win32_icons)
+            window.after(200, _inject_win32_icons)
+            window.after(600, _inject_win32_icons)
+            try:
+                window.bind("<Map>", lambda e: _inject_win32_icons(), add="+")
+            except Exception:
+                pass
     except Exception as e:
         log_debug(f"apply_crisp_window_icon error: {e}")
 
@@ -354,21 +430,19 @@ class PCDeckProGUI:
         # Set Window Icon for Titlebar, Taskbar, and Alt-Tab
         apply_crisp_window_icon(self.root)
 
-        meipass_dir = getattr(sys, "_MEIPASS", "")
-        png_candidates = [
-            os.path.join(meipass_dir, "PCDeck_Mouse_Logo.png"),
-            os.path.join(meipass_dir, "icon.png"),
-            os.path.join(parent_dir, "PCDeck_Mouse_Logo.png"),
-            os.path.join(current_dir, "PCDeck_Mouse_Logo.png"),
-            os.path.join(parent_dir, "icon.png"),
-            os.path.join(current_dir, "icon.png"),
-        ]
-        master_png = next((p for p in png_candidates if p and os.path.exists(p)), None)
+        master_png = find_asset(
+            "PCDeck_Mouse_Logo.png",
+            "PCDeck_Master_Logo.png",
+            "PCDeck_Logo.png",
+            "icon.png",
+            "favicon.png",
+        )
         if master_png:
             try:
                 self.logo_img = Image.open(master_png)
                 self.logo_photo = ImageTk.PhotoImage(self.logo_img.resize((36, 36), Image.Resampling.LANCZOS))
-            except Exception:
+            except Exception as e:
+                log_debug(f"Error loading logo_photo: {e}")
                 self.logo_photo = None
         else:
             self.logo_photo = None
@@ -429,9 +503,25 @@ class PCDeckProGUI:
         brand_frame.pack(side="left", padx=14, pady=10)
 
         # Brand Icon Badge
+        if not getattr(self, "logo_photo", None):
+            master_png = find_asset(
+                "PCDeck_Mouse_Logo.png",
+                "PCDeck_Master_Logo.png",
+                "PCDeck_Logo.png",
+                "icon.png",
+                "favicon.png",
+            )
+            if master_png:
+                try:
+                    self.logo_img = Image.open(master_png)
+                    self.logo_photo = ImageTk.PhotoImage(self.logo_img.resize((36, 36), Image.Resampling.LANCZOS))
+                except Exception:
+                    self.logo_photo = None
+
         if hasattr(self, "logo_photo") and self.logo_photo:
-            logo_lbl = tk.Label(brand_frame, image=self.logo_photo, bg=C_SURFACE)
-            logo_lbl.pack(side="left", padx=(0, 10))
+            self.logo_lbl = tk.Label(brand_frame, image=self.logo_photo, bg=C_SURFACE)
+            self.logo_lbl.image = self.logo_photo
+            self.logo_lbl.pack(side="left", padx=(0, 10))
 
         title_box = tk.Frame(brand_frame, bg=C_SURFACE)
         title_box.pack(side="left")
@@ -1680,7 +1770,7 @@ class PCDeckProGUI:
                 except ImportError:
                     from main import active_connections, screen_connections, get_local_ip
 
-                count = len(active_connections) + len(screen_connections)
+                count = max(len(active_connections), len(screen_connections))
                 if hasattr(self, "client_badge") and self.client_badge.winfo_exists():
                     self.client_badge.config(text=f"{count} Client{'s' if count != 1 else ''}")
 

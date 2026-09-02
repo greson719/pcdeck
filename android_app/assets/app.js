@@ -12,6 +12,10 @@
       try { window.navigator.vibrate(15); } catch(e) {}
     }
     state.activeTab = targetId;
+    document.body.classList.toggle('on-screen-tab', targetId === 'tab-screen');
+    if (targetId !== 'tab-screen' && typeof window.closeScreenTypeBar === 'function') {
+      window.closeScreenTypeBar();
+    }
 
     const allTabs = document.querySelectorAll('.dock-tab');
     allTabs.forEach(t => {
@@ -31,6 +35,11 @@
       }
     });
 
+    // Update Titlebar Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
+    if (typeof window.updateTitlebarActions === 'function') {
+      window.updateTitlebarActions(targetId);
+    }
+
     // If switched to files tab, refresh directory listing
     if (targetId === 'tab-files' && typeof window.loadFsPlacesGlobal === 'function') {
       window.loadFsPlacesGlobal();
@@ -46,7 +55,7 @@
     connected: false,
     screenConnected: false,
     latency: 0,
-    cursorSpeed: 1.5,
+    cursorSpeed: 1.0,
     scrollSpeed: 1.4,
     smoothAccel: true,
     invertScroll: false,
@@ -62,9 +71,13 @@
     autoQualityMode: 'auto',
     zoomSens: 1.0,
     activeTab: 'tab-screen',
+    transferSpeed: 'standard', // 'standard' (10 MB/s) or 'turbo' (Pro uncapped multi-stream)
     screenMode: 'touch', // 'touch', 'mouse', or 'rclick'
     dragLocked: false,
     titleBarHidden: false,
+    gamepadHudEnabled: false,
+    gamepadHudActive: false,
+    gamepadHudEditing: false,
     wakeLockObj: null,
     // Mouse Smoothing & Anti-Jitter Filter
     smoothDx: 0,
@@ -248,6 +261,7 @@
       btnSaveIp: document.getElementById('btn-save-ip'),
       settingsBtnScanQr: document.getElementById('settings-btn-scan-qr'),
       settingsBtnRotate: document.getElementById('settings-btn-rotate'),
+      settingGamepadHud: document.getElementById('setting-gamepad-hud'),
       settingPinchZoom: document.getElementById('setting-pinch-zoom'),
       settingZoomSens: document.getElementById('setting-zoom-sens'),
       valZoomSens: document.getElementById('val-zoom-sens'),
@@ -331,6 +345,30 @@
     }
   }
 
+  // --- Host / IP Address Sanitizer ---
+  function parseHostPort(input) {
+    if (!input || typeof input !== 'string') return null;
+    let clean = input.trim();
+    if (clean.includes('?')) {
+      try {
+        const u = new URL(clean.startsWith('http') ? clean : `http://${clean}`);
+        const ipParam = u.searchParams.get('ip');
+        if (ipParam) clean = ipParam;
+        else if (u.hostname) return { host: u.hostname, port: u.port || '8000' };
+      } catch (e) {}
+    }
+    clean = clean.replace(/^(https?:\/\/|wss?:\/\/)/i, '');
+    clean = clean.split('/')[0].split('?')[0].trim();
+    if (!clean) return null;
+    if (clean.includes(':')) {
+      const parts = clean.split(':');
+      const host = parts[0].trim();
+      const port = parts[1].trim() || '8000';
+      return { host, port };
+    }
+    return { host: clean, port: '8000' };
+  }
+
   // --- Settings Persistence ---
   function loadSettings() {
     try {
@@ -339,14 +377,15 @@
       const queryIp = urlParams.get('ip');
 
       if (queryIp) {
-        const clean = queryIp.replace(/^https?:\/\//, '');
-        const parts = clean.split(':');
-        state.serverHost = parts[0];
-        state.serverPort = parts[1] || '8000';
-        if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
-        if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
-        localStorage.setItem('neontrack_ip', `${state.serverHost}:${state.serverPort}`);
-        localStorage.setItem('pcdeck_onboarding_completed', 'true');
+        const parsed = parseHostPort(queryIp);
+        if (parsed) {
+          state.serverHost = parsed.host;
+          state.serverPort = parsed.port;
+          if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
+          if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
+          localStorage.setItem('neontrack_ip', `${state.serverHost}:${state.serverPort}`);
+          localStorage.setItem('pcdeck_onboarding_completed', 'true');
+        }
       } else if (isHttp) {
         // Direct browser connection: host is already the PC server
         state.serverHost = window.location.hostname;
@@ -358,11 +397,13 @@
       } else {
         const savedIp = localStorage.getItem('neontrack_ip');
         if (savedIp) {
-          const parts = savedIp.split(':');
-          state.serverHost = parts[0];
-          state.serverPort = parts[1] || '8000';
-          if (el.modalIpInput) el.modalIpInput.value = savedIp;
-          if (el.settingsIpInput) el.settingsIpInput.value = savedIp;
+          const parsed = parseHostPort(savedIp);
+          if (parsed) {
+            state.serverHost = parsed.host;
+            state.serverPort = parsed.port;
+            if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
+            if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
+          }
         }
       }
 
@@ -373,10 +414,10 @@
         if (el.valCursorSpeed) el.valCursorSpeed.textContent = parseFloat(cursor).toFixed(1) + 'x';
         if (el.btnSpeedQuick) el.btnSpeedQuick.textContent = `${parseFloat(cursor).toFixed(1)}x`;
       } else {
-        state.cursorSpeed = 1.5;
-        if (el.settingCursorSpeed) el.settingCursorSpeed.value = '1.5';
-        if (el.valCursorSpeed) el.valCursorSpeed.textContent = '1.5x';
-        if (el.btnSpeedQuick) el.btnSpeedQuick.textContent = '1.5x';
+        state.cursorSpeed = 1.0;
+        if (el.settingCursorSpeed) el.settingCursorSpeed.value = '1.0';
+        if (el.valCursorSpeed) el.valCursorSpeed.textContent = '1.0x';
+        if (el.btnSpeedQuick) el.btnSpeedQuick.textContent = '1.0x';
       }
 
       const scroll = localStorage.getItem('neontrack_scroll_speed');
@@ -427,6 +468,15 @@
         if (el.settingWakelock) el.settingWakelock.checked = state.wakelockEnabled;
       }
 
+      const hudEnabled = localStorage.getItem('neontrack_gamepad_hud_enabled');
+      if (hudEnabled !== null) {
+        state.gamepadHudEnabled = hudEnabled === 'true';
+        if (el.settingGamepadHud) el.settingGamepadHud.checked = state.gamepadHudEnabled;
+      } else {
+        state.gamepadHudEnabled = false;
+        if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
+      }
+
       const autoAudio = localStorage.getItem('neontrack_auto_audio');
       if (autoAudio !== null) {
         state.autoAudioStream = autoAudio === 'true';
@@ -454,6 +504,15 @@
         selClarity.value = state.autoQualityMode || 'auto';
       }
 
+      const savedSpeed = localStorage.getItem('neontrack_transfer_speed');
+      if (savedSpeed === 'turbo' || savedSpeed === 'standard') {
+        state.transferSpeed = savedSpeed;
+      }
+      const selSpeed = document.getElementById('setting-transfer-speed');
+      if (selSpeed) {
+        selSpeed.value = state.transferSpeed || 'standard';
+      }
+
       const titlebarHidden = localStorage.getItem('neontrack_titlebar_hidden');
       if (titlebarHidden === 'true') {
         state.titleBarHidden = true;
@@ -476,11 +535,13 @@
       localStorage.setItem('neontrack_invert_scroll', state.invertScroll.toString());
       localStorage.setItem('neontrack_haptics', state.hapticsEnabled.toString());
       localStorage.setItem('neontrack_wakelock', state.wakelockEnabled.toString());
+      localStorage.setItem('neontrack_gamepad_hud_enabled', state.gamepadHudEnabled.toString());
       localStorage.setItem('neontrack_auto_audio', state.autoAudioStream.toString());
       localStorage.setItem('neontrack_stream_fps', state.streamFps.toString());
       localStorage.setItem('neontrack_stream_quality', state.streamQuality.toString());
       localStorage.setItem('neontrack_stream_scale', state.streamScale.toString());
       localStorage.setItem('neontrack_stream_auto_mode', state.autoQualityMode || 'auto');
+      localStorage.setItem('neontrack_transfer_speed', state.transferSpeed || 'standard');
       localStorage.setItem('neontrack_titlebar_hidden', state.titleBarHidden.toString());
 
       if (showToastNotify) {
@@ -494,7 +555,7 @@
 
   function resetAllSettings() {
     localStorage.clear();
-    state.cursorSpeed = 1.5;
+    state.cursorSpeed = 1.0;
     state.scrollSpeed = 1.4;
     state.zoomSens = 1.0;
     state.pinchZoomEnabled = true;
@@ -502,6 +563,7 @@
     state.invertScroll = false;
     state.hapticsEnabled = true;
     state.wakelockEnabled = true;
+    state.gamepadHudEnabled = false;
     state.autoAudioStream = true;
     state.titleBarHidden = false;
     if (el.topNav) el.topNav.classList.remove('hidden-bar');
@@ -515,11 +577,13 @@
     if (el.settingZoomSens) el.settingZoomSens.value = '1.0';
     if (el.valZoomSens) el.valZoomSens.textContent = '1.0x';
     if (el.settingPinchZoom) el.settingPinchZoom.checked = true;
+    if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
     if (el.settingAccel) el.settingAccel.checked = true;
     if (el.settingInvertScroll) el.settingInvertScroll.checked = false;
     if (el.settingHaptics) el.settingHaptics.checked = true;
     if (el.settingWakelock) el.settingWakelock.checked = true;
     if (el.settingAutoAudio) el.settingAutoAudio.checked = true;
+    if (window.updateTitlebarActions) window.updateTitlebarActions();
 
     resetPinchZoom();
     showToast('Settings Reset to Defaults', 'warn', '🔄');
@@ -616,6 +680,11 @@
     const touchArena = el.screenViewport || el.screenCanvas;
 
     touchArena.addEventListener('touchstart', (e) => {
+      // Check if Gamepad HUD is active or touch is on UI overlays
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+        return;
+      }
+
       // Instantly cancel any ongoing kinetic momentum glide (tap-to-stop)
       if (isMomentumActive) {
         isMomentumActive = false;
@@ -691,6 +760,10 @@
     }, { passive: false });
 
     touchArena.addEventListener('touchmove', (e) => {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+        return;
+      }
+
       // 2-Finger Pinch-to-Zoom & Pan
       if (e.touches.length === 2 && twoFingerActive) {
         const t1 = e.touches[0];
@@ -787,6 +860,10 @@
     }, { passive: false });
 
     touchArena.addEventListener('touchend', (e) => {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+        return;
+      }
+
       if (longPressTimer) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
@@ -958,8 +1035,183 @@
     // Gestures unified inside initScreenTouchDisplay for smooth synchronization
   }
 
-  // --- Auto-Connect & WebSocket Management ---
-  function connect() {
+  // --- Auto-Connect, Zero-Config Discovery & WebSocket Management ---
+  let isSubnetSweeping = false;
+  let wsConnectTimeoutTimer = null;
+
+  function clearWsConnectTimeout() {
+    if (wsConnectTimeoutTimer) {
+      clearTimeout(wsConnectTimeoutTimer);
+      wsConnectTimeoutTimer = null;
+    }
+  }
+
+  // Global handler called when PC server is discovered via native UDP or subnet scan
+  window.onServerDiscovered = function(discoveredHost, discoveredPort) {
+    if (!discoveredHost || typeof discoveredHost !== 'string') return;
+    const cleanHost = discoveredHost.trim();
+    const cleanPort = (discoveredPort && typeof discoveredPort === 'string' ? discoveredPort.trim() : '8000') || '8000';
+    if (!cleanHost || cleanHost === '127.0.0.1' || cleanHost === '0.0.0.0') return;
+
+    const wasDifferent = (state.serverHost !== cleanHost || state.serverPort !== cleanPort);
+
+    state.serverHost = cleanHost;
+    state.serverPort = cleanPort;
+    if (el.modalIpInput) el.modalIpInput.value = `${cleanHost}:${cleanPort}`;
+    if (el.settingsIpInput) el.settingsIpInput.value = `${cleanHost}:${cleanPort}`;
+    localStorage.setItem('neontrack_ip', `${cleanHost}:${cleanPort}`);
+    localStorage.setItem('pcdeck_onboarding_completed', 'true');
+
+    if (el.connectModal && el.connectModal.classList.contains('show')) {
+      el.connectModal.classList.remove('show');
+    }
+
+    // If not connected or was pointing to stale host, connect immediately (< 10ms)
+    if (!state.connected || wasDifferent) {
+      clearWsConnectTimeout();
+      connect(true);
+    }
+  };
+
+  function triggerDiscoveryAndSweep() {
+    // 1. Trigger Native Android UDP Broadcast Discovery (< 5ms)
+    if (window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
+      try {
+        window.AndroidApp.discoverServer();
+      } catch (e) {}
+    }
+
+    // 2. Parallel Fast Subnet Sweeper for web and fallback (< 250ms)
+    sweepSubnetAndConnect();
+  }
+
+  async function sweepSubnetAndConnect() {
+    if (isSubnetSweeping || state.connected) return;
+    isSubnetSweeping = true;
+
+    try {
+      const candidates = new Set();
+
+      let deviceIp = '';
+      if (window.AndroidApp && typeof window.AndroidApp.getDeviceIp === 'function') {
+        try { deviceIp = window.AndroidApp.getDeviceIp(); } catch (e) {}
+      }
+
+      const saved = localStorage.getItem('neontrack_ip');
+      if (saved) {
+        const p = parseHostPort(saved);
+        if (p) candidates.add(p.host);
+      }
+      if (state.serverHost) candidates.add(state.serverHost);
+
+      // High-priority hotspot and router gateways
+      const priorityIps = [
+        '192.168.43.1',   // Android Mobile Hotspot Gateway
+        '192.168.137.1',  // Windows Mobile Hotspot Gateway
+        '192.168.1.1',    // Router Gateway
+        '192.168.0.1',    // Router Gateway
+        '192.168.1.100',  // Common DHCP PC IP
+        '192.168.0.100',
+        '192.168.1.2',
+        '192.168.0.2',
+        '10.0.0.1',
+        '10.0.0.2',
+      ];
+      priorityIps.forEach(ip => candidates.add(ip));
+
+      // Derive subnet /24 ranges to sweep
+      const subnetsToSweep = new Set();
+      if (deviceIp && deviceIp.includes('.')) {
+        subnetsToSweep.add(deviceIp.substring(0, deviceIp.lastIndexOf('.')));
+      }
+      if (state.serverHost && state.serverHost.includes('.')) {
+        subnetsToSweep.add(state.serverHost.substring(0, state.serverHost.lastIndexOf('.')));
+      }
+      if (saved && saved.includes('.')) {
+        const p = parseHostPort(saved);
+        if (p && p.host.includes('.')) {
+          subnetsToSweep.add(p.host.substring(0, p.host.lastIndexOf('.')));
+        }
+      }
+
+      if (subnetsToSweep.size === 0) {
+        subnetsToSweep.add('192.168.43');
+        subnetsToSweep.add('192.168.137');
+        subnetsToSweep.add('192.168.1');
+        subnetsToSweep.add('192.168.0');
+      }
+
+      const fullTargetList = Array.from(candidates);
+      for (const subnet of subnetsToSweep) {
+        for (let i = 1; i <= 254; i++) {
+          const ip = `${subnet}.${i}`;
+          if (!candidates.has(ip)) {
+            fullTargetList.push(ip);
+          }
+        }
+      }
+
+      let found = false;
+      const port = state.serverPort || '8000';
+
+      // Sweep in concurrent batches of 32 for maximum speed (< 250ms)
+      const BATCH_SIZE = 32;
+      for (let i = 0; i < fullTargetList.length && !found && !state.connected; i += BATCH_SIZE) {
+        const batch = fullTargetList.slice(i, i + BATCH_SIZE);
+        const promises = batch.map(ip => {
+          return new Promise(resolve => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => {
+              controller.abort();
+              resolve(null);
+            }, 350);
+
+            fetch(`http://${ip}:${port}/api/ping`, {
+              signal: controller.signal,
+              mode: 'cors',
+              cache: 'no-store',
+            })
+              .then(r => r.json())
+              .then(data => {
+                clearTimeout(timer);
+                if (data && data.status === 'ok' && (data.app === 'PCDeck' || data.name)) {
+                  resolve({ ip: data.ip || ip, port: (data.port ? data.port.toString() : port) });
+                } else {
+                  resolve(null);
+                }
+              })
+              .catch(() => {
+                clearTimeout(timer);
+                resolve(null);
+              });
+          });
+        });
+
+        const results = await Promise.all(promises);
+        const match = results.find(r => r !== null);
+        if (match) {
+          found = true;
+          window.onServerDiscovered(match.ip, match.port);
+          break;
+        }
+      }
+    } catch (e) {
+    } finally {
+      isSubnetSweeping = false;
+    }
+  }
+
+  function clearAutoReconnect() {
+    if (state.autoReconnectTimer) {
+      clearTimeout(state.autoReconnectTimer);
+      clearInterval(state.autoReconnectTimer);
+      state.autoReconnectTimer = null;
+    }
+  }
+
+  function connect(force) {
+    clearAutoReconnect();
+    clearWsConnectTimeout();
     updateStatus('connecting', 'Connecting...');
     const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
     const host = state.serverHost || (isHttp ? window.location.hostname : '127.0.0.1');
@@ -968,25 +1220,69 @@
     state.serverPort = port;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    state.wsUrl = `${protocol}//${host}:${port}/ws`;
-    state.screenWsUrl = `${protocol}//${host}:${port}/ws/screen`;
+    const targetWsUrl = `${protocol}//${host}:${port}/ws`;
+    const targetScreenWsUrl = `${protocol}//${host}:${port}/ws/screen`;
+
+    // If socket is already OPEN and connecting to the same target, avoid redundant reconnect
+    if (!force && mainWs && mainWs.readyState === WebSocket.OPEN && state.connected && state.wsUrl === targetWsUrl) {
+      updateStatus('connected', 'Connected');
+      connectScreenWs();
+      return;
+    }
+
+    state.wsUrl = targetWsUrl;
+    state.screenWsUrl = targetScreenWsUrl;
 
     if (mainWs) {
-      try { mainWs.close(); } catch (e) {}
+      const oldWs = mainWs;
+      mainWs = null;
+      oldWs.onopen = null;
+      oldWs.onmessage = null;
+      oldWs.onclose = null;
+      oldWs.onerror = null;
+      try { oldWs.close(); } catch (e) {}
     }
-    // Do NOT close screenWs here: closing it without detaching its handlers fires
-    // onclose, which schedules a reconnect that then races the socket connectScreenWs()
-    // is about to open. connectScreenWs() tears the old one down properly.
+
+    // Concurrently trigger native UDP discovery on connect attempt
+    if (window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
+      try { window.AndroidApp.discoverServer(); } catch (e) {}
+    }
+
+    // Fast-Fail Connect Timeout (1200ms):
+    // If target host does not respond within 1200ms, abort hang and trigger instant discovery!
+    wsConnectTimeoutTimer = setTimeout(() => {
+      if (mainWs && mainWs.readyState === WebSocket.CONNECTING) {
+        try { mainWs.close(); } catch (e) {}
+        triggerDiscoveryAndSweep();
+      }
+    }, 1200);
 
     try {
-      mainWs = new WebSocket(state.wsUrl);
-      mainWs.onopen = onMainWsOpen;
-      mainWs.onmessage = onMainWsMessage;
-      mainWs.onclose = onMainWsClose;
-      mainWs.onerror = onMainWsError;
+      const ws = new WebSocket(state.wsUrl);
+      mainWs = ws;
+      mainWs.onopen = (e) => {
+        clearWsConnectTimeout();
+        if (ws !== mainWs) return;
+        onMainWsOpen(e);
+      };
+      mainWs.onmessage = (e) => {
+        if (ws !== mainWs) return;
+        onMainWsMessage(e);
+      };
+      mainWs.onclose = (e) => {
+        clearWsConnectTimeout();
+        if (ws !== mainWs) return;
+        onMainWsClose(e);
+      };
+      mainWs.onerror = (e) => {
+        clearWsConnectTimeout();
+        if (ws !== mainWs) return;
+        onMainWsError(e);
+      };
 
       connectScreenWs();
     } catch (e) {
+      clearWsConnectTimeout();
       console.error('Failed to open main WebSocket:', e);
       onMainWsError();
     }
@@ -1039,7 +1335,6 @@
   let stableTicks = 0;
   let currentAppliedQuality = 75;
   let currentAppliedScale = 0.85;
-  let lastAutoBandwidthClass = '';
 
   function updateAdaptiveQuality(currentRtt) {
     if (state.autoQualityMode !== 'auto') return;
@@ -1049,33 +1344,27 @@
 
     let targetQuality = 75;
     let targetScale = 0.85;
-    let bandwidthLabel = '';
 
     if (smoothedRtt < 22) {
-      // 5 GHz / 6 GHz / USB Tethering / Wi-Fi 6 Ultra-Fast
+      // Ultra-low latency (< 22ms)
       targetQuality = 88;
       targetScale = 1.0;
-      bandwidthLabel = '5GHz/6G ⚡';
     } else if (smoothedRtt <= 48) {
-      // Clean 5 GHz or strong 2.4 GHz
+      // Clean fast connection (22-48ms)
       targetQuality = 78;
       targetScale = 0.90;
-      bandwidthLabel = '5GHz 📶';
     } else if (smoothedRtt <= 90) {
-      // Standard 2.4 GHz / Mobile Hotspot / USB Dongle
+      // Standard connection (48-90ms)
       targetQuality = 70;
       targetScale = 0.78;
-      bandwidthLabel = '2.4GHz 📶';
     } else if (smoothedRtt <= 150) {
-      // Congested 2.4 GHz / Weak signal
+      // Elevated latency (90-150ms)
       targetQuality = 58;
       targetScale = 0.65;
-      bandwidthLabel = '2.4G Slow ⚠️';
     } else {
-      // High packet loss / Severe interference spike
+      // High latency / interference spike (> 150ms)
       targetQuality = 45;
       targetScale = 0.50;
-      bandwidthLabel = 'Lag Guard 🛡️';
     }
 
     // Fast-drop on latency spike (immediate drop to prevent queue backlog)
@@ -1102,12 +1391,9 @@
       stableTicks = 0;
     }
 
-    // Update status label or latency pill
-    if (lastAutoBandwidthClass !== bandwidthLabel) {
-      lastAutoBandwidthClass = bandwidthLabel;
-      if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
-        el.statusLabel.textContent = `${bandwidthLabel} ${smoothedRtt}ms`;
-      }
+    // Update status label with clean, legitimate latency
+    if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      el.statusLabel.textContent = `Online • ${smoothedRtt}ms`;
     }
   }
 
@@ -1123,12 +1409,13 @@
     }
     try {
       if (screenWs) {
-        screenWs.onopen = null;
-        screenWs.onmessage = null;
-        screenWs.onclose = null;
-        screenWs.onerror = null;
-        try { screenWs.close(); } catch (e) {}
+        const oldScreenWs = screenWs;
         screenWs = null;
+        oldScreenWs.onopen = null;
+        oldScreenWs.onmessage = null;
+        oldScreenWs.onclose = null;
+        oldScreenWs.onerror = null;
+        try { oldScreenWs.close(); } catch (e) {}
       }
       lastScreenFrameReceivedTime = Date.now();
       if (!screenFirstFrameSeen) {
@@ -1159,7 +1446,7 @@
           screenReconnectTimer = setTimeout(() => {
             screenReconnectTimer = null;
             if (state.connected) connectScreenWs();
-          }, 1200);
+          }, 1000);
         }
       };
       ws.onerror = () => {
@@ -1182,11 +1469,7 @@
     showToast(`Connected to PC (${state.serverHost})`, 'success', '💻');
     vibrate(40);
 
-    if (state.autoReconnectTimer) {
-      clearInterval(state.autoReconnectTimer);
-      state.autoReconnectTimer = null;
-    }
-
+    clearAutoReconnect();
     saveAllSettings(false);
 
     if (pingInterval) clearInterval(pingInterval);
@@ -1198,6 +1481,9 @@
 
     // Refresh Places & Current Directory
     loadFsPlaces();
+
+    // Immediately restore / verify screen stream channel upon reconnection
+    connectScreenWs();
 
     // Send Pro status to PC Server
     const isProActive = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
@@ -1218,6 +1504,9 @@
       const sentTime = parseInt(data.split(',')[1], 10);
       state.latency = Math.max(1, Date.now() - sentTime);
       if (el.latencyVal) el.latencyVal.textContent = `${state.latency}ms`;
+      if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
+        el.statusLabel.textContent = `Online • ${state.latency}ms`;
+      }
       updateAdaptiveQuality(state.latency);
       return;
     }
@@ -1254,32 +1543,42 @@
   }
 
   function onMainWsClose() {
+    clearWsConnectTimeout();
     state.connected = false;
     reconnectAttempts++;
 
     if (reconnectAttempts >= 3) {
-      updateStatus('disconnected', 'Reconnecting... (Check VPN/Wi-Fi)');
+      updateStatus('disconnected', 'Reconnecting... (Check Wi-Fi/Hotspot)');
       if (reconnectAttempts === 3) {
-        showToast(`Cannot reach PC (${state.serverHost}). If VPN is ON, pause it or allow LAN`, 'warn', '⚠️');
+        showToast(`Searching for PC on network...`, 'info', '🔍');
       }
     } else {
       updateStatus('disconnected', 'Reconnecting...');
     }
 
-    if (pingInterval) clearInterval(pingInterval);
+    // Trigger instant UDP discovery and subnet sweep on connection drop
+    triggerDiscoveryAndSweep();
+
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingInterval = null;
+    }
     if (audioStreamActive) {
       stopAudioStream();
     }
 
-    if (!state.autoReconnectTimer && localStorage.getItem('neontrack_ip')) {
-      state.autoReconnectTimer = setInterval(() => {
+    clearAutoReconnect();
+    const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
+    const hasTarget = localStorage.getItem('neontrack_ip') || state.serverHost || (isHttp ? window.location.hostname : null);
+    if (hasTarget) {
+      // Super fast initial retry (350ms) instead of 1000ms+ delay
+      const delay = reconnectAttempts <= 1 ? 350 : Math.min(600 + Math.min(reconnectAttempts, 4) * 500, 2500);
+      state.autoReconnectTimer = setTimeout(() => {
+        state.autoReconnectTimer = null;
         if (!state.connected) {
           connect();
-        } else {
-          clearInterval(state.autoReconnectTimer);
-          state.autoReconnectTimer = null;
         }
-      }, 3000);
+      }, delay);
     }
   }
 
@@ -1351,8 +1650,7 @@
     if (!screenCtx) {
       screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
       if (screenCtx) {
-        screenCtx.imageSmoothingEnabled = true;
-        screenCtx.imageSmoothingQuality = 'high';
+        screenCtx.imageSmoothingEnabled = false;
       }
     }
 
@@ -1363,15 +1661,12 @@
       // Primary Decoder: Hardware-Accelerated createImageBitmap
       if (window.createImageBitmap) {
         try {
-          const bmp = await createImageBitmap(blob);
+          const bmp = await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none' });
           if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
             el.screenCanvas.width = bmp.width;
             el.screenCanvas.height = bmp.height;
             screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
-            if (screenCtx) {
-              screenCtx.imageSmoothingEnabled = true;
-              screenCtx.imageSmoothingQuality = 'high';
-            }
+            if (screenCtx) screenCtx.imageSmoothingEnabled = false;
           }
           if (screenCtx) {
             screenCtx.drawImage(bmp, 0, 0);
@@ -1379,7 +1674,19 @@
           }
           if (bmp.close) bmp.close();
         } catch (bmpErr) {
-          console.warn('createImageBitmap failed, falling back to Image element:', bmpErr);
+          try {
+            const bmp = await createImageBitmap(blob);
+            if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
+              el.screenCanvas.width = bmp.width;
+              el.screenCanvas.height = bmp.height;
+              screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
+            }
+            if (screenCtx) {
+              screenCtx.drawImage(bmp, 0, 0);
+              renderedOk = true;
+            }
+            if (bmp.close) bmp.close();
+          } catch (e2) {}
         }
       }
 
@@ -1393,10 +1700,6 @@
               el.screenCanvas.width = cachedScreenImg.naturalWidth;
               el.screenCanvas.height = cachedScreenImg.naturalHeight;
               screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
-              if (screenCtx) {
-                screenCtx.imageSmoothingEnabled = true;
-                screenCtx.imageSmoothingQuality = 'high';
-              }
             }
             if (screenCtx) {
               screenCtx.drawImage(cachedScreenImg, 0, 0);
@@ -1405,7 +1708,6 @@
             resolve();
           };
           cachedScreenImg.onerror = (err) => {
-            console.warn('Image element render error:', err);
             resolve();
           };
           cachedScreenImg.src = activeBlobUrl;
@@ -1422,7 +1724,7 @@
       console.warn('Frame render error:', e);
     } finally {
       if (nextFrameBuffer) {
-        setTimeout(processNextScreenFrame, 0);
+        requestAnimationFrame(processNextScreenFrame);
       } else {
         isDecodingScreen = false;
       }
@@ -1581,6 +1883,8 @@
     if (!targetId) return;
     vibrate(15);
     state.activeTab = targetId;
+    document.body.classList.toggle('on-screen-tab', targetId === 'tab-screen');
+    document.body.classList.toggle('gamepad-mode-active', targetId === 'tab-trackpad' && gamepadActive);
 
     if (el.dockTabs) {
       el.dockTabs.forEach((t) => {
@@ -1600,6 +1904,11 @@
           v.classList.remove('active');
         }
       });
+    }
+
+    // Update Titlebar Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
+    if (typeof window.updateTitlebarActions === 'function') {
+      window.updateTitlebarActions(targetId);
     }
 
     // If switched to Screen tab, verify screen stream liveness without destroying open sockets
@@ -1752,17 +2061,21 @@
     function openTypeBar() {
       bar.hidden = false;
       fab.classList.add('active');
-      if (input.resetLiveTyping) input.resetLiveTyping();
+      document.body.classList.add('typing-active');
       // Focus must happen in the same gesture or Android will not raise the keyboard.
       input.focus();
+      if (input.value) {
+        const len = input.value.length;
+        try { input.setSelectionRange(len, len); } catch(e) {}
+      }
       showToast('Typing to PC — tap ✕ to close', 'success', '⌨️');
     }
 
     function closeTypeBar() {
-      if (input.resetLiveTyping) input.resetLiveTyping();
       input.blur();
       bar.hidden = true;
       fab.classList.remove('active');
+      document.body.classList.remove('typing-active');
     }
 
     fab.addEventListener('click', (e) => {
@@ -3011,6 +3324,12 @@
         };
       }
     });
+
+    // Real-time titlebar label update during active transfer
+    const transferLabel = document.getElementById('fast-transfer-label');
+    if (transferLabel && speed && speed !== '-- MB/s') {
+      transferLabel.textContent = `Fast Transfer • ${speed}`;
+    }
   }
 
   function hideTransferProgress(delay = 0) {
@@ -3021,10 +3340,16 @@
     if (delay === 0) {
       const boxes = document.querySelectorAll('.file-transfer-card');
       boxes.forEach(box => { box.style.display = 'none'; });
+      if (typeof window.syncTransferSpeedButtons === 'function') {
+        window.syncTransferSpeedButtons();
+      }
     } else {
       hideTransferTimeout = setTimeout(() => {
         const boxes = document.querySelectorAll('.file-transfer-card');
         boxes.forEach(box => { box.style.display = 'none'; });
+        if (typeof window.syncTransferSpeedButtons === 'function') {
+          window.syncTransferSpeedButtons();
+        }
       }, delay);
     }
   }
@@ -3615,8 +3940,8 @@
         badgeClass: 'badge-upload',
         filename: file.name,
         percent: 0,
-        status: `Sending ${currentIndex} of ${files.length}...`,
-        speed: '-- MB/s',
+        status: `Starting stream (${file.name})...`,
+        speed: 'Connecting...',
         isDownload: false
       });
 
@@ -3919,7 +4244,7 @@
 
     updateQuickToolsUi();
 
-    showToast(shouldHide ? 'Title Bar Hidden (Gaming Mode)' : 'Title Bar Restored', 'success', shouldHide ? '📺' : '👁️');
+    showToast(shouldHide ? 'Full View (Title Bar Hidden)' : 'Title Bar Restored', 'info', shouldHide ? '📐' : '👁️');
     try {
       localStorage.setItem('neontrack_titlebar_hidden', shouldHide.toString());
     } catch (e) {}
@@ -4099,33 +4424,16 @@
 
   function parseQrAndConnect(data) {
     vibrate(60);
-    try {
-      const url = new URL(data);
-      const ipParam = url.searchParams.get('ip');
-      if (ipParam) {
-        const clean = ipParam.replace(/^https?:\/\//, '');
-        const parts = clean.split(':');
-        state.serverHost = parts[0];
-        state.serverPort = parts[1] || '8000';
-      } else {
-        state.serverHost = url.hostname;
-        state.serverPort = url.port || '8000';
-      }
+    const parsed = parseHostPort(data);
+    if (parsed) {
+      state.serverHost = parsed.host;
+      state.serverPort = parsed.port;
       if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
       if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
       showToast(`Connected to ${state.serverHost}:${state.serverPort}`, 'success', '💻');
+      reconnectAttempts = 0;
       saveAllSettings(false);
-      connect();
-    } catch (e) {
-      const clean = data.replace(/^https?:\/\//, '');
-      const parts = clean.split(':');
-      state.serverHost = parts[0];
-      state.serverPort = parts[1] || '8000';
-      if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
-      if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
-      showToast(`Connected to ${state.serverHost}:${state.serverPort}`, 'success', '💻');
-      saveAllSettings(false);
-      connect();
+      connect(true);
     }
   }
 
@@ -4170,17 +4478,14 @@
       el.modalBtnConnect.onclick = () => {
         const val = el.modalIpInput.value.trim();
         if (val) {
-          let host = val;
-          let port = '8000';
-          if (val.includes(':')) {
-            const p = val.split(':');
-            host = p[0];
-            port = p[1] || '8000';
+          const parsed = parseHostPort(val);
+          if (parsed) {
+            state.serverHost = parsed.host;
+            state.serverPort = parsed.port;
+            reconnectAttempts = 0;
+            saveAllSettings(false);
+            connect(true);
           }
-          state.serverHost = host;
-          state.serverPort = port;
-          saveAllSettings(false);
-          connect();
         }
       };
     }
@@ -4316,6 +4621,22 @@
       };
     }
 
+    if (el.settingGamepadHud) {
+      el.settingGamepadHud.onchange = () => {
+        state.gamepadHudEnabled = el.settingGamepadHud.checked;
+        if (window.updateTitlebarActions) {
+          window.updateTitlebarActions();
+        }
+        if (!state.gamepadHudEnabled && state.gamepadHudActive) {
+          if (typeof window.toggleGamepadHUD === 'function') {
+            window.toggleGamepadHUD(false);
+          }
+        }
+        saveAllSettings(false);
+        showToast(state.gamepadHudEnabled ? 'Gaming Controller HUD Enabled' : 'Gaming Controller HUD Disabled', 'info', '🎮');
+      };
+    }
+
     if (el.settingPinchZoom) {
       el.settingPinchZoom.onchange = () => {
         state.pinchZoomEnabled = el.settingPinchZoom.checked;
@@ -4383,11 +4704,14 @@
       el.btnSaveIp.onclick = () => {
         const val = el.settingsIpInput.value.trim();
         if (val) {
-          const parts = val.replace('http://', '').replace('https://', '').split(':');
-          state.serverHost = parts[0];
-          state.serverPort = parts[1] || '8000';
-          saveAllSettings(true);
-          connect();
+          const parsed = parseHostPort(val);
+          if (parsed) {
+            state.serverHost = parsed.host;
+            state.serverPort = parsed.port;
+            reconnectAttempts = 0;
+            saveAllSettings(true);
+            connect(true);
+          }
         }
       };
     }
@@ -4427,11 +4751,19 @@
   let audioChannels = 2;
   let audioVisualizerAnimId = null;
   let audioConnecting = false;
-  // Bumped on every start/stop so async callbacks (WebSocket handlers, <audio>.play()
-  // promises) from a superseded session can detect that they are stale and bail out.
   let audioSessionId = 0;
-  // Every chunk is scheduled ahead of time; keep the nodes so stop() can kill them.
   const scheduledAudioSources = new Set();
+
+  // Ultra-Low-Latency Jitter-Free Circular Ring Buffer Audio Engine
+  const AUDIO_RING_BUFFER_SIZE = 48000 * 2; // 2 seconds of float frames
+  let audioRingBufferL = new Float32Array(AUDIO_RING_BUFFER_SIZE);
+  let audioRingBufferR = new Float32Array(AUDIO_RING_BUFFER_SIZE);
+  let audioRingWritePos = 0;
+  let audioRingReadPos = 0;
+  let audioRingAvailable = 0;
+  let audioContinuousNode = null;
+  let isAudioPrebuffering = true;
+  const AUDIO_PREBUFFER_THRESHOLD = 1440; // ~30ms pre-buffer before starting playback
 
   function ensureAudioContext() {
     if (!audioCtx || audioCtx.state === 'closed') {
@@ -4602,6 +4934,7 @@
     const audioWsUrl = `ws://${host}:${port}/ws/audio`;
 
     try {
+      setupContinuousAudioProcessor();
       const ws = new WebSocket(audioWsUrl);
       audioWs = ws;
       ws.binaryType = 'arraybuffer';
@@ -4613,7 +4946,7 @@
         }
         audioConnecting = false;
         updateAudioUi(true);
-        showToast('Streaming PC Audio to Phone!', 'success', '🔊');
+        showToast('Streaming Smooth PC Audio!', 'success', '🔊');
       };
 
       ws.onmessage = (event) => {
@@ -4657,6 +4990,85 @@
     }
   }
 
+  function setupContinuousAudioProcessor() {
+    ensureAudioContext();
+    if (!audioCtx) return;
+
+    if (audioContinuousNode) {
+      try { audioContinuousNode.disconnect(); } catch (e) {}
+      audioContinuousNode = null;
+    }
+
+    // Reset ring buffer pointers & pre-buffering gate
+    audioRingWritePos = 0;
+    audioRingReadPos = 0;
+    audioRingAvailable = 0;
+    isAudioPrebuffering = true;
+
+    try {
+      const node = audioCtx.createScriptProcessor(1024, 0, 2);
+      audioContinuousNode = node;
+
+      node.onaudioprocess = (e) => {
+        if (!audioStreamActive) return;
+        const outL = e.outputBuffer.getChannelData(0);
+        const outR = e.outputBuffer.getChannelData(1);
+        const bufLen = outL.length;
+
+        // 1. Prebuffer gate to absorb initial network jitter
+        if (isAudioPrebuffering) {
+          if (audioRingAvailable < AUDIO_PREBUFFER_THRESHOLD) {
+            outL.fill(0);
+            outR.fill(0);
+            return;
+          }
+          isAudioPrebuffering = false;
+        }
+
+        // 2. Buffer underrun check
+        if (audioRingAvailable < bufLen) {
+          for (let i = 0; i < bufLen; i++) {
+            if (audioRingAvailable > 0) {
+              outL[i] = audioRingBufferL[audioRingReadPos];
+              outR[i] = audioRingBufferR[audioRingReadPos];
+              audioRingReadPos = (audioRingReadPos + 1) % AUDIO_RING_BUFFER_SIZE;
+              audioRingAvailable--;
+            } else {
+              outL[i] = 0;
+              outR[i] = 0;
+            }
+          }
+          isAudioPrebuffering = true;
+          return;
+        }
+
+        // 3. Adaptive clock drift compensation (keep latency < 35ms without pitch distortion)
+        const needCatchup = audioRingAvailable > 2880; // > 60ms backlog
+
+        for (let i = 0; i < bufLen; i++) {
+          outL[i] = audioRingBufferL[audioRingReadPos];
+          outR[i] = audioRingBufferR[audioRingReadPos];
+          audioRingReadPos = (audioRingReadPos + 1) % AUDIO_RING_BUFFER_SIZE;
+          audioRingAvailable--;
+
+          if (needCatchup && i % 128 === 0 && audioRingAvailable > 0) {
+            // Subtly skip 1 frame per 128 to gently drain buffer
+            audioRingReadPos = (audioRingReadPos + 1) % AUDIO_RING_BUFFER_SIZE;
+            audioRingAvailable--;
+          }
+        }
+      };
+
+      if (audioAnalyser) {
+        node.connect(audioAnalyser);
+      } else if (audioGainNode) {
+        node.connect(audioGainNode);
+      }
+    } catch (e) {
+      console.warn('Continuous audio node creation error:', e);
+    }
+  }
+
   function playPcmChunk(arrayBuffer) {
     if (!audioCtx || !audioStreamActive) return;
     if (audioCtx.state === 'suspended') {
@@ -4667,58 +5079,31 @@
     const numFrames = Math.floor(int16Array.length / audioChannels);
     if (numFrames <= 0) return;
 
-    try {
-      const audioBuffer = audioCtx.createBuffer(audioChannels, numFrames, audioSampleRate);
-      for (let channel = 0; channel < audioChannels; channel++) {
-        const channelData = audioBuffer.getChannelData(channel);
-        for (let i = 0; i < numFrames; i++) {
-          channelData[i] = int16Array[i * audioChannels + channel] / 32768.0;
-        }
-      }
+    for (let i = 0; i < numFrames; i++) {
+      const sL = int16Array[i * audioChannels] / 32768.0;
+      const sR = audioChannels > 1 ? int16Array[i * audioChannels + 1] / 32768.0 : sL;
 
-      const source = audioCtx.createBufferSource();
-      source.buffer = audioBuffer;
-      if (audioAnalyser) {
-        source.connect(audioAnalyser);
-      } else if (audioGainNode) {
-        source.connect(audioGainNode);
-      }
-
-      const now = audioCtx.currentTime;
-      if (nextAudioPlayTime < now || (nextAudioPlayTime - now) > 0.20) {
-        nextAudioPlayTime = now + 0.035;
-      }
-
-      // Track the node until it finishes so stopAudioStream() can cut off
-      // everything still queued in the ~200ms scheduling window.
-      scheduledAudioSources.add(source);
-      source.onended = () => {
-        scheduledAudioSources.delete(source);
-        try { source.disconnect(); } catch (e) {}
-      };
-
-      source.start(nextAudioPlayTime);
-      nextAudioPlayTime += audioBuffer.duration;
-    } catch (e) {
-      console.warn('PCM play error:', e);
+      audioRingBufferL[audioRingWritePos] = sL;
+      audioRingBufferR[audioRingWritePos] = sR;
+      audioRingWritePos = (audioRingWritePos + 1) % AUDIO_RING_BUFFER_SIZE;
+      audioRingAvailable = Math.min(AUDIO_RING_BUFFER_SIZE, audioRingAvailable + 1);
     }
   }
 
   function killScheduledAudioSources() {
-    scheduledAudioSources.forEach((source) => {
-      try { source.onended = null; } catch (e) {}
-      try { source.stop(0); } catch (e) {}
-      try { source.disconnect(); } catch (e) {}
-    });
-    scheduledAudioSources.clear();
+    if (audioContinuousNode) {
+      try { audioContinuousNode.disconnect(); } catch (e) {}
+      audioContinuousNode = null;
+    }
+    audioRingWritePos = 0;
+    audioRingReadPos = 0;
+    audioRingAvailable = 0;
   }
 
   function teardownHtml5Fallback(element) {
     if (!element) return;
     try {
       element.pause();
-      // removeAttribute + load() aborts the in-flight stream request. Assigning
-      // src = '' instead leaves some WebViews fetching (and playing) forever.
       element.removeAttribute('src');
       element.load();
     } catch (e) {}
@@ -4737,8 +5122,6 @@
     html5AudioFallback = element;
     element.volume = state.audioVolume || 1.0;
     element.play().then(() => {
-      // A stop that lands while play() is pending used to leave this element
-      // orphaned and playing with no reference left to pause it.
       if (element !== html5AudioFallback || session !== audioSessionId || userManuallyStoppedAudio) {
         teardownHtml5Fallback(element);
         if (element === html5AudioFallback) html5AudioFallback = null;
@@ -4758,7 +5141,6 @@
   }
 
   function stopAudioStream(notifyUi = true) {
-    // Invalidate every in-flight async callback belonging to the session being torn down.
     audioSessionId++;
     audioStreamActive = false;
     audioConnecting = false;
@@ -4773,7 +5155,6 @@
       audioVisualizerAnimId = null;
     }
 
-    // Silence synchronously first - suspend() below is async and resolves too late.
     if (audioGainNode && audioCtx && audioCtx.state !== 'closed') {
       try {
         audioGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
@@ -4867,6 +5248,13 @@
     }
     if (mainWs && mainWs.readyState === WebSocket.OPEN) {
       mainWs.send(`pro_status,${isPro ? '1' : '0'}`);
+    }
+
+    if (typeof window.syncTransferSpeedButtons === 'function') {
+      window.syncTransferSpeedButtons();
+    }
+    if (typeof window.updateTitlebarActions === 'function') {
+      window.updateTitlebarActions(state.activeTab);
     }
   }
 
@@ -5097,12 +5485,12 @@
         const val = selClarity.value;
         state.autoQualityMode = val;
         if (val === 'auto') {
-          showToast('✨ Auto Dynamic Quality Enabled (2.4G/5G/6G AI-Tuned)', 'success', '✨');
+          showToast('✨ Auto Dynamic Quality Enabled (Real-Time AI-Tuned)', 'success', '✨');
           updateAdaptiveQuality(state.latency || 25);
         } else if (val === 'ultrahd') {
           state.streamQuality = 90;
           state.streamScale = 1.0;
-          showToast('Ultra HD Crystal Enabled (100% Native · 90Q · 5GHz/6GHz)', 'success', '✨');
+          showToast('Ultra HD Crystal Enabled (100% Native · 90Q)', 'success', '✨');
           sendStreamConfig();
         } else if (val === 'sharp') {
           state.streamQuality = 80;
@@ -5112,7 +5500,7 @@
         } else if (val === 'speed') {
           state.streamQuality = 55;
           state.streamScale = 0.65;
-          showToast('Low Latency Speed (65% Scale · 55Q · 2.4GHz)', 'info', '⚡');
+          showToast('Low Latency Speed (65% Scale · 55Q)', 'info', '⚡');
           sendStreamConfig();
         } else {
           state.streamQuality = 70;
@@ -5124,8 +5512,97 @@
       };
     }
 
-    // Reflect the saved FPS choice in the title-bar toggle on startup.
-    (function syncFpsButtons() {
+    // Title Bar Context Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
+    // Title Bar Context Actions (Screen Streaming FPS vs Kinetic Fast Transfer Pill)
+    window.updateTitlebarActions = function(targetTabId) {
+      const activeTab = targetTabId || state.activeTab || 'tab-screen';
+      const fpsGroup = document.getElementById('titlebar-fps-group');
+      const transferPill = document.getElementById('titlebar-transfer-group');
+      const btnGameHud = document.getElementById('btn-screen-gamepad-hud');
+
+      if (btnGameHud) {
+        btnGameHud.style.display = (activeTab === 'tab-screen' && state.gamepadHudEnabled) ? 'inline-flex' : 'none';
+      }
+
+      if (activeTab === 'tab-files') {
+        if (fpsGroup) fpsGroup.style.display = 'none';
+        if (transferPill) transferPill.style.display = 'inline-flex';
+        syncTransferSpeedButtons();
+      } else {
+        if (transferPill) transferPill.style.display = 'none';
+        if (fpsGroup) fpsGroup.style.display = 'inline-flex';
+      }
+    };
+
+    // Kinetic Fast Transfer Pill Sync & Toggle
+    function syncTransferSpeedButtons() {
+      const transferPill = document.getElementById('titlebar-transfer-group');
+      const transferLabel = document.getElementById('fast-transfer-label');
+      const selSpeed = document.getElementById('setting-transfer-speed');
+      const isPro = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+      const isTurbo = (state.transferSpeed === 'turbo' || (isPro && state.transferSpeed !== 'standard')) && isPro;
+
+      if (!isPro && state.transferSpeed === 'turbo') {
+        state.transferSpeed = 'standard';
+      }
+
+      if (transferPill) {
+        transferPill.classList.toggle('pro-active', isTurbo);
+        transferPill.title = isPro
+          ? (isTurbo ? 'Fast File Transfer • Gigabit LAN Uncapped (Pro)' : 'Fast File Transfer • Standard 10 MB/s')
+          : 'Fast File Transfer • Tap to unlock Gigabit Turbo';
+      }
+
+      if (transferLabel) {
+        transferLabel.textContent = 'Fast File Transfer';
+      }
+
+      if (selSpeed) selSpeed.value = isTurbo ? 'turbo' : 'standard';
+    }
+    window.syncTransferSpeedButtons = syncTransferSpeedButtons;
+
+    // Toggle Fast Transfer Tier on Pill Click
+    const transferPill = document.getElementById('titlebar-transfer-group');
+    if (transferPill) {
+      transferPill.onclick = () => {
+        vibrate(20);
+        if (!window.isProUnlocked()) {
+          window.openProUpgradeModal();
+          showToast('Uncapped Gigabit LAN File Bandwidth requires PCDeck Pro', 'warn', '⭐');
+          return;
+        }
+        const nextSpeed = state.transferSpeed === 'turbo' ? 'standard' : 'turbo';
+        window.setTransferSpeed(nextSpeed);
+      };
+    }
+
+    window.setTransferSpeed = function(speedVal) {
+      const selSpeed = document.getElementById('setting-transfer-speed');
+
+      if (speedVal === 'turbo') {
+        if (!window.isProUnlocked()) {
+          if (selSpeed) selSpeed.value = 'standard';
+          window.openProUpgradeModal();
+          showToast('Uncapped Gigabit LAN File Bandwidth requires PCDeck Pro', 'warn', '⭐');
+          syncTransferSpeedButtons();
+          return;
+        }
+        if (selSpeed) selSpeed.value = 'turbo';
+        state.transferSpeed = 'turbo';
+        saveAllSettings(false);
+        syncTransferSpeedButtons();
+        showToast('Fast Transfer: Turbo Gigabit Mode Active (Uncapped)', 'success', '⚡');
+      } else {
+        if (selSpeed) selSpeed.value = 'standard';
+        state.transferSpeed = 'standard';
+        saveAllSettings(false);
+        syncTransferSpeedButtons();
+        showToast('Fast Transfer: Standard Mode Active (10 MB/s)', 'info', '📁');
+      }
+    };
+
+    // Reflect saved choices in title-bar toggles on startup
+    (function syncTitlebarControls() {
       const btn30 = document.getElementById('btn-fps-30');
       const btn60 = document.getElementById('btn-fps-60');
       const use60 = state.streamFps === 60 && window.isProUnlocked();
@@ -5133,17 +5610,23 @@
       if (btn30) btn30.classList.toggle('active', !use60);
       if (btn60) btn60.classList.toggle('active', use60);
       if (selFps) selFps.value = use60 ? '60' : '30';
+
+      syncTransferSpeedButtons();
+      window.updateTitlebarActions(state.activeTab);
     })();
 
-    // Turbo Speed Gate
+    // Turbo Speed Gate in Settings
     const selSpeed = document.getElementById('setting-transfer-speed');
     if (selSpeed) {
       selSpeed.onchange = () => {
         if (selSpeed.value === 'turbo' && !window.isProUnlocked()) {
           selSpeed.value = 'standard';
-          window.showProCornerCard();
+          window.openProUpgradeModal();
           showToast('Uncapped LAN File Bandwidth requires PCDeck Pro', 'info', '⭐');
+          syncTransferSpeedButtons();
+          return;
         }
+        window.setTransferSpeed(selSpeed.value === 'turbo' ? 'turbo' : 'standard');
       };
     }
 
@@ -5300,6 +5783,2118 @@
     }
   }
 
+  // =========================================================================
+  // VIRTUAL XBOX GAMEPAD CONTROLLER ENGINE
+  // =========================================================================
+  let gamepadActive = false;
+  const gpStickState = {
+    left: { x: 0, y: 0, active: false, pointerId: null },
+    right: { x: 0, y: 0, active: false, pointerId: null },
+  };
+
+  function initGamepadEngine() {
+    const btnToggle = document.getElementById('btn-gamepad-mode-toggle');
+    const btnReturn = document.getElementById('btn-return-trackpad');
+    const stdTrackpad = document.getElementById('standard-trackpad-view');
+    const gpContainer = document.getElementById('gamepad-container');
+
+    let activeGpPreset = 'xbox';
+    let gpSensitivity = 1.0;
+    let gpHaptics = true;
+
+    // Presets definitions
+    const GP_PRESETS = {
+      xbox: {
+        name: 'Xbox 360',
+        buttons: { y: 'Y', x: 'X', b: 'B', a: 'A' },
+        sublabels: { y: 'USE', x: 'RELOAD', b: 'CROUCH', a: 'JUMP' },
+        triggers: { ltTitle: 'LT', ltSub: 'AIM', rtTitle: 'RT', rtSub: 'FIRE', lbTitle: 'LB', rbTitle: 'RB' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #fbbf24 0%, #f59e0b 60%, #d97706 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ef4444 60%, #b91c1c 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)'
+        },
+        textColors: { y: '#000', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'Virtual Xbox 360: Active'
+      },
+      ps: {
+        name: 'PlayStation',
+        buttons: { y: '△', x: '□', b: '○', a: '✕' },
+        sublabels: { y: 'TRIANGLE', x: 'SQUARE', b: 'CIRCLE', a: 'CROSS' },
+        triggers: { ltTitle: 'L2', ltSub: 'AIM', rtTitle: 'R2', rtSub: 'FIRE', lbTitle: 'L1', rbTitle: 'R1' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ec4899 60%, #be185d 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ef4444 0%, #dc2626 60%, #991b1b 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)'
+        },
+        textColors: { y: '#fff', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'Virtual DualShock 4: Active'
+      },
+      racing: {
+        name: 'Racing Mode',
+        buttons: { y: 'NOS', x: 'GEAR-', b: 'HAND', a: 'GEAR+' },
+        sublabels: { y: 'BOOST', x: 'SHIFT DN', b: 'E-BRAKE', a: 'SHIFT UP' },
+        triggers: { ltTitle: 'BRAKE', ltSub: 'STOP', rtTitle: 'GAS', rtSub: 'ACCEL', lbTitle: 'CLUTCH', rbTitle: 'HORN' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #fbbf24 0%, #f59e0b 60%, #d97706 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ef4444 60%, #b91c1c 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)'
+        },
+        textColors: { y: '#000', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'Racing Wheel & Pedals: Active'
+      },
+      wasd: {
+        name: 'WASD / FPS',
+        buttons: { y: 'E', x: 'R', b: 'C', a: 'SPACE' },
+        sublabels: { y: 'USE', x: 'RELOAD', b: 'CROUCH', a: 'JUMP' },
+        triggers: { ltTitle: 'R-CLICK', ltSub: 'AIM', rtTitle: 'L-CLICK', rtSub: 'SHOOT', lbTitle: 'Q (LEAN)', rbTitle: 'E (LEAN)' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #fbbf24 0%, #f59e0b 60%, #d97706 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ef4444 60%, #b91c1c 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)'
+        },
+        textColors: { y: '#000', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'WASD FPS Keypad: Active'
+      }
+    };
+
+    function applyGamepadPreset(presetKey) {
+      activeGpPreset = presetKey;
+      const conf = GP_PRESETS[presetKey] || GP_PRESETS.xbox;
+      const driverBadge = document.getElementById('gp-driver-text');
+      if (driverBadge) driverBadge.textContent = conf.driverLabel;
+
+      const presetChips = document.querySelectorAll('.gp-preset-chip');
+      presetChips.forEach(c => {
+        c.classList.toggle('active', c.dataset.preset === presetKey);
+      });
+
+      // Update diamond buttons label and sublabels
+      const diamonds = document.querySelectorAll('#gp-action-diamond');
+      diamonds.forEach(diamond => {
+        Object.keys(conf.buttons).forEach(btnKey => {
+          const btn = diamond.querySelector(`[data-gp="${btnKey}"]`);
+          if (btn) {
+            const jewel = btn.querySelector('.gp-btn-jewel, .btn-glyph');
+            if (jewel) {
+              jewel.textContent = conf.buttons[btnKey];
+            } else {
+              btn.textContent = conf.buttons[btnKey];
+            }
+            const sub = btn.querySelector('.gp-action-sublabel');
+            if (sub && conf.sublabels && conf.sublabels[btnKey]) {
+              sub.textContent = conf.sublabels[btnKey];
+            }
+            btn.style.background = conf.colors[btnKey];
+            btn.style.color = conf.textColors[btnKey];
+          }
+        });
+      });
+
+      // Update shoulder trigger and bumper labels
+      const ltTitle = document.getElementById('lt-btn-title');
+      const ltSub = document.getElementById('lt-btn-sub');
+      const rtTitle = document.getElementById('rt-btn-title');
+      const rtSub = document.getElementById('rt-btn-sub');
+      const lbTitle = document.getElementById('lb-btn-title');
+      const rbTitle = document.getElementById('rb-btn-title');
+
+      if (conf.triggers) {
+        if (ltTitle) ltTitle.textContent = conf.triggers.ltTitle;
+        if (ltSub) ltSub.textContent = conf.triggers.ltSub;
+        if (rtTitle) rtTitle.textContent = conf.triggers.rtTitle;
+        if (rtSub) rtSub.textContent = conf.triggers.rtSub;
+        if (lbTitle) lbTitle.textContent = conf.triggers.lbTitle;
+        if (rbTitle) rbTitle.textContent = conf.triggers.rbTitle;
+      }
+
+      showToast(`Gamepad Preset: ${conf.name}`, 'success', '🎮');
+    }
+
+    // Preset chips click
+    const presetChips = document.querySelectorAll('.gp-preset-chip');
+    presetChips.forEach(chip => {
+      chip.onclick = () => {
+        vibrate(15);
+        applyGamepadPreset(chip.dataset.preset);
+      };
+    });
+
+    // Top Header Menu & Guide Orb: Toggle / Reveal Bottom Console Options (Xbox, PlayStation, Racing, WASD)
+    const btnTopMenu = document.getElementById('btn-gp-top-menu');
+    const btnGuideOrb = document.getElementById('btn-gp-guide-orb');
+    const btnDriverBadge = document.getElementById('gp-driver-badge');
+    const bottomPresetBar = document.getElementById('gp-bottom-preset-bar');
+
+    function toggleBottomConsolePresets() {
+      vibrate(15);
+      if (bottomPresetBar) {
+        bottomPresetBar.classList.add('pulse-highlight');
+        bottomPresetBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => bottomPresetBar.classList.remove('pulse-highlight'), 1200);
+      }
+      showToast('🎮 Console Layouts: Xbox 360, PlayStation, Racing, WASD/FPS', 'info', '🎮');
+    }
+
+    if (btnTopMenu) {
+      btnTopMenu.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleBottomConsolePresets();
+      };
+    }
+    if (btnGuideOrb) {
+      btnGuideOrb.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleBottomConsolePresets();
+      };
+    }
+    if (btnDriverBadge) {
+      btnDriverBadge.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleBottomConsolePresets();
+      };
+    }
+
+    // Top Back-to-Trackpad Button
+    const btnTopBack = document.getElementById('btn-gp-top-back-trackpad');
+    if (btnTopBack) {
+      btnTopBack.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setGamepadMode(false);
+        showToast('Switched to Trackpad', 'info', '🖱️');
+      };
+    }
+
+    // Stick Sensitivity Toggle
+    const btnSens = document.getElementById('btn-gp-sens-toggle');
+    const SENS_OPTIONS = [1.0, 1.5, 2.0];
+    if (btnSens) {
+      btnSens.onclick = () => {
+        vibrate(15);
+        let idx = (SENS_OPTIONS.indexOf(gpSensitivity) + 1) % SENS_OPTIONS.length;
+        gpSensitivity = SENS_OPTIONS[idx];
+        btnSens.textContent = `Sens: ${gpSensitivity.toFixed(1)}x`;
+        showToast(`Stick Sensitivity: ${gpSensitivity.toFixed(1)}x`, 'info', '🕹️');
+      };
+    }
+
+    // Haptics Toggle
+    const btnHaptics = document.getElementById('btn-gp-haptic-toggle');
+    if (btnHaptics) {
+      btnHaptics.onclick = () => {
+        gpHaptics = !gpHaptics;
+        btnHaptics.classList.toggle('active', gpHaptics);
+        btnHaptics.textContent = gpHaptics ? '📳 Haptics: ON' : '📴 Haptics: OFF';
+        vibrate(gpHaptics ? 25 : 5);
+      };
+    }
+
+    let isGpLayoutEditing = false;
+    let selectedGpElemId = null;
+
+    // Default Gamepad Layout
+    const DEFAULT_GP_LAYOUT = {
+      elements: {
+        'elem-left-stick': { scale: 1.0, hidden: false, name: '🕹️ Left Stick (Move)' },
+        'elem-dpad': { scale: 1.0, hidden: false, name: '➕ 3D D-Pad' },
+        'elem-actions': { scale: 1.0, hidden: false, name: '🎯 Action Diamond' },
+        'elem-right-stick': { scale: 1.0, hidden: false, name: '🕹️ Right Stick (Aim)' },
+        'elem-lt': { scale: 1.0, hidden: false, name: '🎯 Left Trigger (LT)' },
+        'elem-lb': { scale: 1.0, hidden: false, name: '⚡ Left Bumper (LB)' },
+        'elem-rt': { scale: 1.0, hidden: false, name: '🔥 Right Trigger (RT)' },
+        'elem-rb': { scale: 1.0, hidden: false, name: '💥 Right Bumper (RB)' },
+        'elem-sys': { scale: 1.0, hidden: false, name: '🎮 System Hub' },
+        'elem-center-spine': { scale: 1.0, hidden: false, name: 'PCDeck Emblem' }
+      },
+      customButtons: []
+    };
+
+    function loadGpLayout() {
+      try {
+        const raw = localStorage.getItem('pcdeck_gamepad_custom_layout');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.elements) return parsed;
+        }
+      } catch (e) {
+        console.warn('[GamepadLayout] Error loading custom layout:', e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_GP_LAYOUT));
+    }
+
+    let gpCustomLayout = loadGpLayout();
+
+    function selectGpElement(elemId) {
+      const prevSelected = document.querySelectorAll('.gp-elem-selected');
+      prevSelected.forEach(el => el.classList.remove('gp-elem-selected'));
+
+      selectedGpElemId = elemId;
+      const titleBadge = document.getElementById('gp-edit-selected-title');
+      const deleteBtn = document.getElementById('btn-gp-delete-selected');
+      const sizeSlider = document.getElementById('gp-size-slider');
+      const sizeValText = document.getElementById('gp-size-val');
+
+      if (!elemId) {
+        if (titleBadge) titleBadge.textContent = 'Tap a Control';
+        if (deleteBtn) deleteBtn.style.display = 'none';
+        return;
+      }
+
+      const targetElem = document.querySelector(`[data-elem-id="${elemId}"]`);
+      if (targetElem) {
+        targetElem.classList.add('gp-elem-selected');
+        let elemName = 'Control';
+        let elemScale = 1.0;
+
+        if (gpCustomLayout.elements[elemId]) {
+          elemName = gpCustomLayout.elements[elemId].name || elemId;
+          elemScale = gpCustomLayout.elements[elemId].scale || 1.0;
+        } else {
+          const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === elemId);
+          if (customEntry) {
+            elemName = customEntry.label || customEntry.key || elemId;
+            elemScale = customEntry.scale || 1.0;
+          }
+        }
+
+        if (titleBadge) titleBadge.textContent = elemName;
+        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+        const sVal = Math.round(elemScale * 100);
+        if (sizeSlider) sizeSlider.value = sVal;
+        if (sizeValText) sizeValText.textContent = `${sVal}%`;
+      }
+    }
+
+    function applyGpLayout() {
+      const customContainer = document.getElementById('gp-custom-elements-container');
+      if (customContainer) customContainer.innerHTML = '';
+
+      // Apply built-in elements layout
+      Object.keys(gpCustomLayout.elements || {}).forEach(elemId => {
+        const conf = gpCustomLayout.elements[elemId];
+        const elElem = document.querySelector(`[data-elem-id="${elemId}"]`);
+        if (elElem) {
+          elElem.style.display = conf.hidden ? 'none' : '';
+          if (conf.left !== undefined && conf.left !== 'auto') {
+            elElem.style.position = 'absolute';
+            elElem.style.left = conf.left;
+            elElem.style.top = conf.top || 'auto';
+            elElem.style.right = conf.right || 'auto';
+            elElem.style.bottom = conf.bottom || 'auto';
+          } else {
+            elElem.style.position = '';
+            elElem.style.left = '';
+            elElem.style.top = '';
+            elElem.style.right = '';
+            elElem.style.bottom = '';
+          }
+          const scale = conf.scale !== undefined ? conf.scale : 1.0;
+          elElem.style.transform = `scale(${scale})`;
+        }
+      });
+
+      // Render custom dynamically added buttons
+      (gpCustomLayout.customButtons || []).forEach(bConf => {
+        renderCustomGpButton(bConf);
+      });
+    }
+
+    function renderCustomGpButton(bConf) {
+      const customContainer = document.getElementById('gp-custom-elements-container');
+      if (!customContainer) return;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'gp-custom-btn';
+      btn.dataset.elemId = bConf.id;
+      btn.dataset.customKey = bConf.key;
+      btn.style.left = bConf.left || '50%';
+      btn.style.top = bConf.top || '50%';
+      btn.style.transform = `scale(${bConf.scale || 1.0})`;
+
+      const mainLabel = document.createElement('span');
+      mainLabel.className = 'gp-custom-btn-main';
+      mainLabel.textContent = (bConf.key || '').toUpperCase();
+
+      const subLabel = document.createElement('span');
+      subLabel.className = 'gp-custom-btn-sub';
+      subLabel.textContent = bConf.label || '';
+
+      btn.appendChild(mainLabel);
+      if (bConf.label && bConf.label !== bConf.key) {
+        btn.appendChild(subLabel);
+      }
+
+      // Pointer event for custom button
+      const onDown = (e) => {
+        if (isGpLayoutEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.add('active');
+        if (gpHaptics) vibrate(12);
+        const k = bConf.key;
+        if (k.startsWith('mouse_')) {
+          sendCommand(`mouse,down,${k.replace('mouse_', '')}`);
+        } else {
+          sendCommand(`key,down,${k}`);
+        }
+      };
+
+      const onUp = (e) => {
+        if (isGpLayoutEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.remove('active');
+        const k = bConf.key;
+        if (k.startsWith('mouse_')) {
+          sendCommand(`mouse,up,${k.replace('mouse_', '')}`);
+        } else {
+          sendCommand(`key,up,${k}`);
+        }
+      };
+
+      btn.addEventListener('pointerdown', onDown);
+      btn.addEventListener('pointerup', onUp);
+      btn.addEventListener('pointercancel', onUp);
+
+      customContainer.appendChild(btn);
+    }
+
+    function setGamepadEditMode(editing) {
+      isGpLayoutEditing = editing;
+      document.body.classList.toggle('gp-layout-editing', editing);
+      const toolbar = document.getElementById('gp-editor-toolbar');
+      if (toolbar) toolbar.style.display = editing ? 'flex' : 'none';
+
+      if (editing) {
+        showToast('✏️ Tap any control to drag or resize', 'info', '🎮');
+        selectGpElement(selectedGpElemId || 'elem-left-stick');
+      } else {
+        selectGpElement(null);
+      }
+    }
+
+    // Initialize Layout Editor Controls
+    const btnEditLayout = document.getElementById('btn-gp-edit-layout');
+    if (btnEditLayout) {
+      btnEditLayout.onclick = () => setGamepadEditMode(!isGpLayoutEditing);
+    }
+
+    const btnExitEditor = document.getElementById('btn-gp-exit-editor');
+    if (btnExitEditor) {
+      btnExitEditor.onclick = () => setGamepadEditMode(false);
+    }
+
+    const btnSaveLayout = document.getElementById('btn-gp-save-layout');
+    if (btnSaveLayout) {
+      btnSaveLayout.onclick = () => {
+        vibrate(25);
+        try {
+          localStorage.setItem('pcdeck_gamepad_custom_layout', JSON.stringify(gpCustomLayout));
+          showToast('💾 Custom Layout Saved!', 'success', '✓');
+        } catch (e) {
+          console.error('[GamepadLayout] Save error:', e);
+        }
+        setGamepadEditMode(false);
+      };
+    }
+
+    const btnResetLayout = document.getElementById('btn-gp-reset-layout');
+    if (btnResetLayout) {
+      btnResetLayout.onclick = () => {
+        vibrate(20);
+        localStorage.removeItem('pcdeck_gamepad_custom_layout');
+        gpCustomLayout = JSON.parse(JSON.stringify(DEFAULT_GP_LAYOUT));
+        applyGpLayout();
+        selectGpElement(null);
+        showToast('🔄 Restored Factory Layout', 'info', '🎮');
+      };
+    }
+
+    // Size adjustment
+    const sizeSlider = document.getElementById('gp-size-slider');
+    const sizeValText = document.getElementById('gp-size-val');
+    const btnSizeDec = document.getElementById('btn-gp-size-dec');
+    const btnSizeInc = document.getElementById('btn-gp-size-inc');
+
+    function updateSelectedSize(scaleVal) {
+      scaleVal = Math.max(0.6, Math.min(2.2, scaleVal));
+      if (!selectedGpElemId) return;
+
+      if (gpCustomLayout.elements[selectedGpElemId]) {
+        gpCustomLayout.elements[selectedGpElemId].scale = scaleVal;
+      } else {
+        const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === selectedGpElemId);
+        if (customEntry) customEntry.scale = scaleVal;
+      }
+
+      const targetElem = document.querySelector(`[data-elem-id="${selectedGpElemId}"]`);
+      if (targetElem) {
+        targetElem.style.transform = `scale(${scaleVal})`;
+      }
+
+      const sVal = Math.round(scaleVal * 100);
+      if (sizeSlider) sizeSlider.value = sVal;
+      if (sizeValText) sizeValText.textContent = `${sVal}%`;
+    }
+
+    if (sizeSlider) {
+      sizeSlider.oninput = () => {
+        const s = parseInt(sizeSlider.value, 10) / 100;
+        updateSelectedSize(s);
+      };
+    }
+
+    const gpSizePills = document.querySelectorAll('.gp-pill-btn');
+    gpSizePills.forEach(pill => {
+      pill.onclick = () => {
+        vibrate(10);
+        gpSizePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const s = parseInt(pill.dataset.gpSize, 10) / 100;
+        updateSelectedSize(s);
+      };
+    });
+
+    if (btnSizeDec) {
+      btnSizeDec.onclick = () => {
+        const cur = (sizeSlider ? parseInt(sizeSlider.value, 10) : 100) / 100;
+        updateSelectedSize(cur - 0.1);
+      };
+    }
+    if (btnSizeInc) {
+      btnSizeInc.onclick = () => {
+        const cur = (sizeSlider ? parseInt(sizeSlider.value, 10) : 100) / 100;
+        updateSelectedSize(cur + 0.1);
+      };
+    }
+
+    // Delete selected element
+    const btnDeleteSelected = document.getElementById('btn-gp-delete-selected');
+    if (btnDeleteSelected) {
+      btnDeleteSelected.onclick = () => {
+        if (!selectedGpElemId) return;
+        vibrate(20);
+        if (gpCustomLayout.elements[selectedGpElemId]) {
+          gpCustomLayout.elements[selectedGpElemId].hidden = true;
+          const elElem = document.querySelector(`[data-elem-id="${selectedGpElemId}"]`);
+          if (elElem) elElem.style.display = 'none';
+        } else {
+          gpCustomLayout.customButtons = (gpCustomLayout.customButtons || []).filter(b => b.id !== selectedGpElemId);
+          const elElem = document.querySelector(`[data-elem-id="${selectedGpElemId}"]`);
+          if (elElem) elElem.remove();
+        }
+        showToast('🗑️ Control Removed', 'info', '✕');
+        selectGpElement(null);
+      };
+    }
+
+    // Add Control Modal
+    const addModal = document.getElementById('gp-add-control-modal');
+    const btnOpenAddModal = document.getElementById('btn-gp-open-add-modal');
+    const btnModalClose = document.getElementById('btn-gp-modal-close');
+
+    if (btnOpenAddModal && addModal) {
+      btnOpenAddModal.onclick = () => {
+        vibrate(15);
+        addModal.style.display = 'flex';
+      };
+    }
+    if (btnModalClose && addModal) {
+      btnModalClose.onclick = () => {
+        addModal.style.display = 'none';
+      };
+    }
+
+    // Modal Tabs
+    const modalTabs = document.querySelectorAll('.gp-tab-btn');
+    modalTabs.forEach(t => {
+      t.onclick = () => {
+        modalTabs.forEach(tb => tb.classList.remove('active'));
+        t.classList.add('active');
+        const targetTab = t.dataset.tab;
+        const contents = document.querySelectorAll('.gp-add-tab-content');
+        contents.forEach(c => {
+          c.style.display = c.id === `gp-add-tab-${targetTab}` ? 'block' : 'none';
+        });
+      };
+    });
+
+    // Add preset controls (unhide or position)
+    const addPresetCards = document.querySelectorAll('.gp-add-item-card');
+    addPresetCards.forEach(card => {
+      card.onclick = () => {
+        const type = card.dataset.addType;
+        const elemKey = `elem-${type}`;
+        if (gpCustomLayout.elements[elemKey]) {
+          gpCustomLayout.elements[elemKey].hidden = false;
+          gpCustomLayout.elements[elemKey].scale = 1.0;
+          const elElem = document.querySelector(`[data-elem-id="${elemKey}"]`);
+          if (elElem) {
+            elElem.style.display = '';
+            elElem.style.transform = 'scale(1)';
+          }
+        }
+        if (addModal) addModal.style.display = 'none';
+        selectGpElement(elemKey);
+        showToast(`➕ Added ${card.querySelector('.item-name').textContent}`, 'success', '🎮');
+      };
+    });
+
+    // Add PC Key items
+    const addKeyItems = document.querySelectorAll('.gp-key-item');
+    addKeyItems.forEach(kBtn => {
+      kBtn.onclick = () => {
+        const key = kBtn.dataset.key;
+        const label = kBtn.dataset.label || key.toUpperCase();
+        const customId = `custom-btn-${Date.now()}`;
+        const newBtnConf = {
+          id: customId,
+          key: key,
+          label: label,
+          left: '48%',
+          top: '45%',
+          scale: 1.0
+        };
+        gpCustomLayout.customButtons = gpCustomLayout.customButtons || [];
+        gpCustomLayout.customButtons.push(newBtnConf);
+        renderCustomGpButton(newBtnConf);
+        if (addModal) addModal.style.display = 'none';
+        selectGpElement(customId);
+        showToast(`➕ Added Button: ${label}`, 'success', '⌨️');
+      };
+    });
+
+    // Add Custom Letter / Key Form
+    const btnCustomAddConfirm = document.getElementById('btn-gp-add-custom-confirm');
+    const customKeyNameInput = document.getElementById('gp-custom-key-name');
+    const customKeyLabelInput = document.getElementById('gp-custom-key-label');
+
+    if (btnCustomAddConfirm && customKeyNameInput) {
+      btnCustomAddConfirm.onclick = () => {
+        const keyName = (customKeyNameInput.value || '').trim().toLowerCase();
+        if (!keyName) {
+          showToast('Please enter a key name', 'warning', '⚠️');
+          return;
+        }
+        const label = (customKeyLabelInput.value || '').trim() || keyName.toUpperCase();
+        const customId = `custom-btn-${Date.now()}`;
+        const newBtnConf = {
+          id: customId,
+          key: keyName,
+          label: label,
+          left: '50%',
+          top: '50%',
+          scale: 1.0
+        };
+        gpCustomLayout.customButtons = gpCustomLayout.customButtons || [];
+        gpCustomLayout.customButtons.push(newBtnConf);
+        renderCustomGpButton(newBtnConf);
+        customKeyNameInput.value = '';
+        if (customKeyLabelInput) customKeyLabelInput.value = '';
+        if (addModal) addModal.style.display = 'none';
+        selectGpElement(customId);
+        showToast(`➕ Added Custom Key: ${label}`, 'success', '⚙️');
+      };
+    }
+
+    // Drag-and-Drop Repositioning Engine for Layout Editor (100% Fluid, Zero Snapping)
+    let dragTarget = null;
+    let dragOffset = { x: 0, y: 0 };
+    let isCurrentlyDragging = false;
+
+    if (gpContainer) {
+      gpContainer.addEventListener('pointerdown', (e) => {
+        if (!isGpLayoutEditing) return;
+        const selectable = e.target.closest('[data-elem-id]');
+        if (selectable && gpContainer.contains(selectable) && !selectable.closest('#gp-editor-toolbar, #gp-bottom-preset-bar')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const elemId = selectable.dataset.elemId;
+          selectGpElement(elemId);
+          dragTarget = selectable;
+          isCurrentlyDragging = true;
+          dragTarget.classList.add('gp-is-dragging');
+
+          const containerRect = gpContainer.getBoundingClientRect();
+          const rect = selectable.getBoundingClientRect();
+          dragOffset.x = e.clientX - rect.left;
+          dragOffset.y = e.clientY - rect.top;
+
+          // Convert to container-relative coordinate immediately so there is zero jump/snap on first touch
+          const curLeftPx = rect.left - containerRect.left;
+          const curTopPx = rect.top - containerRect.top;
+          dragTarget.style.position = 'absolute';
+          dragTarget.style.left = `${curLeftPx.toFixed(1)}px`;
+          dragTarget.style.top = `${curTopPx.toFixed(1)}px`;
+          dragTarget.style.right = 'auto';
+          dragTarget.style.bottom = 'auto';
+
+          try { selectable.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+      });
+
+      gpContainer.addEventListener('pointermove', (e) => {
+        if (!isGpLayoutEditing || !dragTarget || !isCurrentlyDragging) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const containerRect = gpContainer.getBoundingClientRect();
+        let leftPx = e.clientX - containerRect.left - dragOffset.x;
+        let topPx = e.clientY - containerRect.top - dragOffset.y;
+
+        // Fluid continuous bounding
+        leftPx = Math.max(0, Math.min(containerRect.width - dragTarget.offsetWidth, leftPx));
+        topPx = Math.max(0, Math.min(containerRect.height - dragTarget.offsetHeight, topPx));
+
+        // High precision pixel placement during drag for instant 60/120fps response
+        dragTarget.style.left = `${leftPx.toFixed(1)}px`;
+        dragTarget.style.top = `${topPx.toFixed(1)}px`;
+
+        const leftPercent = ((leftPx / containerRect.width) * 100).toFixed(2);
+        const topPercent = ((topPx / containerRect.height) * 100).toFixed(2);
+
+        const elemId = dragTarget.dataset.elemId;
+        if (gpCustomLayout.elements[elemId]) {
+          gpCustomLayout.elements[elemId].left = `${leftPercent}%`;
+          gpCustomLayout.elements[elemId].top = `${topPercent}%`;
+          gpCustomLayout.elements[elemId].right = 'auto';
+          gpCustomLayout.elements[elemId].bottom = 'auto';
+        } else {
+          const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === elemId);
+          if (customEntry) {
+            customEntry.left = `${leftPercent}%`;
+            customEntry.top = `${topPercent}%`;
+          }
+        }
+      });
+
+      const handleDragEnd = (e) => {
+        if (dragTarget) {
+          dragTarget.classList.remove('gp-is-dragging');
+          const containerRect = gpContainer.getBoundingClientRect();
+          const rect = dragTarget.getBoundingClientRect();
+          const leftPct = (((rect.left - containerRect.left) / containerRect.width) * 100).toFixed(2) + '%';
+          const topPct = (((rect.top - containerRect.top) / containerRect.height) * 100).toFixed(2) + '%';
+          dragTarget.style.left = leftPct;
+          dragTarget.style.top = topPct;
+          try { dragTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+          dragTarget = null;
+          isCurrentlyDragging = false;
+        }
+      };
+
+      gpContainer.addEventListener('pointerup', handleDragEnd);
+      gpContainer.addEventListener('pointercancel', handleDragEnd);
+    }
+
+    // Apply layout on init
+    applyGpLayout();
+
+    function setGamepadMode(active) {
+      gamepadActive = active;
+      if (stdTrackpad) stdTrackpad.style.display = active ? 'none' : '';
+      if (gpContainer) gpContainer.style.display = active ? 'flex' : 'none';
+      document.body.classList.toggle('gamepad-mode-active', active);
+      const tabTrackpad = document.getElementById('tab-trackpad');
+      if (tabTrackpad) tabTrackpad.classList.toggle('gamepad-mode-active', active);
+      if (btnToggle) {
+        btnToggle.style.background = active ? 'var(--neo-lime)' : 'var(--neo-cyan)';
+        btnToggle.textContent = active ? '🖱️ Trackpad' : '🎮 Gamepad';
+      }
+      if (active) {
+        applyGamepadPreset(activeGpPreset);
+        applyGpLayout();
+      } else {
+        setGamepadEditMode(false);
+      }
+      vibrate(20);
+    }
+
+    if (btnToggle) {
+      btnToggle.onclick = () => setGamepadMode(!gamepadActive);
+    }
+    const returnButtons = document.querySelectorAll('#btn-return-trackpad, .gp-exit-chip');
+    returnButtons.forEach((btn) => {
+      btn.onclick = () => setGamepadMode(false);
+    });
+
+    // Bind Digital & Action Buttons
+    const gpButtons = document.querySelectorAll('[data-gp]');
+    gpButtons.forEach((btn) => {
+      const code = btn.dataset.gp;
+      const onDown = (e) => {
+        if (isGpLayoutEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.add('active');
+        if (gpHaptics) vibrate(12);
+
+        if (activeGpPreset === 'wasd') {
+          const wasdKeyMap = {
+            a: 'space', b: 'c', x: 'z', y: 'r',
+            lb: 'q', rb: 'e',
+            lt: 'mouse_right', rt: 'mouse_left',
+            ls_click: 'shift', rs_click: 'alt',
+            back: 'm', start: 'escape'
+          };
+          const key = wasdKeyMap[code] || code;
+          if (key.startsWith('mouse_')) {
+            sendCommand(`mouse,down,${key.replace('mouse_', '')}`);
+          } else {
+            sendCommand(`key,down,${key}`);
+          }
+        } else {
+          sendCommand(`gp,btn,${code},1`);
+        }
+      };
+
+      const onUp = (e) => {
+        if (isGpLayoutEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.remove('active');
+
+        if (activeGpPreset === 'wasd') {
+          const wasdKeyMap = {
+            a: 'space', b: 'c', x: 'z', y: 'r',
+            lb: 'q', rb: 'e',
+            lt: 'mouse_right', rt: 'mouse_left',
+            ls_click: 'shift', rs_click: 'alt',
+            back: 'm', start: 'escape'
+          };
+          const key = wasdKeyMap[code] || code;
+          if (key.startsWith('mouse_')) {
+            sendCommand(`mouse,up,${key.replace('mouse_', '')}`);
+          } else {
+            sendCommand(`key,up,${key}`);
+          }
+        } else {
+          sendCommand(`gp,btn,${code},0`);
+        }
+      };
+
+      btn.addEventListener('pointerdown', onDown);
+      btn.addEventListener('pointerup', onUp);
+      btn.addEventListener('pointercancel', onUp);
+    });
+
+    // Setup Dual Analog Sticks (Left & Right)
+    setupAnalogStick('gp-left-stick-zone', 'gp-left-thumb', 'left');
+    setupAnalogStick('gp-right-stick-zone', 'gp-right-thumb', 'right');
+  }
+
+  function setupAnalogStick(zoneId, thumbId, stickKey) {
+    const zone = document.getElementById(zoneId);
+    const thumb = document.getElementById(thumbId);
+    if (!zone || !thumb) return;
+
+    const base = zone.querySelector('.gp-stick-base') || zone;
+
+    const handlePointerMove = (e) => {
+      const s = gpStickState[stickKey];
+      if (!s.active || s.pointerId !== e.pointerId) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const rect = base.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      let dx = e.clientX - centerX;
+      let dy = e.clientY - centerY;
+      const dist = Math.hypot(dx, dy);
+
+      const maxTravel = Math.max(22, (rect.width / 2) - (thumb.offsetWidth / 2 || 24));
+
+      if (dist > maxTravel) {
+        dx = (dx / dist) * maxTravel;
+        dy = (dy / dist) * maxTravel;
+      }
+
+      thumb.style.transform = `translate(${dx}px, ${dy}px)`;
+
+      // Normalize to -1.0 .. +1.0
+      let normX = dx / maxTravel;
+      let normY = -(dy / maxTravel);
+
+      const deadzone = 0.08;
+      if (Math.abs(normX) < deadzone) normX = 0;
+      if (Math.abs(normY) < deadzone) normY = 0;
+
+      normX = Math.max(-1, Math.min(1, normX * gpSensitivity));
+      normY = Math.max(-1, Math.min(1, normY * gpSensitivity));
+
+      s.x = Math.round(normX * 100) / 100;
+      s.y = Math.round(normY * 100) / 100;
+
+      sendCommand(`gp,axis,${stickKey},${s.x},${s.y}`);
+    };
+
+    const handlePointerDown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      base.setPointerCapture(e.pointerId);
+      const s = gpStickState[stickKey];
+      s.active = true;
+      s.pointerId = e.pointerId;
+      handlePointerMove(e);
+    };
+
+    const handlePointerUp = (e) => {
+      const s = gpStickState[stickKey];
+      if (s.pointerId === e.pointerId) {
+        e.stopPropagation();
+        s.active = false;
+        s.pointerId = null;
+        s.x = 0;
+        s.y = 0;
+        thumb.style.transform = 'translate(0px, 0px)';
+        sendCommand(`gp,axis,${stickKey},0,0`);
+      }
+    };
+
+    base.addEventListener('pointerdown', handlePointerDown);
+    base.addEventListener('pointermove', handlePointerMove);
+    base.addEventListener('pointerup', handlePointerUp);
+    base.addEventListener('pointercancel', handlePointerUp);
+  }
+
+  /* ==========================================================================
+     🎮 IN-DISPLAY MOBILE GAMING CONTROLLER HUD (PUBG / COD STYLE)
+     ========================================================================== */
+  function initScreenGamepadHUD() {
+    const btnToggleHud = document.getElementById('btn-screen-gamepad-hud');
+    const hudOverlay = document.getElementById('screen-gamepad-overlay');
+    const hudContainer = document.getElementById('hud-elements-container');
+    const btnCloseHud = document.getElementById('btn-hud-close');
+    const btnEditLayout = document.getElementById('btn-hud-edit-layout');
+    const btnModeSwitch = document.getElementById('btn-hud-emulation-mode');
+    const editorToolbar = document.getElementById('hud-editor-toolbar');
+    const selectedElemLabel = document.getElementById('hud-selected-elem-label');
+    const sizeSlider = document.getElementById('hud-size-slider');
+    const sizeValText = document.getElementById('hud-size-val');
+    const btnSizeDec = document.getElementById('btn-hud-size-dec');
+    const btnSizeInc = document.getElementById('btn-hud-size-inc');
+    const opacitySlider = document.getElementById('hud-opacity-slider');
+    const opacityValText = document.getElementById('hud-opacity-val');
+    const btnDeleteSelected = document.getElementById('btn-hud-delete-selected');
+    const btnAddBtn = document.getElementById('btn-hud-add-btn');
+    const btnReset = document.getElementById('btn-hud-reset');
+    const btnSave = document.getElementById('btn-hud-save');
+    const addBtnModal = document.getElementById('hud-add-btn-modal');
+    const btnModalCancel = document.getElementById('btn-hud-modal-cancel');
+    const btnModalAddSelected = document.getElementById('btn-hud-modal-add-selected');
+    const customKeyInput = document.getElementById('hud-custom-key-input');
+    const filterTabs = document.querySelectorAll('.hud-filter-tab');
+    const keyPickBtns = document.querySelectorAll('.hud-key-pick-btn');
+
+    if (!btnToggleHud || !hudOverlay || !hudContainer) return;
+
+    let isEditing = false;
+    let selectedElemId = null;
+    let emulationMode = 'xinput'; // 'xinput' or 'wasd'
+    let customBtnCounter = 0;
+    let chosenPresetBtn = null;
+
+    // Default HUD Elements Layout
+    const DEFAULT_HUD_LAYOUT = {
+      scale: 1.0,
+      opacity: 0.65,
+      mode: 'xinput',
+      elements: {
+        'joystick': { left: '6%', bottom: '18%', top: 'auto', right: 'auto', type: 'joystick', scale: 1.0, label: 'JOYSTICK' },
+        'lt': { left: '6%', top: '14%', right: 'auto', bottom: 'auto', type: 'trigger', gp: 'lt', key: 'mouse_right', scale: 1.0, label: 'LT (AIM)' },
+        'lb': { left: '20%', top: '14%', right: 'auto', bottom: 'auto', type: 'trigger', gp: 'lb', key: 'shift', scale: 1.0, label: 'LB (SPRINT)' },
+        'rt': { right: '6%', top: '14%', left: 'auto', bottom: 'auto', type: 'trigger', gp: 'rt', key: 'mouse_left', scale: 1.0, label: 'RT (FIRE)' },
+        'rb': { right: '20%', top: '14%', left: 'auto', bottom: 'auto', type: 'trigger', gp: 'rb', key: 'ctrl', scale: 1.0, label: 'RB (PRONE)' },
+        'btn-a': { right: '14%', bottom: '12%', left: 'auto', top: 'auto', type: 'circle', gp: 'a', key: 'space', scale: 1.0, label: 'A (JUMP)' },
+        'btn-b': { right: '5%', bottom: '22%', left: 'auto', top: 'auto', type: 'circle', gp: 'b', key: 'c', scale: 1.0, label: 'B (CROUCH)' },
+        'btn-x': { right: '23%', bottom: '22%', left: 'auto', top: 'auto', type: 'circle', gp: 'x', key: 'r', scale: 1.0, label: 'X (RELOAD)' },
+        'btn-y': { right: '14%', bottom: '32%', left: 'auto', top: 'auto', type: 'circle', gp: 'y', key: 'e', scale: 1.0, label: 'Y (USE)' },
+        'btn-1': { right: '33%', bottom: '12%', left: 'auto', top: 'auto', type: 'pill', gp: '1', key: '1', scale: 1.0, label: '1 (PRIMARY)' },
+        'btn-2': { right: '33%', bottom: '24%', left: 'auto', top: 'auto', type: 'pill', gp: '2', key: '2', scale: 1.0, label: '2 (SECONDARY)' },
+        'btn-tab': { left: '33%', bottom: '12%', right: 'auto', top: 'auto', type: 'pill', gp: 'back', key: 'tab', scale: 1.0, label: 'TAB (BAG)' },
+        'btn-esc': { left: '33%', bottom: '24%', right: 'auto', top: 'auto', type: 'pill', gp: 'start', key: 'escape', scale: 1.0, label: 'ESC (MENU)' }
+      }
+    };
+
+    function loadSavedLayout() {
+      try {
+        const raw = localStorage.getItem('pcdeck_gamepad_hud_layout');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.elements) return parsed;
+        }
+      } catch (e) {
+        console.warn('[GamepadHUD] Error loading layout:', e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_HUD_LAYOUT));
+    }
+
+    let currentLayout = loadSavedLayout();
+
+    function getElementFriendlyName(elemId, elElem) {
+      if (!elemId) return 'None';
+      const conf = currentLayout.elements[elemId];
+      if (conf && conf.label) return conf.label;
+      if (elElem && elElem.textContent) {
+        const txt = elElem.textContent.replace('✕', '').trim();
+        if (txt) return txt.substring(0, 14);
+      }
+      return elemId.toUpperCase();
+    }
+
+    function selectHudElement(elemId) {
+      // Clear previous selection
+      const prevSelected = hudContainer.querySelectorAll('.hud-elem-selected');
+      prevSelected.forEach(el => el.classList.remove('hud-elem-selected'));
+
+      selectedElemId = elemId;
+      if (!elemId) {
+        if (selectedElemLabel) selectedElemLabel.textContent = 'Tap a Key';
+        if (btnDeleteSelected) btnDeleteSelected.style.display = 'none';
+        return;
+      }
+
+      const elElem = hudContainer.querySelector(`[data-elem-id="${elemId}"]`);
+      if (elElem) {
+        elElem.classList.add('hud-elem-selected');
+        const friendlyName = getElementFriendlyName(elemId, elElem);
+        if (selectedElemLabel) selectedElemLabel.textContent = friendlyName;
+        if (btnDeleteSelected) btnDeleteSelected.style.display = 'inline-flex';
+
+        const conf = currentLayout.elements[elemId] || {};
+        const elemScale = conf.scale !== undefined ? conf.scale : 1.0;
+        const sVal = Math.round(elemScale * 100);
+        if (sizeSlider) sizeSlider.value = sVal;
+        if (sizeValText) sizeValText.textContent = `${sVal}%`;
+
+        const elemOpacity = conf.opacity !== undefined ? conf.opacity : (currentLayout.opacity || 0.65);
+        const opVal = Math.round(elemOpacity * 100);
+        if (opacitySlider) opacitySlider.value = opVal;
+        if (opacityValText) opacityValText.textContent = `${opVal}%`;
+      } else {
+        selectedElemId = null;
+        if (selectedElemLabel) selectedElemLabel.textContent = 'Tap a Key';
+        if (btnDeleteSelected) btnDeleteSelected.style.display = 'none';
+      }
+    }
+
+    function removeHudElement(elemId) {
+      if (!elemId) return;
+      const elElem = hudContainer.querySelector(`[data-elem-id="${elemId}"]`);
+      if (elElem) {
+        delete currentLayout.elements[elemId];
+        elElem.remove();
+        if (selectedElemId === elemId) {
+          selectHudElement(null);
+        }
+        vibrate(20);
+        showToast(`🗑️ Button Removed`, 'info', '✕');
+      }
+    }
+
+    function applyLayout(layout) {
+      hudContainer.style.opacity = layout.opacity !== undefined ? layout.opacity : 0.65;
+      emulationMode = layout.mode || 'xinput';
+
+      if (btnModeSwitch) {
+        btnModeSwitch.textContent = emulationMode === 'xinput' ? 'Mode: XInput' : 'Mode: PC Keys';
+      }
+
+      // Sync elements
+      Object.keys(layout.elements).forEach(elemId => {
+        let elElem = hudContainer.querySelector(`[data-elem-id="${elemId}"]`);
+        const conf = layout.elements[elemId];
+        if (!elElem && conf.custom) {
+          elElem = createCustomHudButton(elemId, conf);
+        }
+        if (elElem) {
+          elElem.style.left = conf.left !== 'auto' ? conf.left : 'auto';
+          elElem.style.top = conf.top !== 'auto' ? conf.top : 'auto';
+          elElem.style.right = conf.right !== 'auto' ? conf.right : 'auto';
+          elElem.style.bottom = conf.bottom !== 'auto' ? conf.bottom : 'auto';
+          const scale = conf.scale !== undefined ? conf.scale : 1.0;
+          elElem.style.transform = `scale(${scale})`;
+          if (conf.opacity !== undefined) {
+            elElem.style.opacity = conf.opacity;
+          }
+          if (conf.gp) elElem.dataset.gp = conf.gp;
+          if (conf.key) elElem.dataset.key = conf.key;
+        }
+      });
+
+      // Remove default DOM elements that were deleted by the user from currentLayout
+      const existingDomElems = hudContainer.querySelectorAll('.hud-elem');
+      existingDomElems.forEach(el => {
+        const id = el.dataset.elemId;
+        if (id && !layout.elements[id]) {
+          el.remove();
+        }
+      });
+    }
+
+    function createCustomHudButton(elemId, conf) {
+      const btn = document.createElement('div');
+      btn.className = 'hud-elem hud-tactical-pill is-custom-btn';
+      btn.dataset.elemId = elemId;
+      btn.dataset.gp = conf.gp || 'a';
+      btn.dataset.key = conf.key || 'space';
+      const labelText = conf.label || conf.key.toUpperCase();
+      btn.innerHTML = `<span>${labelText}</span>`;
+      hudContainer.appendChild(btn);
+      bindHudElementEvents(btn);
+      return btn;
+    }
+
+    // Toggle In-Display Gaming HUD
+    function toggleGamepadHUD(forceState) {
+      const nextState = forceState !== undefined ? forceState : !state.gamepadHudActive;
+      state.gamepadHudActive = nextState;
+      btnToggleHud.classList.toggle('active', nextState);
+      document.body.classList.toggle('gamepad-hud-active', nextState);
+
+      if (nextState) {
+        hudOverlay.style.display = 'flex';
+        applyLayout(currentLayout);
+        vibrate(30);
+        showToast('🎮 In-Display Gaming HUD Active (Full Screen View)', 'info', '🎮');
+      } else {
+        exitEditMode();
+        hudOverlay.style.display = 'none';
+        sendCommand('gr');
+        vibrate(15);
+        showToast('Gaming HUD Closed', 'info', '🎮');
+      }
+    }
+
+    window.toggleGamepadHUD = toggleGamepadHUD;
+    btnToggleHud.onclick = () => toggleGamepadHUD();
+    if (btnCloseHud) btnCloseHud.onclick = () => toggleGamepadHUD(false);
+
+    if (btnModeSwitch) {
+      btnModeSwitch.onclick = () => {
+        vibrate(15);
+        emulationMode = emulationMode === 'xinput' ? 'wasd' : 'xinput';
+        currentLayout.mode = emulationMode;
+        btnModeSwitch.textContent = emulationMode === 'xinput' ? 'Mode: XInput' : 'Mode: PC Keys';
+        showToast(`Emulation Mode: ${emulationMode === 'xinput' ? 'Virtual Xbox 360' : 'PC Keyboard/Mouse'}`, 'info', '🕹️');
+      };
+    }
+
+    // Layout Customizer Mode (PUBG / CoD Style)
+    function enterEditMode() {
+      isEditing = true;
+      state.gamepadHudEditing = true;
+      hudContainer.classList.add('hud-editing');
+      editorToolbar.style.display = 'flex';
+      btnEditLayout.textContent = '🔒 Exit Edit';
+      btnEditLayout.classList.add('active');
+
+      // Auto-select first available element
+      const firstElem = hudContainer.querySelector('.hud-elem');
+      if (firstElem) {
+        selectHudElement(firstElem.dataset.elemId);
+      }
+      showToast('✏️ Tap any key to resize, or drag to position', 'info', '✏️');
+    }
+
+    function exitEditMode() {
+      isEditing = false;
+      state.gamepadHudEditing = false;
+      hudContainer.classList.remove('hud-editing');
+      editorToolbar.style.display = 'none';
+      btnEditLayout.textContent = '✏️ Edit Layout';
+      btnEditLayout.classList.remove('active');
+      selectHudElement(null);
+    }
+
+    if (btnEditLayout) {
+      btnEditLayout.onclick = () => {
+        vibrate(15);
+        if (isEditing) exitEditMode();
+        else enterEditMode();
+      };
+    }
+
+    // Per-Key Size Control (Slider + Buttons)
+    function setElementScale(scaleRatio) {
+      if (!selectedElemId) {
+        showToast('Tap a button on screen to select it first', 'warn', '👆');
+        return;
+      }
+      const elElem = hudContainer.querySelector(`[data-elem-id="${selectedElemId}"]`);
+      if (elElem) {
+        scaleRatio = Math.max(0.5, Math.min(2.2, scaleRatio));
+        if (!currentLayout.elements[selectedElemId]) {
+          currentLayout.elements[selectedElemId] = { scale: 1.0 };
+        }
+        currentLayout.elements[selectedElemId].scale = scaleRatio;
+        elElem.style.transform = `scale(${scaleRatio})`;
+        const sVal = Math.round(scaleRatio * 100);
+        if (sizeSlider) sizeSlider.value = sVal;
+        if (sizeValText) sizeValText.textContent = `${sVal}%`;
+      }
+    }
+
+    if (sizeSlider) {
+      sizeSlider.oninput = (e) => {
+        const val = parseInt(e.target.value, 10);
+        setElementScale(val / 100);
+      };
+    }
+
+    const hudSizePills = document.querySelectorAll('[data-hud-size]');
+    hudSizePills.forEach(pill => {
+      pill.onclick = () => {
+        vibrate(10);
+        hudSizePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const s = parseInt(pill.dataset.hudSize, 10) / 100;
+        setElementScale(s);
+      };
+    });
+
+    if (btnSizeDec) {
+      btnSizeDec.onclick = () => {
+        const curVal = sizeSlider ? parseInt(sizeSlider.value, 10) : 100;
+        setElementScale((curVal - 5) / 100);
+      };
+    }
+
+    if (btnSizeInc) {
+      btnSizeInc.onclick = () => {
+        const curVal = sizeSlider ? parseInt(sizeSlider.value, 10) : 100;
+        setElementScale((curVal + 5) / 100);
+      };
+    }
+
+    // Opacity Control
+    if (opacitySlider) {
+      opacitySlider.oninput = (e) => {
+        const opVal = parseInt(e.target.value, 10) / 100;
+        currentLayout.opacity = opVal;
+        hudContainer.style.opacity = opVal;
+        if (opacityValText) opacityValText.textContent = `${parseInt(e.target.value, 10)}%`;
+      };
+    }
+
+    const hudOpacityPills = document.querySelectorAll('[data-hud-opacity]');
+    hudOpacityPills.forEach(pill => {
+      pill.onclick = () => {
+        vibrate(10);
+        hudOpacityPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const opVal = parseInt(pill.dataset.hudOpacity, 10) / 100;
+        currentLayout.opacity = opVal;
+        hudContainer.style.opacity = opVal;
+        if (opacitySlider) opacitySlider.value = parseInt(pill.dataset.hudOpacity, 10);
+        if (opacityValText) opacityValText.textContent = `${parseInt(pill.dataset.hudOpacity, 10)}%`;
+      };
+    });
+
+    const btnExitHudEditor = document.getElementById('btn-hud-exit-editor');
+    if (btnExitHudEditor) {
+      btnExitHudEditor.onclick = () => exitEditMode();
+    }
+
+    // Delete Selected Button
+    if (btnDeleteSelected) {
+      btnDeleteSelected.onclick = () => {
+        if (selectedElemId) {
+          removeHudElement(selectedElemId);
+        }
+      };
+    }
+
+    // Save Layout
+    if (btnSave) {
+      btnSave.onclick = () => {
+        vibrate(30);
+        const allElems = hudContainer.querySelectorAll('.hud-elem');
+        const containerRect = hudContainer.getBoundingClientRect();
+        allElems.forEach(el => {
+          const elemId = el.dataset.elemId;
+          const rect = el.getBoundingClientRect();
+          const leftPct = ((rect.left - containerRect.left) / containerRect.width * 100).toFixed(1) + '%';
+          const topPct = ((rect.top - containerRect.top) / containerRect.height * 100).toFixed(1) + '%';
+          if (!currentLayout.elements[elemId]) {
+            currentLayout.elements[elemId] = { custom: true, gp: el.dataset.gp, key: el.dataset.key, label: el.textContent.replace('✕', '').trim() };
+          }
+          currentLayout.elements[elemId].left = leftPct;
+          currentLayout.elements[elemId].top = topPct;
+          currentLayout.elements[elemId].right = 'auto';
+          currentLayout.elements[elemId].bottom = 'auto';
+        });
+        currentLayout.mode = emulationMode;
+
+        localStorage.setItem('pcdeck_gamepad_hud_layout', JSON.stringify(currentLayout));
+        exitEditMode();
+        showToast('💾 Gaming HUD Layout Saved Permanently!', 'success', '💾');
+      };
+    }
+
+    // Reset Layout
+    if (btnReset) {
+      btnReset.onclick = () => {
+        vibrate(20);
+        currentLayout = JSON.parse(JSON.stringify(DEFAULT_HUD_LAYOUT));
+        localStorage.removeItem('pcdeck_gamepad_hud_layout');
+        hudContainer.innerHTML = `
+          <div id="hud-elem-joystick" class="hud-elem hud-joystick-zone" data-elem-id="joystick" style="left: 6%; bottom: 18%;">
+            <div class="hud-joystick-base">
+              <div class="hud-joystick-stick" id="hud-joystick-thumb"></div>
+              <span class="hud-joystick-label">LS / WASD</span>
+            </div>
+          </div>
+          <div id="hud-elem-lt" class="hud-elem hud-trigger-btn hud-trigger-lt" data-elem-id="lt" data-gp="lt" style="left: 6%; top: 14%;">
+            <span class="hud-btn-text">LT</span>
+            <span class="hud-btn-sub">AIM / ADS</span>
+          </div>
+          <div id="hud-elem-lb" class="hud-elem hud-trigger-btn hud-trigger-lb" data-elem-id="lb" data-gp="lb" style="left: 20%; top: 14%;">
+            <span class="hud-btn-text">LB</span>
+            <span class="hud-btn-sub">SPRINT</span>
+          </div>
+          <div id="hud-elem-rt" class="hud-elem hud-trigger-btn hud-trigger-rt" data-elem-id="rt" data-gp="rt" style="right: 6%; top: 14%;">
+            <span class="hud-btn-text">RT</span>
+            <span class="hud-btn-sub">FIRE 💥</span>
+          </div>
+          <div id="hud-elem-rb" class="hud-elem hud-trigger-btn hud-trigger-rb" data-elem-id="rb" data-gp="rb" style="right: 20%; top: 14%;">
+            <span class="hud-btn-text">RB</span>
+            <span class="hud-btn-sub">PRONE</span>
+          </div>
+          <div id="hud-elem-btn-a" class="hud-elem hud-action-circle btn-hud-a" data-elem-id="btn-a" data-gp="a" style="right: 14%; bottom: 12%;">
+            <span class="hud-circle-glyph">A</span>
+            <span class="hud-circle-sub">JUMP</span>
+          </div>
+          <div id="hud-elem-btn-b" class="hud-elem hud-action-circle btn-hud-b" data-elem-id="btn-b" data-gp="b" style="right: 5%; bottom: 22%;">
+            <span class="hud-circle-glyph">B</span>
+            <span class="hud-circle-sub">CROUCH</span>
+          </div>
+          <div id="hud-elem-btn-x" class="hud-elem hud-action-circle btn-hud-x" data-elem-id="btn-x" data-gp="x" style="right: 23%; bottom: 22%;">
+            <span class="hud-circle-glyph">X</span>
+            <span class="hud-circle-sub">RELOAD</span>
+          </div>
+          <div id="hud-elem-btn-y" class="hud-elem hud-action-circle btn-hud-y" data-elem-id="btn-y" data-gp="y" style="right: 14%; bottom: 32%;">
+            <span class="hud-circle-glyph">Y</span>
+            <span class="hud-circle-sub">USE</span>
+          </div>
+          <div id="hud-elem-btn-1" class="hud-elem hud-tactical-pill" data-elem-id="btn-1" data-gp="1" style="right: 33%; bottom: 12%;">
+            <span>1️⃣ PRIM</span>
+          </div>
+          <div id="hud-elem-btn-2" class="hud-elem hud-tactical-pill" data-elem-id="btn-2" data-gp="2" style="right: 33%; bottom: 24%;">
+            <span>2️⃣ SEC</span>
+          </div>
+          <div id="hud-elem-btn-tab" class="hud-elem hud-tactical-pill" data-elem-id="btn-tab" data-gp="back" style="left: 33%; bottom: 12%;">
+            <span>🎒 TAB</span>
+          </div>
+          <div id="hud-elem-btn-esc" class="hud-elem hud-tactical-pill" data-elem-id="btn-esc" data-gp="start" style="left: 33%; bottom: 24%;">
+            <span>⚙️ ESC</span>
+          </div>
+        `;
+        const newElems = hudContainer.querySelectorAll('.hud-elem');
+        newElems.forEach(bindHudElementEvents);
+        initJoystick();
+        applyLayout(currentLayout);
+        selectHudElement('btn-a');
+        showToast('↺ Restored Default Controller Layout', 'info', '↺');
+      };
+    }
+
+    // Add Button Modal & Category Filtering
+    if (btnAddBtn && addBtnModal) {
+      btnAddBtn.onclick = () => {
+        vibrate(15);
+        chosenPresetBtn = null;
+        if (customKeyInput) customKeyInput.value = '';
+        keyPickBtns.forEach(b => b.classList.remove('selected'));
+        addBtnModal.style.display = 'flex';
+      };
+    }
+
+    if (btnModalCancel && addBtnModal) {
+      btnModalCancel.onclick = () => {
+        addBtnModal.style.display = 'none';
+      };
+    }
+
+    if (filterTabs) {
+      filterTabs.forEach(tab => {
+        tab.onclick = () => {
+          filterTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const filter = tab.dataset.filter;
+          keyPickBtns.forEach(btn => {
+            if (filter === 'all' || btn.dataset.category === filter) {
+              btn.style.display = 'block';
+            } else {
+              btn.style.display = 'none';
+            }
+          });
+        };
+      });
+    }
+
+    keyPickBtns.forEach(pick => {
+      pick.onclick = () => {
+        keyPickBtns.forEach(b => b.classList.remove('selected'));
+        pick.classList.add('selected');
+        chosenPresetBtn = pick;
+        if (customKeyInput) customKeyInput.value = '';
+      };
+    });
+
+    if (btnModalAddSelected) {
+      btnModalAddSelected.onclick = () => {
+        let key = '';
+        let label = '';
+        let gp = 'a';
+
+        const customVal = customKeyInput ? customKeyInput.value.trim().toLowerCase() : '';
+        if (customVal) {
+          key = customVal;
+          label = customVal.toUpperCase();
+          gp = 'a';
+        } else if (chosenPresetBtn) {
+          key = chosenPresetBtn.dataset.key;
+          label = chosenPresetBtn.dataset.label || key.toUpperCase();
+          gp = chosenPresetBtn.dataset.gp || 'a';
+        } else {
+          showToast('Please select a button or type a custom key', 'warn', '⚠️');
+          return;
+        }
+
+        customBtnCounter++;
+        const customId = `custom-btn-${customBtnCounter}-${Date.now()}`;
+        currentLayout.elements[customId] = {
+          left: '45%',
+          top: '45%',
+          right: 'auto',
+          bottom: 'auto',
+          custom: true,
+          key: key,
+          gp: gp,
+          label: label,
+          scale: 1.0
+        };
+
+        const elNew = createCustomHudButton(customId, currentLayout.elements[customId]);
+        elNew.style.left = '45%';
+        elNew.style.top = '45%';
+        elNew.style.transform = 'scale(1.0)';
+        addBtnModal.style.display = 'none';
+        selectHudElement(customId);
+        showToast(`➕ Added "${label}" (Drag to reposition)`, 'success', '➕');
+        vibrate(25);
+      };
+    }
+
+    // Multi-Touch Button & Drag Engine (100% Fluid, Zero Snapping)
+    function bindHudElementEvents(elElem) {
+      let isDragging = false;
+      let startX = 0, startY = 0;
+      let initialLeft = 0, initialTop = 0;
+
+      elElem.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isEditing) {
+          const rect = elElem.getBoundingClientRect();
+          // Check if delete handle tapped (top-right corner 28px region)
+          if (e.clientX > rect.right - 28 && e.clientY < rect.top + 28) {
+            removeHudElement(elElem.dataset.elemId);
+            return;
+          }
+
+          // Select this element
+          selectHudElement(elElem.dataset.elemId);
+
+          // Fluid Drag Mode
+          isDragging = true;
+          elElem.classList.add('is-dragging');
+          try { elElem.setPointerCapture(e.pointerId); } catch (_) {}
+          startX = e.clientX;
+          startY = e.clientY;
+          const containerRect = hudContainer.getBoundingClientRect();
+          initialLeft = rect.left - containerRect.left;
+          initialTop = rect.top - containerRect.top;
+
+          elElem.style.position = 'absolute';
+          elElem.style.left = `${initialLeft.toFixed(1)}px`;
+          elElem.style.top = `${initialTop.toFixed(1)}px`;
+          elElem.style.right = 'auto';
+          elElem.style.bottom = 'auto';
+          return;
+        }
+
+        // Gameplay Button Press Mode
+        if (elElem.dataset.elemId === 'joystick') return;
+
+        elElem.classList.add('active-pressed');
+        if (state.hapticsEnabled) vibrate(12);
+
+        const gpCode = elElem.dataset.gp;
+        const key = elElem.dataset.key;
+
+        if (emulationMode === 'wasd') {
+          if (key && key.startsWith('mouse_')) {
+            sendCommand(`mouse,down,${key.replace('mouse_', '')}`);
+          } else if (key) {
+            sendCommand(`key,down,${key}`);
+          }
+        } else {
+          if (gpCode === 'lt' || gpCode === 'rt') {
+            sendCommand(`gt,${gpCode},1.0`);
+          } else if (gpCode) {
+            sendCommand(`gp,btn,${gpCode},1`);
+          }
+        }
+      });
+
+      elElem.addEventListener('pointermove', (e) => {
+        if (isEditing && isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          const newLeft = Math.max(0, Math.min(hudContainer.clientWidth - elElem.offsetWidth, initialLeft + dx));
+          const newTop = Math.max(0, Math.min(hudContainer.clientHeight - elElem.offsetHeight, initialTop + dy));
+          elElem.style.left = `${newLeft.toFixed(1)}px`;
+          elElem.style.top = `${newTop.toFixed(1)}px`;
+          elElem.style.right = 'auto';
+          elElem.style.bottom = 'auto';
+        }
+      });
+
+      const onPointerRelease = (e) => {
+        if (isEditing && isDragging) {
+          isDragging = false;
+          elElem.classList.remove('is-dragging');
+          try { elElem.releasePointerCapture(e.pointerId); } catch (_) {}
+          const containerRect = hudContainer.getBoundingClientRect();
+          const rect = elElem.getBoundingClientRect();
+          const leftPct = (((rect.left - containerRect.left) / containerRect.width) * 100).toFixed(2) + '%';
+          const topPct = (((rect.top - containerRect.top) / containerRect.height) * 100).toFixed(2) + '%';
+          elElem.style.left = leftPct;
+          elElem.style.top = topPct;
+          if (currentLayout.elements[elElem.dataset.elemId]) {
+            currentLayout.elements[elElem.dataset.elemId].left = leftPct;
+            currentLayout.elements[elElem.dataset.elemId].top = topPct;
+            currentLayout.elements[elElem.dataset.elemId].right = 'auto';
+            currentLayout.elements[elElem.dataset.elemId].bottom = 'auto';
+          }
+          return;
+        }
+
+        if (elElem.dataset.elemId === 'joystick') return;
+
+        elElem.classList.remove('active-pressed');
+        const gpCode = elElem.dataset.gp;
+        const key = elElem.dataset.key;
+
+        if (emulationMode === 'wasd') {
+          if (key && key.startsWith('mouse_')) {
+            sendCommand(`mouse,up,${key.replace('mouse_', '')}`);
+          } else if (key) {
+            sendCommand(`key,up,${key}`);
+          }
+        } else {
+          if (gpCode === 'lt' || gpCode === 'rt') {
+            sendCommand(`gt,${gpCode},0.0`);
+          } else if (gpCode) {
+            sendCommand(`gp,btn,${gpCode},0`);
+          }
+        }
+      };
+
+      elElem.addEventListener('pointerup', onPointerRelease);
+      elElem.addEventListener('pointercancel', onPointerRelease);
+    }
+
+    // Bind all initial elements
+    const initialElems = hudContainer.querySelectorAll('.hud-elem');
+    initialElems.forEach(bindHudElementEvents);
+
+    // 🕹️ Virtual Joystick Engine
+    let joystickActive = false;
+    let joystickPointerId = null;
+    let lastStickX = 0, lastStickY = 0;
+    const maxStickRadius = 40;
+    let activeKeys = { w: false, a: false, s: false, d: false };
+
+    function initJoystick() {
+      const joystickZone = document.getElementById('hud-elem-joystick');
+      const joystickThumb = document.getElementById('hud-joystick-thumb');
+      if (!joystickZone || !joystickThumb) return;
+
+      joystickZone.addEventListener('pointerdown', (e) => {
+        if (isEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        joystickActive = true;
+        joystickPointerId = e.pointerId;
+        joystickZone.setPointerCapture(e.pointerId);
+        if (state.hapticsEnabled) vibrate(15);
+        updateJoystickPosition(e.clientX, e.clientY);
+      });
+
+      joystickZone.addEventListener('pointermove', (e) => {
+        if (!joystickActive || joystickPointerId !== e.pointerId || isEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        updateJoystickPosition(e.clientX, e.clientY);
+      });
+
+      const onJoystickRelease = (e) => {
+        if (!joystickActive || joystickPointerId !== e.pointerId) return;
+        joystickActive = false;
+        joystickPointerId = null;
+        try { joystickZone.releasePointerCapture(e.pointerId); } catch (_) {}
+        joystickThumb.style.transform = 'translate(0px, 0px)';
+
+        if (emulationMode === 'wasd') {
+          ['w', 'a', 's', 'd'].forEach(k => {
+            if (activeKeys[k]) {
+              sendCommand(`key,up,${k}`);
+              activeKeys[k] = false;
+            }
+          });
+        } else {
+          sendCommand('ga,left,0,0');
+        }
+      };
+
+      joystickZone.addEventListener('pointerup', onJoystickRelease);
+      joystickZone.addEventListener('pointercancel', onJoystickRelease);
+
+      function updateJoystickPosition(clientX, clientY) {
+        const rect = joystickZone.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        let dx = clientX - centerX;
+        let dy = clientY - centerY;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > maxStickRadius) {
+          dx = (dx / dist) * maxStickRadius;
+          dy = (dy / dist) * maxStickRadius;
+        }
+
+        joystickThumb.style.transform = `translate(${dx}px, ${dy}px)`;
+
+        let normX = dx / maxStickRadius;
+        let normY = -(dy / maxStickRadius);
+
+        const deadzone = 0.12;
+        if (Math.abs(normX) < deadzone) normX = 0;
+        if (Math.abs(normY) < deadzone) normY = 0;
+
+        if (emulationMode === 'wasd') {
+          const pressW = normY > 0.35;
+          const pressS = normY < -0.35;
+          const pressD = normX > 0.35;
+          const pressA = normX < -0.35;
+
+          if (pressW !== activeKeys.w) { sendCommand(`key,${pressW ? 'down' : 'up'},w`); activeKeys.w = pressW; }
+          if (pressS !== activeKeys.s) { sendCommand(`key,${pressS ? 'down' : 'up'},s`); activeKeys.s = pressS; }
+          if (pressA !== activeKeys.a) { sendCommand(`key,${pressA ? 'down' : 'up'},a`); activeKeys.a = pressA; }
+          if (pressD !== activeKeys.d) { sendCommand(`key,${pressD ? 'down' : 'up'},d`); activeKeys.d = pressD; }
+        } else {
+          normX = Math.round(normX * 100) / 100;
+          normY = Math.round(normY * 100) / 100;
+          if (normX !== lastStickX || normY !== lastStickY) {
+            lastStickX = normX;
+            lastStickY = normY;
+            sendCommand(`ga,left,${normX},${normY}`);
+          }
+        }
+      }
+    }
+
+    initJoystick();
+
+    // Apply layout on startup
+    applyLayout(currentLayout);
+  }
+
+  // =========================================================================
+  // WIRELESS PC MICROPHONE MODULE
+  // =========================================================================
+  let micWs = null;
+  let micAudioContext = null;
+  let micMediaStream = null;
+  let micProcessorNode = null;
+  let micGainNode = null;
+  let micActive = false;
+  let micMuted = false;
+
+  function initWirelessMicrophone() {
+    const btnToggle = document.getElementById('btn-toggle-mic');
+    const btnMute = document.getElementById('btn-mute-mic');
+    const statusBadge = document.getElementById('mic-status-badge');
+    const vuFill = document.getElementById('vu-meter-fill');
+    const vuDb = document.getElementById('vu-meter-db');
+    const gainSlider = document.getElementById('mic-gain-slider');
+    const gainVal = document.getElementById('mic-gain-val');
+
+    if (gainSlider && gainVal) {
+      gainSlider.oninput = (e) => {
+        gainVal.textContent = `${e.target.value}%`;
+        if (micGainNode) micGainNode.gain.value = e.target.value / 100;
+      };
+    }
+
+    async function startMic() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+        micMediaStream = stream;
+        micAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+        const source = micAudioContext.createMediaStreamSource(stream);
+
+        micGainNode = micAudioContext.createGain();
+        if (gainSlider) micGainNode.gain.value = gainSlider.value / 100;
+
+        const analyser = micAudioContext.createAnalyser();
+        analyser.fftSize = 64;
+        source.connect(micGainNode);
+        micGainNode.connect(analyser);
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/mic`;
+        micWs = new WebSocket(wsUrl);
+        micWs.binaryType = 'arraybuffer';
+
+        // Stream 16-bit PCM Audio
+        const scriptNode = micAudioContext.createScriptProcessor(2048, 1, 1);
+        const pcmData = new Int16Array(2048);
+        scriptNode.onaudioprocess = (e) => {
+          if (!micActive || micMuted || micWs.readyState !== WebSocket.OPEN) return;
+          const input = e.inputBuffer.getChannelData(0);
+          for (let i = 0; i < input.length; i++) {
+            let s = Math.max(-1, Math.min(1, input[i]));
+            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
+          micWs.send(pcmData.buffer);
+        };
+
+        micGainNode.connect(scriptNode);
+        scriptNode.connect(micAudioContext.destination);
+        micProcessorNode = scriptNode;
+
+        // VU meter ticker
+        const pcmBuffer = new Uint8Array(analyser.frequencyBinCount);
+        const updateVu = () => {
+          if (!micActive) return;
+          analyser.getByteFrequencyData(pcmBuffer);
+          let sum = 0;
+          for (let i = 0; i < pcmBuffer.length; i++) sum += pcmBuffer[i];
+          let avg = sum / pcmBuffer.length;
+          let pct = Math.min(100, Math.round((avg / 128) * 100));
+          if (vuFill) vuFill.style.width = `${pct}%`;
+          if (vuDb) vuDb.textContent = `${pct > 0 ? '-' + (100 - pct) : '-inf'} dB`;
+          requestAnimationFrame(updateVu);
+        };
+
+        micActive = true;
+        if (btnToggle) {
+          btnToggle.className = 'neo-btn btn-pink';
+          btnToggle.innerHTML = '<span>⏹️</span><span>STOP MICROPHONE</span>';
+        }
+        if (btnMute) btnMute.style.display = 'inline-block';
+        if (statusBadge) {
+          statusBadge.className = 'mini-status-chip online';
+          statusBadge.textContent = 'TRANSMITTING';
+        }
+        const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
+        if (quickMicBtn) {
+          quickMicBtn.style.background = 'var(--neo-pink)';
+          quickMicBtn.textContent = '🎙️ Mic: ON';
+        }
+        const toolMicSub = document.getElementById('tool-mic-status');
+        if (toolMicSub) toolMicSub.textContent = 'Active';
+
+        showToast('Microphone Active (Streaming to PC)', 'success', '🎙️');
+        updateVu();
+      } catch (err) {
+        showToast('Mic Access Denied: ' + err.message, 'error', '⚠️');
+      }
+    }
+
+    function stopMic() {
+      micActive = false;
+      if (micMediaStream) {
+        micMediaStream.getTracks().forEach(t => t.stop());
+        micMediaStream = null;
+      }
+      if (micAudioContext) {
+        micAudioContext.close();
+        micAudioContext = null;
+      }
+      if (micWs) {
+        micWs.close();
+        micWs = null;
+      }
+      if (btnToggle) {
+        btnToggle.className = 'neo-btn btn-lime';
+        btnToggle.innerHTML = '<span>🎙️</span><span>START TRANSMITTING</span>';
+      }
+      if (btnMute) btnMute.style.display = 'none';
+      if (statusBadge) {
+        statusBadge.className = 'mini-status-chip offline';
+        statusBadge.textContent = 'OFFLINE';
+      }
+      if (vuFill) vuFill.style.width = '0%';
+
+      const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
+      if (quickMicBtn) {
+        quickMicBtn.style.background = 'var(--neo-lime)';
+        quickMicBtn.textContent = '🎙️ Mic';
+      }
+      const toolMicSub = document.getElementById('tool-mic-status');
+      if (toolMicSub) toolMicSub.textContent = 'Offline';
+    }
+
+    const toggleMicHandler = () => {
+      vibrate(15);
+      if (micActive) stopMic(); else startMic();
+    };
+
+    if (btnToggle) btnToggle.onclick = toggleMicHandler;
+
+    const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
+    if (quickMicBtn) quickMicBtn.onclick = toggleMicHandler;
+
+    const toolMicBtn = document.getElementById('tool-mic-quick');
+    if (toolMicBtn) toolMicBtn.onclick = () => {
+      toggleMicHandler();
+      if (el.quickToolsDrawer) el.quickToolsDrawer.classList.remove('open');
+    };
+
+    if (btnMute) {
+      btnMute.onclick = () => {
+        vibrate(15);
+        micMuted = !micMuted;
+        btnMute.textContent = micMuted ? '🔊 UNMUTE' : '🔇 MUTE';
+        btnMute.style.background = micMuted ? 'var(--neo-yellow)' : '';
+      };
+    }
+  }
+
+  // =========================================================================
+  // WIRELESS HD WEBCAM MODULE WITH MULTI-LENS & TORCH SUPPORT
+  // =========================================================================
+  let camWs = null;
+  let camMediaStream = null;
+  let camActive = false;
+  let camFacingMode = 'environment';
+  let camSelectedDeviceId = '';
+  let camTargetRes = 720;
+  let camFps = 30;
+  let camTorchActive = false;
+  let availableVideoDevices = [];
+
+  function initWirelessWebcam() {
+    const btnToggle = document.getElementById('btn-toggle-cam');
+    const btnSwitch = document.getElementById('btn-switch-cam-lens');
+    const btnTorch = document.getElementById('btn-toggle-torch');
+    const deviceSelect = document.getElementById('cam-device-select');
+    const statusBadge = document.getElementById('cam-status-badge');
+    const videoPreview = document.getElementById('webcam-preview-video');
+    const placeholder = document.getElementById('cam-idle-placeholder');
+    const resChips = document.querySelectorAll('.cam-res-selector .neo-chip-toggle');
+
+    // Enumerate hardware cameras
+    async function enumerateCameras() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        availableVideoDevices = devices.filter(d => d.kind === 'videoinput');
+
+        if (deviceSelect && availableVideoDevices.length > 0) {
+          deviceSelect.innerHTML = '';
+          availableVideoDevices.forEach((dev, idx) => {
+            const opt = document.createElement('option');
+            opt.value = dev.deviceId;
+            let label = dev.label || `Camera ${idx + 1}`;
+            if (label.toLowerCase().includes('back') || label.toLowerCase().includes('rear') || label.toLowerCase().includes('environment')) {
+              opt.textContent = `📷 Rear: ${label}`;
+            } else if (label.toLowerCase().includes('front') || label.toLowerCase().includes('user')) {
+              opt.textContent = `🤳 Front: ${label}`;
+            } else {
+              opt.textContent = `📷 ${label}`;
+            }
+            deviceSelect.appendChild(opt);
+          });
+          if (camSelectedDeviceId) deviceSelect.value = camSelectedDeviceId;
+        }
+      } catch (e) {
+        console.warn('Camera enumeration error:', e);
+      }
+    }
+
+    if (deviceSelect) {
+      deviceSelect.onchange = () => {
+        camSelectedDeviceId = deviceSelect.value;
+        if (camActive) {
+          stopCam();
+          startCam();
+        }
+      };
+    }
+
+    resChips.forEach((chip) => {
+      chip.onclick = () => {
+        const targetRes = parseInt(chip.dataset.res, 10) || 720;
+        if (targetRes === 1080 && (!window.isProUnlocked || !window.isProUnlocked())) {
+          if (typeof vibrate === 'function') vibrate(25);
+          if (typeof window.openProUpgradeModal === 'function') {
+            window.openProUpgradeModal();
+          }
+          if (typeof showToast === 'function') {
+            showToast('1080p 60 FPS HD Webcam requires PCDeck Pro', 'warn', '⭐');
+          }
+          return;
+        }
+        resChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        camTargetRes = targetRes;
+        camFps = camTargetRes === 1080 ? 60 : (camTargetRes === 480 ? 60 : 30);
+        if (typeof vibrate === 'function') vibrate(15);
+        if (camActive) {
+          stopCam();
+          startCam();
+        }
+      };
+    });
+
+    async function startCam() {
+      try {
+        let width = 1280;
+        let height = 720;
+        if (camTargetRes === 1080) { width = 1920; height = 1080; }
+        else if (camTargetRes === 480) { width = 854; height = 480; }
+
+        const videoConstraints = {
+          width: { ideal: width },
+          height: { ideal: height },
+          frameRate: { ideal: camFps }
+        };
+
+        if (camSelectedDeviceId) {
+          videoConstraints.deviceId = { exact: camSelectedDeviceId };
+        } else {
+          videoConstraints.facingMode = camFacingMode;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+        camMediaStream = stream;
+
+        // Re-enumerate to get full device labels once permission is granted
+        await enumerateCameras();
+
+        if (videoPreview) {
+          videoPreview.srcObject = stream;
+          videoPreview.play();
+        }
+        if (placeholder) placeholder.style.display = 'none';
+
+        // Check torch capabilities
+        const track = stream.getVideoTracks()[0];
+        if (track && typeof track.getCapabilities === 'function') {
+          const caps = track.getCapabilities();
+          if (caps && caps.torch && btnTorch) {
+            btnTorch.style.display = 'inline-block';
+          }
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/cam`;
+        camWs = new WebSocket(wsUrl);
+
+        // Hardware-accelerated canvas frame grabber
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'medium';
+
+        const frameInterval = 1000 / camFps;
+        let lastFrameTime = 0;
+
+        const captureFrame = (time) => {
+          if (!camActive) return;
+          if (time - lastFrameTime >= frameInterval && camWs && camWs.readyState === WebSocket.OPEN && videoPreview && videoPreview.readyState >= 2) {
+            lastFrameTime = time;
+            ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => {
+              if (blob && camWs && camWs.readyState === WebSocket.OPEN) {
+                blob.arrayBuffer().then(buf => camWs.send(buf));
+              }
+            }, 'image/jpeg', 0.82);
+          }
+          requestAnimationFrame(captureFrame);
+        };
+
+        camActive = true;
+        if (btnToggle) {
+          btnToggle.className = 'neo-btn btn-pink';
+          btnToggle.innerHTML = '<span>⏹️</span><span>STOP WEBCAM</span>';
+        }
+        if (btnSwitch) btnSwitch.style.display = 'inline-block';
+        if (statusBadge) {
+          statusBadge.className = 'mini-status-chip online';
+          statusBadge.textContent = 'STREAMING ' + camTargetRes + 'p';
+        }
+        const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
+        if (quickCamBtn) {
+          quickCamBtn.style.background = 'var(--neo-pink)';
+          quickCamBtn.textContent = '📹 Cam: ON';
+        }
+        const toolCamSub = document.getElementById('tool-cam-status');
+        if (toolCamSub) toolCamSub.textContent = 'Active';
+
+        showToast('Webcam Broadcasting to PC DirectShow', 'success', '📹');
+        requestAnimationFrame(captureFrame);
+      } catch (err) {
+        showToast('Camera Access Denied: ' + err.message, 'error', '⚠️');
+      }
+    }
+
+    function stopCam() {
+      camActive = false;
+      camTorchActive = false;
+      if (btnTorch) {
+        btnTorch.style.display = 'none';
+        btnTorch.style.background = '';
+      }
+      if (camMediaStream) {
+        camMediaStream.getTracks().forEach(t => t.stop());
+        camMediaStream = null;
+      }
+      if (videoPreview) videoPreview.srcObject = null;
+      if (placeholder) placeholder.style.display = 'flex';
+      if (camWs) {
+        camWs.close();
+        camWs = null;
+      }
+      if (btnToggle) {
+        btnToggle.className = 'neo-btn btn-cyan';
+        btnToggle.innerHTML = '<span>📹</span><span>START WEBCAM</span>';
+      }
+      if (btnSwitch) btnSwitch.style.display = 'none';
+      if (statusBadge) {
+        statusBadge.className = 'mini-status-chip offline';
+        statusBadge.textContent = 'OFFLINE';
+      }
+      const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
+      if (quickCamBtn) {
+        quickCamBtn.style.background = 'var(--neo-cyan)';
+        quickCamBtn.textContent = '📹 Cam';
+      }
+      const toolCamSub = document.getElementById('tool-cam-status');
+      if (toolCamSub) toolCamSub.textContent = 'Offline';
+    }
+
+    // Torch Toggle
+    if (btnTorch) {
+      btnTorch.onclick = async () => {
+        vibrate(15);
+        if (!camMediaStream) return;
+        const track = camMediaStream.getVideoTracks()[0];
+        if (track) {
+          try {
+            camTorchActive = !camTorchActive;
+            await track.applyConstraints({ advanced: [{ torch: camTorchActive }] });
+            btnTorch.style.background = camTorchActive ? 'var(--neo-lime)' : 'var(--neo-yellow)';
+            btnTorch.style.color = '#000';
+            showToast(`Torch: ${camTorchActive ? 'ON' : 'OFF'}`, 'info', '💡');
+          } catch (e) {
+            console.warn('Torch toggle error:', e);
+          }
+        }
+      };
+    }
+
+    // Cycle Next Lens / Sensor
+    if (btnSwitch) {
+      btnSwitch.onclick = () => {
+        vibrate(15);
+        if (availableVideoDevices.length > 1) {
+          let currentIdx = availableVideoDevices.findIndex(d => d.deviceId === camSelectedDeviceId);
+          let nextIdx = (currentIdx + 1) % availableVideoDevices.length;
+          camSelectedDeviceId = availableVideoDevices[nextIdx].deviceId;
+          if (deviceSelect) deviceSelect.value = camSelectedDeviceId;
+        } else {
+          camFacingMode = camFacingMode === 'user' ? 'environment' : 'user';
+          camSelectedDeviceId = '';
+        }
+        if (camActive) {
+          stopCam();
+          startCam();
+        }
+      };
+    }
+
+    const toggleCamHandler = () => {
+      vibrate(15);
+      if (camActive) stopCam(); else startCam();
+    };
+
+    if (btnToggle) btnToggle.onclick = toggleCamHandler;
+
+    const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
+    if (quickCamBtn) quickCamBtn.onclick = toggleCamHandler;
+
+    const toolCamBtn = document.getElementById('tool-cam-quick');
+    if (toolCamBtn) toolCamBtn.onclick = () => {
+      toggleCamHandler();
+      if (el.quickToolsDrawer) el.quickToolsDrawer.classList.remove('open');
+    };
+
+    enumerateCameras();
+  }
+
+  // =========================================================================
+  // HIGH-TRUST DRIVER MODAL MANAGER
+  // =========================================================================
+  function initDriverTrustManager() {
+    const modal = document.getElementById('driver-trust-modal');
+    const btnInstall = document.getElementById('btn-modal-install-driver');
+    const btnSkip = document.getElementById('btn-modal-skip-driver');
+    const statusBox = document.getElementById('driver-install-status-box');
+
+    if (btnInstall) {
+      btnInstall.onclick = () => {
+        vibrate(20);
+        if (statusBox) {
+          statusBox.style.display = 'block';
+          statusBox.style.background = 'rgba(0, 240, 255, 0.15)';
+          statusBox.style.color = 'var(--neo-cyan)';
+          statusBox.textContent = '⚡ Running 1-Click Silent Setup on PC...';
+        }
+        sendCommand('install_driver_request');
+      };
+    }
+
+    if (btnSkip && modal) {
+      btnSkip.onclick = () => {
+        vibrate(10);
+        modal.style.display = 'none';
+      };
+    }
+  }
+
   function bootstrap() {
     initDomElements();
     loadSettings();
@@ -5314,6 +7909,14 @@
     initEventHandlers();
     initProEngine();
     initOnboardingEngine();
+    initGamepadEngine();
+    initScreenGamepadHUD();
+    initWirelessMicrophone();
+    initWirelessWebcam();
+    initDriverTrustManager();
+
+    // Trigger zero-config background UDP discovery and fast subnet probe immediately (< 5ms)
+    triggerDiscoveryAndSweep();
 
     // Flexible Onboarding & Auto-Connection for Web vs App
     const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
@@ -5327,12 +7930,12 @@
       const obModal = document.getElementById('onboarding-modal');
       if (obModal) obModal.classList.remove('show');
       connect();
-    } else if (!onboardingDone && isNativeApp) {
+    } else if (savedIp) {
+      connect();
+    } else if (isNativeApp && !onboardingDone) {
       if (typeof window.openOnboardingModal === 'function') {
         window.openOnboardingModal();
       }
-    } else if (savedIp) {
-      connect();
     } else {
       if (el.connectModal) el.connectModal.classList.add('show');
     }
@@ -5341,6 +7944,28 @@
     document.addEventListener('webkitfullscreenchange', updateQuickToolsUi);
     window.addEventListener('resize', updateQuickToolsUi);
     window.addEventListener('orientationchange', updateQuickToolsUi);
+
+    // Dynamic Wake-Up & Proactive Instant Reconnection Engine
+    function checkAndResumeConnection() {
+      triggerDiscoveryAndSweep();
+      if (document.visibilityState === 'visible') {
+        if (!state.connected || !mainWs || mainWs.readyState !== WebSocket.OPEN) {
+          reconnectAttempts = 0;
+          connect();
+        } else if (!screenWs || screenWs.readyState !== WebSocket.OPEN) {
+          connectScreenWs();
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', checkAndResumeConnection);
+    window.addEventListener('focus', checkAndResumeConnection);
+    window.addEventListener('pageshow', checkAndResumeConnection);
+    window.addEventListener('online', () => {
+      reconnectAttempts = 0;
+      triggerDiscoveryAndSweep();
+      connect(true);
+    });
+    window.onAppResume = checkAndResumeConnection;
 
     // Initialize In-App OTA Auto-Updater System
     initAppUpdater();

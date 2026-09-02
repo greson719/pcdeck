@@ -15,7 +15,7 @@ import sys
 import shutil
 import threading
 import time
-from typing import Optional, Set
+from typing import Optional, Set, List, Dict, Any, Tuple
 
 # Ensure sys.stdout and sys.stderr exist for windowed / noconsole PyInstaller executables
 if sys.stdout is None:
@@ -55,16 +55,22 @@ for p in [current_dir, parent_dir]:
 try:
     from server.input_controller import WindowsInputController as InputController
     from server.screen_streamer import ScreenStreamer
-    from server.audio_streamer import audio_streamer
+    from server.audio_streamer import audio_streamer, mic_sink
+    from server.gamepad_manager import gamepad_manager, is_vigem_installed, install_vigem_silently
+    from server.camera_streamer import camera_streamer
 except ImportError:
     try:
         from input_controller import WindowsInputController as InputController
         from screen_streamer import ScreenStreamer
-        from audio_streamer import audio_streamer
+        from audio_streamer import audio_streamer, mic_sink
+        from gamepad_manager import gamepad_manager, is_vigem_installed, install_vigem_silently
+        from camera_streamer import camera_streamer
     except ImportError:
         from .input_controller import WindowsInputController as InputController
         from .screen_streamer import ScreenStreamer
-        from .audio_streamer import audio_streamer
+        from .audio_streamer import audio_streamer, mic_sink
+        from .gamepad_manager import gamepad_manager, is_vigem_installed, install_vigem_silently
+        from .camera_streamer import camera_streamer
 
 import subprocess
 import zipfile
@@ -89,44 +95,65 @@ screen_connections: Set[WebSocket] = set()
 
 
 def ensure_windows_firewall_rule():
-    """Ensure Windows Defender Firewall allows inbound TCP traffic on port 8000 on Private and Public networks."""
+    """Ensure Windows Defender Firewall allows inbound TCP traffic on port 8000 and UDP on port 8001."""
     if sys.platform == "win32":
-        try:
-            subprocess.run(
-                [
-                    "netsh", "advfirewall", "firewall", "add", "rule",
-                    "name=PCDeck Pro Port 8000", "dir=in", "action=allow",
-                    "protocol=TCP", "localport=8000", "profile=any"
-                ],
-                capture_output=True,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-                timeout=4,
-            )
-        except Exception:
-            pass
+        def _add_rules():
+            try:
+                subprocess.run(
+                    [
+                        "netsh", "advfirewall", "firewall", "add", "rule",
+                        "name=PCDeck Pro Port 8000", "dir=in", "action=allow",
+                        "protocol=TCP", "localport=8000", "profile=any"
+                    ],
+                    capture_output=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=3,
+                )
+                subprocess.run(
+                    [
+                        "netsh", "advfirewall", "firewall", "add", "rule",
+                        "name=PCDeck Pro UDP Discovery", "dir=in", "action=allow",
+                        "protocol=UDP", "localport=8001", "profile=any"
+                    ],
+                    capture_output=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=3,
+                )
+            except Exception:
+                pass
+        threading.Thread(target=_add_rules, name="PCDeck-Firewall-Init", daemon=True).start()
 
 
 ensure_windows_firewall_rule()
 
 
-# Transfers Directory on PC (Default: Downloads/PCDeck_Transfers)
-TRANSFER_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "PCDeck_Transfers")
-try:
-    os.makedirs(TRANSFER_DIR, exist_ok=True)
-except Exception:
-    TRANSFER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transfers")
-    os.makedirs(TRANSFER_DIR, exist_ok=True)
+# ---------------------------------------------------------------------------
+# Zero-Config Ultra-Fast UDP Discovery Daemon (Port 8001)
+# ---------------------------------------------------------------------------
+DISCOVERY_UDP_PORT = 8001
+_udp_discovery_running = False
 
 
-def format_bytes(bytes_num: int) -> str:
-    """Format bytes to human readable format."""
-    if bytes_num <= 0:
-        return "0 B"
-    units = ["B", "KB", "MB", "GB", "TB"]
-    i = int(math.floor(math.log(bytes_num, 1024)))
-    p = math.pow(1024, i)
-    s = round(bytes_num / p, 2)
-    return f"{s} {units[i]}"
+def _get_subnet_broadcasts() -> List[str]:
+    """Calculate broadcast addresses for all active local interfaces."""
+    broadcasts = {"255.255.255.255"}
+    try:
+        import psutil
+        addrs = psutil.net_if_addrs()
+        for iface, nic_addrs in addrs.items():
+            for snic in nic_addrs:
+                if snic.family == socket.AF_INET and snic.address:
+                    ip = snic.address
+                    if not ip.startswith("127.") and not ip.startswith("169.254."):
+                        if snic.broadcast:
+                            broadcasts.add(snic.broadcast)
+                        else:
+                            parts = ip.split(".")
+                            if len(parts) == 4:
+                                broadcasts.add(f"{parts[0]}.{parts[1]}.{parts[2]}.255")
+    except Exception:
+        pass
+    return list(broadcasts)
 
 
 def get_local_ip() -> str:
@@ -198,6 +225,89 @@ SERVER_PORT = 8000
 SERVER_URL = f"http://{LOCAL_IP}:{SERVER_PORT}"
 
 
+def start_udp_discovery_daemon():
+    """Start background UDP responder and periodic beacon broadcaster."""
+    global _udp_discovery_running
+    if _udp_discovery_running:
+        return
+    _udp_discovery_running = True
+
+    def responder_loop():
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.bind(("", DISCOVERY_UDP_PORT))
+            sock.settimeout(0.8)
+        except Exception:
+            return
+
+        last_beacon_time = 0
+        while _udp_discovery_running:
+            now = time.time()
+            # Send periodic heartbeat beacon every 1.5 seconds
+            if now - last_beacon_time >= 1.5:
+                last_beacon_time = now
+                current_ip = get_local_ip()
+                hostname = socket.gethostname()
+                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.6.6".encode("utf-8")
+                for bcast in _get_subnet_broadcasts():
+                    try:
+                        sock.sendto(beacon_msg, (bcast, DISCOVERY_UDP_PORT))
+                    except Exception:
+                        pass
+
+            try:
+                data, addr = sock.recvfrom(1024)
+                if not data:
+                    continue
+                text = data.decode("utf-8", errors="ignore").strip()
+                if "PCDECK_DISCOVER" in text or "NEONTRACK_DISCOVER" in text:
+                    current_ip = get_local_ip()
+                    hostname = socket.gethostname()
+                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.6.6".encode("utf-8")
+                    sock.sendto(reply, addr)
+            except socket.timeout:
+                continue
+            except Exception:
+                pass
+
+        try:
+            sock.close()
+        except Exception:
+            pass
+
+    t = threading.Thread(target=responder_loop, name="PCDeck-UDP-Discovery", daemon=True)
+    t.start()
+
+
+# Auto-launch discovery daemon on startup
+start_udp_discovery_daemon()
+
+
+# Transfers Directory on PC (Default: Downloads/PCDeck_Transfers)
+TRANSFER_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "PCDeck_Transfers")
+try:
+    os.makedirs(TRANSFER_DIR, exist_ok=True)
+except Exception:
+    TRANSFER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transfers")
+    os.makedirs(TRANSFER_DIR, exist_ok=True)
+
+
+def format_bytes(bytes_num: int) -> str:
+    """Format bytes to human readable format."""
+    if bytes_num <= 0:
+        return "0 B"
+    units = ["B", "KB", "MB", "GB", "TB"]
+    i = int(math.floor(math.log(bytes_num, 1024)))
+    p = math.pow(1024, i)
+    s = round(bytes_num / p, 2)
+    return f"{s} {units[i]}"
+
+
+
+
+
 def generate_qr_image_bytes(data: str) -> bytes:
     """Generate high-contrast QR code image as PNG bytes."""
     qr = qrcode.QRCode(
@@ -251,6 +361,20 @@ def set_pro_client(active: bool):
     client_is_pro = active
 
 
+@app.get("/api/ping")
+async def get_ping():
+    """Ultra-fast instant health-check endpoint for parallel HTTP subnet scanning."""
+    live_ip = get_local_ip()
+    return {
+        "status": "ok",
+        "app": "PCDeck",
+        "name": socket.gethostname(),
+        "ip": live_ip,
+        "port": SERVER_PORT,
+        "version": "2.6.6",
+    }
+
+
 @app.get("/api/info")
 async def get_info():
     """Return server system info and connection state."""
@@ -263,7 +387,7 @@ async def get_info():
         "port": SERVER_PORT,
         "url": f"http://{live_ip}:{SERVER_PORT}",
         "transfer_dir": TRANSFER_DIR,
-        "clients_connected": len(active_connections) + len(screen_connections),
+        "clients_connected": max(len(active_connections), len(screen_connections)),
         "pro_active": client_is_pro,
         "screen": {
             "width": mon["width"],
@@ -427,14 +551,24 @@ async def upload_file_stream(
 
     try:
         total_written = 0
-        with open(dest_path, mode, buffering=4194304) as f:
+        def _write_bytes(f_obj, data):
+            f_obj.write(data)
+
+        with open(dest_path, mode, buffering=1048576) as f:
             if offset > 0 and mode == "r+b":
                 f.seek(offset)
+            buf = bytearray()
             async for chunk in request.stream():
                 if chunk:
-                    f.write(chunk)
+                    buf.extend(chunk)
                     total_written += len(chunk)
-            f.flush()
+                    if len(buf) >= 524288:  # 512KB batch write
+                        await asyncio.to_thread(_write_bytes, f, bytes(buf))
+                        buf.clear()
+            if buf:
+                await asyncio.to_thread(_write_bytes, f, bytes(buf))
+                buf.clear()
+            await asyncio.to_thread(f.flush)
 
         final_size = os.path.getsize(dest_path)
         return {
@@ -544,7 +678,7 @@ async def download_any_file(
     path: str,
     range_header: Optional[str] = Header(None, alias="Range"),
 ):
-    """Download any specified file from PC to phone with high-speed 1MB chunked streaming and HTTP Range support."""
+    """Download any specified file from PC to phone with smooth non-blocking streaming and HTTP Range support."""
     if not path or not os.path.exists(path) or not os.path.isfile(path):
         return JSONResponse(status_code=404, content={"error": "File not found"})
     try:
@@ -565,19 +699,23 @@ async def download_any_file(
 
         content_length = max(0, end - start + 1)
 
-        def file_iterator():
-            with open(path, "rb", buffering=4194304) as f:
+        async def file_iterator():
+            def _read_chunk(f_obj, n):
+                return f_obj.read(n)
+
+            with open(path, "rb", buffering=1048576) as f:
                 if start > 0:
                     f.seek(start)
                 remaining = content_length
-                chunk_size = 2097152  # 2MB high-throughput chunks
+                chunk_size = 131072  # 128KB smooth streaming chunks
                 while remaining > 0:
                     read_len = min(chunk_size, remaining)
-                    chunk = f.read(read_len)
+                    chunk = await asyncio.to_thread(_read_chunk, f, read_len)
                     if not chunk:
                         break
                     remaining -= len(chunk)
                     yield chunk
+                    await asyncio.sleep(0)  # Yield to asyncio event loop
 
         headers = {
             "Content-Length": str(content_length),
@@ -586,6 +724,7 @@ async def download_any_file(
             "Connection": "keep-alive",
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "X-Content-Type-Options": "nosniff",
+            "X-Accel-Buffering": "no",
         }
 
         if status_code == 206:
@@ -1121,6 +1260,57 @@ def dispatch_command(data: str):
         elif cmd == "media" and len(parts) >= 2:
             controller.media(parts[1])
 
+        # --- Gamepad & Virtual Controller Commands ---
+        elif cmd == "gp":
+            # Formats:
+            # 1. gp,btn,BTN_NAME,1/0
+            # 2. gp,axis,left/right,x,y
+            # 3. gp,trigger,left/right,val
+            # 4. gp,reset
+            # 5. gp,BTN_NAME,1/0
+            if len(parts) >= 4 and parts[1] == "btn":
+                btn_name = parts[2]
+                is_down = (parts[3] == "1")
+                gamepad_manager.set_button(btn_name, is_down)
+            elif len(parts) >= 5 and parts[1] == "axis":
+                stick_name = parts[2]
+                try:
+                    gamepad_manager.set_stick(stick_name, float(parts[3]), float(parts[4]))
+                except Exception:
+                    pass
+            elif len(parts) >= 4 and parts[1] == "trigger":
+                trigger_name = parts[2]
+                try:
+                    gamepad_manager.set_trigger(trigger_name, float(parts[3]))
+                except Exception:
+                    pass
+            elif len(parts) >= 2 and parts[1] == "reset":
+                gamepad_manager.reset_all()
+            elif len(parts) >= 3:
+                btn_name = parts[1]
+                is_down = (parts[2] == "1")
+                gamepad_manager.set_button(btn_name, is_down)
+
+        elif cmd == "ga" and len(parts) >= 4:
+            # Analog stick: ga,left/right,x,y
+            stick_name = parts[1]
+            try:
+                gamepad_manager.set_stick(stick_name, float(parts[2]), float(parts[3]))
+            except Exception:
+                pass
+
+        elif cmd == "gt" and len(parts) >= 3:
+            # Analog trigger: gt,left/right,pressure (0.0 to 1.0)
+            trigger_name = parts[1]
+            try:
+                gamepad_manager.set_trigger(trigger_name, float(parts[2]))
+            except Exception:
+                pass
+
+        elif cmd == "gr":
+            # Reset all gamepad inputs to neutral
+            gamepad_manager.reset_all()
+
         elif cmd == "pro_status" and len(parts) >= 2:
             global client_is_pro
             client_is_pro = (parts[1] == "1" or parts[1].lower() == "true")
@@ -1596,7 +1786,7 @@ async def send_phone_command_api(cmd: str = Body(..., embed=True)):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """Main Trackpad and control WebSocket endpoint."""
+    """Main Trackpad, Gamepad and control WebSocket endpoint."""
     await websocket.accept()
     active_connections.add(websocket)
 
@@ -1606,14 +1796,92 @@ async def websocket_endpoint(websocket: WebSocket):
             if data.startswith("p,"):
                 parts = data.split(",")
                 await websocket.send_text(f"pong,{parts[1]}")
+            elif data == "driver_check":
+                # Check ViGEmBus status on Windows
+                installed = is_vigem_installed()
+                status = "installed" if installed else "missing"
+                mode = gamepad_manager.mode
+                await websocket.send_text(f"driver_status,{status},{mode}")
+            elif data == "install_driver_request":
+                # Request 1-click silent driver install
+                await websocket.send_text("driver_installing,start")
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                msi_path = os.path.join(base_dir, "drivers", "ViGEmBus_x64.msi")
+                ok, msg = install_vigem_silently(msi_path)
+                if ok:
+                    gamepad_manager.init_backend()
+                    await websocket.send_text(f"driver_install_result,success,{gamepad_manager.mode}")
+                else:
+                    await websocket.send_text(f"driver_install_result,failed,{msg}")
             else:
                 dispatch_command(data)
 
-    except WebSocketDisconnect:
-        active_connections.remove(websocket)
-    except Exception as e:
-        if websocket in active_connections:
-            active_connections.remove(websocket)
+    except (WebSocketDisconnect, asyncio.CancelledError, Exception):
+        pass
+    finally:
+        active_connections.discard(websocket)
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+@app.websocket("/ws/mic")
+async def websocket_mic_endpoint(websocket: WebSocket):
+    """
+    Wireless PC Microphone endpoint.
+    Receives real-time 16-bit 48kHz PCM audio buffers from the phone and routes
+    them to the host's virtual audio cable device.
+    """
+    await websocket.accept()
+    mic_sink.start()
+    try:
+        await websocket.send_text(f"mic_ready,{mic_sink.sample_rate},{mic_sink.channels},{mic_sink.active_device_name}")
+        while True:
+            data = await websocket.receive_bytes()
+            if data:
+                mic_sink.push_pcm_bytes(data)
+    except (WebSocketDisconnect, asyncio.CancelledError, Exception):
+        pass
+    finally:
+        mic_sink.stop()
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+@app.websocket("/ws/cam")
+async def websocket_cam_endpoint(websocket: WebSocket):
+    """
+    Wireless HD Webcam endpoint.
+    Receives high-resolution video frames from the mobile camera and pushes
+    them to the virtual webcam DirectShow device via pyvirtualcam.
+    """
+    await websocket.accept()
+    camera_streamer.start_camera(width=1280, height=720, fps=30)
+    try:
+        await websocket.send_text(f"cam_ready,{camera_streamer.target_width},{camera_streamer.target_height},{camera_streamer.target_fps}")
+        while True:
+            # Handle either binary frame or text config command
+            message = await websocket.receive()
+            if "bytes" in message and message["bytes"]:
+                camera_streamer.push_frame_bytes(message["bytes"])
+            elif "text" in message and message["text"]:
+                text_cmd = message["text"]
+                if text_cmd.startswith("cfg,"):
+                    parts = text_cmd.split(",")
+                    if len(parts) >= 4:
+                        w, h, fps = int(parts[1]), int(parts[2]), int(parts[3])
+                        camera_streamer.start_camera(width=w, height=h, fps=fps)
+    except (WebSocketDisconnect, asyncio.CancelledError, Exception):
+        pass
+    finally:
+        camera_streamer.stop_camera()
+        try:
+            await websocket.close()
+        except Exception:
+            pass
 
 
 @app.websocket("/ws/screen")
@@ -1622,6 +1890,10 @@ async def websocket_screen_endpoint(websocket: WebSocket):
     await websocket.accept()
     screen_connections.add(websocket)
     streamer.acquire()
+
+    loop = asyncio.get_running_loop()
+    frame_event = asyncio.Event()
+    streamer.register_async_listener(loop, frame_event)
 
     # Instantly deliver the latest frame so the client renders in <10ms without a black/loading screen
     initial_jpeg, initial_id = streamer.get_latest_frame()
@@ -1639,14 +1911,17 @@ async def websocket_screen_endpoint(websocket: WebSocket):
     async def send_frames():
         last_sent_id = initial_id if initial_jpeg else -1
         last_keepalive_at = time.time()
-        loop = asyncio.get_running_loop()
         while True:
             try:
-                # Wait for the exact moment a new frame is captured (0ms latency!)
-                jpeg, frame_id = await loop.run_in_executor(
-                    None, streamer.wait_next_frame, last_sent_id, 0.8
-                )
+                # Wait for instant async frame notification (0ms delay, zero executor overhead)
+                try:
+                    await asyncio.wait_for(frame_event.wait(), timeout=0.8)
+                except asyncio.TimeoutError:
+                    pass
+                frame_event.clear()
+
                 now = time.time()
+                jpeg, frame_id = streamer.get_latest_frame()
                 if jpeg and frame_id != last_sent_id:
                     last_sent_id = frame_id
                     last_keepalive_at = now
@@ -1690,6 +1965,7 @@ async def websocket_screen_endpoint(websocket: WebSocket):
         pass
     finally:
         screen_connections.discard(websocket)
+        streamer.unregister_async_listener(frame_event)
         streamer.release()
         try:
             await websocket.close()

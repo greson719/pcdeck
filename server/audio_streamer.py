@@ -106,6 +106,15 @@ class AudioStreamer:
         """Internal non-blocking audio capture loop with keep-alive silence generator and self-healing."""
         self._last_audio_time = time.time()
         try:
+            # Boost thread priority on Windows to prevent any audio underruns or stutter
+            try:
+                import ctypes
+                thread_handle = ctypes.windll.kernel32.GetCurrentThread()
+                # THREAD_PRIORITY_HIGHEST = 2, THREAD_PRIORITY_TIME_CRITICAL = 15
+                ctypes.windll.kernel32.SetThreadPriority(thread_handle, 2)
+            except Exception:
+                pass
+
             self.pyaudio_instance = pyaudio.PyAudio()
             dev = self._find_loopback_device(self.pyaudio_instance)
             if not dev:
@@ -221,5 +230,109 @@ class AudioStreamer:
         return header
 
 
-# Global audio streamer singleton
+# ---------------------------------------------------------------------------
+# Wireless Microphone Sink (Phone Mic -> PC Virtual Audio Cable)
+# ---------------------------------------------------------------------------
+
+try:
+    import sounddevice as sd
+    _HAS_SOUNDDEVICE = True
+except ImportError:
+    sd = None
+    _HAS_SOUNDDEVICE = False
+
+
+class MicrophoneSink:
+    """
+    Receives uncompressed 16-bit 48kHz PCM audio chunks streamed from the phone
+    and plays them into a virtual audio cable (e.g. VB-Cable) so PC applications
+    (Discord, Zoom, OBS) receive them as microphone input.
+    """
+
+    def __init__(self, sample_rate: int = 48000, channels: int = 1):
+        self.sample_rate = sample_rate
+        self.channels = channels
+        self.is_active = False
+        self.out_stream = None
+        self.lock = threading.Lock()
+        self.active_device_name = "Default"
+
+    def _find_virtual_audio_device(self) -> Optional[int]:
+        """Finds virtual audio cable device index on Windows if present."""
+        if not _HAS_SOUNDDEVICE:
+            return None
+        try:
+            devices = sd.query_devices()
+            # Look for VB-Audio Cable Input, Virtual Audio, or Line 1
+            for idx, dev in enumerate(devices):
+                if dev.get('max_output_channels', 0) > 0:
+                    name = dev.get('name', '').lower()
+                    if 'cable input' in name or 'vb-audio' in name or 'virtual audio' in name:
+                        return idx
+        except Exception:
+            pass
+        return None
+
+    def start(self):
+        """Starts the virtual microphone output stream."""
+        with self.lock:
+            if self.is_active and self.out_stream:
+                return
+
+            if not _HAS_SOUNDDEVICE:
+                print("[MicrophoneSink] sounddevice not available. Operating in buffer loopback mode.")
+                self.is_active = True
+                return
+
+            try:
+                dev_idx = self._find_virtual_audio_device()
+                if dev_idx is not None:
+                    dev_info = sd.query_devices(dev_idx)
+                    self.active_device_name = dev_info.get('name', 'Virtual Audio Cable')
+                else:
+                    self.active_device_name = "Default Audio Output"
+
+                self.out_stream = sd.RawOutputStream(
+                    samplerate=self.sample_rate,
+                    channels=self.channels,
+                    dtype='int16',
+                    device=dev_idx,
+                    blocksize=480
+                )
+                self.out_stream.start()
+                self.is_active = True
+                print(f"[MicrophoneSink] Active — Routing phone microphone to: {self.active_device_name}")
+            except Exception as e:
+                print(f"[MicrophoneSink] Could not open output device ({e}). Ingesting frames in loopback mode.")
+                self.is_active = True
+
+    def stop(self):
+        """Stops the microphone stream."""
+        with self.lock:
+            self.is_active = False
+            if self.out_stream:
+                try:
+                    self.out_stream.stop()
+                    self.out_stream.close()
+                except Exception:
+                    pass
+                self.out_stream = None
+            print("[MicrophoneSink] Stopped.")
+
+    def push_pcm_bytes(self, pcm_bytes: bytes):
+        """Writes incoming raw 16-bit PCM bytes to the output device."""
+        if not pcm_bytes or not self.is_active:
+            return
+
+        with self.lock:
+            if self.out_stream:
+                try:
+                    self.out_stream.write(pcm_bytes)
+                except Exception:
+                    pass
+
+
+# Global singletons
 audio_streamer = AudioStreamer()
+mic_sink = MicrophoneSink()
+

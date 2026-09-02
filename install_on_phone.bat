@@ -1,21 +1,21 @@
 @echo off
-title Install NeonTrack APK on Phone
+title Install PCDeck APK on Phone
 echo =======================================================
-echo     Installing NeonTrack.apk to connected Android Phone
+echo     Installing PCDeck.apk to connected Android Phone
 echo =======================================================
 echo.
 echo Waiting for device with USB debugging enabled...
 echo (If prompted on your phone screen, tap "Allow USB Debugging")
 echo.
 "C:\Android\platform-tools\adb.exe" wait-for-device
-echo [+] Device connected! Installing NeonTrack.apk...
-"C:\Android\platform-tools\adb.exe" install -r -d "NeonTrack.apk"
+echo [+] Device connected! Installing PCDeck.apk...
+"C:\Android\platform-tools\adb.exe" install -r -d "PCDeck.apk"
 if %errorlevel% equ 0 (
     echo.
     echo =======================================================
-    echo [OK] SUCCESS: NeonTrack installed successfully!
+    echo [OK] SUCCESS: PCDeck installed successfully!
     echo =======================================================
-    echo Launching NeonTrack on your phone...
+    echo Launching PCDeck on your phone...
     "C:\Android\platform-tools\adb.exe" shell am start -n com.neontrack.mouse/.MainActivity
 ) else (
     echo.

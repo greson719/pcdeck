@@ -52,6 +52,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -150,6 +156,105 @@ public class MainActivity extends Activity {
 
     private PowerManager.WakeLock transferWakeLock = null;
     private WifiManager.WifiLock transferWifiLock = null;
+    private WifiManager.MulticastLock multicastLock = null;
+    private static final int DISCOVERY_PORT = 8001;
+    private long lastDiscoveryTime = 0;
+
+    public synchronized void startUdpDiscovery() {
+        long now = System.currentTimeMillis();
+        if (now - lastDiscoveryTime < 800) return; // Debounce rapid triggers
+        lastDiscoveryTime = now;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DatagramSocket socket = null;
+                try {
+                    WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    if (wm != null) {
+                        try {
+                            if (multicastLock == null) {
+                                multicastLock = wm.createMulticastLock("PCDeck:DiscoveryLock");
+                                multicastLock.setReferenceCounted(false);
+                            }
+                            if (multicastLock != null && !multicastLock.isHeld()) {
+                                multicastLock.acquire();
+                            }
+                        } catch (Exception ignored) {}
+                    }
+
+                    socket = new DatagramSocket();
+                    socket.setBroadcast(true);
+                    socket.setSoTimeout(1200);
+
+                    byte[] sendData = "PCDECK_DISCOVER".getBytes("UTF-8");
+
+                    // Collect all broadcast targets (global + active interface subnets)
+                    List<InetAddress> broadcastTargets = new ArrayList<InetAddress>();
+                    broadcastTargets.add(InetAddress.getByName("255.255.255.255"));
+
+                    try {
+                        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+                        while (interfaces != null && interfaces.hasMoreElements()) {
+                            NetworkInterface networkInterface = interfaces.nextElement();
+                            if (networkInterface.isLoopback() || !networkInterface.isUp()) continue;
+                            for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
+                                InetAddress broadcast = interfaceAddress.getBroadcast();
+                                if (broadcast != null && !broadcastTargets.contains(broadcast)) {
+                                    broadcastTargets.add(broadcast);
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
+
+                    // Broadcast discovery packet to all targets
+                    for (InetAddress target : broadcastTargets) {
+                        try {
+                            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, target, DISCOVERY_PORT);
+                            socket.send(sendPacket);
+                        } catch (Exception ignored) {}
+                    }
+
+                    // Listen for instant response (< 5ms)
+                    byte[] recvBuf = new byte[1024];
+                    DatagramPacket recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
+
+                    long listenDeadline = System.currentTimeMillis() + 1200;
+                    while (System.currentTimeMillis() < listenDeadline) {
+                        try {
+                            socket.receive(recvPacket);
+                            String message = new String(recvPacket.getData(), 0, recvPacket.getLength(), "UTF-8").trim();
+                            if (message.startsWith("PCDECK_SERVER:") || message.startsWith("PCDECK_BEACON:")) {
+                                String[] parts = message.split(":");
+                                final String serverPort = parts.length > 1 && !parts[1].isEmpty() ? parts[1] : "8000";
+                                final String serverIp = parts.length > 3 && !parts[3].isEmpty() ? parts[3] : recvPacket.getAddress().getHostAddress();
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (webView != null) {
+                                            webView.evaluateJavascript("if (window.onServerDiscovered) { window.onServerDiscovered('" + serverIp + "', '" + serverPort + "'); }", null);
+                                        }
+                                    }
+                                });
+                                break; // Instant discovery complete!
+                            }
+                        } catch (java.net.SocketTimeoutException e) {
+                            break;
+                        }
+                    }
+                } catch (Exception ignored) {
+                } finally {
+                    if (socket != null) {
+                        try { socket.close(); } catch (Exception ignored) {}
+                    }
+                    if (multicastLock != null && multicastLock.isHeld()) {
+                        try { multicastLock.release(); } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }, "PCDeck-UDP-Discover").start();
+    }
 
     private synchronized void acquireTransferLocks() {
         try {
@@ -301,6 +406,43 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean isNativeApp() {
             return true;
+        }
+
+        @JavascriptInterface
+        public void discoverServer() {
+            MainActivity.this.startUdpDiscovery();
+        }
+
+        @JavascriptInterface
+        public String getDeviceIp() {
+            try {
+                Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+                while (interfaces != null && interfaces.hasMoreElements()) {
+                    NetworkInterface iface = interfaces.nextElement();
+                    if (iface.isLoopback() || !iface.isUp()) continue;
+                    for (InterfaceAddress addr : iface.getInterfaceAddresses()) {
+                        InetAddress inet = addr.getAddress();
+                        if (inet != null && !inet.isLoopbackAddress() && inet instanceof java.net.Inet4Address) {
+                            return inet.getHostAddress();
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+            return "";
+        }
+
+        @JavascriptInterface
+        public void vibrate(long ms) {
+            try {
+                android.os.Vibrator v = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                if (v != null && v.hasVibrator()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        v.vibrate(android.os.VibrationEffect.createOneShot(Math.max(1, Math.min(500, ms)), android.os.VibrationEffect.DEFAULT_AMPLITUDE));
+                    } else {
+                        v.vibrate(Math.max(1, Math.min(500, ms)));
+                    }
+                }
+            } catch (Exception e) {}
         }
 
         @JavascriptInterface
@@ -475,7 +617,7 @@ public class MainActivity extends Activity {
                         conn.setRequestProperty("Accept-Encoding", "identity");
                         conn.setRequestProperty("User-Agent", "PCDeck/2.1");
                         conn.setConnectTimeout(15000);
-                        conn.setReadTimeout(0); // 0 = Infinite read timeout during multi-gigabyte transfers
+                        conn.setReadTimeout(30000); // 30s timeout preventing indefinite socket hangs
                         conn.connect();
 
                         int responseCode = conn.getResponseCode();
@@ -484,14 +626,14 @@ public class MainActivity extends Activity {
                         }
 
                         final long fileLength = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) ? conn.getContentLengthLong() : conn.getContentLength();
-                        input = new java.io.BufferedInputStream(conn.getInputStream(), 1048576);
+                        input = new java.io.BufferedInputStream(conn.getInputStream(), 131072);
 
                         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "PCDeck");
                         if (!dir.exists()) dir.mkdirs();
                         File targetFile = new File(dir, fileName);
 
                         try {
-                            output = new java.io.BufferedOutputStream(new FileOutputStream(targetFile), 1048576);
+                            output = new java.io.BufferedOutputStream(new FileOutputStream(targetFile), 131072);
                             writtenFile = targetFile;
                         } catch (Exception eDirect) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -504,13 +646,13 @@ public class MainActivity extends Activity {
                                 if (insertedUri == null) {
                                     throw new Exception("Cannot create download storage stream");
                                 }
-                                output = new java.io.BufferedOutputStream(getContentResolver().openOutputStream(insertedUri), 1048576);
+                                output = new java.io.BufferedOutputStream(getContentResolver().openOutputStream(insertedUri), 131072);
                             } else {
                                 throw eDirect;
                             }
                         }
 
-                        byte[] data = new byte[1048576]; // 1MB Ultra-Fast Chunk Buffer
+                        byte[] data = new byte[131072]; // 128KB Smooth High-Throughput Chunk Buffer
                         long total = 0;
                         int count;
                         long startTime = System.currentTimeMillis();
@@ -529,7 +671,7 @@ public class MainActivity extends Activity {
                                 long elapsedMs = System.currentTimeMillis() - startTime;
                                 if (expectedMs > elapsedMs) {
                                     long sleepMs = expectedMs - elapsedMs;
-                                    if (sleepMs > 0 && sleepMs <= 1000) {
+                                    if (sleepMs > 0 && sleepMs <= 500) {
                                         try { Thread.sleep(sleepMs); } catch (InterruptedException ignored) {}
                                     }
                                 }
@@ -1166,7 +1308,7 @@ public class MainActivity extends Activity {
                         }
 
                         if (inputStream != null) {
-                            inputStream = new java.io.BufferedInputStream(inputStream, 2097152);
+                            inputStream = new java.io.BufferedInputStream(inputStream, 131072);
                         }
 
                         if (fileName == null || fileName.isEmpty()) {
@@ -1208,8 +1350,8 @@ public class MainActivity extends Activity {
                                 }
                                 URL vUrl = new URL(verifyUrl);
                                 HttpURLConnection vConn = (HttpURLConnection) vUrl.openConnection();
-                                vConn.setConnectTimeout(3000);
-                                vConn.setReadTimeout(3000);
+                                vConn.setConnectTimeout(800);
+                                vConn.setReadTimeout(800);
                                 if (vConn.getResponseCode() == 200) {
                                     java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(vConn.getInputStream()));
                                     StringBuilder sb = new StringBuilder();
@@ -1263,10 +1405,10 @@ public class MainActivity extends Activity {
                         }
                         conn.setRequestProperty("User-Agent", "PCDeckPro/2.1");
                         conn.setConnectTimeout(15000);
-                        conn.setReadTimeout(0); // 0 = Infinite read timeout for large 5GB+ transfers
+                        conn.setReadTimeout(30000); // 30s timeout preventing indefinite hangs
 
-                        // Use 2MB Chunked Streaming Mode for maximum throughput without memory limits
-                        conn.setChunkedStreamingMode(2097152);
+                        // Use 128KB Chunked Streaming Mode for steady throughput without buffer bloat
+                        conn.setChunkedStreamingMode(131072);
 
                         final long initOffset = resumeOffset;
                         runOnUiThread(new Runnable() {
@@ -1279,8 +1421,8 @@ public class MainActivity extends Activity {
                             }
                         });
 
-                        outputStream = new java.io.BufferedOutputStream(conn.getOutputStream(), 2097152);
-                        byte[] buffer = new byte[2097152]; // 2MB high-throughput buffer
+                        outputStream = new java.io.BufferedOutputStream(conn.getOutputStream(), 131072);
+                        byte[] buffer = new byte[131072]; // 128KB buffer
                         long totalRead = resumeOffset;
                         int bytesRead;
                         long startTime = System.currentTimeMillis();
@@ -1300,7 +1442,7 @@ public class MainActivity extends Activity {
                                 long elapsedMs = System.currentTimeMillis() - startTime;
                                 if (expectedMs > elapsedMs) {
                                     long sleepMs = expectedMs - elapsedMs;
-                                    if (sleepMs > 0 && sleepMs <= 1000) {
+                                    if (sleepMs > 0 && sleepMs <= 500) {
                                         try { Thread.sleep(sleepMs); } catch (InterruptedException ignored) {}
                                     }
                                 }
@@ -1572,6 +1714,9 @@ public class MainActivity extends Activity {
             }
         }
 
+        // Start zero-config UDP background discovery for instant connection
+        startUdpDiscovery();
+
         // Load local bundled web assets with full UI
         webView.loadUrl(initialUrl);
     }
@@ -1601,6 +1746,8 @@ public class MainActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        webView.clearCache(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         settings.setAllowFileAccessFromFileURLs(true);
@@ -1808,8 +1955,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        startUdpDiscovery();
         if (webView != null) {
-            webView.evaluateJavascript("if(window.onStoragePermissionChanged) window.onStoragePermissionChanged();", null);
+            webView.evaluateJavascript("if(window.onAppResume) window.onAppResume(); if(window.onStoragePermissionChanged) window.onStoragePermissionChanged();", null);
         }
     }
 
