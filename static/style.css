@@ -1104,55 +1104,85 @@ header.top-nav.hidden-bar {
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
-    padding: 6px 8px 36px 8px !important;
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-    align-items: stretch !important;
-    align-content: start !important;
+    padding: 8px 12px 48px 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
   }
 
   .scroll-container > .neo-card {
-    height: 100% !important;
-    min-height: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
     margin-bottom: 0 !important;
     box-sizing: border-box !important;
     width: 100% !important;
+    max-width: 680px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
-    padding: 10px 12px !important;
-    gap: 6px !important;
+    padding: 14px 16px !important;
+    gap: 10px !important;
   }
 
   .scroll-container > .neo-card.card-full-span {
-    grid-column: 1 / -1 !important;
-    height: auto !important;
     width: 100% !important;
+    max-width: 680px !important;
+    height: auto !important;
   }
 
   .scroll-container > .neo-card > .settings-action-row,
   .scroll-container > .neo-card > .tools-control-row,
   .scroll-container > .neo-card > .quick-input-row:last-child {
-    margin-top: auto !important;
+    margin-top: 4px !important;
   }
 
   .setting-item {
-    padding: 6px 0 !important;
-    min-height: 38px !important;
+    padding: 8px 0 !important;
+    min-height: 42px !important;
+    gap: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .setting-item .item-title {
+    font-size: 0.82rem !important;
+  }
+
+  .setting-item .item-desc {
+    font-size: 0.68rem !important;
+  }
+
+  .range-box {
+    min-width: 150px !important;
+    max-width: 220px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
   }
 
   .shortcuts-deck {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
     gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .cyber-numpad-grid {
+    max-width: 380px !important;
+    margin: 4px auto !important;
+    width: 100% !important;
+    gap: 6px !important;
   }
 
   .fs-browser-container {
     display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
     gap: 8px !important;
     align-content: start !important;
     padding: 4px 4px 20px 4px !important;
+    width: 100% !important;
+    max-width: 680px !important;
   }
 
   .fs-browser-container > .empty-files-placeholder {
@@ -1160,14 +1190,29 @@ header.top-nav.hidden-bar {
   }
 
   .webcam-preview-box {
-    height: 130px !important;
-    max-height: 25vh !important;
-    margin: 6px 0 !important;
+    height: 150px !important;
+    max-height: 35vh !important;
+    margin: 6px auto !important;
+    width: 100% !important;
+    max-width: 440px !important;
   }
 
   .vu-meter-container {
     margin: 6px 0 !important;
     padding: 6px 10px !important;
+  }
+
+  /* Modals in Landscape */
+  .modal-card,
+  .pro-modal-card,
+  .onboarding-card,
+  .gp-add-modal-card {
+    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
+    max-width: min(500px, 92vw) !important;
+    padding: 14px 18px !important;
+    overflow-y: auto !important;
+    gap: 10px !important;
   }
 
   /* Trackpad Tab in Landscape */
@@ -1231,6 +1276,31 @@ header.top-nav.hidden-bar {
     z-index: 2000 !important;
   }
   .vk-key { height: 30px; font-size: 0.72rem; }
+}
+
+@media (orientation: landscape) and (min-width: 960px) {
+  .scroll-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: start !important;
+    gap: 14px !important;
+    max-width: 1080px !important;
+    margin: 0 auto !important;
+  }
+
+  .scroll-container > .neo-card {
+    max-width: 100% !important;
+  }
+
+  .scroll-container > .neo-card.card-full-span {
+    grid-column: 1 / -1 !important;
+    max-width: 100% !important;
+  }
+
+  .fs-browser-container {
+    max-width: 100% !important;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+  }
 }
 
 /* ==========================================================================
