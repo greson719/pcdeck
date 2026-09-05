@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 import shutil
 import zipfile
@@ -31,11 +31,21 @@ def sync_assets():
     src = os.path.join(ROOT, "static")
     dst = os.path.join(ROOT, "android_app", "assets")
     os.makedirs(dst, exist_ok=True)
+    ignore_exts = {".apk", ".exe", ".zip", ".aab", ".idsig", ".msix"}
+    for fname in os.listdir(dst):
+        if any(fname.lower().endswith(ext) for ext in ignore_exts):
+            try:
+                os.remove(os.path.join(dst, fname))
+                print(f"    Purged stale binary artifact from assets: {fname}")
+            except Exception:
+                pass
     for root, dirs, files in os.walk(src):
         rel = os.path.relpath(root, src)
         target_root = os.path.join(dst, rel) if rel != "." else dst
         os.makedirs(target_root, exist_ok=True)
         for f in files:
+            if any(f.lower().endswith(ext) for ext in ignore_exts):
+                continue
             s_file = os.path.join(root, f)
             d_file = os.path.join(target_root, f)
             shutil.copy2(s_file, d_file)

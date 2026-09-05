@@ -1230,7 +1230,16 @@ header.top-nav.hidden-bar {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
     gap: 10px !important;
     align-content: start !important;
-    padding: 6px 6px calc(var(--dock-height, 56px) + 20px) 6px !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    overscroll-behavior-y: contain !important;
+    overscroll-behavior-x: none !important;
+    padding: 6px 6px calc(var(--dock-height, 56px) + env(safe-area-inset-bottom, 0px) + 24px) !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
@@ -1665,6 +1674,7 @@ header.top-nav.hidden-bar {
   overflow-x: auto;
   padding: 2px 2px 4px;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x !important;
 }
 
 .fs-places-strip::-webkit-scrollbar {
@@ -1900,15 +1910,20 @@ header.top-nav.hidden-bar {
 
 /* Maximized Viewport File Browser List */
 .fs-browser-container {
-  flex: 1 1 0;
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 2px 2px calc(var(--dock-height) + env(safe-area-inset-bottom) + 16px);
-  -webkit-overflow-scrolling: touch;
+  padding: 4px 4px calc(var(--dock-height, 56px) + env(safe-area-inset-bottom, 0px) + 24px) !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  overscroll-behavior-y: contain !important;
+  overscroll-behavior-x: none !important;
+  box-sizing: border-box !important;
 }
 
 .fs-item-card {
@@ -1923,6 +1938,7 @@ header.top-nav.hidden-bar {
   gap: 6px;
   transition: transform 0.08s ease, background 0.1s ease, border-color 0.1s ease;
   user-select: none;
+  touch-action: pan-y !important;
   flex-shrink: 0;
   min-width: 0;
 }
@@ -1948,6 +1964,7 @@ header.top-nav.hidden-bar {
   flex: 1;
   min-width: 0;
   cursor: pointer;
+  touch-action: pan-y !important;
 }
 
 .fs-icon-badge {

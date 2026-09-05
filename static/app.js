@@ -3285,56 +3285,7 @@
     }
     window.setFsCardsCollapsed = setCardsCollapsed;
 
-    function handleContainerScroll(container, isPhone) {
-      if (!container) return;
-      const currentScrollTop = container.scrollTop;
-      const lastScrollTop = isPhone ? lastPhoneScrollTop : lastPcScrollTop;
-      const delta = currentScrollTop - lastScrollTop;
-
-      const activeEl = document.activeElement;
-      if (activeEl && (activeEl.id === 'fs-search-input' || activeEl.id === 'phone-fs-search-input')) {
-        return;
-      }
-
-      if (currentScrollTop <= 15) {
-        setCardsCollapsed(false);
-      } else if (delta > 8 && currentScrollTop > 35) {
-        setCardsCollapsed(true);
-      } else if (delta < -8) {
-        setCardsCollapsed(false);
-      }
-
-      if (isPhone) {
-        lastPhoneScrollTop = Math.max(0, currentScrollTop);
-      } else {
-        lastPcScrollTop = Math.max(0, currentScrollTop);
-      }
-    }
-
-    if (el.fsBrowserItems) {
-      el.fsBrowserItems.addEventListener('scroll', () => {
-        if (!scrollTicking) {
-          window.requestAnimationFrame(() => {
-            handleContainerScroll(el.fsBrowserItems, false);
-            scrollTicking = false;
-          });
-          scrollTicking = true;
-        }
-      }, { passive: true });
-    }
-
-    if (el.phoneFsBrowserItems) {
-      el.phoneFsBrowserItems.addEventListener('scroll', () => {
-        if (!scrollTicking) {
-          window.requestAnimationFrame(() => {
-            handleContainerScroll(el.phoneFsBrowserItems, true);
-            scrollTicking = false;
-          });
-          scrollTicking = true;
-        }
-      }, { passive: true });
-    }
-
+    // Explicit manual toggle for cards; no scroll-driven layout shifts during touch gestures
     if (btnFsToggleCards) {
       btnFsToggleCards.onclick = () => {
         vibrate(12);
