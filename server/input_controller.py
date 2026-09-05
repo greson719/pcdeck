@@ -67,6 +67,10 @@ VK_MAP = {
     'up': 0x26,
     'right': 0x27,
     'down': 0x28,
+    'dpad_left': 0x25,
+    'dpad_up': 0x26,
+    'dpad_right': 0x27,
+    'dpad_down': 0x28,
     'capslock': 0x14,
     'numlock': 0x90,
     'scrolllock': 0x91,
@@ -166,13 +170,41 @@ if _IS_WIN32:
     user32.SetCursorPos.restype = ctypes.wintypes.BOOL
 
     MOUSEEVENTF_VIRTUALDESK = 0x4000
+
+    # Force Windows OS kernel scheduler timer resolution from 15.6ms down to 1.0ms
+    # and elevate process priority to HIGH_PRIORITY_CLASS to eliminate preemption jitter
+    def init_low_latency_environment():
+        """Configures 1ms OS timer resolution and HIGH_PRIORITY_CLASS."""
+        if not _IS_WIN32:
+            return False
+        try:
+            ctypes.windll.winmm.timeBeginPeriod(1)
+            import atexit
+            atexit.register(ctypes.windll.winmm.timeEndPeriod, 1)
+        except Exception:
+            pass
+        try:
+            k32 = ctypes.windll.kernel32
+            k32.GetCurrentProcess.restype = ctypes.wintypes.HANDLE
+            k32.SetPriorityClass.argtypes = [ctypes.wintypes.HANDLE, ctypes.wintypes.DWORD]
+            k32.SetPriorityClass.restype = ctypes.wintypes.BOOL
+            h = k32.GetCurrentProcess()
+            k32.SetPriorityClass(h, 0x00000080)
+        except Exception:
+            pass
+        return True
+
+    init_low_latency_environment()
 else:
     MOUSEEVENTF_VIRTUALDESK = 0x4000
+    def init_low_latency_environment():
+        return False
 
 class WindowsInputController:
     """Ultra-fast, Jitter-Free Win32 input simulator with subpixel smoothing."""
 
     def __init__(self):
+        self._desktop_attached = False
         self._attach_desktop()
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -182,8 +214,8 @@ class WindowsInputController:
             except Exception:
                 pass
 
-        self.screen_width = user32.GetSystemMetrics(0)
-        self.screen_height = user32.GetSystemMetrics(1)
+        self.screen_width = user32.GetSystemMetrics(0) if user32 else 1920
+        self.screen_height = user32.GetSystemMetrics(1) if user32 else 1080
         self.is_dragging = False
 
         # Sub-pixel accumulators for ultra-smooth non-shaking mouse glide
@@ -204,29 +236,32 @@ class WindowsInputController:
         except Exception:
             pass
 
-    def _attach_desktop(self):
-        """Ensure the thread is attached to the active interactive input desktop."""
+    def _attach_desktop(self, force: bool = False):
+        """Ensure the thread is attached to the active interactive input desktop (cached)."""
+        if self._desktop_attached and not force:
+            return
         try:
             hdesk = user32.OpenInputDesktop(0, False, 0x01FF)
             if hdesk:
                 user32.SetThreadDesktop(hdesk)
+                self._desktop_attached = True
         except Exception:
             pass
 
     def _send_mouse(self, flags: int, dx: int = 0, dy: int = 0, data: int = 0):
-        """Hardware-level SendInput and mouse_event mouse event."""
-        self._attach_desktop()
+        """Hardware-level SendInput mouse event."""
         try:
             inp = INPUT()
             inp.type = INPUT_MOUSE
             inp.u.mi.dx = int(dx)
             inp.u.mi.dy = int(dy)
-            inp.u.mi.mouseData = int(data)
+            inp.u.mi.mouseData = int(data) & 0xFFFFFFFF
             inp.u.mi.dwFlags = flags
             inp.u.mi.time = 0
             inp.u.mi.dwExtraInfo = None
             res = user32.SendInput(1, ctypes.byref(inp), ctypes.sizeof(INPUT))
             if res == 0:
+                self._attach_desktop(force=True)
                 user32.mouse_event(flags, int(dx), int(dy), int(data), 0)
         except Exception:
             try:
@@ -298,13 +333,18 @@ class WindowsInputController:
         self.mouse_up(button)
 
     def scroll_at(self, norm_x: float, norm_y: float, dx: float, dy: float):
-        """Move cursor to coordinate and scroll vertical & horizontal wheel with sub-pixel accumulator."""
-        self.move_absolute(norm_x, norm_y)
+        """Move cursor to coordinate if needed, and scroll vertical & horizontal wheel with sub-pixel accumulator."""
+        w = max(1, user32.GetSystemMetrics(0))
+        h = max(1, user32.GetSystemMetrics(1))
+        target_x = int(round(max(0.0, min(1.0, float(norm_x))) * (w - 1)))
+        target_y = int(round(max(0.0, min(1.0, float(norm_y))) * (h - 1)))
+        cur_x, cur_y = self.get_cursor_pos()
+        if abs(cur_x - target_x) > 6 or abs(cur_y - target_y) > 6:
+            user32.SetCursorPos(target_x, target_y)
         self.scroll(dx, dy)
 
     def move_relative(self, dx: float, dy: float):
         """Move cursor relatively with sub-pixel accumulator to eliminate jitter."""
-        self._attach_desktop()
         self._accum_x += dx
         self._accum_y += dy
 
@@ -312,9 +352,6 @@ class WindowsInputController:
         step_y = int(self._accum_y)
 
         if step_x != 0 or step_y != 0:
-            pt = POINT_STRUCT()
-            if user32.GetCursorPos(ctypes.byref(pt)):
-                user32.SetCursorPos(int(pt.x + step_x), int(pt.y + step_y))
             self._send_mouse(MOUSEEVENTF_MOVE, step_x, step_y)
             self._accum_x -= step_x
             self._accum_y -= step_y
@@ -342,9 +379,28 @@ class WindowsInputController:
             self._send_mouse(MOUSEEVENTF_MIDDLEUP)
 
     def click(self, button: str = 'left'):
-        """Perform a single click."""
+        """Perform an ultra-low latency single click with atomic SendInput pair."""
+        button = button.lower()
+        down_flag = MOUSEEVENTF_LEFTDOWN
+        up_flag = MOUSEEVENTF_LEFTUP
+        if button == 'right':
+            down_flag, up_flag = MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP
+        elif button == 'middle':
+            down_flag, up_flag = MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP
+
+        if _IS_WIN32:
+            try:
+                inputs = (INPUT * 2)()
+                inputs[0].type = INPUT_MOUSE
+                inputs[0].u.mi.dwFlags = down_flag
+                inputs[1].type = INPUT_MOUSE
+                inputs[1].u.mi.dwFlags = up_flag
+                res = user32.SendInput(2, inputs, ctypes.sizeof(INPUT))
+                if res > 0:
+                    return
+            except Exception:
+                pass
         self.mouse_down(button)
-        time.sleep(0.01)
         self.mouse_up(button)
 
     def double_click(self, button: str = 'left'):
@@ -362,11 +418,11 @@ class WindowsInputController:
         step_x = int(self._accum_scroll_x)
 
         if step_y != 0:
-            user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, step_y, None)
+            self._send_mouse(MOUSEEVENTF_WHEEL, 0, 0, step_y)
             self._accum_scroll_y -= step_y
 
         if step_x != 0:
-            user32.mouse_event(MOUSEEVENTF_HWHEEL, 0, 0, step_x, None)
+            self._send_mouse(MOUSEEVENTF_HWHEEL, 0, 0, step_x)
             self._accum_scroll_x -= step_x
 
     def key_down(self, key_name: str):
@@ -374,20 +430,24 @@ class WindowsInputController:
         k = key_name.lower()
         if k in VK_MAP:
             vk = VK_MAP[k]
-            user32.keybd_event(vk, 0, 0, 0)
+            scan = user32.MapVirtualKeyW(vk, 0) if user32 else 0
+            user32.keybd_event(vk, scan, 0, 0)
         elif len(k) == 1:
-            vk = user32.VkKeyScanW(ord(k)) & 0xFF
-            user32.keybd_event(vk, 0, 0, 0)
+            vk = (user32.VkKeyScanW(ord(k)) & 0xFF) if user32 else 0
+            scan = user32.MapVirtualKeyW(vk, 0) if user32 else 0
+            user32.keybd_event(vk, scan, 0, 0)
 
     def key_up(self, key_name: str):
         """Release a key."""
         k = key_name.lower()
         if k in VK_MAP:
             vk = VK_MAP[k]
-            user32.keybd_event(vk, 0, KEYEVENTF_KEYUP, 0)
+            scan = user32.MapVirtualKeyW(vk, 0) if user32 else 0
+            user32.keybd_event(vk, scan, KEYEVENTF_KEYUP, 0)
         elif len(k) == 1:
-            vk = user32.VkKeyScanW(ord(k)) & 0xFF
-            user32.keybd_event(vk, 0, KEYEVENTF_KEYUP, 0)
+            vk = (user32.VkKeyScanW(ord(k)) & 0xFF) if user32 else 0
+            scan = user32.MapVirtualKeyW(vk, 0) if user32 else 0
+            user32.keybd_event(vk, scan, KEYEVENTF_KEYUP, 0)
 
     def key_press(self, key_name: str):
         """Press and release a key with virtual key mapping and unicode character fallback."""
@@ -555,7 +615,11 @@ class LinuxInputController:
         self.mouse_up(button)
 
     def scroll_at(self, norm_x: float, norm_y: float, dx: float, dy: float):
-        self.move_absolute(norm_x, norm_y)
+        cur_x, cur_y = self.get_cursor_pos()
+        target_x = int(round(float(norm_x) * (self.screen_width - 1)))
+        target_y = int(round(float(norm_y) * (self.screen_height - 1)))
+        if abs(cur_x - target_x) > 6 or abs(cur_y - target_y) > 6:
+            self.move_absolute(norm_x, norm_y)
         self.scroll(dx, dy)
 
     def move_relative(self, dx: float, dy: float):

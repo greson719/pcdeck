@@ -1,54 +1,127 @@
 /**
- * NeonTrack - Cyber-Neobrutalism Client Controller
+ * PCDeck Pro - Cyber-Neobrutalism Client Controller
  * Low-Latency PC Remote Touch Display, Universal Virtual Keyboard, In-Built PC File Manager & Anti-Jitter Trackpad
  */
 
 (function () {
   'use strict';
 
-  // Global Direct Tab Switcher (Called from HTML onclick or JS events)
+  const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+  try {
+    if (isNativeApp) {
+      document.documentElement.classList.add('is-native-app');
+    } else {
+      document.documentElement.classList.add('is-web-browser');
+    }
+  } catch (e) {}
+
+  // Global PCDeck Icon Registry & Helper Function
+  const PC_DECK_ICONS = {
+    lock: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+    mic: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+    gamepad: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>`,
+    camera: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`,
+    keyc: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>`,
+    insert: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+    home: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    pageUp: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/><polyline points="18 9 12 3 6 9"/></svg>`,
+    pageDown: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/><polyline points="6 15 12 21 18 15"/></svg>`,
+    end: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 19 12"/><polyline points="13 6 19 12 13 18"/><line x1="21" y1="6" x2="21" y2="18"/></svg>`,
+    fileUp: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>`,
+    sendFiles: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><path d="M8 16l4-4 4 4"/><line x1="12" y1="12" x2="12" y2="20"/></svg>`,
+    folder: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></svg>`,
+    pc: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+    phone: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
+    mute: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
+    volDown: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><line x1="18" y1="12" x2="22" y2="12"/></svg>`,
+    volUp: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`,
+    showDesktop: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="13" x2="22" y2="13"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>`,
+    switchApp: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="13" height="13" rx="2"/><path d="M4 17V5a2 2 0 0 1 2-2h12"/></svg>`,
+    screenshot: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M20 9V5a1 1 0 0 0-1-1h-4"/><path d="M4 15v4a1 1 0 0 0 1 1h4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>`,
+    taskManager: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 12h2l2-4 3 8 2-4h2"/></svg>`,
+    closeWindow: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>`,
+    send: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+    qrScanner: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M16 4h3a1 1 0 0 1 1 1v3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 20H5a1 1 0 0 1-1-1v-3"/><rect x="7" y="7" width="3" height="3" rx="0.5"/><rect x="14" y="7" width="3" height="3" rx="0.5"/><rect x="7" y="14" width="3" height="3" rx="0.5"/><path d="M14 14h3v3h-3z"/></svg>`,
+    cameraLoading: `<svg class="deck-icon deck-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>`,
+    file: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
+    image: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+    video: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+    wifi: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`,
+    settings: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    close: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+  };
+
+  /**
+   * Normalizes input key aliases and returns the matching SVG markup.
+   */
+  function getIcon(name) {
+    const normalized = String(name).trim().toLowerCase().replace(/[\s\-_]/g, '');
+    const aliasMap = {
+      lock: 'lock',
+      mic: 'mic',
+      mick: 'mic',
+      gamepad: 'gamepad',
+      camera: 'camera',
+      keyc: 'keyc',
+      keys: 'keyc',
+      keyboard: 'keyc',
+      insert: 'insert',
+      home: 'home',
+      gageup: 'pageUp',
+      pageup: 'pageUp',
+      pagedown: 'pageDown',
+      end: 'end',
+      fileup: 'fileUp',
+      sendfiles: 'sendFiles',
+      folder: 'folder',
+      pc: 'pc',
+      phone: 'phone',
+      mure: 'mute',
+      mute: 'mute',
+      volminus: 'volDown',
+      voldown: 'volDown',
+      volplus: 'volUp',
+      volup: 'volUp',
+      showdesktop: 'showDesktop',
+      switchapp: 'switchApp',
+      screenshot: 'screenshot',
+      screenshotm: 'screenshot',
+      taskmanager: 'taskManager',
+      closewindow: 'closeWindow',
+      send: 'send',
+      qrscanner: 'qrScanner',
+      cameraloading: 'cameraLoading',
+      file: 'file',
+      image: 'image',
+      video: 'video',
+      wifi: 'wifi',
+      settings: 'settings',
+      close: 'close'
+    };
+
+    const key = aliasMap[normalized] || name;
+    return PC_DECK_ICONS[key] || PC_DECK_ICONS.pc;
+  }
+
+  window.PC_DECK_ICONS = PC_DECK_ICONS;
+  window.getIcon = getIcon;
+  window.getDeckIcon = getIcon;
+
+  window.switchTab = function(targetId) {
+    if (typeof switchTab === 'function') {
+      switchTab(targetId);
+    }
+  };
+
   window.switchTabNav = function(tabEl, targetId) {
-    if (window.navigator && window.navigator.vibrate) {
-      try { window.navigator.vibrate(15); } catch(e) {}
-    }
-    state.activeTab = targetId;
-    document.body.classList.toggle('on-screen-tab', targetId === 'tab-screen');
-    if (targetId !== 'tab-screen' && typeof window.closeScreenTypeBar === 'function') {
-      window.closeScreenTypeBar();
-    }
-
-    const allTabs = document.querySelectorAll('.dock-tab');
-    allTabs.forEach(t => {
-      if (t.dataset.target === targetId || t === tabEl) {
-        t.classList.add('active');
-      } else {
-        t.classList.remove('active');
-      }
-    });
-
-    const allViews = document.querySelectorAll('.tab-view');
-    allViews.forEach(v => {
-      if (v.id === targetId) {
-        v.classList.add('active');
-      } else {
-        v.classList.remove('active');
-      }
-    });
-
-    // Update Titlebar Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
-    if (typeof window.updateTitlebarActions === 'function') {
-      window.updateTitlebarActions(targetId);
-    }
-
-    // If switched to files tab, refresh directory listing
-    if (targetId === 'tab-files' && typeof window.loadFsPlacesGlobal === 'function') {
-      window.loadFsPlacesGlobal();
+    if (typeof switchTab === 'function') {
+      switchTab(targetId);
     }
   };
 
   // --- Configuration & Default State ---
   const state = {
-    serverHost: window.location.hostname || '127.0.0.1',
+    serverHost: (window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '',
     serverPort: window.location.port || '8000',
     wsUrl: '',
     screenWsUrl: '',
@@ -61,7 +134,7 @@
     invertScroll: false,
     hapticsEnabled: true,
     wakelockEnabled: true,
-    autoAudioStream: true,
+    autoAudioStream: false,
     pinchZoomEnabled: true,
     // Screen stream encoder settings, pushed to the server as "cfg,quality,scale,fps".
     // The server clamps fps to 10-60, so 60 is the effective maximum.
@@ -78,6 +151,7 @@
     gamepadHudEnabled: false,
     gamepadHudActive: false,
     gamepadHudEditing: false,
+    gamepadDriverInstalled: false,
     wakeLockObj: null,
     // Mouse Smoothing & Anti-Jitter Filter
     smoothDx: 0,
@@ -312,7 +386,7 @@
     }
     toastTimer = setTimeout(() => {
       el.toastMsg.classList.remove('show');
-    }, 2500);
+    }, 1700);
   }
 
   // --- Haptic Feedback ---
@@ -352,6 +426,10 @@
     if (clean.includes('?')) {
       try {
         const u = new URL(clean.startsWith('http') ? clean : `http://${clean}`);
+        const tok = u.searchParams.get('token');
+        if (tok) {
+          try { localStorage.setItem('pcdeck_token', tok.trim()); } catch (e) {}
+        }
         const ipParam = u.searchParams.get('ip');
         if (ipParam) clean = ipParam;
         else if (u.hostname) return { host: u.hostname, port: u.port || '8000' };
@@ -373,17 +451,25 @@
   function loadSettings() {
     try {
       const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
+      const getPref = (key) => localStorage.getItem('pcdeck_' + key) ?? localStorage.getItem('neontrack_' + key);
+
+      // 0. Auto-derive or load Server IP & Pairing Token
       const urlParams = new URLSearchParams(window.location.search);
-      const queryIp = urlParams.get('ip');
+      const queryIp = urlParams.get('ip') || urlParams.get('connect');
+      const queryToken = urlParams.get('token');
+      if (queryToken) {
+        try { localStorage.setItem('pcdeck_token', queryToken); } catch (e) {}
+      }
 
       if (queryIp) {
+        // Deep link with ?ip=192.168.x.x:8000
         const parsed = parseHostPort(queryIp);
         if (parsed) {
           state.serverHost = parsed.host;
           state.serverPort = parsed.port;
           if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
           if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
-          localStorage.setItem('neontrack_ip', `${state.serverHost}:${state.serverPort}`);
+          localStorage.setItem('pcdeck_ip', `${state.serverHost}:${state.serverPort}`);
           localStorage.setItem('pcdeck_onboarding_completed', 'true');
         }
       } else if (isHttp) {
@@ -392,10 +478,10 @@
         state.serverPort = window.location.port || '8000';
         if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
         if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
-        localStorage.setItem('neontrack_ip', `${state.serverHost}:${state.serverPort}`);
+        localStorage.setItem('pcdeck_ip', `${state.serverHost}:${state.serverPort}`);
         localStorage.setItem('pcdeck_onboarding_completed', 'true');
       } else {
-        const savedIp = localStorage.getItem('neontrack_ip');
+        const savedIp = getPref('ip');
         if (savedIp) {
           const parsed = parseHostPort(savedIp);
           if (parsed) {
@@ -407,7 +493,7 @@
         }
       }
 
-      const cursor = localStorage.getItem('neontrack_cursor_speed');
+      const cursor = getPref('cursor_speed');
       if (cursor) {
         state.cursorSpeed = parseFloat(cursor);
         if (el.settingCursorSpeed) el.settingCursorSpeed.value = cursor;
@@ -420,7 +506,7 @@
         if (el.btnSpeedQuick) el.btnSpeedQuick.textContent = '1.0x';
       }
 
-      const scroll = localStorage.getItem('neontrack_scroll_speed');
+      const scroll = getPref('scroll_speed');
       if (scroll) {
         state.scrollSpeed = parseFloat(scroll);
         if (el.settingScrollSpeed) el.settingScrollSpeed.value = scroll;
@@ -431,45 +517,45 @@
         if (el.valScrollSpeed) el.valScrollSpeed.textContent = '1.4x';
       }
 
-      const zoomSens = localStorage.getItem('neontrack_zoom_sens');
+      const zoomSens = getPref('zoom_sens');
       if (zoomSens) {
         state.zoomSens = parseFloat(zoomSens);
         if (el.settingZoomSens) el.settingZoomSens.value = zoomSens;
         if (el.valZoomSens) el.valZoomSens.textContent = zoomSens + 'x';
       }
 
-      const pinch = localStorage.getItem('neontrack_pinch_zoom');
-      if (pinch !== null) {
+      const pinch = getPref('pinch_zoom');
+      if (pinch !== null && pinch !== undefined) {
         state.pinchZoomEnabled = pinch === 'true';
         if (el.settingPinchZoom) el.settingPinchZoom.checked = state.pinchZoomEnabled;
       }
 
-      const accel = localStorage.getItem('neontrack_accel');
-      if (accel !== null) {
+      const accel = getPref('accel');
+      if (accel !== null && accel !== undefined) {
         state.smoothAccel = accel === 'true';
         if (el.settingAccel) el.settingAccel.checked = state.smoothAccel;
       }
 
-      const invert = localStorage.getItem('neontrack_invert_scroll');
-      if (invert !== null) {
+      const invert = getPref('invert_scroll');
+      if (invert !== null && invert !== undefined) {
         state.invertScroll = invert === 'true';
         if (el.settingInvertScroll) el.settingInvertScroll.checked = state.invertScroll;
       }
 
-      const haptics = localStorage.getItem('neontrack_haptics');
-      if (haptics !== null) {
+      const haptics = getPref('haptics');
+      if (haptics !== null && haptics !== undefined) {
         state.hapticsEnabled = haptics === 'true';
         if (el.settingHaptics) el.settingHaptics.checked = state.hapticsEnabled;
       }
 
-      const wakelock = localStorage.getItem('neontrack_wakelock');
-      if (wakelock !== null) {
+      const wakelock = getPref('wakelock');
+      if (wakelock !== null && wakelock !== undefined) {
         state.wakelockEnabled = wakelock === 'true';
         if (el.settingWakelock) el.settingWakelock.checked = state.wakelockEnabled;
       }
 
-      const hudEnabled = localStorage.getItem('neontrack_gamepad_hud_enabled');
-      if (hudEnabled !== null) {
+      const hudEnabled = getPref('gamepad_hud_enabled');
+      if (hudEnabled !== null && hudEnabled !== undefined) {
         state.gamepadHudEnabled = hudEnabled === 'true';
         if (el.settingGamepadHud) el.settingGamepadHud.checked = state.gamepadHudEnabled;
       } else {
@@ -477,26 +563,26 @@
         if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
       }
 
-      const autoAudio = localStorage.getItem('neontrack_auto_audio');
-      if (autoAudio !== null) {
+      const autoAudio = getPref('auto_audio');
+      if (autoAudio !== null && autoAudio !== undefined) {
         state.autoAudioStream = autoAudio === 'true';
         if (el.settingAutoAudio) el.settingAutoAudio.checked = state.autoAudioStream;
       } else {
-        state.autoAudioStream = true;
-        if (el.settingAutoAudio) el.settingAutoAudio.checked = true;
+        state.autoAudioStream = false;
+        if (el.settingAutoAudio) el.settingAutoAudio.checked = false;
       }
 
-      const savedFps = localStorage.getItem('neontrack_stream_fps');
-      if (savedFps !== null) {
+      const savedFps = getPref('stream_fps');
+      if (savedFps !== null && savedFps !== undefined) {
         const parsed = parseInt(savedFps, 10);
         if (parsed === 30 || parsed === 60) state.streamFps = parsed;
       }
 
-      const savedQuality = localStorage.getItem('neontrack_stream_quality');
-      if (savedQuality !== null) state.streamQuality = parseInt(savedQuality, 10);
-      const savedScale = localStorage.getItem('neontrack_stream_scale');
-      if (savedScale !== null) state.streamScale = parseFloat(savedScale);
-      const savedAutoMode = localStorage.getItem('neontrack_stream_auto_mode');
+      const savedQuality = getPref('stream_quality');
+      if (savedQuality !== null && savedQuality !== undefined) state.streamQuality = parseInt(savedQuality, 10);
+      const savedScale = getPref('stream_scale');
+      if (savedScale !== null && savedScale !== undefined) state.streamScale = parseFloat(savedScale);
+      const savedAutoMode = getPref('stream_auto_mode');
       if (savedAutoMode) state.autoQualityMode = savedAutoMode;
 
       const selClarity = document.getElementById('setting-stream-clarity');
@@ -504,7 +590,7 @@
         selClarity.value = state.autoQualityMode || 'auto';
       }
 
-      const savedSpeed = localStorage.getItem('neontrack_transfer_speed');
+      const savedSpeed = getPref('transfer_speed');
       if (savedSpeed === 'turbo' || savedSpeed === 'standard') {
         state.transferSpeed = savedSpeed;
       }
@@ -513,7 +599,7 @@
         selSpeed.value = state.transferSpeed || 'standard';
       }
 
-      const titlebarHidden = localStorage.getItem('neontrack_titlebar_hidden');
+      const titlebarHidden = getPref('titlebar_hidden');
       if (titlebarHidden === 'true') {
         state.titleBarHidden = true;
         if (el.topNav) el.topNav.classList.add('hidden-bar');
@@ -526,23 +612,23 @@
 
   function saveAllSettings(showToastNotify = true) {
     try {
-      localStorage.setItem('neontrack_ip', `${state.serverHost}:${state.serverPort}`);
-      localStorage.setItem('neontrack_cursor_speed', state.cursorSpeed.toString());
-      localStorage.setItem('neontrack_scroll_speed', state.scrollSpeed.toString());
-      localStorage.setItem('neontrack_zoom_sens', state.zoomSens.toString());
-      localStorage.setItem('neontrack_pinch_zoom', state.pinchZoomEnabled.toString());
-      localStorage.setItem('neontrack_accel', state.smoothAccel.toString());
-      localStorage.setItem('neontrack_invert_scroll', state.invertScroll.toString());
-      localStorage.setItem('neontrack_haptics', state.hapticsEnabled.toString());
-      localStorage.setItem('neontrack_wakelock', state.wakelockEnabled.toString());
-      localStorage.setItem('neontrack_gamepad_hud_enabled', state.gamepadHudEnabled.toString());
-      localStorage.setItem('neontrack_auto_audio', state.autoAudioStream.toString());
-      localStorage.setItem('neontrack_stream_fps', state.streamFps.toString());
-      localStorage.setItem('neontrack_stream_quality', state.streamQuality.toString());
-      localStorage.setItem('neontrack_stream_scale', state.streamScale.toString());
-      localStorage.setItem('neontrack_stream_auto_mode', state.autoQualityMode || 'auto');
-      localStorage.setItem('neontrack_transfer_speed', state.transferSpeed || 'standard');
-      localStorage.setItem('neontrack_titlebar_hidden', state.titleBarHidden.toString());
+      localStorage.setItem('pcdeck_ip', `${state.serverHost}:${state.serverPort}`);
+      localStorage.setItem('pcdeck_cursor_speed', state.cursorSpeed.toString());
+      localStorage.setItem('pcdeck_scroll_speed', state.scrollSpeed.toString());
+      localStorage.setItem('pcdeck_zoom_sens', state.zoomSens.toString());
+      localStorage.setItem('pcdeck_pinch_zoom', state.pinchZoomEnabled.toString());
+      localStorage.setItem('pcdeck_accel', state.smoothAccel.toString());
+      localStorage.setItem('pcdeck_invert_scroll', state.invertScroll.toString());
+      localStorage.setItem('pcdeck_haptics', state.hapticsEnabled.toString());
+      localStorage.setItem('pcdeck_wakelock', state.wakelockEnabled.toString());
+      localStorage.setItem('pcdeck_gamepad_hud_enabled', state.gamepadHudEnabled.toString());
+      localStorage.setItem('pcdeck_auto_audio', state.autoAudioStream.toString());
+      localStorage.setItem('pcdeck_stream_fps', state.streamFps.toString());
+      localStorage.setItem('pcdeck_stream_quality', state.streamQuality.toString());
+      localStorage.setItem('pcdeck_stream_scale', state.streamScale.toString());
+      localStorage.setItem('pcdeck_stream_auto_mode', state.autoQualityMode || 'auto');
+      localStorage.setItem('pcdeck_transfer_speed', state.transferSpeed || 'standard');
+      localStorage.setItem('pcdeck_titlebar_hidden', state.titleBarHidden.toString());
 
       if (showToastNotify) {
         showToast('All Preferences Saved!', 'success', '💾');
@@ -564,7 +650,7 @@
     state.hapticsEnabled = true;
     state.wakelockEnabled = true;
     state.gamepadHudEnabled = false;
-    state.autoAudioStream = true;
+    state.autoAudioStream = false;
     state.titleBarHidden = false;
     if (el.topNav) el.topNav.classList.remove('hidden-bar');
     if (el.btnUnhideTitlebar) el.btnUnhideTitlebar.style.display = 'none';
@@ -634,6 +720,9 @@
     // 1-Finger and 2-Finger Touch State Engine
     let isScrolling = false;
     let isLongPressDrag = false;
+    let touchAnchorNormX = 0.5;
+    let touchAnchorNormY = 0.5;
+    let scrollCursorAnchored = false;
     let twoFingerActive = false;
     let twoFingerStartTime = 0;
     let twoFingerStartDist = 0;
@@ -667,13 +756,13 @@
       if (state.screenMode === 'mouse') {
         // Virtual Cursor Trackpad Mode: relative move
         if (pendingRelDx !== 0 || pendingRelDy !== 0) {
-          sendCommand(`m,${pendingRelDx.toFixed(1)},${pendingRelDy.toFixed(1)}`);
+          sendBinaryMoveRel(pendingRelDx, pendingRelDy);
           pendingRelDx = 0;
           pendingRelDy = 0;
         }
       } else {
         // Direct Touch Mode: absolute move
-        sendScreenCommand(`a,${pendingNormX.toFixed(4)},${pendingNormY.toFixed(4)}`);
+        sendBinaryMoveAbs(pendingNormX, pendingNormY);
       }
     }
 
@@ -729,6 +818,7 @@
       touchActive = true;
       isScrolling = false;
       isLongPressDrag = false;
+      scrollCursorAnchored = false;
       const touch = e.touches[0];
       touchStartX = lastX = touch.clientX;
       touchStartY = lastY = touch.clientY;
@@ -737,6 +827,8 @@
       touchHistory = [{ time: touchStartTime, x: touch.clientX, y: touch.clientY }];
 
       const norm = getNormalizedCoords(touch.clientX, touch.clientY);
+      touchAnchorNormX = norm.x;
+      touchAnchorNormY = norm.y;
       pendingNormX = norm.x;
       pendingNormY = norm.y;
       pendingRelDx = 0;
@@ -753,7 +845,7 @@
             showToast('Drag & Move Locked ✊ (Move to drag, release to drop)', 'info', '✊');
             const curNorm = getNormalizedCoords(lastX, lastY);
             // Move cursor to position and press down left mouse button on PC
-            sendScreenCommand(`td,${curNorm.x.toFixed(4)},${curNorm.y.toFixed(4)},left`);
+            sendBinaryTouchDown(curNorm.x, curNorm.y, 'left');
           }
         }
       }, 350);
@@ -805,7 +897,7 @@
       // If in Long-Press Drag Mode: move the file / item / window / selection on PC!
       if (isLongPressDrag) {
         const norm = getNormalizedCoords(touch.clientX, touch.clientY);
-        sendScreenCommand(`tm,${norm.x.toFixed(4)},${norm.y.toFixed(4)}`);
+        sendBinaryTouchMove(norm.x, norm.y);
         if (now - lastTrailTime > 40) {
           lastTrailTime = now;
           spawnTouchRipple(touch.clientX, touch.clientY, 'trail');
@@ -829,30 +921,37 @@
           requestAnimationFrame(flushScreenMove);
         }
       } else {
-        // Direct Touch Mode: 1-Finger Drag = Targeted 1:1 Smart Scroll at Touch Position!
-        if (totalDist > 7 || isScrolling) {
+        // Direct Mobile Touch 1:1 Scroll Drag Physics
+        if (totalDist > 7) {
           isScrolling = true;
-          const norm = getNormalizedCoords(touch.clientX, touch.clientY);
+
+          // Anchor the PC mouse cursor once at the initial touch point:
+          // 1. Keeps scroll focus strictly on the target list in Windows File Explorer (no treeview/header drift).
+          // 2. Eliminates hover lag, link flickers, and selection interrupts in web browsers.
+          if (!scrollCursorAnchored) {
+            scrollCursorAnchored = true;
+            sendBinaryMoveAbs(touchAnchorNormX, touchAnchorNormY);
+          }
+
           const rect = el.screenCanvas.getBoundingClientRect();
           const canvasH = (el.screenCanvas.height && el.screenCanvas.height > 0) ? el.screenCanvas.height : 1080;
           const canvasW = (el.screenCanvas.width && el.screenCanvas.width > 0) ? el.screenCanvas.width : 1920;
           const rectH = (rect && rect.height > 0) ? rect.height : 360;
           const rectW = (rect && rect.width > 0) ? rect.width : 640;
-
           const effectiveZoom = (state.zoomScale && state.zoomScale > 0.1) ? state.zoomScale : 1.0;
-
-          // True 1:1 Physical PC Screen Tracking:
-          // Matches native mobile touch scrolling in folders, browsers, and documents.
           const scrollFactor = state.invertScroll ? -1 : 1;
-          const scrollMultiplier = 3.5;
+
+          // 1:1 Physical Screen Tracking:
+          // In Windows & Chromium, 120 wheel delta = ~96-100 PC pixels.
+          // Translating mobile touch pixels to PC canvas pixels * 1.25 yields exact 1:1 physical finger tracking.
           const scaleY = (canvasH / rectH) / effectiveZoom;
           const scaleX = (canvasW / rectW) / effectiveZoom;
 
-          const wheelDy = dy * scaleY * state.scrollSpeed * scrollFactor * scrollMultiplier;
-          const wheelDx = dx * scaleX * state.scrollSpeed * scrollFactor * scrollMultiplier;
+          const wheelDy = dy * scaleY * 1.25 * state.scrollSpeed * scrollFactor;
+          const wheelDx = dx * scaleX * 1.25 * state.scrollSpeed * scrollFactor;
 
-          if (Math.abs(wheelDy) >= 0.2 || Math.abs(wheelDx) >= 0.2) {
-            sendScreenCommand(`ts,${norm.x.toFixed(4)},${norm.y.toFixed(4)},${wheelDx.toFixed(1)},${wheelDy.toFixed(1)}`);
+          if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+            sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
           }
         }
       }
@@ -890,11 +989,11 @@
       if (isLongPressDrag) {
         isLongPressDrag = false;
         const norm = getNormalizedCoords(lastX, lastY);
-        sendScreenCommand(`tu,${norm.x.toFixed(4)},${norm.y.toFixed(4)},left`);
+        sendBinaryTouchUp(norm.x, norm.y, 'left');
 
         if (moveDist < 12) {
           // Held in place without dragging -> Trigger Right-Click Context Menu!
-          sendScreenCommand('c,right');
+          sendBinaryClick('right');
           spawnTouchRipple(lastX, lastY, 'right');
           showToast('Right Click 🖱️', 'success', '🖱️');
           vibrate(30);
@@ -925,6 +1024,7 @@
       if (isScrolling || moveDist > 14) {
         const wasScrolling = isScrolling;
         isScrolling = false;
+        scrollCursorAnchored = false;
 
         // Engage Kinetic Momentum Glide if flicked with velocity (> 0.35 px/ms)
         if (wasScrolling && (Math.abs(vy) > 0.35 || Math.abs(vx) > 0.35) && state.screenMode !== 'mouse') {
@@ -940,7 +1040,6 @@
 
           let momentumVy = vy;
           let momentumVx = vx;
-          let lastNorm = getNormalizedCoords(lastX, lastY);
           let lastMomentumTime = performance.now();
 
           const stepMomentum = (curTime) => {
@@ -948,20 +1047,20 @@
             const dt = Math.min(32, curTime - lastMomentumTime);
             lastMomentumTime = curTime;
 
-            // Exponential friction decay (smooth mobile deceleration curve)
-            const friction = Math.pow(0.92, dt / 16.67);
+            // Smooth exponential deceleration curve
+            const friction = Math.pow(0.93, dt / 16.67);
             momentumVy *= friction;
             momentumVx *= friction;
 
             const stepDy = momentumVy * dt;
             const stepDx = momentumVx * dt;
 
-            const scrollMultiplier = 3.5;
-            const wheelDy = stepDy * scaleY * state.scrollSpeed * scrollFactor * scrollMultiplier;
-            const wheelDx = stepDx * scaleX * state.scrollSpeed * scrollFactor * scrollMultiplier;
+            // 1:1 Physical kinetic momentum
+            const wheelDy = stepDy * scaleY * 1.25 * state.scrollSpeed * scrollFactor;
+            const wheelDx = stepDx * scaleX * 1.25 * state.scrollSpeed * scrollFactor;
 
-            if (Math.abs(wheelDy) >= 0.2 || Math.abs(wheelDx) >= 0.2) {
-              sendScreenCommand(`ts,${lastNorm.x.toFixed(4)},${lastNorm.y.toFixed(4)},${wheelDx.toFixed(1)},${wheelDy.toFixed(1)}`);
+            if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+              sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
             }
 
             if (Math.abs(momentumVy) > 0.04 || Math.abs(momentumVx) > 0.04) {
@@ -987,8 +1086,8 @@
           lastTapTime = 0;
           spawnTouchRipple(lastX, lastY, 'double');
           const norm = getNormalizedCoords(lastX, lastY);
-          sendScreenCommand(`a,${norm.x.toFixed(4)},${norm.y.toFixed(4)}`);
-          sendScreenCommand('c,double');
+          sendBinaryMoveAbs(norm.x, norm.y);
+          sendBinaryClick('double');
           vibrate(30);
           showToast('Double Click (Open/Run)', 'success', '🖱️');
         } else {
@@ -1001,15 +1100,15 @@
           spawnTouchRipple(lastX, lastY, state.screenMode === 'rclick' ? 'right' : 'tap');
 
           const norm = getNormalizedCoords(lastX, lastY);
-          sendScreenCommand(`a,${norm.x.toFixed(4)},${norm.y.toFixed(4)}`);
+          sendBinaryMoveAbs(norm.x, norm.y);
 
           if (state.screenMode === 'rclick') {
-            sendScreenCommand('c,right');
+            sendBinaryClick('right');
             state.screenMode = 'touch';
             if (el.toolRclickStatus) el.toolRclickStatus.textContent = 'Next Tap: Normal';
             showToast('Right Click 🖱️', 'success', '🖱️');
           } else {
-            sendScreenCommand('c,left');
+            sendBinaryClick('left');
           }
         }
       }
@@ -1047,11 +1146,20 @@
   }
 
   // Global handler called when PC server is discovered via native UDP or subnet scan
-  window.onServerDiscovered = function(discoveredHost, discoveredPort) {
+  window.onServerDiscovered = function(discoveredHost, discoveredPort, discoveredToken) {
     if (!discoveredHost || typeof discoveredHost !== 'string') return;
     const cleanHost = discoveredHost.trim();
     const cleanPort = (discoveredPort && typeof discoveredPort === 'string' ? discoveredPort.trim() : '8000') || '8000';
     if (!cleanHost || cleanHost === '127.0.0.1' || cleanHost === '0.0.0.0') return;
+
+    if (discoveredToken && typeof discoveredToken === 'string') {
+      try { localStorage.setItem('pcdeck_token', discoveredToken.trim()); } catch (e) {}
+    }
+
+    // Guard: If already successfully connected to this exact server, do not reconnect or flicker status!
+    if (state.connected && mainWs && mainWs.readyState === WebSocket.OPEN && state.serverHost === cleanHost && state.serverPort === cleanPort) {
+      return;
+    }
 
     const wasDifferent = (state.serverHost !== cleanHost || state.serverPort !== cleanPort);
 
@@ -1059,17 +1167,17 @@
     state.serverPort = cleanPort;
     if (el.modalIpInput) el.modalIpInput.value = `${cleanHost}:${cleanPort}`;
     if (el.settingsIpInput) el.settingsIpInput.value = `${cleanHost}:${cleanPort}`;
-    localStorage.setItem('neontrack_ip', `${cleanHost}:${cleanPort}`);
+    localStorage.setItem('pcdeck_ip', `${cleanHost}:${cleanPort}`);
     localStorage.setItem('pcdeck_onboarding_completed', 'true');
 
     if (el.connectModal && el.connectModal.classList.contains('show')) {
       el.connectModal.classList.remove('show');
     }
 
-    // If not connected or was pointing to stale host, connect immediately (< 10ms)
+    // Only force reconnect if host changed, or connect if disconnected
     if (!state.connected || wasDifferent) {
       clearWsConnectTimeout();
-      connect(true);
+      connect(wasDifferent);
     }
   };
 
@@ -1096,13 +1204,18 @@
       if (window.AndroidApp && typeof window.AndroidApp.getDeviceIp === 'function') {
         try { deviceIp = window.AndroidApp.getDeviceIp(); } catch (e) {}
       }
+      let gatewayIp = '';
+      if (window.AndroidApp && typeof window.AndroidApp.getGatewayIp === 'function') {
+        try { gatewayIp = window.AndroidApp.getGatewayIp(); } catch (e) {}
+      }
 
-      const saved = localStorage.getItem('neontrack_ip');
+      const saved = localStorage.getItem('pcdeck_ip') || localStorage.getItem('neontrack_ip');
       if (saved) {
         const p = parseHostPort(saved);
         if (p) candidates.add(p.host);
       }
       if (state.serverHost) candidates.add(state.serverHost);
+      if (gatewayIp) candidates.add(gatewayIp);
 
       // High-priority hotspot and router gateways
       const priorityIps = [
@@ -1112,17 +1225,25 @@
         '192.168.0.1',    // Router Gateway
         '192.168.1.100',  // Common DHCP PC IP
         '192.168.0.100',
-        '192.168.1.2',
-        '192.168.0.2',
         '10.0.0.1',
-        '10.0.0.2',
       ];
       priorityIps.forEach(ip => candidates.add(ip));
 
       // Derive subnet /24 ranges to sweep
       const subnetsToSweep = new Set();
+      if (window.AndroidApp && typeof window.AndroidApp.getAllSubnets === 'function') {
+        try {
+          const subs = JSON.parse(window.AndroidApp.getAllSubnets());
+          if (Array.isArray(subs)) {
+            subs.forEach(s => { if (s && typeof s === 'string' && s.includes('.')) subnetsToSweep.add(s); });
+          }
+        } catch (e) {}
+      }
       if (deviceIp && deviceIp.includes('.')) {
         subnetsToSweep.add(deviceIp.substring(0, deviceIp.lastIndexOf('.')));
+      }
+      if (gatewayIp && gatewayIp.includes('.')) {
+        subnetsToSweep.add(gatewayIp.substring(0, gatewayIp.lastIndexOf('.')));
       }
       if (state.serverHost && state.serverHost.includes('.')) {
         subnetsToSweep.add(state.serverHost.substring(0, state.serverHost.lastIndexOf('.')));
@@ -1141,7 +1262,47 @@
         subnetsToSweep.add('192.168.0');
       }
 
-      const fullTargetList = Array.from(candidates);
+      const port = state.serverPort || '8000';
+
+      // 1. Ultra-fast probe of candidate list first (< 100ms)
+      const initialCandidates = Array.from(candidates);
+      const candPromises = initialCandidates.map(ip => {
+        return new Promise(resolve => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => { controller.abort(); resolve(null); }, 300);
+          fetch(`http://${ip}:${port}/api/ping`, {
+            signal: controller.signal,
+            mode: 'cors',
+            cache: 'no-store',
+          })
+            .then(r => r.json())
+            .then(data => {
+              clearTimeout(timer);
+              if (data && data.status === 'ok' && (data.app === 'PCDeck' || data.name)) {
+                if (data.token) {
+                  try { localStorage.setItem('pcdeck_token', data.token.trim()); } catch (e) {}
+                }
+                resolve({ ip: data.ip || ip, port: (data.port ? data.port.toString() : port), token: data.token });
+              } else {
+                resolve(null);
+              }
+            })
+            .catch(() => {
+              clearTimeout(timer);
+              resolve(null);
+            });
+        });
+      });
+
+      const candResults = await Promise.all(candPromises);
+      const candMatch = candResults.find(r => r !== null);
+      if (candMatch) {
+        window.onServerDiscovered(candMatch.ip, candMatch.port, candMatch.token);
+        return;
+      }
+
+      // 2. Parallel sweep across all identified physical subnets in batches of 32
+      const fullTargetList = [];
       for (const subnet of subnetsToSweep) {
         for (let i = 1; i <= 254; i++) {
           const ip = `${subnet}.${i}`;
@@ -1152,9 +1313,6 @@
       }
 
       let found = false;
-      const port = state.serverPort || '8000';
-
-      // Sweep in concurrent batches of 32 for maximum speed (< 250ms)
       const BATCH_SIZE = 32;
       for (let i = 0; i < fullTargetList.length && !found && !state.connected; i += BATCH_SIZE) {
         const batch = fullTargetList.slice(i, i + BATCH_SIZE);
@@ -1164,7 +1322,7 @@
             const timer = setTimeout(() => {
               controller.abort();
               resolve(null);
-            }, 350);
+            }, 300);
 
             fetch(`http://${ip}:${port}/api/ping`, {
               signal: controller.signal,
@@ -1175,7 +1333,10 @@
               .then(data => {
                 clearTimeout(timer);
                 if (data && data.status === 'ok' && (data.app === 'PCDeck' || data.name)) {
-                  resolve({ ip: data.ip || ip, port: (data.port ? data.port.toString() : port) });
+                  if (data.token) {
+                    try { localStorage.setItem('pcdeck_token', data.token.trim()); } catch (e) {}
+                  }
+                  resolve({ ip: data.ip || ip, port: (data.port ? data.port.toString() : port), token: data.token });
                 } else {
                   resolve(null);
                 }
@@ -1191,7 +1352,7 @@
         const match = results.find(r => r !== null);
         if (match) {
           found = true;
-          window.onServerDiscovered(match.ip, match.port);
+          window.onServerDiscovered(match.ip, match.port, match.token);
           break;
         }
       }
@@ -1212,22 +1373,43 @@
   function connect(force) {
     clearAutoReconnect();
     clearWsConnectTimeout();
-    updateStatus('connecting', 'Connecting...');
     const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
     const host = state.serverHost || (isHttp ? window.location.hostname : '127.0.0.1');
     const port = state.serverPort || (isHttp ? (window.location.port || '8000') : '8000');
     state.serverHost = host;
     state.serverPort = port;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const targetWsUrl = `${protocol}//${host}:${port}/ws`;
-    const targetScreenWsUrl = `${protocol}//${host}:${port}/ws/screen`;
+    let storedToken = localStorage.getItem('pcdeck_token') || '';
+    if (!storedToken && host && host !== '127.0.0.1' && host !== 'localhost') {
+      fetch(`http://${host}:${port}/api/ping`, { cache: 'no-store' })
+        .then(res => res.json())
+        .then(pingData => {
+          if (pingData && pingData.token) {
+            const tok = pingData.token.trim();
+            try { localStorage.setItem('pcdeck_token', tok); } catch (e) {}
+            if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+              try { mainWs.send(`pair,${tok}`); } catch (e) {}
+            }
+          }
+        })
+        .catch(() => {});
+    }
 
-    // If socket is already OPEN and connecting to the same target, avoid redundant reconnect
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const tokenQuery = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+    const targetWsUrl = `${protocol}//${host}:${port}/ws${tokenQuery}`;
+    const targetScreenWsUrl = `${protocol}//${host}:${port}/ws/screen${tokenQuery}`;
+
+    // If socket is already OPEN and connecting to the same target, avoid redundant reconnect and maintain solid status
     if (!force && mainWs && mainWs.readyState === WebSocket.OPEN && state.connected && state.wsUrl === targetWsUrl) {
       updateStatus('connected', 'Connected');
       connectScreenWs();
       return;
+    }
+
+    // Only set "Connecting..." if we are truly disconnected
+    if (!state.connected || !mainWs || mainWs.readyState !== WebSocket.OPEN) {
+      updateStatus('connecting', 'Connecting...');
     }
 
     state.wsUrl = targetWsUrl;
@@ -1243,22 +1425,23 @@
       try { oldWs.close(); } catch (e) {}
     }
 
-    // Concurrently trigger native UDP discovery on connect attempt
-    if (window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
+    // Concurrently trigger native UDP discovery on connect attempt only when disconnected
+    if (!state.connected && window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
       try { window.AndroidApp.discoverServer(); } catch (e) {}
     }
 
-    // Fast-Fail Connect Timeout (1200ms):
-    // If target host does not respond within 1200ms, abort hang and trigger instant discovery!
+    // Stable Connect Timeout (5000ms):
+    // Prevents false disconnects on mobile Wi-Fi while giving ample time for WebSocket handshake
     wsConnectTimeoutTimer = setTimeout(() => {
       if (mainWs && mainWs.readyState === WebSocket.CONNECTING) {
         try { mainWs.close(); } catch (e) {}
         triggerDiscoveryAndSweep();
       }
-    }, 1200);
+    }, 5000);
 
     try {
       const ws = new WebSocket(state.wsUrl);
+      ws.binaryType = 'arraybuffer';
       mainWs = ws;
       mainWs.onopen = (e) => {
         clearWsConnectTimeout();
@@ -1280,7 +1463,9 @@
         onMainWsError(e);
       };
 
-      connectScreenWs();
+      if (state.activeTab === 'tab-screen') {
+        connectScreenWs();
+      }
     } catch (e) {
       clearWsConnectTimeout();
       console.error('Failed to open main WebSocket:', e);
@@ -1305,7 +1490,7 @@
   function startScreenWatchdog() {
     if (screenWatchdogTimer) return;
     screenWatchdogTimer = setInterval(() => {
-      if (!state.connected) return;
+      if (!state.connected || state.activeTab !== 'tab-screen') return;
       if (!screenWs || screenWs.readyState === WebSocket.CLOSED) {
         connectScreenWs();
       } else if (screenWs.readyState === WebSocket.OPEN) {
@@ -1317,6 +1502,22 @@
         }
       }
     }, 2500);
+  }
+
+  function disconnectScreenWs() {
+    if (screenReconnectTimer) {
+      clearTimeout(screenReconnectTimer);
+      screenReconnectTimer = null;
+    }
+    if (screenWs) {
+      const ws = screenWs;
+      screenWs = null;
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onclose = null;
+      ws.onerror = null;
+      try { ws.close(); } catch (e) {}
+    }
   }
 
   // Pushes the encoder settings to the server.
@@ -1335,65 +1536,144 @@
   let stableTicks = 0;
   let currentAppliedQuality = 75;
   let currentAppliedScale = 0.85;
+  let currentAppliedFps = 30;
+
+  function getLatencyColor(ms) {
+    if (ms <= 25) return '#00ff66'; // Cyber Lime (Ultra-fast <25ms)
+    if (ms <= 45) return '#00f0ff'; // Neon Cyan (Fast LAN 25-45ms)
+    if (ms <= 75) return '#a3e635'; // Lime Yellow (Normal 45-75ms)
+    if (ms <= 110) return '#eab308'; // Amber (Moderate 75-110ms)
+    if (ms <= 180) return '#f97316'; // Neon Orange (Elevated 110-180ms)
+    if (ms <= 300) return '#ef4444'; // Red-Orange (High 180-300ms)
+    return '#ff0055';               // Neon Crimson (Critical lag >300ms)
+  }
+
+  let lastLatencyUiUpdate = 0;
+  let smoothedLatencyMs = 0;
+
+  function updateLatencyDisplay(ms, force = false) {
+    if (!state.connected) return;
+    const now = Date.now();
+    const raw = Math.max(1, Math.round(ms));
+
+    // Low-pass exponential moving average filter (80% historical, 20% sample)
+    if (smoothedLatencyMs <= 0) {
+      smoothedLatencyMs = raw;
+    } else {
+      smoothedLatencyMs = (smoothedLatencyMs * 0.80) + (raw * 0.20);
+    }
+
+    // Pace UI updates to at most once every 1000ms unless forced (prevents rapid flickering)
+    if (!force && (now - lastLatencyUiUpdate < 1000)) {
+      return;
+    }
+    lastLatencyUiUpdate = now;
+
+    const currentMs = Math.max(1, Math.round(smoothedLatencyMs));
+    const color = getLatencyColor(currentMs);
+
+    if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      el.statusLabel.innerHTML = `Connected • <span class="status-latency-num" style="color: ${color}; font-weight: 800; text-shadow: 0 0 6px ${color}88;">${currentMs}ms</span>`;
+    }
+
+    if (el.statusIndicator && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      el.statusIndicator.className = 'status-dot connected';
+      el.statusIndicator.style.background = '';
+      el.statusIndicator.style.boxShadow = '';
+      el.statusIndicator.style.borderColor = '';
+    }
+
+    if (el.pillStatus) {
+      el.pillStatus.style.borderColor = '';
+      el.pillStatus.style.boxShadow = '';
+    }
+
+    if (el.latencyVal) {
+      el.latencyVal.textContent = `${currentMs}ms`;
+      el.latencyVal.style.color = color;
+      el.latencyVal.style.fontWeight = '800';
+    }
+  }
+
+  let degradeTicks = 0;
 
   function updateAdaptiveQuality(currentRtt) {
     if (state.autoQualityMode !== 'auto') return;
 
     // Exponential moving average for jitter-resistant smoothed RTT
-    smoothedRtt = Math.round(smoothedRtt * 0.65 + currentRtt * 0.35);
+    smoothedRtt = Math.round(smoothedRtt * 0.70 + currentRtt * 0.30);
+
+    const isPro = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+    const maxAllowedFps = isPro ? (parseInt(state.streamFps, 10) || 60) : 30;
 
     let targetQuality = 75;
     let targetScale = 0.85;
+    let targetFps = maxAllowedFps;
 
-    if (smoothedRtt < 22) {
-      // Ultra-low latency (< 22ms)
-      targetQuality = 88;
+    if (smoothedRtt <= 50) {
+      // Clean Wi-Fi (5GHz/6GHz or strong 2.4GHz) -> Peak fidelity & full framerate
+      targetQuality = 85;
       targetScale = 1.0;
-    } else if (smoothedRtt <= 48) {
-      // Clean fast connection (22-48ms)
-      targetQuality = 78;
-      targetScale = 0.90;
-    } else if (smoothedRtt <= 90) {
-      // Standard connection (48-90ms)
-      targetQuality = 70;
-      targetScale = 0.78;
-    } else if (smoothedRtt <= 150) {
-      // Elevated latency (90-150ms)
-      targetQuality = 58;
+      targetFps = maxAllowedFps;
+    } else if (smoothedRtt <= 85) {
+      // Standard local Wi-Fi / Hotspot -> Maintain full framerate with optimized scale
+      targetQuality = 75;
+      targetScale = 0.85;
+      targetFps = maxAllowedFps;
+    } else if (smoothedRtt <= 130) {
+      // Moderate congestion -> Balanced 30 FPS
+      targetQuality = 65;
+      targetScale = 0.75;
+      targetFps = Math.min(maxAllowedFps, 30);
+    } else if (smoothedRtt <= 180) {
+      // Elevated latency / queueing -> 24 FPS
+      targetQuality = 55;
       targetScale = 0.65;
+      targetFps = 24;
     } else {
-      // High latency / interference spike (> 150ms)
+      // Severe interference spike (>180ms) -> 18 FPS lag guard
       targetQuality = 45;
       targetScale = 0.50;
+      targetFps = 18;
     }
 
-    // Fast-drop on latency spike (immediate drop to prevent queue backlog)
-    const isDegrading = (targetQuality < currentAppliedQuality);
+    const isDegrading = (targetQuality < currentAppliedQuality || targetFps < currentAppliedFps);
     if (isDegrading) {
-      stableTicks = 0;
-      currentAppliedQuality = targetQuality;
-      currentAppliedScale = targetScale;
-      state.streamQuality = currentAppliedQuality;
-      state.streamScale = currentAppliedScale;
-      sendStreamConfig();
-    } else if (targetQuality > currentAppliedQuality) {
-      // Hysteresis: Require 3 consecutive stable checks (4.5 seconds) before stepping up quality
-      stableTicks++;
-      if (stableTicks >= 3) {
+      // Require 2 consecutive degraded samples (~3s) to prevent single-packet jitter from dropping FPS
+      degradeTicks++;
+      if (degradeTicks >= 2) {
+        degradeTicks = 0;
         stableTicks = 0;
         currentAppliedQuality = targetQuality;
         currentAppliedScale = targetScale;
+        currentAppliedFps = targetFps;
         state.streamQuality = currentAppliedQuality;
         state.streamScale = currentAppliedScale;
+        state.streamFps = currentAppliedFps;
+        sendStreamConfig();
+      }
+    } else if (targetQuality > currentAppliedQuality || targetFps > currentAppliedFps) {
+      degradeTicks = 0;
+      // Require 2 consecutive stable checks before stepping up quality
+      stableTicks++;
+      if (stableTicks >= 2) {
+        stableTicks = 0;
+        currentAppliedQuality = targetQuality;
+        currentAppliedScale = targetScale;
+        currentAppliedFps = targetFps;
+        state.streamQuality = currentAppliedQuality;
+        state.streamScale = currentAppliedScale;
+        state.streamFps = currentAppliedFps;
         sendStreamConfig();
       }
     } else {
+      degradeTicks = 0;
       stableTicks = 0;
     }
 
-    // Update status label with clean, legitimate latency
+    // Update status label with dynamic latency color gradient
     if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
-      el.statusLabel.textContent = `Online • ${smoothedRtt}ms`;
+      updateLatencyDisplay(smoothedRtt);
     }
   }
 
@@ -1421,7 +1701,12 @@
       if (!screenFirstFrameSeen) {
         showScreenLoader('STREAMING PC SCREEN...');
       }
-      const ws = new WebSocket(state.screenWsUrl);
+      const currentToken = localStorage.getItem('pcdeck_token') || '';
+      const tokenQuery = currentToken ? `?token=${encodeURIComponent(currentToken)}` : '';
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen${tokenQuery}`;
+      state.screenWsUrl = screenWsUrl;
+      const ws = new WebSocket(screenWsUrl);
       screenWs = ws;
       ws.binaryType = 'blob';
       ws.onopen = () => {
@@ -1431,11 +1716,19 @@
         startScreenWatchdog();
         // Re-apply encoder settings
         sendStreamConfig();
+        // If client is not on screen tab, tell server to pause stream immediately to save 100% Wi-Fi bandwidth
+        if (state.activeTab !== 'tab-screen') {
+          try { ws.send('pause'); } catch (e) {}
+        }
       };
       ws.onmessage = (event) => {
         if (ws !== screenWs) return;
         if (event.data) {
           lastScreenFrameReceivedTime = Date.now();
+          if (typeof event.data !== 'string') {
+            // Instant frame ACK back to server so server knows this frame cleared the network pipe!
+            try { ws.send('a'); } catch (e) {}
+          }
           renderScreenFrame(event.data);
         }
       };
@@ -1466,29 +1759,46 @@
     state.connected = true;
     updateStatus('connected', 'Connected');
     if (el.connectModal) el.connectModal.classList.remove('show');
-    showToast(`Connected to PC (${state.serverHost})`, 'success', '💻');
-    vibrate(40);
+    vibrate(28);
 
     clearAutoReconnect();
     saveAllSettings(false);
 
-    if (pingInterval) clearInterval(pingInterval);
-    pingInterval = setInterval(() => {
-      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-        mainWs.send(`p,${Date.now()}`);
-      }
-    }, 1500);
+    // Engage native Android low-latency Wi-Fi performance lock immediately upon connection
+    if (window.AndroidApp && typeof window.AndroidApp.setLowLatencyWifiEnabled === 'function') {
+      try { window.AndroidApp.setLowLatencyWifiEnabled(true); } catch (e) {}
+    }
+    // Start active 1000ms binary ping beacon to maintain Wi-Fi low latency and measure RTT calmly
+    startUltraLowLatencyBeacon();
+
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingInterval = null;
+    }
 
     // Refresh Places & Current Directory
     loadFsPlaces();
 
-    // Immediately restore / verify screen stream channel upon reconnection
-    connectScreenWs();
+    // Only restore / connect screen stream channel if currently on screen tab, avoiding unused Wi-Fi load
+    if (state.activeTab === 'tab-screen') {
+      connectScreenWs();
+    }
+
+    // Transmit pairing token if stored locally, or request it from PC server
+    const storedToken = localStorage.getItem('pcdeck_token');
+    if (storedToken && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try { mainWs.send(`pair,${storedToken}`); } catch (e) {}
+    } else if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try { mainWs.send('get_token'); } catch (e) {}
+    }
 
     // Send Pro status to PC Server
     const isProActive = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
     if (mainWs && mainWs.readyState === WebSocket.OPEN) {
       mainWs.send(`pro_status,${isProActive ? '1' : '0'}`);
+      mainWs.send('cam_driver_check');
+      mainWs.send('mic_driver_check');
+      mainWs.send('driver_check');
     }
 
     // Auto-enable PC audio streaming if enabled in preferences.
@@ -1499,15 +1809,480 @@
   }
 
   function onMainWsMessage(event) {
+    if (event.data instanceof ArrayBuffer) {
+      const view = new DataView(event.data);
+      if (view.byteLength >= 8 && view.getUint8(0) === 0x08) { // OP_PING / PONG
+        const sentTime = view.getUint32(2, true);
+        const now = (Date.now() & 0xFFFFFFFF) >>> 0;
+        const delta = (now >= sentTime) ? (now - sentTime) : ((0xFFFFFFFF - sentTime) + now + 1);
+        state.latency = Math.max(1, delta);
+        updateLatencyDisplay(state.latency);
+        updateAdaptiveQuality(state.latency);
+        if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+          try { screenWs.send(`lat,${state.latency}`); } catch (e) {}
+        }
+      }
+      return;
+    }
+
     const data = event.data;
+    if (typeof data === 'string' && data.startsWith('token,')) {
+      const serverToken = data.substring(6).trim();
+      if (serverToken) {
+        try { localStorage.setItem('pcdeck_token', serverToken); } catch (e) {}
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        state.screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen?token=${encodeURIComponent(serverToken)}`;
+        if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
+          connectScreenWs();
+        }
+      }
+      return;
+    }
+    if (data === 'auth_required' || data.startsWith('pair_error,')) {
+      showToast('Pairing required: please scan the QR code on your PC screen.', 'error');
+      if (el.connectModal) el.connectModal.classList.add('show');
+      return;
+    }
+    if (data.startsWith('pair_ok,')) {
+      return;
+    }
     if (data.startsWith('pong,')) {
       const sentTime = parseInt(data.split(',')[1], 10);
       state.latency = Math.max(1, Date.now() - sentTime);
-      if (el.latencyVal) el.latencyVal.textContent = `${state.latency}ms`;
-      if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
-        el.statusLabel.textContent = `Online • ${state.latency}ms`;
-      }
+      updateLatencyDisplay(state.latency);
       updateAdaptiveQuality(state.latency);
+      // Synchronize measured latency to server Wi-Fi Latency Manager for dynamic pacing
+      if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+        try { screenWs.send(`lat,${state.latency}`); } catch (e) {}
+      }
+      return;
+    }
+
+    // --- Virtual Driver Status & Installation Handlers ---
+    if (data.startsWith('gamepad_driver_status,') || data.startsWith('driver_status,')) {
+      const parts = data.split(',');
+      const status = parts[1];
+      const mode = parts[2] || 'xinput';
+      state.gamepadDriverInstalled = (status === 'installed');
+      const banner = document.getElementById('gamepad-driver-banner');
+      const text = document.getElementById('gamepad-driver-status-text');
+      const btn = document.getElementById('btn-install-gamepad-driver');
+      const pBox = document.getElementById('gamepad-driver-progress-box');
+      const driverBadge = document.getElementById('gp-driver-text');
+      const hudBtn = document.getElementById('btn-hud-install-driver');
+      const hudBanner = document.getElementById('hud-driver-banner');
+      const hudText = document.getElementById('hud-driver-status-text');
+      const hudActionBtn = document.getElementById('btn-hud-driver-action');
+
+      if (status === 'installed') {
+        if (banner) banner.style.display = 'none';
+        if (pBox) pBox.style.display = 'none';
+        if (hudBtn) hudBtn.style.display = 'none';
+        if (hudBanner) hudBanner.style.display = 'none';
+        if (driverBadge) driverBadge.textContent = 'Virtual Xbox 360: Active';
+      } else {
+        if (banner) {
+          banner.style.display = 'block';
+          banner.style.background = 'rgba(0, 240, 255, 0.08)';
+          banner.style.borderColor = 'rgba(0, 240, 255, 0.28)';
+        }
+        if (text) {
+          text.style.color = 'var(--neo-cyan)';
+          text.textContent = 'Driver Installation Required';
+        }
+        const sub = document.getElementById('gamepad-driver-subtext');
+        if (sub) {
+          sub.textContent = 'Virtual controller driver needed to control PC games';
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.style.display = 'inline-flex';
+          btn.className = 'neo-btn btn-cyan';
+          btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg><span>Install Driver</span>';
+        }
+        if (hudBtn) hudBtn.style.display = 'inline-flex';
+        if (hudActionBtn) {
+          hudActionBtn.disabled = false;
+          hudActionBtn.style.display = 'inline-flex';
+          hudActionBtn.className = 'neo-btn btn-cyan';
+          hudActionBtn.innerHTML = '<svg class="deck-icon" width="12" height="12"><use href="#icon-gamepad"/></svg><span>Install Driver</span>';
+        }
+        if (hudText) {
+          hudText.textContent = 'Driver Installation Required';
+        }
+        if (driverBadge) driverBadge.textContent = 'Driver Required (Tap to Install)';
+      }
+      return;
+    }
+
+    if (data.startsWith('gamepad_driver_progress,') || data.startsWith('driver_progress,')) {
+      const parts = data.split(',');
+      const pct = parseInt(parts[1] || '0', 10);
+      const stage = parts.slice(2).join(',');
+      const banner = document.getElementById('gamepad-driver-banner');
+      const pBox = document.getElementById('gamepad-driver-progress-box');
+      const pFill = document.getElementById('gamepad-driver-progress-fill');
+      const pStage = document.getElementById('gamepad-driver-stage-text');
+      const pPct = document.getElementById('gamepad-driver-pct-text');
+      const btn = document.getElementById('btn-install-gamepad-driver');
+      const hudBanner = document.getElementById('hud-driver-banner');
+      const hudBox = document.getElementById('hud-driver-progress-box');
+      const hudFill = document.getElementById('hud-driver-progress-fill');
+      const hudStage = document.getElementById('hud-driver-stage-text');
+      const hudPct = document.getElementById('hud-driver-pct-text');
+      const hudActionBtn = document.getElementById('btn-hud-driver-action');
+
+      if (banner) banner.style.display = 'block';
+      if (pBox) pBox.style.display = 'block';
+      if (pFill) pFill.style.width = pct + '%';
+      if (pStage) pStage.textContent = stage;
+      if (pPct) pPct.textContent = pct + '%';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span>⏳ ${pct}%</span>`;
+      }
+
+      if (hudBanner && state.gamepadHudActive) hudBanner.style.display = 'block';
+      if (hudBox) hudBox.style.display = 'block';
+      if (hudFill) hudFill.style.width = pct + '%';
+      if (hudStage) hudStage.textContent = stage;
+      if (hudPct) hudPct.textContent = pct + '%';
+      if (hudActionBtn) {
+        hudActionBtn.disabled = true;
+        hudActionBtn.innerHTML = `<span>⏳ ${pct}%</span>`;
+      }
+      return;
+    }
+
+    if (data.startsWith('gamepad_driver_installing,') || data.startsWith('driver_installing,')) {
+      const banner = document.getElementById('gamepad-driver-banner');
+      const btn = document.getElementById('btn-install-gamepad-driver');
+      const pBox = document.getElementById('gamepad-driver-progress-box');
+      const pFill = document.getElementById('gamepad-driver-progress-fill');
+      const pStage = document.getElementById('gamepad-driver-stage-text');
+      const pPct = document.getElementById('gamepad-driver-pct-text');
+      if (banner) banner.style.display = 'block';
+      if (pBox) pBox.style.display = 'block';
+      if (pFill) pFill.style.width = '15%';
+      if (pStage) pStage.textContent = 'Please click "Yes" on the PC prompt...';
+      if (pPct) pPct.textContent = '15%';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ 15%</span>';
+      }
+
+      const hudBanner = document.getElementById('hud-driver-banner');
+      const hudBox = document.getElementById('hud-driver-progress-box');
+      const hudFill = document.getElementById('hud-driver-progress-fill');
+      const hudStage = document.getElementById('hud-driver-stage-text');
+      const hudPct = document.getElementById('hud-driver-pct-text');
+      const hudActionBtn = document.getElementById('btn-hud-driver-action');
+      if (hudBanner && state.gamepadHudActive) hudBanner.style.display = 'block';
+      if (hudBox) hudBox.style.display = 'block';
+      if (hudFill) hudFill.style.width = '15%';
+      if (hudStage) hudStage.textContent = 'Please click "Yes" on the PC prompt...';
+      if (hudPct) hudPct.textContent = '15%';
+      if (hudActionBtn) {
+        hudActionBtn.disabled = true;
+        hudActionBtn.innerHTML = '<span>⏳ 15%</span>';
+      }
+
+      showToast('Installing Virtual Gamepad Driver on PC...', 'info', '🎮');
+      return;
+    }
+
+    if (data.startsWith('gamepad_driver_install_result,') || data.startsWith('driver_install_result,')) {
+      const parts = data.split(',');
+      const res = parts[1];
+      const msg = parts.slice(2).join(',');
+      const banner = document.getElementById('gamepad-driver-banner');
+      const text = document.getElementById('gamepad-driver-status-text');
+      const btn = document.getElementById('btn-install-gamepad-driver');
+      const pBox = document.getElementById('gamepad-driver-progress-box');
+      const pFill = document.getElementById('gamepad-driver-progress-fill');
+      const pStage = document.getElementById('gamepad-driver-stage-text');
+      const pPct = document.getElementById('gamepad-driver-pct-text');
+      const driverBadge = document.getElementById('gp-driver-text');
+      const hudBtn = document.getElementById('btn-hud-install-driver');
+      const hudBanner = document.getElementById('hud-driver-banner');
+      const hudText = document.getElementById('hud-driver-status-text');
+      const hudActionBtn = document.getElementById('btn-hud-driver-action');
+      const hudBox = document.getElementById('hud-driver-progress-box');
+      const hudFill = document.getElementById('hud-driver-progress-fill');
+      const hudStage = document.getElementById('hud-driver-stage-text');
+      const hudPct = document.getElementById('hud-driver-pct-text');
+
+      if (res === 'success') {
+        state.gamepadDriverInstalled = true;
+        if (pFill) pFill.style.width = '100%';
+        if (pStage) pStage.textContent = '✔ Virtual Xbox 360 Controller Active!';
+        if (pPct) pPct.textContent = '100%';
+        if (hudFill) hudFill.style.width = '100%';
+        if (hudStage) hudStage.textContent = '✔ Virtual Xbox 360 Controller Active!';
+        if (hudPct) hudPct.textContent = '100%';
+        if (driverBadge) driverBadge.textContent = 'Virtual Xbox 360: Active';
+        showToast('🎮 Virtual Xbox 360 Controller active & verified!', 'success', '🎮');
+        setTimeout(() => {
+          if (banner) banner.style.display = 'none';
+          if (pBox) pBox.style.display = 'none';
+          if (hudBtn) hudBtn.style.display = 'none';
+          if (hudBanner) hudBanner.style.display = 'none';
+        }, 1800);
+      } else {
+        state.gamepadDriverInstalled = false;
+        showToast(`Gamepad driver: ${msg}`, 'error', '⚠️');
+        if (banner) {
+          banner.style.display = 'block';
+          banner.style.background = 'rgba(255, 68, 68, 0.12)';
+          banner.style.borderColor = 'rgba(255, 68, 68, 0.35)';
+        }
+        if (text) {
+          text.style.color = '#ff6b6b';
+          text.textContent = 'Driver Installation Failed';
+        }
+        const sub = document.getElementById('gamepad-driver-subtext');
+        if (sub) {
+          sub.textContent = msg || 'Could not complete driver setup';
+        }
+        if (pStage) pStage.textContent = msg;
+        if (btn) {
+          btn.disabled = false;
+          btn.style.display = 'inline-flex';
+          btn.className = 'neo-btn btn-cyan';
+          btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg><span>Retry Install</span>';
+        }
+        if (hudBanner && state.gamepadHudActive) {
+          hudBanner.style.display = 'block';
+          if (hudText) hudText.textContent = 'Driver Installation Failed';
+          if (hudStage) hudStage.textContent = msg;
+        }
+        if (hudActionBtn) {
+          hudActionBtn.disabled = false;
+          hudActionBtn.style.display = 'inline-flex';
+          hudActionBtn.innerHTML = '<svg class="deck-icon" width="12" height="12"><use href="#icon-gamepad"/></svg><span>Retry Install</span>';
+        }
+      }
+      return;
+    }
+
+    if (data.startsWith('cam_driver_status,')) {
+      const status = data.split(',')[1];
+      const banner = document.getElementById('cam-driver-banner');
+      const text = document.getElementById('cam-driver-status-text');
+      const btn = document.getElementById('btn-install-cam-driver');
+      const pBox = document.getElementById('cam-driver-progress-box');
+      if (banner) {
+        if (status === 'installed') {
+          // If already installed, hide banner completely as user requested
+          banner.style.display = 'none';
+          if (pBox) pBox.style.display = 'none';
+        } else {
+          banner.style.display = 'block';
+          banner.style.background = 'rgba(0, 240, 255, 0.08)';
+          banner.style.borderColor = 'rgba(0, 240, 255, 0.28)';
+          if (text) {
+            text.style.color = 'var(--neo-cyan)';
+            text.textContent = 'Virtual Camera Driver Required';
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.style.display = 'inline-flex';
+            btn.className = 'neo-btn btn-cyan';
+            btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Install Driver</span>';
+          }
+        }
+      }
+      return;
+    }
+    if (data.startsWith('cam_driver_progress,')) {
+      const parts = data.split(',');
+      const pct = parseInt(parts[1] || '0', 10);
+      const stage = parts.slice(2).join(',');
+      const banner = document.getElementById('cam-driver-banner');
+      const pBox = document.getElementById('cam-driver-progress-box');
+      const pFill = document.getElementById('cam-driver-progress-fill');
+      const pStage = document.getElementById('cam-driver-stage-text');
+      const pPct = document.getElementById('cam-driver-pct-text');
+      const btn = document.getElementById('btn-install-cam-driver');
+      if (banner) banner.style.display = 'block';
+      if (pBox) pBox.style.display = 'block';
+      if (pFill) pFill.style.width = pct + '%';
+      if (pStage) pStage.textContent = stage;
+      if (pPct) pPct.textContent = pct + '%';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span>⏳ ${pct}%</span>`;
+      }
+      return;
+    }
+    if (data.startsWith('cam_driver_installing,')) {
+      const banner = document.getElementById('cam-driver-banner');
+      const btn = document.getElementById('btn-install-cam-driver');
+      const pBox = document.getElementById('cam-driver-progress-box');
+      const pFill = document.getElementById('cam-driver-progress-fill');
+      const pStage = document.getElementById('cam-driver-stage-text');
+      const pPct = document.getElementById('cam-driver-pct-text');
+      if (banner) banner.style.display = 'block';
+      if (pBox) pBox.style.display = 'block';
+      if (pFill) pFill.style.width = '15%';
+      if (pStage) pStage.textContent = 'Registering camera filter...';
+      if (pPct) pPct.textContent = '15%';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ 15%</span>';
+      }
+      showToast('Installing Virtual Camera driver on PC...', 'info', '📹');
+      return;
+    }
+    if (data.startsWith('cam_driver_install_result,')) {
+      const parts = data.split(',');
+      const res = parts[1];
+      const msg = parts.slice(2).join(',');
+      const banner = document.getElementById('cam-driver-banner');
+      const text = document.getElementById('cam-driver-status-text');
+      const btn = document.getElementById('btn-install-cam-driver');
+      const pBox = document.getElementById('cam-driver-progress-box');
+      const pFill = document.getElementById('cam-driver-progress-fill');
+      const pStage = document.getElementById('cam-driver-stage-text');
+      const pPct = document.getElementById('cam-driver-pct-text');
+      if (res === 'success') {
+        if (pFill) pFill.style.width = '100%';
+        if (pStage) pStage.textContent = '✔ Driver installed & active in Windows!';
+        if (pPct) pPct.textContent = '100%';
+        showToast('Virtual Camera driver active & verified!', 'success', '📹');
+        setTimeout(() => {
+          if (banner) banner.style.display = 'none';
+          if (pBox) pBox.style.display = 'none';
+        }, 1500);
+      } else {
+        showToast(`Camera driver: ${msg}`, 'error', '⚠️');
+        if (banner) {
+          banner.style.display = 'block';
+          banner.style.background = 'rgba(255, 68, 68, 0.12)';
+          banner.style.borderColor = 'rgba(255, 68, 68, 0.35)';
+        }
+        if (text) {
+          text.style.color = '#ff6b6b';
+          text.textContent = `❌ ${msg}`;
+        }
+        if (pStage) pStage.textContent = `❌ ${msg}`;
+        if (btn) {
+          btn.disabled = false;
+          btn.style.display = 'inline-flex';
+          btn.className = 'neo-btn btn-cyan';
+          btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Retry Install</span>';
+        }
+      }
+      return;
+    }
+    if (data.startsWith('mic_driver_status,')) {
+      const status = data.split(',')[1];
+      const banner = document.getElementById('mic-driver-banner');
+      const text = document.getElementById('mic-driver-status-text');
+      const btn = document.getElementById('btn-install-mic-driver');
+      const pBox = document.getElementById('mic-driver-progress-box');
+      if (banner) {
+        if (status === 'installed') {
+          // If already installed, hide banner completely as user requested
+          banner.style.display = 'none';
+          if (pBox) pBox.style.display = 'none';
+        } else {
+          banner.style.display = 'block';
+          banner.style.background = 'rgba(255, 68, 68, 0.12)';
+          banner.style.borderColor = 'rgba(255, 68, 68, 0.35)';
+          if (text) {
+            text.style.color = '#ff6b6b';
+            text.textContent = 'Virtual Audio Driver Required';
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.style.display = 'inline-flex';
+            btn.className = 'neo-btn btn-lime';
+            btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Install Driver</span>';
+          }
+        }
+      }
+      return;
+    }
+    if (data.startsWith('mic_driver_progress,')) {
+      const parts = data.split(',');
+      const pct = parseInt(parts[1] || '0', 10);
+      const stage = parts.slice(2).join(',');
+      const banner = document.getElementById('mic-driver-banner');
+      const pBox = document.getElementById('mic-driver-progress-box');
+      const pFill = document.getElementById('mic-driver-progress-fill');
+      const pStage = document.getElementById('mic-driver-stage-text');
+      const pPct = document.getElementById('mic-driver-pct-text');
+      const btn = document.getElementById('btn-install-mic-driver');
+      if (banner) banner.style.display = 'block';
+      if (pBox) pBox.style.display = 'block';
+      if (pFill) pFill.style.width = pct + '%';
+      if (pStage) pStage.textContent = stage;
+      if (pPct) pPct.textContent = pct + '%';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span>⏳ ${pct}%</span>`;
+      }
+      return;
+    }
+    if (data.startsWith('mic_driver_installing,')) {
+      const banner = document.getElementById('mic-driver-banner');
+      const btn = document.getElementById('btn-install-mic-driver');
+      const pBox = document.getElementById('mic-driver-progress-box');
+      const pFill = document.getElementById('mic-driver-progress-fill');
+      const pStage = document.getElementById('mic-driver-stage-text');
+      const pPct = document.getElementById('mic-driver-pct-text');
+      if (banner) banner.style.display = 'block';
+      if (pBox) pBox.style.display = 'block';
+      if (pFill) pFill.style.width = '15%';
+      if (pStage) pStage.textContent = 'Please click "Yes" on the PC prompt...';
+      if (pPct) pPct.textContent = '15%';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ 15%</span>';
+      }
+      showToast('Installing Virtual Audio Cable on PC...', 'info', '🎙️');
+      return;
+    }
+    if (data.startsWith('mic_driver_install_result,')) {
+      const parts = data.split(',');
+      const res = parts[1];
+      const msg = parts.slice(2).join(',');
+      const banner = document.getElementById('mic-driver-banner');
+      const text = document.getElementById('mic-driver-status-text');
+      const btn = document.getElementById('btn-install-mic-driver');
+      const pBox = document.getElementById('mic-driver-progress-box');
+      const pFill = document.getElementById('mic-driver-progress-fill');
+      const pStage = document.getElementById('mic-driver-stage-text');
+      const pPct = document.getElementById('mic-driver-pct-text');
+      if (res === 'success') {
+        if (pFill) pFill.style.width = '100%';
+        if (pStage) pStage.textContent = '✔ Driver installed & active in Windows!';
+        if (pPct) pPct.textContent = '100%';
+        showToast('Virtual Audio Cable active & verified!', 'success', '🎙️');
+        setTimeout(() => {
+          if (banner) banner.style.display = 'none';
+          if (pBox) pBox.style.display = 'none';
+        }, 1500);
+      } else {
+        showToast(`Mic driver: ${msg}`, 'error', '⚠️');
+        if (banner) {
+          banner.style.display = 'block';
+          banner.style.background = 'rgba(255, 68, 68, 0.12)';
+          banner.style.borderColor = 'rgba(255, 68, 68, 0.35)';
+        }
+        if (text) {
+          text.style.color = '#ff6b6b';
+          text.textContent = `❌ ${msg}`;
+        }
+        if (pStage) pStage.textContent = `❌ ${msg}`;
+        if (btn) {
+          btn.disabled = false;
+          btn.style.display = 'inline-flex';
+          btn.className = 'neo-btn btn-lime';
+          btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Retry Install</span>';
+        }
+      }
       return;
     }
 
@@ -1542,8 +2317,31 @@
     }
   }
 
+  let ultraLowLatencyBeaconTimer = null;
+  function startUltraLowLatencyBeacon() {
+    if (ultraLowLatencyBeaconTimer) clearInterval(ultraLowLatencyBeaconTimer);
+    ultraLowLatencyBeaconTimer = setInterval(() => {
+      if (state.connected && mainWs && mainWs.readyState === WebSocket.OPEN) {
+        sendBinaryPing();
+      }
+    }, 1000); // 1000ms pace keeps Wi-Fi link responsive without airtime contention or bufferbloat
+  }
+
+  function stopUltraLowLatencyBeacon() {
+    if (ultraLowLatencyBeaconTimer) {
+      clearInterval(ultraLowLatencyBeaconTimer);
+      ultraLowLatencyBeaconTimer = null;
+    }
+  }
+
   function onMainWsClose() {
     clearWsConnectTimeout();
+    stopUltraLowLatencyBeacon();
+    smoothedLatencyMs = 0;
+    lastLatencyUiUpdate = 0;
+    if (window.AndroidApp && typeof window.AndroidApp.setLowLatencyWifiEnabled === 'function') {
+      try { window.AndroidApp.setLowLatencyWifiEnabled(false); } catch (e) {}
+    }
     state.connected = false;
     reconnectAttempts++;
 
@@ -1569,7 +2367,7 @@
 
     clearAutoReconnect();
     const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
-    const hasTarget = localStorage.getItem('neontrack_ip') || state.serverHost || (isHttp ? window.location.hostname : null);
+    const hasTarget = localStorage.getItem('pcdeck_ip') || localStorage.getItem('neontrack_ip') || state.serverHost || (isHttp ? window.location.hostname : null);
     if (hasTarget) {
       // Super fast initial retry (350ms) instead of 1000ms+ delay
       const delay = reconnectAttempts <= 1 ? 350 : Math.min(600 + Math.min(reconnectAttempts, 4) * 500, 2500);
@@ -1586,20 +2384,168 @@
     state.connected = false;
     updateStatus('disconnected', 'Disconnected');
     const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
-    if (!localStorage.getItem('neontrack_ip') && el.connectModal && isNativeApp) {
+    if (!localStorage.getItem('pcdeck_ip') && !localStorage.getItem('neontrack_ip') && el.connectModal && isNativeApp) {
       el.connectModal.classList.add('show');
     }
   }
 
   function updateStatus(status, label) {
+    const sConnChip = document.getElementById('settings-conn-chip');
+    if (sConnChip) {
+      if (status === 'connected') {
+        sConnChip.className = 'mini-status-chip online';
+        sConnChip.textContent = 'CONNECTED';
+      } else {
+        sConnChip.className = 'mini-status-chip offline';
+        sConnChip.textContent = 'OFFLINE';
+      }
+    }
     if (!el.statusIndicator || !el.statusLabel) return;
-    el.statusLabel.textContent = label;
     if (status === 'connected') {
       el.statusIndicator.className = 'status-dot connected';
+      updateLatencyDisplay(state.latency || 15, true);
     } else {
+      // Robust Guard: Never override active connection display if socket is truly OPEN!
+      if (mainWs && mainWs.readyState === WebSocket.OPEN && state.connected) {
+        return;
+      }
       el.statusIndicator.className = 'status-dot';
-      if (el.latencyVal) el.latencyVal.textContent = '--ms';
+      el.statusIndicator.style.background = '';
+      el.statusIndicator.style.boxShadow = '';
+      el.statusIndicator.style.borderColor = '';
+      if (el.pillStatus) {
+        el.pillStatus.style.borderColor = '';
+        el.pillStatus.style.boxShadow = '';
+      }
+      el.statusLabel.textContent = label;
+      if (el.latencyVal) {
+        el.latencyVal.textContent = '--ms';
+        el.latencyVal.style.color = '';
+      }
     }
+  }
+
+  // --- High-Speed Zero-Allocation Binary Wire Protocol ---
+  const BINARY_OP = {
+    MOVE_REL: 0x01,
+    MOVE_ABS: 0x02,
+    TOUCH_DOWN: 0x03,
+    TOUCH_UP: 0x04,
+    CLICK: 0x05,
+    SCROLL_REL: 0x06,
+    SCROLL_ABS: 0x07,
+    PING: 0x08,
+    GAMEPAD: 0x09,
+    TOUCH_MOVE: 0x0A
+  };
+
+  const BTN_MAP_JS = { left: 0, right: 1, middle: 2, double: 3 };
+
+  // Pre-allocated static buffers (Zero GC overhead on 60-120Hz touch pipelines)
+  const _binBuf8 = new ArrayBuffer(8);
+  const _binView8 = new DataView(_binBuf8);
+  const _binBuf12 = new ArrayBuffer(12);
+  const _binView12 = new DataView(_binBuf12);
+
+  function sendBinaryMoveRel(dx, dy, flags = 0) {
+    _binView8.setUint8(0, BINARY_OP.MOVE_REL);
+    _binView8.setUint8(1, flags);
+    const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
+    const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
+    _binView8.setInt16(2, idx, true);
+    _binView8.setInt16(4, idy, true);
+    _binView8.setUint16(6, 0, true);
+    sendCommand(_binBuf8);
+  }
+
+  function sendBinaryMoveAbs(normX, normY, pressure = 0, flags = 0) {
+    _binView8.setUint8(0, BINARY_OP.MOVE_ABS);
+    _binView8.setUint8(1, flags);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    _binView8.setUint16(2, ix, true);
+    _binView8.setUint16(4, iy, true);
+    _binView8.setUint8(6, pressure & 0xFF);
+    _binView8.setUint8(7, 0);
+    sendScreenCommand(_binBuf8);
+  }
+
+  function sendBinaryTouchDown(normX, normY, button = 'left', pressure = 0) {
+    _binView8.setUint8(0, BINARY_OP.TOUCH_DOWN);
+    _binView8.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    _binView8.setUint16(2, ix, true);
+    _binView8.setUint16(4, iy, true);
+    _binView8.setUint8(6, pressure & 0xFF);
+    _binView8.setUint8(7, 0);
+    sendScreenCommand(_binBuf8);
+  }
+
+  function sendBinaryTouchMove(normX, normY, pressure = 0, flags = 0) {
+    _binView8.setUint8(0, BINARY_OP.TOUCH_MOVE);
+    _binView8.setUint8(1, flags);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    _binView8.setUint16(2, ix, true);
+    _binView8.setUint16(4, iy, true);
+    _binView8.setUint8(6, pressure & 0xFF);
+    _binView8.setUint8(7, 0);
+    sendScreenCommand(_binBuf8);
+  }
+
+  function sendBinaryTouchUp(normX, normY, button = 'left') {
+    _binView8.setUint8(0, BINARY_OP.TOUCH_UP);
+    _binView8.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    _binView8.setUint16(2, ix, true);
+    _binView8.setUint16(4, iy, true);
+    _binView8.setUint16(6, 0, true);
+    sendScreenCommand(_binBuf8);
+  }
+
+  function sendBinaryClick(button = 'left') {
+    _binView8.setUint8(0, BINARY_OP.CLICK);
+    _binView8.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    _binView8.setUint32(2, 0, true);
+    _binView8.setUint16(6, 0, true);
+    sendCommand(_binBuf8);
+  }
+
+  function sendBinaryScrollRel(dx, dy, flags = 0) {
+    _binView8.setUint8(0, BINARY_OP.SCROLL_REL);
+    _binView8.setUint8(1, flags);
+    const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
+    const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
+    _binView8.setInt16(2, idx, true);
+    _binView8.setInt16(4, idy, true);
+    _binView8.setUint16(6, 0, true);
+    sendCommand(_binBuf8);
+  }
+
+  function sendBinaryScrollAbs(normX, normY, dx, dy, flags = 0) {
+    _binView12.setUint8(0, BINARY_OP.SCROLL_ABS);
+    _binView12.setUint8(1, flags);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
+    const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
+    _binView12.setUint16(2, ix, true);
+    _binView12.setUint16(4, iy, true);
+    _binView12.setInt16(6, idx, true);
+    _binView12.setInt16(8, idy, true);
+    _binView12.setUint16(10, 0, true);
+    sendScreenCommand(_binBuf12);
+  }
+
+  function sendBinaryPing(flags = 0) {
+    const ts = Date.now() & 0xFFFFFFFF;
+    _binView8.setUint8(0, BINARY_OP.PING);
+    _binView8.setUint8(1, flags);
+    _binView8.setUint32(2, ts, true);
+    _binView8.setUint16(6, 0, true);
+    sendCommand(_binBuf8);
   }
 
   function sendCommand(cmdStr) {
@@ -1661,7 +2607,7 @@
       // Primary Decoder: Hardware-Accelerated createImageBitmap
       if (window.createImageBitmap) {
         try {
-          const bmp = await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none' });
+          const bmp = await createImageBitmap(blob);
           if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
             el.screenCanvas.width = bmp.width;
             el.screenCanvas.height = bmp.height;
@@ -1673,21 +2619,7 @@
             renderedOk = true;
           }
           if (bmp.close) bmp.close();
-        } catch (bmpErr) {
-          try {
-            const bmp = await createImageBitmap(blob);
-            if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
-              el.screenCanvas.width = bmp.width;
-              el.screenCanvas.height = bmp.height;
-              screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
-            }
-            if (screenCtx) {
-              screenCtx.drawImage(bmp, 0, 0);
-              renderedOk = true;
-            }
-            if (bmp.close) bmp.close();
-          } catch (e2) {}
-        }
+        } catch (bmpErr) {}
       }
 
       // Secondary Decoder: HTML5 Image element fallback
@@ -1742,12 +2674,15 @@
     let tapStartTime = 0;
     let totalMoved = 0;
 
-    // Frame-coalesced kinematic filtering variables
+    // Frame-coalesced kinematic filtering & motion prediction variables
     let filteredDx = 0;
     let filteredDy = 0;
     let pendingDx = 0;
     let pendingDy = 0;
     let rAfScheduled = false;
+    let lastFlushTime = performance.now();
+    let velPredictX = 0;
+    let velPredictY = 0;
 
     // Quick Speed Preset Toggle Button
     if (el.btnSpeedQuick) {
@@ -1778,14 +2713,32 @@
       const moveDist = Math.hypot(rawDx, rawDy);
       if (moveDist < 0.08) return;
 
+      const nowTime = performance.now();
+      const dt = Math.max(1.0, nowTime - lastFlushTime);
+      lastFlushTime = nowTime;
+
       // Adaptive Dynamic Smoothing:
       // High responsiveness for real movements, strong damping for sub-pixel digitizer tremor
       const alpha = Math.min(1.0, Math.max(0.65, moveDist / 8.0));
       filteredDx = alpha * rawDx + (1.0 - alpha) * filteredDx;
       filteredDy = alpha * rawDy + (1.0 - alpha) * filteredDy;
 
-      let sendDx = filteredDx * state.cursorSpeed * 1.35;
-      let sendDy = filteredDy * state.cursorSpeed * 1.35;
+      // Instant velocity (px/ms) & EMA Velocity Predictor
+      const instVx = filteredDx / dt;
+      const instVy = filteredDy / dt;
+      velPredictX = 0.65 * instVx + 0.35 * velPredictX;
+      velPredictY = 0.65 * instVy + 0.35 * velPredictY;
+
+      // Lead-ahead prediction for network latency compensation (~2.5ms Wi-Fi flight time)
+      let predDx = 0;
+      let predDy = 0;
+      if (moveDist > 2.0) {
+        predDx = velPredictX * 2.5;
+        predDy = velPredictY * 2.5;
+      }
+
+      let sendDx = (filteredDx + predDx) * state.cursorSpeed * 1.35;
+      let sendDy = (filteredDy + predDy) * state.cursorSpeed * 1.35;
 
       if (state.smoothAccel) {
         // Natural ballistic curve: 1.0x at low speed, accelerating smoothly up to 2.5x on rapid swipes
@@ -1797,7 +2750,7 @@
         sendDy *= accelFactor;
       }
 
-      sendCommand(`m,${sendDx.toFixed(2)},${sendDy.toFixed(2)}`);
+      sendBinaryMoveRel(sendDx, sendDy);
     }
 
     surface.addEventListener('touchstart', (e) => {
@@ -1807,14 +2760,17 @@
         startX = lastX = t.clientX;
         startY = lastY = t.clientY;
         tapStartTime = Date.now();
+        lastFlushTime = performance.now();
         totalMoved = 0;
         filteredDx = 0;
         filteredDy = 0;
         pendingDx = 0;
         pendingDy = 0;
+        velPredictX = 0;
+        velPredictY = 0;
       } else if (e.touches.length === 2) {
         vibrate(20);
-        sendCommand('c,right');
+        sendBinaryClick('right');
         touchActive = false;
       }
     }, { passive: false });
@@ -1845,7 +2801,7 @@
         const tapDuration = Date.now() - tapStartTime;
         if (tapDuration < 220 && totalMoved < 8) {
           vibrate(18);
-          sendCommand('c,left');
+          sendBinaryClick('left');
         }
       }
     }, { passive: false });
@@ -1868,7 +2824,7 @@
         scrollStartY = currentY;
 
         let scrollDelta = dy * 4.0 * state.scrollSpeed * (state.invertScroll ? -1 : 1);
-        sendCommand(`s,0,${scrollDelta.toFixed(1)}`);
+        sendBinaryScrollRel(0, scrollDelta);
         e.preventDefault();
       }, { passive: false });
 
@@ -1886,41 +2842,95 @@
     document.body.classList.toggle('on-screen-tab', targetId === 'tab-screen');
     document.body.classList.toggle('gamepad-mode-active', targetId === 'tab-trackpad' && gamepadActive);
 
-    if (el.dockTabs) {
-      el.dockTabs.forEach((t) => {
-        if (t.dataset.target === targetId) {
-          t.classList.add('active');
-        } else {
-          t.classList.remove('active');
-        }
-      });
-    }
+    const allTabs = (el && el.dockTabs && el.dockTabs.length) ? el.dockTabs : document.querySelectorAll('.dock-tab');
+    allTabs.forEach((t) => {
+      if (t.dataset.target === targetId) {
+        t.classList.add('active');
+      } else {
+        t.classList.remove('active');
+      }
+    });
 
-    if (el.tabViews) {
-      el.tabViews.forEach((v) => {
-        if (v.id === targetId) {
-          v.classList.add('active');
-        } else {
-          v.classList.remove('active');
-        }
-      });
-    }
+    const allViews = (el && el.tabViews && el.tabViews.length) ? el.tabViews : document.querySelectorAll('.tab-view');
+    allViews.forEach((v) => {
+      if (v.id === targetId) {
+        v.classList.add('active');
+      } else {
+        v.classList.remove('active');
+      }
+    });
 
     // Update Titlebar Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
     if (typeof window.updateTitlebarActions === 'function') {
       window.updateTitlebarActions(targetId);
     }
 
-    // If switched to Screen tab, verify screen stream liveness without destroying open sockets
+    // 1. Screen Streaming Tab Handling: Only stream when actively looking at the Screen tab!
     if (targetId === 'tab-screen') {
+      if (window.AndroidApp && typeof window.AndroidApp.setStreamingMode === 'function') {
+        try { window.AndroidApp.setStreamingMode(true); } catch (e) {}
+      }
+      // Prioritize screen streaming: put non-essential heavy background sensors/inputs to sleep
+      if (typeof stopCam === 'function' && camActive) {
+        stopCam();
+      }
+      if (typeof stopMic === 'function' && micActive) {
+        stopMic();
+      }
+      if (typeof window.setGamepadMode === 'function' && gamepadActive) {
+        window.setGamepadMode(false);
+      }
+
       if (state.connected) {
         if (!screenWs || screenWs.readyState === WebSocket.CLOSED || screenWs.readyState === WebSocket.CLOSING) {
           connectScreenWs();
         } else if (screenWs.readyState === WebSocket.OPEN) {
+          try { screenWs.send('resume'); } catch (e) {}
           sendStreamConfig();
         }
+        // Preserve and allow PC Audio Streaming (essential for movies, videos, and games)
+        if (state.autoAudioStream && !audioStreamActive && !userManuallyStoppedAudio && typeof startAudioStream === 'function') {
+          startAudioStream();
+        }
       }
-    } else if (typeof window.closeScreenTypeBar === 'function') {
+    } else {
+      // Navigated away from screen tab: immediately pause & disconnect PC screen capture thread
+      // This puts the capture thread to deep sleep and eliminates 100% of Wi-Fi video streaming bandwidth,
+      // guaranteeing rock-solid ultra-low latency for trackpad and typing!
+      if (screenWs) {
+        if (screenWs.readyState === WebSocket.OPEN) {
+          try { screenWs.send('pause'); } catch (e) {}
+        }
+        disconnectScreenWs();
+      }
+      if (window.AndroidApp && typeof window.AndroidApp.setStreamingMode === 'function') {
+        try { window.AndroidApp.setStreamingMode(false); } catch (e) {}
+      }
+    }
+
+    // 2. Wireless Camera / Media Tab Handling: Stop camera & mic sensors when leaving media tab to save CPU & battery
+    if (targetId === 'tab-media') {
+      // Switched to media tab: verify virtual driver status on PC
+      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        mainWs.send('cam_driver_check');
+        mainWs.send('mic_driver_check');
+      }
+    } else if (targetId === 'tab-trackpad') {
+      // Switched to trackpad/gamepad tab: verify virtual controller driver status on PC
+      if (gamepadActive && mainWs && mainWs.readyState === WebSocket.OPEN) {
+        mainWs.send('driver_check');
+      }
+    } else {
+      // Navigated away from media tab: turn off camera & mic immediately so they don't stream in background
+      if (camActive && typeof stopCam === 'function') {
+        stopCam();
+      }
+      if (micActive && typeof stopMic === 'function') {
+        stopMic();
+      }
+    }
+
+    if (targetId !== 'tab-screen' && typeof window.closeScreenTypeBar === 'function') {
       // Leaving the screen view: don't leave the typing overlay open behind other tabs.
       window.closeScreenTypeBar();
     }
@@ -1931,14 +2941,14 @@
       loadPhonePlaces();
       let targetPath = state.currentFsPath;
       try {
-        const savedPath = localStorage.getItem('neontrack_last_fs_path');
+        const savedPath = localStorage.getItem('pcdeck_last_fs_path') || localStorage.getItem('neontrack_last_fs_path');
         if (savedPath) targetPath = savedPath;
       } catch (e) {}
       browseFsDirectory(targetPath);
 
       let targetPhonePath = state.phoneFs.currentPath || 'default';
       try {
-        const savedPhonePath = localStorage.getItem('neontrack_last_phone_fs_path');
+        const savedPhonePath = localStorage.getItem('pcdeck_last_phone_fs_path') || localStorage.getItem('neontrack_last_phone_fs_path');
         if (savedPhonePath) targetPhonePath = savedPhonePath;
       } catch (e) {}
       state.phoneFs.currentPath = targetPhonePath;
@@ -2254,7 +3264,113 @@
   }
 
   function initFileManager() {
+    const tabFiles = document.getElementById('tab-files');
+    const btnFsToggleCards = document.getElementById('btn-fs-toggle-cards');
+    const btnPhoneFsToggleCards = document.getElementById('btn-phone-fs-toggle-cards');
+    let isFsCardsCollapsed = false;
+    let lastPcScrollTop = 0;
+    let lastPhoneScrollTop = 0;
+    let scrollTicking = false;
+
+    function setCardsCollapsed(collapsed) {
+      if (isFsCardsCollapsed === collapsed) return;
+      isFsCardsCollapsed = collapsed;
+      if (tabFiles) {
+        if (collapsed) {
+          tabFiles.classList.add('fs-compact-mode');
+        } else {
+          tabFiles.classList.remove('fs-compact-mode');
+        }
+      }
+    }
+    window.setFsCardsCollapsed = setCardsCollapsed;
+
+    function handleContainerScroll(container, isPhone) {
+      if (!container) return;
+      const currentScrollTop = container.scrollTop;
+      const lastScrollTop = isPhone ? lastPhoneScrollTop : lastPcScrollTop;
+      const delta = currentScrollTop - lastScrollTop;
+
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.id === 'fs-search-input' || activeEl.id === 'phone-fs-search-input')) {
+        return;
+      }
+
+      if (currentScrollTop <= 15) {
+        setCardsCollapsed(false);
+      } else if (delta > 8 && currentScrollTop > 35) {
+        setCardsCollapsed(true);
+      } else if (delta < -8) {
+        setCardsCollapsed(false);
+      }
+
+      if (isPhone) {
+        lastPhoneScrollTop = Math.max(0, currentScrollTop);
+      } else {
+        lastPcScrollTop = Math.max(0, currentScrollTop);
+      }
+    }
+
+    if (el.fsBrowserItems) {
+      el.fsBrowserItems.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+          window.requestAnimationFrame(() => {
+            handleContainerScroll(el.fsBrowserItems, false);
+            scrollTicking = false;
+          });
+          scrollTicking = true;
+        }
+      }, { passive: true });
+    }
+
+    if (el.phoneFsBrowserItems) {
+      el.phoneFsBrowserItems.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+          window.requestAnimationFrame(() => {
+            handleContainerScroll(el.phoneFsBrowserItems, true);
+            scrollTicking = false;
+          });
+          scrollTicking = true;
+        }
+      }, { passive: true });
+    }
+
+    if (btnFsToggleCards) {
+      btnFsToggleCards.onclick = () => {
+        vibrate(12);
+        setCardsCollapsed(!isFsCardsCollapsed);
+      };
+    }
+
+    if (btnPhoneFsToggleCards) {
+      btnPhoneFsToggleCards.onclick = () => {
+        vibrate(12);
+        setCardsCollapsed(!isFsCardsCollapsed);
+      };
+    }
+
+    if (el.fsCurrentPath) {
+      el.fsCurrentPath.onclick = () => {
+        if (isFsCardsCollapsed) {
+          vibrate(10);
+          setCardsCollapsed(false);
+        }
+      };
+    }
+
+    if (el.phoneFsCurrentPath) {
+      el.phoneFsCurrentPath.onclick = () => {
+        if (isFsCardsCollapsed) {
+          vibrate(10);
+          setCardsCollapsed(false);
+        }
+      };
+    }
+
     function setFilesMode(mode) {
+      setCardsCollapsed(false);
+      lastPcScrollTop = 0;
+      lastPhoneScrollTop = 0;
       if (mode === 'pc') {
         if (el.btnFsModePc) el.btnFsModePc.classList.add('active');
         if (el.btnFsModePhone) el.btnFsModePhone.classList.remove('active');
@@ -2268,7 +3384,7 @@
         loadPhonePlaces();
         let targetPhonePath = state.phoneFs.currentPath || 'default';
         try {
-          const saved = localStorage.getItem('neontrack_last_phone_fs_path');
+          const saved = localStorage.getItem('pcdeck_last_phone_fs_path') || localStorage.getItem('neontrack_last_phone_fs_path');
           if (saved) targetPhonePath = saved;
         } catch (e) {}
         browsePhoneDirectory(targetPhonePath);
@@ -2604,10 +3720,14 @@
   }
 
   function browseFsDirectory(path) {
+    if (typeof window.setFsCardsCollapsed === 'function') {
+      window.setFsCardsCollapsed(false);
+    }
     if (!el.fsBrowserItems) return;
+    el.fsBrowserItems.scrollTop = 0;
     el.fsBrowserItems.innerHTML = `
       <div class="empty-files-placeholder">
-        <span>📂</span>
+        <svg class="deck-icon" width="38" height="38" style="opacity: 0.6;"><use href="#icon-folder"/></svg>
         <p>Loading directory...</p>
       </div>
     `;
@@ -2622,7 +3742,7 @@
           state.fsFiles = data.files || [];
 
           try {
-            localStorage.setItem('neontrack_last_fs_path', data.current_path);
+            localStorage.setItem('pcdeck_last_fs_path', data.current_path);
           } catch (e) {}
 
           if (el.fsCurrentPath) {
@@ -2983,15 +4103,19 @@
   }
 
   function browsePhoneDirectory(reqPath, highlightTarget = '') {
+    if (typeof window.setFsCardsCollapsed === 'function') {
+      window.setFsCardsCollapsed(false);
+    }
     state.phoneFs.currentPath = reqPath || 'default';
     try {
-      localStorage.setItem('neontrack_last_phone_fs_path', state.phoneFs.currentPath);
+      localStorage.setItem('pcdeck_last_phone_fs_path', state.phoneFs.currentPath);
     } catch (e) {}
 
     if (el.phoneFsBrowserItems) {
+      el.phoneFsBrowserItems.scrollTop = 0;
       el.phoneFsBrowserItems.innerHTML = `
         <div class="empty-files-placeholder">
-          <span>📱</span>
+          <svg class="deck-icon" width="38" height="38" style="opacity: 0.6;"><use href="#icon-phone"/></svg>
           <p>Loading phone storage & files...</p>
         </div>
       `;
@@ -3009,7 +4133,7 @@
           state.phoneFs.markedPaths.clear();
 
           try {
-            localStorage.setItem('neontrack_last_phone_fs_path', data.current_path);
+            localStorage.setItem('pcdeck_last_phone_fs_path', data.current_path);
           } catch (e) {}
 
           if (el.phoneFsCurrentPath) {
@@ -3744,6 +4868,11 @@
 
     const downloadUrl = `http://${state.serverHost}:${state.serverPort}/api/fs/download?path=${encodeURIComponent(filePath)}`;
 
+    // Prioritize 100% Wi-Fi bandwidth for file transfer by putting any background screen stream to sleep
+    if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+      try { screenWs.send('pause'); } catch (e) {}
+    }
+
     // If running in Android App, use Native MediaStore Downloader directly into Downloads/PCDeck/
     if (window.AndroidApp && typeof window.AndroidApp.saveFileToDownloads === 'function') {
       nativeDownloadStartTime = Date.now();
@@ -3901,6 +5030,12 @@
 
   function uploadFilesToCurrentDir(fileList) {
     if (!fileList || fileList.length === 0) return;
+
+    // Prioritize 100% Wi-Fi bandwidth for file upload by putting any background screen stream to sleep
+    if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+      try { screenWs.send('pause'); } catch (e) {}
+    }
+
     const files = Array.from(fileList);
     let currentIndex = 0;
     let errorOccurred = false;
@@ -4246,7 +5381,7 @@
 
     showToast(shouldHide ? 'Full View (Title Bar Hidden)' : 'Title Bar Restored', 'info', shouldHide ? '📐' : '👁️');
     try {
-      localStorage.setItem('neontrack_titlebar_hidden', shouldHide.toString());
+      localStorage.setItem('pcdeck_titlebar_hidden', shouldHide.toString());
     } catch (e) {}
   }
 
@@ -4295,6 +5430,9 @@
     el.qrScannerModal.classList.add('show');
     vibrate(25);
 
+    const qrLoader = document.getElementById('qr-camera-loading');
+    if (qrLoader) qrLoader.classList.remove('hidden');
+
     const constraints = {
       video: {
         facingMode: state.currentFacingMode,
@@ -4304,13 +5442,20 @@
       audio: false
     };
 
+    const hideLoader = () => {
+      if (qrLoader) qrLoader.classList.add('hidden');
+    };
+
     navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
       state.qrStream = stream;
       el.qrVideo.srcObject = stream;
       el.qrVideo.setAttribute('playsinline', 'true');
+      el.qrVideo.onloadeddata = hideLoader;
       el.qrVideo.play().then(() => {
+        hideLoader();
         qrScanAnimationId = requestAnimationFrame(scanQrFrame);
       }).catch(() => {
+        hideLoader();
         qrScanAnimationId = requestAnimationFrame(scanQrFrame);
       });
     }).catch((err) => {
@@ -4319,8 +5464,14 @@
         state.qrStream = stream;
         el.qrVideo.srcObject = stream;
         el.qrVideo.setAttribute('playsinline', 'true');
-        el.qrVideo.play();
-        qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+        el.qrVideo.onloadeddata = hideLoader;
+        el.qrVideo.play().then(() => {
+          hideLoader();
+          qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+        }).catch(() => {
+          hideLoader();
+          qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+        });
       }).catch((e2) => {
         console.error('Camera access error:', e2);
         showToast('Camera permission required to scan QR', 'error', '📷');
@@ -4338,6 +5489,8 @@
       state.qrStream.getTracks().forEach(t => t.stop());
       state.qrStream = null;
     }
+    const qrLoader = document.getElementById('qr-camera-loading');
+    if (qrLoader) qrLoader.classList.remove('hidden');
     state.torchActive = false;
     if (el.btnToggleTorch) el.btnToggleTorch.textContent = '💡 Flashlight';
     if (el.qrScannerModal) el.qrScannerModal.classList.remove('show');
@@ -4430,7 +5583,6 @@
       state.serverPort = parsed.port;
       if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
       if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
-      showToast(`Connected to ${state.serverHost}:${state.serverPort}`, 'success', '💻');
       reconnectAttempts = 0;
       saveAllSettings(false);
       connect(true);
@@ -4693,9 +5845,6 @@
       if (audioCtx && audioCtx.state === 'suspended' && audioStreamActive && !userManuallyStoppedAudio) {
         audioCtx.resume().catch(() => {});
       }
-      if (state.autoAudioStream && !audioStreamActive && !userManuallyStoppedAudio && state.connected) {
-        startAudioStream();
-      }
     };
     window.addEventListener('touchstart', unlockAudioOnGesture, { passive: true });
     window.addEventListener('click', unlockAudioOnGesture, { passive: true });
@@ -4762,8 +5911,12 @@
   let audioRingReadPos = 0;
   let audioRingAvailable = 0;
   let audioContinuousNode = null;
+  let audioWorkletNode = null;
+  let audioWorkletReady = false;
   let isAudioPrebuffering = true;
-  const AUDIO_PREBUFFER_THRESHOLD = 1440; // ~30ms pre-buffer before starting playback
+  let audioFracPos = 0.0;
+  let audioLastSampleL = 0.0;
+  let audioLastSampleR = 0.0;
 
   function ensureAudioContext() {
     if (!audioCtx || audioCtx.state === 'closed') {
@@ -4856,31 +6009,22 @@
     audioStreamActive = active;
     if (el.btnToggleAudioStream) {
       if (active) {
-        el.btnToggleAudioStream.classList.remove('btn-lime');
+        el.btnToggleAudioStream.classList.remove('btn-yellow', 'btn-lime');
         el.btnToggleAudioStream.classList.add('btn-pink');
-        if (el.audioBtnIcon) el.audioBtnIcon.textContent = '⏹️';
-        if (el.audioBtnLabel) el.audioBtnLabel.textContent = 'STOP HEARING PC AUDIO';
+        if (el.audioBtnIcon) el.audioBtnIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>';
+        if (el.audioBtnLabel) el.audioBtnLabel.textContent = 'Stop Audio';
       } else {
         el.btnToggleAudioStream.classList.remove('btn-pink');
-        el.btnToggleAudioStream.classList.add('btn-lime');
-        if (el.audioBtnIcon) el.audioBtnIcon.textContent = '🔊';
-        if (el.audioBtnLabel) el.audioBtnLabel.textContent = 'START HEARING PC AUDIO';
+        el.btnToggleAudioStream.classList.add('btn-yellow');
+        if (el.audioBtnIcon) el.audioBtnIcon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+        if (el.audioBtnLabel) el.audioBtnLabel.textContent = 'Listen to PC';
       }
     }
 
-    if (el.audioStatusPill) {
-      el.audioStatusPill.textContent = active ? 'STREAMING LIVE' : 'OFFLINE';
-      if (active) {
-        el.audioStatusPill.classList.add('streaming');
-        el.audioStatusPill.style.background = 'var(--neo-lime)';
-        el.audioStatusPill.style.color = '#000';
-        el.audioStatusPill.style.borderColor = '#000';
-      } else {
-        el.audioStatusPill.classList.remove('streaming');
-        el.audioStatusPill.style.background = 'var(--bg-surface-elevated)';
-        el.audioStatusPill.style.color = 'var(--text-muted)';
-        el.audioStatusPill.style.borderColor = 'var(--neo-dark)';
-      }
+    const audioStatusBadge = document.getElementById('audio-stream-status-badge') || el.audioStatusPill;
+    if (audioStatusBadge) {
+      audioStatusBadge.textContent = active ? 'LIVE' : 'STANDBY';
+      audioStatusBadge.className = active ? 'mini-status-chip online' : 'mini-status-chip offline';
     }
 
     if (el.audioVisualizerBars) {
@@ -4913,7 +6057,12 @@
     }
   }
 
-  function startAudioStream() {
+  async function startAudioStream() {
+    if (!state.connected || !state.serverHost) {
+      audioConnecting = false;
+      audioStreamActive = false;
+      return;
+    }
     stopAudioStream(false);
     const session = ++audioSessionId;
     userManuallyStoppedAudio = false;
@@ -4921,6 +6070,9 @@
     updateAudioUi(true);
 
     ensureAudioContext();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      try { await audioCtx.resume(); } catch (e) {}
+    }
 
     // stopAudioStream() zeroes the gain to silence instantly; restore it for the new session.
     if (audioGainNode && audioCtx && audioCtx.state !== 'closed') {
@@ -4931,10 +6083,13 @@
 
     const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
     const port = state.serverPort || (window.location.port && window.location.port !== '' ? window.location.port : '8000');
-    const audioWsUrl = `ws://${host}:${port}/ws/audio`;
+    const storedToken = localStorage.getItem('pcdeck_token') || '';
+    const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+    const audioWsUrl = `ws://${host}:${port}/ws/audio${tokenParam}`;
 
     try {
-      setupContinuousAudioProcessor();
+      // Ensure dedicated AudioWorklet thread is initialized BEFORE opening socket
+      await initAudioPlayerEngine();
       const ws = new WebSocket(audioWsUrl);
       audioWs = ws;
       ws.binaryType = 'arraybuffer';
@@ -4946,7 +6101,6 @@
         }
         audioConnecting = false;
         updateAudioUi(true);
-        showToast('Streaming Smooth PC Audio!', 'success', '🔊');
       };
 
       ws.onmessage = (event) => {
@@ -4957,12 +6111,26 @@
             const parts = event.data.split(',');
             audioSampleRate = parseInt(parts[1] || '48000', 10);
             audioChannels = parseInt(parts[2] || '2', 10);
+            if (audioWorkletReady && audioWorkletNode) {
+              try {
+                audioWorkletNode.port.postMessage({ type: 'cfg', sampleRate: audioSampleRate, channels: audioChannels });
+              } catch (e) {}
+            }
           }
           return;
         }
 
         if (event.data instanceof ArrayBuffer) {
-          playPcmChunk(event.data);
+          if (audioWorkletReady && audioWorkletNode) {
+            try {
+              // Direct zero-copy transfer to dedicated background AudioWorklet thread
+              audioWorkletNode.port.postMessage(event.data, [event.data]);
+            } catch (e) {
+              playPcmChunk(event.data);
+            }
+          } else {
+            playPcmChunk(event.data);
+          }
         }
       };
 
@@ -4990,6 +6158,208 @@
     }
   }
 
+  async function initAudioPlayerEngine() {
+    ensureAudioContext();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') {
+      try { await audioCtx.resume(); } catch (e) {}
+    }
+
+    if (audioWorkletNode) {
+      try { audioWorkletNode.disconnect(); } catch (e) {}
+      audioWorkletNode = null;
+    }
+    audioWorkletReady = false;
+
+    // 3. Permanent Solution: Dedicated Real-Time Audio Thread (AudioWorklet)
+    // Runs on dedicated high-priority OS audio thread, immune to 60 FPS video & trackpad swipes
+    if (audioCtx.audioWorklet && typeof audioCtx.audioWorklet.addModule === 'function') {
+      let moduleLoaded = false;
+
+      // 1. Try static asset modules first (works across browser & Android WebView)
+      const moduleCandidates = [
+        'audio-worklet-processor.js',
+        '/audio-worklet-processor.js',
+      ];
+      if (window.location.protocol.startsWith('http')) {
+        const host = state.serverHost || window.location.hostname || '127.0.0.1';
+        const port = state.serverPort || window.location.port || '8000';
+        moduleCandidates.push(`http://${host}:${port}/audio-worklet-processor.js`);
+      }
+
+      for (const candidate of moduleCandidates) {
+        try {
+          await audioCtx.audioWorklet.addModule(candidate);
+          moduleLoaded = true;
+          break;
+        } catch (e) {}
+      }
+
+      // 2. Blob fallback if file access was restricted
+      if (!moduleLoaded) {
+        try {
+          const workletCode = `
+class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.RING_SIZE = 96000 * 2;
+    this.bufferL = new Float32Array(this.RING_SIZE);
+    this.bufferR = new Float32Array(this.RING_SIZE);
+    this.writePos = 0;
+    this.readPos = 0;
+    this.available = 0;
+    this.fracPos = 0.0;
+    this.srcRate = 48000;
+    this.channels = 2;
+    this.isPrebuffering = true;
+    this.lastSampleL = 0.0;
+    this.lastSampleR = 0.0;
+
+    this.port.onmessage = (event) => {
+      const msg = event.data;
+      if (!msg) return;
+      if (msg.type === 'cfg') {
+        this.srcRate = msg.sampleRate || 48000;
+        this.channels = msg.channels || 2;
+        return;
+      }
+      if (msg.type === 'reset') {
+        this.writePos = 0;
+        this.readPos = 0;
+        this.available = 0;
+        this.fracPos = 0.0;
+        this.isPrebuffering = true;
+        this.lastSampleL = 0.0;
+        this.lastSampleR = 0.0;
+        return;
+      }
+      if (msg instanceof ArrayBuffer) {
+        const int16 = new Int16Array(msg);
+        const ch = this.channels;
+        const frames = Math.floor(int16.length / ch);
+        if (frames <= 0) return;
+        for (let i = 0; i < frames; i++) {
+          const sL = int16[i * ch] / 32768.0;
+          const sR = ch > 1 ? int16[i * ch + 1] / 32768.0 : sL;
+          this.bufferL[this.writePos] = sL;
+          this.bufferR[this.writePos] = sR;
+          this.writePos = (this.writePos + 1) % this.RING_SIZE;
+          this.available = Math.min(this.RING_SIZE, this.available + 1);
+        }
+      }
+    };
+  }
+
+  process(inputs, outputs, parameters) {
+    const output = outputs[0];
+    if (!output || output.length === 0) return true;
+    const outL = output[0];
+    const outR = output.length > 1 ? output[1] : output[0];
+    const bufLen = outL.length;
+
+    const hwRate = typeof sampleRate !== 'undefined' ? sampleRate : 48000;
+    const baseRatio = this.srcRate / hwRate;
+
+    const prebufferThreshold = Math.round(this.srcRate * 0.065);
+    if (this.isPrebuffering) {
+      if (this.available < prebufferThreshold) {
+        outL.fill(0);
+        if (outR !== outL) outR.fill(0);
+        return true;
+      }
+      this.isPrebuffering = false;
+    }
+
+    if (this.available <= 2) {
+      this.isPrebuffering = true;
+      for (let i = 0; i < bufLen; i++) {
+        if (i < 32) {
+          const fade = (32 - i) / 32;
+          outL[i] = this.lastSampleL * fade;
+          if (outR !== outL) outR[i] = this.lastSampleR * fade;
+        } else {
+          outL[i] = 0;
+          if (outR !== outL) outR[i] = 0;
+        }
+      }
+      this.lastSampleL = 0.0;
+      this.lastSampleR = 0.0;
+      return true;
+    }
+
+    const bufferedMs = (this.available / this.srcRate) * 1000;
+    let rateMult = 1.0;
+    if (bufferedMs > 80) {
+      rateMult = 1.018;
+    } else if (bufferedMs < 35) {
+      rateMult = 0.982;
+    }
+    const effectiveRatio = baseRatio * rateMult;
+
+    for (let i = 0; i < bufLen; i++) {
+      if (this.available <= 1) {
+        outL[i] = 0;
+        if (outR !== outL) outR[i] = 0;
+        continue;
+      }
+
+      const idx0 = this.readPos;
+      const idx1 = (this.readPos + 1) % this.RING_SIZE;
+      const alpha = this.fracPos;
+
+      const sL = this.bufferL[idx0] * (1.0 - alpha) + this.bufferL[idx1] * alpha;
+      const sR = this.bufferR[idx0] * (1.0 - alpha) + this.bufferR[idx1] * alpha;
+
+      outL[i] = sL;
+      if (outR !== outL) outR[i] = sR;
+      this.lastSampleL = sL;
+      this.lastSampleR = sR;
+
+      this.fracPos += effectiveRatio;
+      if (this.fracPos >= 1.0) {
+        const step = Math.floor(this.fracPos);
+        this.fracPos -= step;
+        this.readPos = (this.readPos + step) % this.RING_SIZE;
+        this.available = Math.max(0, this.available - step);
+      }
+    }
+    return true;
+  }
+}
+try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcessor); } catch(e){}`;
+          const blob = new Blob([workletCode], { type: 'application/javascript' });
+          const blobUrl = URL.createObjectURL(blob);
+          await audioCtx.audioWorklet.addModule(blobUrl);
+          moduleLoaded = true;
+        } catch (e) {}
+      }
+
+      if (moduleLoaded) {
+        try {
+          audioWorkletNode = new AudioWorkletNode(audioCtx, 'pcdeck-audio-player-worklet', {
+            numberOfInputs: 0,
+            numberOfOutputs: 1,
+            outputChannelCount: [2]
+          });
+          if (audioAnalyser) {
+            audioWorkletNode.connect(audioAnalyser);
+          } else if (audioGainNode) {
+            audioWorkletNode.connect(audioGainNode);
+          }
+          audioWorkletReady = true;
+          audioWorkletNode.port.postMessage({ type: 'cfg', sampleRate: audioSampleRate, channels: audioChannels });
+          console.log('[PCDeck Audio] Dedicated Real-Time AudioWorklet Thread active!');
+          return;
+        } catch (err) {
+          console.warn('[PCDeck Audio] AudioWorkletNode creation fallback:', err);
+        }
+      }
+    }
+
+    // Fallback: Resampled continuous ScriptProcessorNode
+    setupContinuousAudioProcessor();
+  }
+
   function setupContinuousAudioProcessor() {
     ensureAudioContext();
     if (!audioCtx) return;
@@ -5003,6 +6373,9 @@
     audioRingWritePos = 0;
     audioRingReadPos = 0;
     audioRingAvailable = 0;
+    audioFracPos = 0.0;
+    audioLastSampleL = 0.0;
+    audioLastSampleR = 0.0;
     isAudioPrebuffering = true;
 
     try {
@@ -5015,9 +6388,14 @@
         const outR = e.outputBuffer.getChannelData(1);
         const bufLen = outL.length;
 
-        // 1. Prebuffer gate to absorb initial network jitter
+        const hwRate = (audioCtx && audioCtx.sampleRate) ? audioCtx.sampleRate : 48000;
+        const srcRate = audioSampleRate || 48000;
+        const baseRatio = srcRate / hwRate;
+
+        // Prebuffer gate: wait for ~65ms buffer to absorb initial Wi-Fi jitter
+        const prebufferThreshold = Math.round(srcRate * 0.065);
         if (isAudioPrebuffering) {
-          if (audioRingAvailable < AUDIO_PREBUFFER_THRESHOLD) {
+          if (audioRingAvailable < prebufferThreshold) {
             outL.fill(0);
             outR.fill(0);
             return;
@@ -5025,36 +6403,62 @@
           isAudioPrebuffering = false;
         }
 
-        // 2. Buffer underrun check
-        if (audioRingAvailable < bufLen) {
+        // Buffer starvation / underrun handling with smooth ramp-down to prevent clicks
+        if (audioRingAvailable <= 2) {
+          isAudioPrebuffering = true;
           for (let i = 0; i < bufLen; i++) {
-            if (audioRingAvailable > 0) {
-              outL[i] = audioRingBufferL[audioRingReadPos];
-              outR[i] = audioRingBufferR[audioRingReadPos];
-              audioRingReadPos = (audioRingReadPos + 1) % AUDIO_RING_BUFFER_SIZE;
-              audioRingAvailable--;
+            if (i < 32) {
+              const fade = (32 - i) / 32;
+              outL[i] = audioLastSampleL * fade;
+              outR[i] = audioLastSampleR * fade;
             } else {
               outL[i] = 0;
               outR[i] = 0;
             }
           }
-          isAudioPrebuffering = true;
+          audioLastSampleL = 0.0;
+          audioLastSampleR = 0.0;
           return;
         }
 
-        // 3. Adaptive clock drift compensation (keep latency < 35ms without pitch distortion)
-        const needCatchup = audioRingAvailable > 2880; // > 60ms backlog
+        // Adaptive clock drift compensation (PLL):
+        // Gently adjust resampling ratio by ±1.5% without pitch clicks or sample drops
+        const bufferedMs = (audioRingAvailable / srcRate) * 1000;
+        let rateMultiplier = 1.0;
+        if (bufferedMs > 80) {
+          rateMultiplier = 1.018; // Gently drain buffer
+        } else if (bufferedMs < 35) {
+          rateMultiplier = 0.982; // Gently accumulate buffer
+        }
+        const effectiveRatio = baseRatio * rateMultiplier;
 
+        // High-Fidelity Fractional Linear-Interpolated Resampling:
+        // Preserves full treble and exact natural pitch at all times (never dull or slow!)
         for (let i = 0; i < bufLen; i++) {
-          outL[i] = audioRingBufferL[audioRingReadPos];
-          outR[i] = audioRingBufferR[audioRingReadPos];
-          audioRingReadPos = (audioRingReadPos + 1) % AUDIO_RING_BUFFER_SIZE;
-          audioRingAvailable--;
+          if (audioRingAvailable <= 1) {
+            outL[i] = 0;
+            outR[i] = 0;
+            continue;
+          }
 
-          if (needCatchup && i % 128 === 0 && audioRingAvailable > 0) {
-            // Subtly skip 1 frame per 128 to gently drain buffer
-            audioRingReadPos = (audioRingReadPos + 1) % AUDIO_RING_BUFFER_SIZE;
-            audioRingAvailable--;
+          const idx0 = audioRingReadPos;
+          const idx1 = (audioRingReadPos + 1) % AUDIO_RING_BUFFER_SIZE;
+          const alpha = audioFracPos;
+
+          const sL = audioRingBufferL[idx0] * (1.0 - alpha) + audioRingBufferL[idx1] * alpha;
+          const sR = audioRingBufferR[idx0] * (1.0 - alpha) + audioRingBufferR[idx1] * alpha;
+
+          outL[i] = sL;
+          outR[i] = sR;
+          audioLastSampleL = sL;
+          audioLastSampleR = sR;
+
+          audioFracPos += effectiveRatio;
+          if (audioFracPos >= 1.0) {
+            const step = Math.floor(audioFracPos);
+            audioFracPos -= step;
+            audioRingReadPos = (audioRingReadPos + step) % AUDIO_RING_BUFFER_SIZE;
+            audioRingAvailable = Math.max(0, audioRingAvailable - step);
           }
         }
       };
@@ -5091,6 +6495,12 @@
   }
 
   function killScheduledAudioSources() {
+    if (audioWorkletNode) {
+      try { audioWorkletNode.port.postMessage({ type: 'reset' }); } catch (e) {}
+      try { audioWorkletNode.disconnect(); } catch (e) {}
+      audioWorkletNode = null;
+      audioWorkletReady = false;
+    }
     if (audioContinuousNode) {
       try { audioContinuousNode.disconnect(); } catch (e) {}
       audioContinuousNode = null;
@@ -5098,6 +6508,9 @@
     audioRingWritePos = 0;
     audioRingReadPos = 0;
     audioRingAvailable = 0;
+    audioFracPos = 0.0;
+    audioLastSampleL = 0.0;
+    audioLastSampleR = 0.0;
   }
 
   function teardownHtml5Fallback(element) {
@@ -5111,6 +6524,7 @@
 
   function startHtml5AudioFallback(session) {
     if (session !== undefined && session !== audioSessionId) return;
+    if (!state.connected || !state.serverHost) return;
 
     teardownHtml5Fallback(html5AudioFallback);
     html5AudioFallback = null;
@@ -5129,7 +6543,6 @@
       }
       audioConnecting = false;
       updateAudioUi(true);
-      showToast('Streaming PC Audio (HTML5 Fallback)', 'success', '🔊');
     }).catch((e) => {
       console.warn('HTML5 audio play error:', e);
       teardownHtml5Fallback(element);
@@ -5191,7 +6604,7 @@
      ========================================================================== */
 
   window.isProUnlocked = function() {
-    return localStorage.getItem('pcdeck_pro_active') === 'true';
+    return localStorage.getItem('pcdeck_pro_active') === 'true' || window.serverProActive === true;
   };
 
   window.openProUpgradeModal = function() {
@@ -5247,7 +6660,13 @@
       keyRow.style.display = isPro ? 'none' : 'flex';
     }
     if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-      mainWs.send(`pro_status,${isPro ? '1' : '0'}`);
+      const authKey = localStorage.getItem('pcdeck_pro_license') || '';
+      const authInst = localStorage.getItem('pcdeck_pro_instance_id') || '';
+      if (authKey && authInst) {
+        mainWs.send(`pro_auth,${authKey},${authInst}`);
+      } else {
+        mainWs.send(`pro_status,${isPro ? '1' : '0'}`);
+      }
     }
 
     if (typeof window.syncTransferSpeedButtons === 'function') {
@@ -5264,18 +6683,6 @@
       return false;
     }
     const cleanKey = keyStr.trim();
-
-    // Developer Test Key (For immediate local verification)
-    if (cleanKey.toUpperCase() === 'PCDECK-DEV-TEST-KEY-2026') {
-      localStorage.setItem('pcdeck_pro_active', 'true');
-      localStorage.setItem('pcdeck_pro_license', 'PCDECK-DEV-TEST-KEY-2026');
-      localStorage.setItem('pcdeck_pro_instance_id', 'dev-test-instance-001');
-      updateProUI();
-      window.closeProUpgradeModal();
-      showCelebrationModal();
-      showToast('Developer Pro License Activated!', 'success');
-      return true;
-    }
 
     showToast('Activating with Lemon Squeezy...', 'info');
     try {
@@ -5689,7 +7096,7 @@
       }
       const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
       // If not connected and in native app without saved IP, show connect modal
-      if (!state.connected && !localStorage.getItem('neontrack_ip') && isNativeApp) {
+      if (!state.connected && !localStorage.getItem('pcdeck_ip') && !localStorage.getItem('neontrack_ip') && isNativeApp) {
         if (el.connectModal) el.connectModal.classList.add('show');
       }
     };
@@ -5866,7 +7273,19 @@
       activeGpPreset = presetKey;
       const conf = GP_PRESETS[presetKey] || GP_PRESETS.xbox;
       const driverBadge = document.getElementById('gp-driver-text');
-      if (driverBadge) driverBadge.textContent = conf.driverLabel;
+      if (driverBadge) {
+        driverBadge.textContent = (state.gamepadDriverInstalled === false)
+          ? 'Driver Required (Tap to Install)'
+          : conf.driverLabel;
+      }
+
+      const emblemText = document.getElementById('gp-center-emblem-text');
+      if (emblemText) {
+        if (presetKey === 'xbox') emblemText.textContent = 'XBOX 360 PC DECK';
+        else if (presetKey === 'ps') emblemText.textContent = 'PLAYSTATION DECK';
+        else if (presetKey === 'racing') emblemText.textContent = 'RACING SIM DECK';
+        else if (presetKey === 'wasd') emblemText.textContent = 'PC KEYBOARD/MOUSE';
+      }
 
       const presetChips = document.querySelectorAll('.gp-preset-chip');
       presetChips.forEach(c => {
@@ -5874,7 +7293,7 @@
       });
 
       // Update diamond buttons label and sublabels
-      const diamonds = document.querySelectorAll('#gp-action-diamond');
+      const diamonds = document.querySelectorAll('#gp-action-diamond, .gp-abxy-diamond');
       diamonds.forEach(diamond => {
         Object.keys(conf.buttons).forEach(btnKey => {
           const btn = diamond.querySelector(`[data-gp="${btnKey}"]`);
@@ -6407,9 +7826,62 @@
     }
 
     // Drag-and-Drop Repositioning Engine for Layout Editor (100% Fluid, Zero Snapping)
+    // Drag-and-Drop Repositioning Engine for Layout Editor (100% Fluid, Zero Snapping)
     let dragTarget = null;
     let dragOffset = { x: 0, y: 0 };
     let isCurrentlyDragging = false;
+
+    const handleDragMove = (e) => {
+      if (!isGpLayoutEditing || !dragTarget || !isCurrentlyDragging) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const containerRect = gpContainer.getBoundingClientRect();
+      let leftPx = e.clientX - containerRect.left - dragOffset.x;
+      let topPx = e.clientY - containerRect.top - dragOffset.y;
+
+      // Fluid continuous bounding
+      leftPx = Math.max(0, Math.min(containerRect.width - dragTarget.offsetWidth, leftPx));
+      topPx = Math.max(0, Math.min(containerRect.height - dragTarget.offsetHeight, topPx));
+
+      // High precision pixel placement during drag for instant 60/120fps response
+      dragTarget.style.left = `${leftPx.toFixed(1)}px`;
+      dragTarget.style.top = `${topPx.toFixed(1)}px`;
+
+      const leftPercent = ((leftPx / containerRect.width) * 100).toFixed(2);
+      const topPercent = ((topPx / containerRect.height) * 100).toFixed(2);
+
+      const elemId = dragTarget.dataset.elemId;
+      if (gpCustomLayout.elements[elemId]) {
+        gpCustomLayout.elements[elemId].left = `${leftPercent}%`;
+        gpCustomLayout.elements[elemId].top = `${topPercent}%`;
+        gpCustomLayout.elements[elemId].right = 'auto';
+        gpCustomLayout.elements[elemId].bottom = 'auto';
+      } else {
+        const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === elemId);
+        if (customEntry) {
+          customEntry.left = `${leftPercent}%`;
+          customEntry.top = `${topPercent}%`;
+        }
+      }
+    };
+
+    const handleDragEnd = (e) => {
+      if (dragTarget) {
+        dragTarget.classList.remove('gp-is-dragging');
+        const containerRect = gpContainer.getBoundingClientRect();
+        const rect = dragTarget.getBoundingClientRect();
+        const leftPct = (((rect.left - containerRect.left) / containerRect.width) * 100).toFixed(2) + '%';
+        const topPct = (((rect.top - containerRect.top) / containerRect.height) * 100).toFixed(2) + '%';
+        dragTarget.style.left = leftPct;
+        dragTarget.style.top = topPct;
+        try { dragTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+        dragTarget = null;
+        isCurrentlyDragging = false;
+      }
+      window.removeEventListener('pointermove', handleDragMove);
+      window.removeEventListener('pointerup', handleDragEnd);
+      window.removeEventListener('pointercancel', handleDragEnd);
+    };
 
     if (gpContainer) {
       gpContainer.addEventListener('pointerdown', (e) => {
@@ -6439,60 +7911,11 @@
           dragTarget.style.bottom = 'auto';
 
           try { selectable.setPointerCapture(e.pointerId); } catch (_) {}
+          window.addEventListener('pointermove', handleDragMove, { passive: false });
+          window.addEventListener('pointerup', handleDragEnd);
+          window.addEventListener('pointercancel', handleDragEnd);
         }
       });
-
-      gpContainer.addEventListener('pointermove', (e) => {
-        if (!isGpLayoutEditing || !dragTarget || !isCurrentlyDragging) return;
-        e.preventDefault();
-        e.stopPropagation();
-        const containerRect = gpContainer.getBoundingClientRect();
-        let leftPx = e.clientX - containerRect.left - dragOffset.x;
-        let topPx = e.clientY - containerRect.top - dragOffset.y;
-
-        // Fluid continuous bounding
-        leftPx = Math.max(0, Math.min(containerRect.width - dragTarget.offsetWidth, leftPx));
-        topPx = Math.max(0, Math.min(containerRect.height - dragTarget.offsetHeight, topPx));
-
-        // High precision pixel placement during drag for instant 60/120fps response
-        dragTarget.style.left = `${leftPx.toFixed(1)}px`;
-        dragTarget.style.top = `${topPx.toFixed(1)}px`;
-
-        const leftPercent = ((leftPx / containerRect.width) * 100).toFixed(2);
-        const topPercent = ((topPx / containerRect.height) * 100).toFixed(2);
-
-        const elemId = dragTarget.dataset.elemId;
-        if (gpCustomLayout.elements[elemId]) {
-          gpCustomLayout.elements[elemId].left = `${leftPercent}%`;
-          gpCustomLayout.elements[elemId].top = `${topPercent}%`;
-          gpCustomLayout.elements[elemId].right = 'auto';
-          gpCustomLayout.elements[elemId].bottom = 'auto';
-        } else {
-          const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === elemId);
-          if (customEntry) {
-            customEntry.left = `${leftPercent}%`;
-            customEntry.top = `${topPercent}%`;
-          }
-        }
-      });
-
-      const handleDragEnd = (e) => {
-        if (dragTarget) {
-          dragTarget.classList.remove('gp-is-dragging');
-          const containerRect = gpContainer.getBoundingClientRect();
-          const rect = dragTarget.getBoundingClientRect();
-          const leftPct = (((rect.left - containerRect.left) / containerRect.width) * 100).toFixed(2) + '%';
-          const topPct = (((rect.top - containerRect.top) / containerRect.height) * 100).toFixed(2) + '%';
-          dragTarget.style.left = leftPct;
-          dragTarget.style.top = topPct;
-          try { dragTarget.releasePointerCapture(e.pointerId); } catch (_) {}
-          dragTarget = null;
-          isCurrentlyDragging = false;
-        }
-      };
-
-      gpContainer.addEventListener('pointerup', handleDragEnd);
-      gpContainer.addEventListener('pointercancel', handleDragEnd);
     }
 
     // Apply layout on init
@@ -6512,83 +7935,316 @@
       if (active) {
         applyGamepadPreset(activeGpPreset);
         applyGpLayout();
+        if (gyroEngine && gyroEngine.enabled) gyroEngine.start();
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          mainWs.send('driver_check');
+        }
       } else {
         setGamepadEditMode(false);
+        if (gyroEngine) gyroEngine.stop();
       }
       vibrate(20);
     }
+    window.setGamepadMode = setGamepadMode;
 
     if (btnToggle) {
       btnToggle.onclick = () => setGamepadMode(!gamepadActive);
     }
-    const returnButtons = document.querySelectorAll('#btn-return-trackpad, .gp-exit-chip');
+    const returnButtons = document.querySelectorAll('#btn-return-trackpad, #btn-gp-top-back-trackpad, .gp-exit-chip');
     returnButtons.forEach((btn) => {
       btn.onclick = () => setGamepadMode(false);
     });
 
-    // Bind Digital & Action Buttons
-    const gpButtons = document.querySelectorAll('[data-gp]');
-    gpButtons.forEach((btn) => {
-      const code = btn.dataset.gp;
-      const onDown = (e) => {
+    const btnInstallGpDriver = document.getElementById('btn-install-gamepad-driver');
+    if (btnInstallGpDriver) {
+      btnInstallGpDriver.onclick = () => {
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          vibrate(20);
+          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info', '🎮');
+          mainWs.send('install_gamepad_driver_request');
+        } else {
+          showToast('PC not connected', 'error', '⚠️');
+        }
+      };
+    }
+
+    const gpDriverBadge = document.getElementById('gp-driver-badge');
+    if (gpDriverBadge) {
+      gpDriverBadge.onclick = () => {
+        if (state.gamepadDriverInstalled === false) {
+          if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+            vibrate(20);
+            showToast('Requesting PC Virtual Gamepad Driver installation...', 'info', '🎮');
+            mainWs.send('install_gamepad_driver_request');
+          } else {
+            showToast('PC not connected', 'error', '⚠️');
+          }
+        }
+      };
+    }
+
+    const wasdKeyMap = {
+      a: 'space', b: 'c', x: 'z', y: 'r',
+      lb: 'q', rb: 'e',
+      lt: 'mouse_right', rt: 'mouse_left',
+      ls_click: 'shift', rs_click: 'alt',
+      back: 'm', start: 'escape', guide: 'win',
+      dpad_up: 'up', dpad_down: 'down', dpad_left: 'left', dpad_right: 'right'
+    };
+
+    function sendGamepadButtonState(code, isPressed) {
+      if (activeGpPreset === 'wasd') {
+        const key = wasdKeyMap[code] || code;
+        if (key.startsWith('mouse_')) {
+          sendCommand(`mouse,${isPressed ? 'down' : 'up'},${key.replace('mouse_', '')}`);
+        } else {
+          sendCommand(`key,${isPressed ? 'down' : 'up'},${key}`);
+        }
+      } else {
+        sendCommand(`gp,btn,${code},${isPressed ? 1 : 0}`);
+      }
+    }
+
+    // =========================================================================
+    // ➕ D-PAD TOUCH & FLUID 8-WAY DRAG ENGINE
+    // =========================================================================
+    const dpadDisc = document.getElementById('gp-dpad-disc');
+    const dpadButtons = {
+      up: document.querySelector('.gp-dpad-up'),
+      down: document.querySelector('.gp-dpad-down'),
+      left: document.querySelector('.gp-dpad-left'),
+      right: document.querySelector('.gp-dpad-right')
+    };
+    let activeDpadDirections = { up: false, down: false, left: false, right: false };
+    let dpadPointerId = null;
+
+    function setDpadDirectionState(dir, isPressed) {
+      if (activeDpadDirections[dir] === isPressed) return;
+      activeDpadDirections[dir] = isPressed;
+      const btn = dpadButtons[dir];
+      if (btn) btn.classList.toggle('active', isPressed);
+      sendGamepadButtonState(`dpad_${dir}`, isPressed);
+      if (isPressed && gpHaptics) vibrate(10);
+    }
+
+    function updateDpadFromCoords(clientX, clientY) {
+      if (!dpadDisc) return;
+      const rect = dpadDisc.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dx = clientX - centerX;
+      const dy = clientY - centerY;
+      const dist = Math.hypot(dx, dy);
+
+      const deadzone = Math.max(8, rect.width * 0.12);
+
+      if (dist < deadzone) {
+        setDpadDirectionState('up', false);
+        setDpadDirectionState('down', false);
+        setDpadDirectionState('left', false);
+        setDpadDirectionState('right', false);
+        return;
+      }
+
+      const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+      const isRight = (angleDeg >= -67.5 && angleDeg <= 67.5);
+      const isLeft = (angleDeg >= 112.5 || angleDeg <= -112.5);
+      const isDown = (angleDeg >= 22.5 && angleDeg <= 157.5);
+      const isUp = (angleDeg >= -157.5 && angleDeg <= -22.5);
+
+      setDpadDirectionState('up', isUp);
+      setDpadDirectionState('down', isDown);
+      setDpadDirectionState('left', isLeft);
+      setDpadDirectionState('right', isRight);
+    }
+
+    if (dpadDisc) {
+      dpadDisc.addEventListener('pointerdown', (e) => {
         if (isGpLayoutEditing) return;
         e.preventDefault();
         e.stopPropagation();
+        dpadPointerId = e.pointerId;
+        try { dpadDisc.setPointerCapture(e.pointerId); } catch (_) {}
+        updateDpadFromCoords(e.clientX, e.clientY);
+
+        const onDpadMove = (me) => {
+          if (dpadPointerId !== me.pointerId || isGpLayoutEditing) return;
+          me.preventDefault();
+          me.stopPropagation();
+          updateDpadFromCoords(me.clientX, me.clientY);
+        };
+
+        const onDpadUp = (ue) => {
+          if (ue.pointerId !== undefined && ue.pointerId !== dpadPointerId) return;
+          try { dpadDisc.releasePointerCapture(dpadPointerId); } catch (_) {}
+          dpadPointerId = null;
+          window.removeEventListener('pointermove', onDpadMove);
+          window.removeEventListener('pointerup', onDpadUp);
+          window.removeEventListener('pointercancel', onDpadUp);
+
+          setDpadDirectionState('up', false);
+          setDpadDirectionState('down', false);
+          setDpadDirectionState('left', false);
+          setDpadDirectionState('right', false);
+        };
+
+        window.addEventListener('pointermove', onDpadMove, { passive: false });
+        window.addEventListener('pointerup', onDpadUp);
+        window.addEventListener('pointercancel', onDpadUp);
+      });
+    }
+
+    // =========================================================================
+    // 🎯 ABXY ACTION DIAMOND FLUID SLIDE & TOUCH ENGINE
+    // =========================================================================
+    const actionDiamond = document.getElementById('gp-action-diamond');
+    let actionActiveBtn = null;
+    let actionPointerId = null;
+
+    if (actionDiamond) {
+      actionDiamond.addEventListener('pointerdown', (e) => {
+        if (isGpLayoutEditing) return;
+        const targetBtn = e.target.closest('.gp-action-btn[data-gp]');
+        if (!targetBtn) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        actionPointerId = e.pointerId;
+        try { actionDiamond.setPointerCapture(e.pointerId); } catch (_) {}
+
+        actionActiveBtn = targetBtn;
+        actionActiveBtn.classList.add('active');
+        sendGamepadButtonState(actionActiveBtn.dataset.gp, true);
+        if (gpHaptics) vibrate(12);
+
+        const onDiamondMove = (me) => {
+          if (me.pointerId !== actionPointerId || isGpLayoutEditing) return;
+          me.preventDefault();
+          me.stopPropagation();
+
+          const underElem = document.elementFromPoint(me.clientX, me.clientY);
+          const newBtn = underElem ? underElem.closest('.gp-action-btn[data-gp]') : null;
+
+          if (newBtn !== actionActiveBtn) {
+            if (actionActiveBtn) {
+              actionActiveBtn.classList.remove('active');
+              sendGamepadButtonState(actionActiveBtn.dataset.gp, false);
+            }
+            if (newBtn && actionDiamond.contains(newBtn)) {
+              actionActiveBtn = newBtn;
+              actionActiveBtn.classList.add('active');
+              sendGamepadButtonState(actionActiveBtn.dataset.gp, true);
+              if (gpHaptics) vibrate(12);
+            } else {
+              actionActiveBtn = null;
+            }
+          }
+        };
+
+        const onDiamondUp = (ue) => {
+          if (ue.pointerId !== undefined && ue.pointerId !== actionPointerId) return;
+          try { actionDiamond.releasePointerCapture(actionPointerId); } catch (_) {}
+          actionPointerId = null;
+          window.removeEventListener('pointermove', onDiamondMove);
+          window.removeEventListener('pointerup', onDiamondUp);
+          window.removeEventListener('pointercancel', onDiamondUp);
+
+          if (actionActiveBtn) {
+            actionActiveBtn.classList.remove('active');
+            sendGamepadButtonState(actionActiveBtn.dataset.gp, false);
+            actionActiveBtn = null;
+          }
+        };
+
+        window.addEventListener('pointermove', onDiamondMove, { passive: false });
+        window.addEventListener('pointerup', onDiamondUp);
+        window.addEventListener('pointercancel', onDiamondUp);
+      });
+    }
+
+    // =========================================================================
+    // 🔘 BIND ALL INDIVIDUAL BUTTONS (Triggers, Bumpers, System, Stick Clicks)
+    // =========================================================================
+    const gpButtons = document.querySelectorAll('#gamepad-container [data-gp]');
+    gpButtons.forEach((btn) => {
+      // Skip dpad and abxy buttons as they are managed with fluid sliding above
+      if (btn.closest('#gp-dpad-disc') || btn.closest('#gp-action-diamond')) return;
+
+      const code = btn.dataset.gp;
+      let isPressed = false;
+      let btnPointerId = null;
+
+      const pressDown = (e) => {
+        if (isGpLayoutEditing || isPressed) return;
+        e.preventDefault();
+        e.stopPropagation();
+        isPressed = true;
+        btnPointerId = e.pointerId;
         btn.classList.add('active');
         if (gpHaptics) vibrate(12);
 
-        if (activeGpPreset === 'wasd') {
-          const wasdKeyMap = {
-            a: 'space', b: 'c', x: 'z', y: 'r',
-            lb: 'q', rb: 'e',
-            lt: 'mouse_right', rt: 'mouse_left',
-            ls_click: 'shift', rs_click: 'alt',
-            back: 'm', start: 'escape'
-          };
-          const key = wasdKeyMap[code] || code;
-          if (key.startsWith('mouse_')) {
-            sendCommand(`mouse,down,${key.replace('mouse_', '')}`);
-          } else {
-            sendCommand(`key,down,${key}`);
-          }
-        } else {
-          sendCommand(`gp,btn,${code},1`);
+        // Analog Trigger Depth Visualizer & ADS Support
+        if (code === 'lt') {
+          const ltMeter = document.getElementById('lt-meter-fill') || document.getElementById('gp-lt-meter');
+          if (ltMeter) ltMeter.style.width = '100%';
+          if (gyroEngine) gyroEngine.setAdsPressed(true);
+        } else if (code === 'rt') {
+          const rtMeter = document.getElementById('rt-meter-fill') || document.getElementById('gp-rt-meter');
+          if (rtMeter) rtMeter.style.width = '100%';
         }
+
+        sendGamepadButtonState(code, true);
+
+        const onBtnMove = (me) => {
+          if (me.pointerId !== btnPointerId) return;
+          const under = document.elementFromPoint(me.clientX, me.clientY);
+          const isOver = under && (under === btn || btn.contains(under));
+          if (!isOver && isPressed) {
+            pressUp(me);
+          }
+        };
+
+        const onBtnRelease = (ue) => {
+          if (ue.pointerId !== undefined && ue.pointerId !== btnPointerId) return;
+          pressUp(ue);
+        };
+
+        window.addEventListener('pointermove', onBtnMove, { passive: false });
+        window.addEventListener('pointerup', onBtnRelease, { once: true });
+        window.addEventListener('pointercancel', onBtnRelease, { once: true });
       };
 
-      const onUp = (e) => {
-        if (isGpLayoutEditing) return;
-        e.preventDefault();
-        e.stopPropagation();
+      const pressUp = (e) => {
+        if (!isPressed) return;
+        isPressed = false;
+        btnPointerId = null;
         btn.classList.remove('active');
 
-        if (activeGpPreset === 'wasd') {
-          const wasdKeyMap = {
-            a: 'space', b: 'c', x: 'z', y: 'r',
-            lb: 'q', rb: 'e',
-            lt: 'mouse_right', rt: 'mouse_left',
-            ls_click: 'shift', rs_click: 'alt',
-            back: 'm', start: 'escape'
-          };
-          const key = wasdKeyMap[code] || code;
-          if (key.startsWith('mouse_')) {
-            sendCommand(`mouse,up,${key.replace('mouse_', '')}`);
-          } else {
-            sendCommand(`key,up,${key}`);
-          }
-        } else {
-          sendCommand(`gp,btn,${code},0`);
+        // Reset Trigger Depth Visualizer & ADS Support
+        if (code === 'lt') {
+          const ltMeter = document.getElementById('lt-meter-fill') || document.getElementById('gp-lt-meter');
+          if (ltMeter) ltMeter.style.width = '0%';
+          if (gyroEngine) gyroEngine.setAdsPressed(false);
+        } else if (code === 'rt') {
+          const rtMeter = document.getElementById('rt-meter-fill') || document.getElementById('gp-rt-meter');
+          if (rtMeter) rtMeter.style.width = '0%';
         }
+
+        sendGamepadButtonState(code, false);
       };
 
-      btn.addEventListener('pointerdown', onDown);
-      btn.addEventListener('pointerup', onUp);
-      btn.addEventListener('pointercancel', onUp);
+      btn.addEventListener('pointerdown', pressDown);
+      btn.addEventListener('pointerleave', (e) => {
+        if (isPressed) pressUp(e);
+      });
     });
 
-    // Setup Dual Analog Sticks (Left & Right)
+    // Setup Dual Analog Sticks (Left & Right) with Full Window Tracking
     setupAnalogStick('gp-left-stick-zone', 'gp-left-thumb', 'left');
     setupAnalogStick('gp-right-stick-zone', 'gp-right-thumb', 'right');
+
+    // Initialize Gyro Super Motion Engine
+    gyroEngine = initGyroSuperEngine();
   }
 
   function setupAnalogStick(zoneId, thumbId, stickKey) {
@@ -6600,7 +8256,7 @@
 
     const handlePointerMove = (e) => {
       const s = gpStickState[stickKey];
-      if (!s.active || s.pointerId !== e.pointerId) return;
+      if (!s.active || (s.pointerId !== null && s.pointerId !== e.pointerId)) return;
       e.preventDefault();
       e.stopPropagation();
 
@@ -6612,14 +8268,14 @@
       let dy = e.clientY - centerY;
       const dist = Math.hypot(dx, dy);
 
-      const maxTravel = Math.max(22, (rect.width / 2) - (thumb.offsetWidth / 2 || 24));
+      const maxTravel = Math.max(24, (rect.width / 2) - (thumb.offsetWidth / 2 || 22));
 
       if (dist > maxTravel) {
         dx = (dx / dist) * maxTravel;
         dy = (dy / dist) * maxTravel;
       }
 
-      thumb.style.transform = `translate(${dx}px, ${dy}px)`;
+      thumb.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
 
       // Normalize to -1.0 .. +1.0
       let normX = dx / maxTravel;
@@ -6639,32 +8295,485 @@
     };
 
     const handlePointerDown = (e) => {
+      if (isGpLayoutEditing) return;
+      if (e.target.closest('.gp-stick-click-btn')) return;
+
       e.preventDefault();
       e.stopPropagation();
-      base.setPointerCapture(e.pointerId);
       const s = gpStickState[stickKey];
       s.active = true;
       s.pointerId = e.pointerId;
+      try { base.setPointerCapture(e.pointerId); } catch (_) {}
+
+      window.addEventListener('pointermove', handlePointerMove, { passive: false });
+      window.addEventListener('pointerup', handlePointerUp);
+      window.addEventListener('pointercancel', handlePointerUp);
+
       handlePointerMove(e);
     };
 
     const handlePointerUp = (e) => {
       const s = gpStickState[stickKey];
-      if (s.pointerId === e.pointerId) {
-        e.stopPropagation();
+      if (s.active && (s.pointerId === e.pointerId || e.pointerId === undefined)) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        try { base.releasePointerCapture(s.pointerId); } catch (_) {}
         s.active = false;
         s.pointerId = null;
         s.x = 0;
         s.y = 0;
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', handlePointerUp);
+        window.removeEventListener('pointercancel', handlePointerUp);
+
         thumb.style.transform = 'translate(0px, 0px)';
         sendCommand(`gp,axis,${stickKey},0,0`);
       }
     };
 
     base.addEventListener('pointerdown', handlePointerDown);
-    base.addEventListener('pointermove', handlePointerMove);
-    base.addEventListener('pointerup', handlePointerUp);
-    base.addEventListener('pointercancel', handlePointerUp);
+    zone.addEventListener('pointerdown', handlePointerDown);
+  }
+
+  /* ==========================================================================
+     ⚡ GYRO SUPER MOTION ENGINE (TILT STEERING & MOTION AIMING)
+     ========================================================================== */
+  let gyroEngine = null;
+
+  function initGyroSuperEngine() {
+    // Config from localStorage
+    const savedConfig = localStorage.getItem('pcdeck_gyro_config');
+    const config = savedConfig ? JSON.parse(savedConfig) : {
+      enabled: true,
+      mode: 'steer',       // 'steer' | 'aim' | 'mouse'
+      trigger: 'always',   // 'always' | 'ads'
+      sens: 1.5,           // 0.5 to 4.0
+      deadzone: 0.8,       // in degrees
+      smoothing: 0.65,     // 0.1 to 0.95 (EMA filter weight)
+      invertX: false,
+      invertY: false
+    };
+
+    let isRunning = false;
+    let isAdsPressed = false;
+    let zeroRoll = 0;
+    let zeroPitch = -25; // Default comfortable landscape tilt
+    let calibrated = false;
+
+    let filteredRoll = 0;
+    let filteredPitch = 0;
+    let lastSentSteer = 0;
+    let lastSentAimX = 0;
+    let lastSentAimY = 0;
+    let prevRollDeg = null;
+    let prevPitchDeg = null;
+
+    let lastSendTime = 0;
+    const SEND_INTERVAL_MS = 16; // ~60Hz transmission
+
+    // DOM Elements
+    const btnTopToggle = document.getElementById('btn-gp-gyro-toggle');
+    const btnBottomChip = document.getElementById('btn-gp-gyro-bottom-chip');
+    const btnTopCalib = document.getElementById('btn-gp-gyro-calib');
+    const btnModalCalib = document.getElementById('btn-modal-gyro-calib');
+    const btnTopSettings = document.getElementById('btn-gp-gyro-settings');
+    const horizonHud = document.getElementById('gp-gyro-horizon-hud');
+    const horizonLine = document.getElementById('gp-gyro-horizon-line');
+    const rollValText = document.getElementById('gp-gyro-roll-val');
+    const pitchValText = document.getElementById('gp-gyro-pitch-val');
+    const modeBadgeText = document.getElementById('gp-gyro-mode-badge');
+
+    // Modal Elements
+    const gyroModal = document.getElementById('gp-gyro-super-modal');
+    const btnModalClose = document.getElementById('btn-gp-gyro-modal-close');
+    const btnModalDone = document.getElementById('btn-gp-gyro-done');
+    const masterEnableCb = document.getElementById('gyro-master-enable');
+    const modeCards = document.querySelectorAll('.gyro-mode-card');
+    const triggerRadios = document.querySelectorAll('input[name="gyro-trigger-type"]');
+    const sensSlider = document.getElementById('gyro-sens-slider');
+    const sensText = document.getElementById('gyro-sens-text');
+    const sensPills = document.querySelectorAll('.gyro-sens-pills .gp-pill-btn');
+    const deadzoneSlider = document.getElementById('gyro-deadzone-slider');
+    const deadzoneText = document.getElementById('gyro-deadzone-text');
+    const smoothSlider = document.getElementById('gyro-smooth-slider');
+    const smoothText = document.getElementById('gyro-smooth-text');
+    const invertXCb = document.getElementById('gyro-invert-x');
+    const invertYCb = document.getElementById('gyro-invert-y');
+    const modalHorizonLine = document.getElementById('modal-gyro-horizon-line');
+    const modalLiveRoll = document.getElementById('modal-live-roll');
+    const modalLivePitch = document.getElementById('modal-live-pitch');
+
+    function saveConfig() {
+      localStorage.setItem('pcdeck_gyro_config', JSON.stringify(config));
+    }
+
+    function updateUIState() {
+      const active = config.enabled;
+      if (btnTopToggle) {
+        btnTopToggle.classList.toggle('gyro-disabled', !active);
+        const statusSpan = btnTopToggle.querySelector('.gp-gyro-status-text');
+        if (statusSpan) statusSpan.textContent = active ? 'GYRO ON' : 'GYRO OFF';
+      }
+      if (btnBottomChip) {
+        btnBottomChip.classList.toggle('active', active);
+        btnBottomChip.textContent = active ? '⚡ Gyro: ON' : '⚡ Gyro: OFF';
+        btnBottomChip.style.background = active ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+        btnBottomChip.style.borderColor = active ? 'var(--neo-lime)' : 'rgba(255, 255, 255, 0.2)';
+        btnBottomChip.style.color = active ? 'var(--neo-lime)' : 'var(--text-muted)';
+      }
+      if (modeBadgeText) {
+        modeBadgeText.textContent = config.mode.toUpperCase();
+      }
+      if (masterEnableCb) {
+        masterEnableCb.checked = active;
+      }
+      modeCards.forEach(c => {
+        c.classList.toggle('active', c.dataset.gyroMode === config.mode);
+      });
+      triggerRadios.forEach(r => {
+        r.checked = (r.value === config.trigger);
+      });
+      if (sensSlider) sensSlider.value = config.sens;
+      if (sensText) sensText.textContent = `${config.sens.toFixed(1)}x`;
+      sensPills.forEach(p => {
+        p.classList.toggle('active', parseFloat(p.dataset.sens) === config.sens);
+      });
+      if (deadzoneSlider) deadzoneSlider.value = config.deadzone;
+      if (deadzoneText) deadzoneText.textContent = `${config.deadzone.toFixed(1)}°`;
+      if (smoothSlider) smoothSlider.value = Math.round(config.smoothing * 100);
+      if (smoothText) smoothText.textContent = `${Math.round(config.smoothing * 100)}%`;
+      if (invertXCb) invertXCb.checked = config.invertX;
+      if (invertYCb) invertYCb.checked = config.invertY;
+    }
+
+    function calibrateNeutral(showFeedback = true) {
+      if (currentRawRoll !== null && currentRawPitch !== null) {
+        zeroRoll = currentRawRoll;
+        zeroPitch = currentRawPitch;
+        calibrated = true;
+      }
+      filteredRoll = 0;
+      filteredPitch = 0;
+      if (showFeedback) {
+        vibrate([15, 40, 20]);
+        showToast('🎯 Gyro Neutral Calibrated', 'success', '⚡');
+      }
+    }
+
+    let currentRawRoll = null;
+    let currentRawPitch = null;
+
+    // Process raw degrees (roll & pitch) from sensor
+    function processMotionAngles(rawRoll, rawPitch) {
+      currentRawRoll = rawRoll;
+      currentRawPitch = rawPitch;
+
+      if (!calibrated) {
+        zeroRoll = rawRoll;
+        zeroPitch = rawPitch;
+        calibrated = true;
+      }
+
+      // Delta relative to calibrated center
+      let deltaRoll = rawRoll - zeroRoll;
+      let deltaPitch = rawPitch - zeroPitch;
+
+      // Wrap-around normalization
+      if (deltaRoll > 180) deltaRoll -= 360;
+      if (deltaRoll < -180) deltaRoll += 360;
+      if (deltaPitch > 180) deltaPitch -= 360;
+      if (deltaPitch < -180) deltaPitch += 360;
+
+      // Inversions
+      if (config.invertX) deltaRoll = -deltaRoll;
+      if (config.invertY) deltaPitch = -deltaPitch;
+
+      // Deadzone filtering
+      const dz = config.deadzone;
+      let activeRoll = Math.abs(deltaRoll) > dz ? (deltaRoll > 0 ? deltaRoll - dz : deltaRoll + dz) : 0;
+      let activePitch = Math.abs(deltaPitch) > dz ? (deltaPitch > 0 ? deltaPitch - dz : deltaPitch + dz) : 0;
+
+      // Normalize with max angle: 35 degrees = 1.0 deflection
+      const MAX_STEER_ANGLE = 35.0;
+      const MAX_AIM_ANGLE = 28.0;
+
+      let normRoll = (activeRoll / MAX_STEER_ANGLE) * config.sens;
+      let normPitch = (activePitch / MAX_AIM_ANGLE) * config.sens;
+
+      normRoll = Math.max(-1.0, Math.min(1.0, normRoll));
+      normPitch = Math.max(-1.0, Math.min(1.0, normPitch));
+
+      // EMA smoothing filter (alpha = 1 - smoothing)
+      const alpha = Math.max(0.08, 1.0 - config.smoothing);
+      filteredRoll = alpha * normRoll + (1.0 - alpha) * filteredRoll;
+      filteredPitch = alpha * normPitch + (1.0 - alpha) * filteredPitch;
+
+      // Update Live Horizon HUD
+      const tiltDeg = (-filteredRoll * 32).toFixed(1);
+      const pitchPx = (filteredPitch * 14).toFixed(1);
+      if (horizonLine) {
+        horizonLine.style.transform = `rotate(${tiltDeg}deg) translateY(${pitchPx}px)`;
+      }
+      if (modalHorizonLine) {
+        modalHorizonLine.style.transform = `rotate(${tiltDeg}deg) translateY(${pitchPx}px)`;
+      }
+      if (rollValText) rollValText.textContent = `R:${deltaRoll > 0 ? '+' : ''}${deltaRoll.toFixed(0)}°`;
+      if (pitchValText) pitchValText.textContent = `P:${deltaPitch > 0 ? '+' : ''}${deltaPitch.toFixed(0)}°`;
+      if (modalLiveRoll) modalLiveRoll.textContent = `Roll: ${deltaRoll.toFixed(1)}°`;
+      if (modalLivePitch) modalLivePitch.textContent = `Pitch: ${deltaPitch.toFixed(1)}°`;
+
+      // Check transmission condition
+      if (!isRunning || !config.enabled) return;
+
+      // Check ADS trigger condition
+      if (config.trigger === 'ads' && !isAdsPressed) {
+        // If ADS required and not pressed, release active gyro commands
+        if (lastSentSteer !== 0 || lastSentAimX !== 0 || lastSentAimY !== 0) {
+          if (config.mode === 'steer') sendCommand('gyro,steer,0');
+          if (config.mode === 'aim') sendCommand('gyro,aim,0,0');
+          lastSentSteer = 0;
+          lastSentAimX = 0;
+          lastSentAimY = 0;
+        }
+        return;
+      }
+
+      const now = performance.now();
+      if (now - lastSendTime < SEND_INTERVAL_MS) return;
+      lastSendTime = now;
+
+      if (config.mode === 'steer') {
+        const steerOut = Math.round(filteredRoll * 1000) / 1000;
+        if (Math.abs(steerOut - lastSentSteer) > 0.005 || (steerOut === 0 && lastSentSteer !== 0)) {
+          lastSentSteer = steerOut;
+          sendCommand(`gyro,steer,${steerOut}`);
+        }
+      } else if (config.mode === 'aim') {
+        const aimX = Math.round(filteredRoll * 1000) / 1000;
+        const aimY = Math.round(filteredPitch * 1000) / 1000;
+        if (Math.abs(aimX - lastSentAimX) > 0.005 || Math.abs(aimY - lastSentAimY) > 0.005 ||
+           ((aimX === 0 && aimY === 0) && (lastSentAimX !== 0 || lastSentAimY !== 0))) {
+          lastSentAimX = aimX;
+          lastSentAimY = aimY;
+          sendCommand(`gyro,aim,${aimX},${aimY}`);
+        }
+      } else if (config.mode === 'mouse') {
+        if (prevRollDeg !== null && prevPitchDeg !== null) {
+          const dRoll = deltaRoll - prevRollDeg;
+          const dPitch = deltaPitch - prevPitchDeg;
+          const mouseGain = 2.2 * config.sens;
+          const dx = Math.round(dRoll * mouseGain);
+          const dy = Math.round(dPitch * mouseGain);
+          if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
+            sendCommand(`gyro,mouse,${dx},${dy}`);
+          }
+        }
+        prevRollDeg = deltaRoll;
+        prevPitchDeg = deltaPitch;
+      }
+    }
+
+    // Android Native Bridge callback
+    window.onNativeGyroUpdate = function(roll, pitch, yaw) {
+      processMotionAngles(roll, pitch);
+    };
+
+    // W3C Device Orientation Fallback
+    function handleDeviceOrientation(e) {
+      if (!e) return;
+      const screenAngle = (window.screen && window.screen.orientation && window.screen.orientation.angle) || window.orientation || 0;
+      let rollDeg = 0;
+      let pitchDeg = 0;
+
+      if (screenAngle === 90) {
+        rollDeg = -(e.beta || 0);
+        pitchDeg = -(e.gamma || 0);
+      } else if (screenAngle === 270 || screenAngle === -90) {
+        rollDeg = (e.beta || 0);
+        pitchDeg = (e.gamma || 0);
+      } else {
+        rollDeg = (e.gamma || 0);
+        pitchDeg = (e.beta || 0);
+      }
+
+      processMotionAngles(rollDeg, pitchDeg);
+    }
+
+    function start() {
+      if (isRunning) return;
+      isRunning = true;
+      calibrated = false;
+
+      // Try Android hardware native bridge (AndroidApp or AndroidBridge)
+      let startedNative = false;
+      const bridge = window.AndroidApp || window.AndroidBridge;
+      if (bridge && typeof bridge.startNativeGyro === 'function') {
+        try {
+          startedNative = bridge.startNativeGyro();
+        } catch (_) {}
+      }
+
+      // If not native or in browser, listen to W3C deviceorientation
+      if (!startedNative) {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission().then(resp => {
+            if (resp === 'granted') {
+              window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+            }
+          }).catch(() => {});
+        } else {
+          window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+        }
+      }
+    }
+
+    function stop() {
+      if (!isRunning) return;
+      isRunning = false;
+
+      const bridge = window.AndroidApp || window.AndroidBridge;
+      if (bridge && typeof bridge.stopNativeGyro === 'function') {
+        try { bridge.stopNativeGyro(); } catch (_) {}
+      }
+      window.removeEventListener('deviceorientation', handleDeviceOrientation, true);
+
+      // Release any active gyro deflection
+      if (lastSentSteer !== 0) {
+        sendCommand('gyro,steer,0');
+        lastSentSteer = 0;
+      }
+      if (lastSentAimX !== 0 || lastSentAimY !== 0) {
+        sendCommand('gyro,aim,0,0');
+        lastSentAimX = 0;
+        lastSentAimY = 0;
+      }
+      prevRollDeg = null;
+      prevPitchDeg = null;
+    }
+
+    // Bind UI Event Handlers
+    function toggleGyro() {
+      config.enabled = !config.enabled;
+      saveConfig();
+      updateUIState();
+      vibrate(config.enabled ? 25 : 15);
+      showToast(config.enabled ? '⚡ Gyro Super: ON' : 'Gyro Super: OFF', config.enabled ? 'success' : 'info', '⚡');
+      if (config.enabled && gamepadActive) {
+        start();
+      } else {
+        stop();
+      }
+    }
+
+    if (btnTopToggle) btnTopToggle.onclick = toggleGyro;
+    if (btnBottomChip) btnBottomChip.onclick = toggleGyro;
+    if (btnTopCalib) btnTopCalib.onclick = () => calibrateNeutral(true);
+    if (btnModalCalib) btnModalCalib.onclick = () => calibrateNeutral(true);
+    if (horizonHud) horizonHud.onclick = () => calibrateNeutral(true);
+
+    if (btnTopSettings) {
+      btnTopSettings.onclick = () => {
+        updateUIState();
+        if (gyroModal) gyroModal.style.display = 'flex';
+        vibrate(15);
+      };
+    }
+
+    const closeModal = () => {
+      if (gyroModal) gyroModal.style.display = 'none';
+      vibrate(10);
+    };
+    if (btnModalClose) btnModalClose.onclick = closeModal;
+    if (btnModalDone) btnModalDone.onclick = closeModal;
+
+    if (masterEnableCb) {
+      masterEnableCb.onchange = () => {
+        config.enabled = masterEnableCb.checked;
+        saveConfig();
+        updateUIState();
+        if (config.enabled && gamepadActive) start();
+        else stop();
+      };
+    }
+
+    modeCards.forEach(card => {
+      card.onclick = () => {
+        config.mode = card.dataset.gyroMode;
+        saveConfig();
+        updateUIState();
+        vibrate(15);
+        showToast(`Gyro Mode: ${card.querySelector('.mode-name').textContent}`, 'info', '🎮');
+      };
+    });
+
+    triggerRadios.forEach(radio => {
+      radio.onchange = () => {
+        if (radio.checked) {
+          config.trigger = radio.value;
+          saveConfig();
+          vibrate(12);
+        }
+      };
+    });
+
+    if (sensSlider) {
+      sensSlider.oninput = () => {
+        config.sens = parseFloat(sensSlider.value);
+        if (sensText) sensText.textContent = `${config.sens.toFixed(1)}x`;
+        sensPills.forEach(p => p.classList.toggle('active', parseFloat(p.dataset.sens) === config.sens));
+        saveConfig();
+      };
+    }
+
+    sensPills.forEach(pill => {
+      pill.onclick = () => {
+        config.sens = parseFloat(pill.dataset.sens);
+        if (sensSlider) sensSlider.value = config.sens;
+        if (sensText) sensText.textContent = `${config.sens.toFixed(1)}x`;
+        sensPills.forEach(p => p.classList.toggle('active', p === pill));
+        saveConfig();
+        vibrate(12);
+      };
+    });
+
+    if (deadzoneSlider) {
+      deadzoneSlider.oninput = () => {
+        config.deadzone = parseFloat(deadzoneSlider.value);
+        if (deadzoneText) deadzoneText.textContent = `${config.deadzone.toFixed(1)}°`;
+        saveConfig();
+      };
+    }
+
+    if (smoothSlider) {
+      smoothSlider.oninput = () => {
+        config.smoothing = parseInt(smoothSlider.value, 10) / 100;
+        if (smoothText) smoothText.textContent = `${Math.round(config.smoothing * 100)}%`;
+        saveConfig();
+      };
+    }
+
+    if (invertXCb) {
+      invertXCb.onchange = () => {
+        config.invertX = invertXCb.checked;
+        saveConfig();
+      };
+    }
+
+    if (invertYCb) {
+      invertYCb.onchange = () => {
+        config.invertY = invertYCb.checked;
+        saveConfig();
+      };
+    }
+
+    updateUIState();
+
+    return {
+      get enabled() { return config.enabled; },
+      start,
+      stop,
+      calibrateNeutral,
+      setAdsPressed(pressed) { isAdsPressed = pressed; }
+    };
   }
 
   /* ==========================================================================
@@ -6865,6 +8974,9 @@
       if (nextState) {
         hudOverlay.style.display = 'flex';
         applyLayout(currentLayout);
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          mainWs.send('driver_check');
+        }
         vibrate(30);
         showToast('🎮 In-Display Gaming HUD Active (Full Screen View)', 'info', '🎮');
       } else {
@@ -6879,6 +8991,34 @@
     window.toggleGamepadHUD = toggleGamepadHUD;
     btnToggleHud.onclick = () => toggleGamepadHUD();
     if (btnCloseHud) btnCloseHud.onclick = () => toggleGamepadHUD(false);
+
+    const btnHudInstallDriver = document.getElementById('btn-hud-install-driver');
+    if (btnHudInstallDriver) {
+      btnHudInstallDriver.onclick = () => {
+        const hudDriverBanner = document.getElementById('hud-driver-banner');
+        if (hudDriverBanner) hudDriverBanner.style.display = 'block';
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          vibrate(20);
+          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info', '🎮');
+          mainWs.send('install_gamepad_driver_request');
+        } else {
+          showToast('PC not connected', 'error', '⚠️');
+        }
+      };
+    }
+
+    const btnHudDriverAction = document.getElementById('btn-hud-driver-action');
+    if (btnHudDriverAction) {
+      btnHudDriverAction.onclick = () => {
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          vibrate(20);
+          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info', '🎮');
+          mainWs.send('install_gamepad_driver_request');
+        } else {
+          showToast('PC not connected', 'error', '⚠️');
+        }
+      };
+    }
 
     if (btnModeSwitch) {
       btnModeSwitch.onclick = () => {
@@ -7336,29 +9476,21 @@
       const joystickThumb = document.getElementById('hud-joystick-thumb');
       if (!joystickZone || !joystickThumb) return;
 
-      joystickZone.addEventListener('pointerdown', (e) => {
-        if (isEditing) return;
-        e.preventDefault();
-        e.stopPropagation();
-        joystickActive = true;
-        joystickPointerId = e.pointerId;
-        joystickZone.setPointerCapture(e.pointerId);
-        if (state.hapticsEnabled) vibrate(15);
-        updateJoystickPosition(e.clientX, e.clientY);
-      });
-
-      joystickZone.addEventListener('pointermove', (e) => {
+      const onJoystickMove = (e) => {
         if (!joystickActive || joystickPointerId !== e.pointerId || isEditing) return;
         e.preventDefault();
         e.stopPropagation();
         updateJoystickPosition(e.clientX, e.clientY);
-      });
+      };
 
       const onJoystickRelease = (e) => {
-        if (!joystickActive || joystickPointerId !== e.pointerId) return;
+        if (!joystickActive || (e && e.pointerId !== undefined && joystickPointerId !== e.pointerId)) return;
         joystickActive = false;
         joystickPointerId = null;
         try { joystickZone.releasePointerCapture(e.pointerId); } catch (_) {}
+        window.removeEventListener('pointermove', onJoystickMove);
+        window.removeEventListener('pointerup', onJoystickRelease);
+        window.removeEventListener('pointercancel', onJoystickRelease);
         joystickThumb.style.transform = 'translate(0px, 0px)';
 
         if (emulationMode === 'wasd') {
@@ -7373,8 +9505,21 @@
         }
       };
 
-      joystickZone.addEventListener('pointerup', onJoystickRelease);
-      joystickZone.addEventListener('pointercancel', onJoystickRelease);
+      joystickZone.addEventListener('pointerdown', (e) => {
+        if (isEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        joystickActive = true;
+        joystickPointerId = e.pointerId;
+        try { joystickZone.setPointerCapture(e.pointerId); } catch (_) {}
+        if (state.hapticsEnabled) vibrate(15);
+
+        window.addEventListener('pointermove', onJoystickMove, { passive: false });
+        window.addEventListener('pointerup', onJoystickRelease);
+        window.addEventListener('pointercancel', onJoystickRelease);
+
+        updateJoystickPosition(e.clientX, e.clientY);
+      });
 
       function updateJoystickPosition(clientX, clientY) {
         const rect = joystickZone.getBoundingClientRect();
@@ -7447,6 +9592,32 @@
     const gainSlider = document.getElementById('mic-gain-slider');
     const gainVal = document.getElementById('mic-gain-val');
 
+    const btnInstallMic = document.getElementById('btn-install-mic-driver');
+    if (btnInstallMic) {
+      btnInstallMic.onclick = () => {
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          mainWs.send('install_mic_driver_request');
+        } else {
+          showToast('PC not connected', 'error', '⚠️');
+        }
+      };
+    }
+
+    const btnUpdateApk = document.getElementById('btn-update-apk');
+    if (btnUpdateApk) {
+      btnUpdateApk.onclick = () => {
+        const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+        const port = state.serverPort || 8000;
+        const apkUrl = `http://${host}:${port}/PCDeck.apk`;
+        showToast('Downloading and installing PCDeck v2.7.0 update...', 'info', '⬇️');
+        if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
+          window.AndroidApp.downloadAndInstallApk(apkUrl);
+        } else {
+          window.location.href = apkUrl;
+        }
+      };
+    }
+
     if (gainSlider && gainVal) {
       gainSlider.oninput = (e) => {
         gainVal.textContent = `${e.target.value}%`;
@@ -7455,10 +9626,78 @@
     }
 
     async function startMic() {
+      let host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+      if (host && host.includes(':')) {
+        host = host.split(':')[0];
+      }
+
+      // 1. Native Android Hardware Microphone Pipeline (100% immune to Chromium/WebView origin bugs)
+      if (window.AndroidApp && typeof window.AndroidApp.startNativeMic === 'function') {
+        try {
+          if (typeof window.AndroidApp.hasMicPermission === 'function' && !window.AndroidApp.hasMicPermission()) {
+            window.onNativeMicPermissionResult = (granted) => {
+              if (granted) {
+                startMic();
+              } else {
+                showToast('Microphone permission required for voice input', 'warning', '🎙️');
+              }
+            };
+            window.AndroidApp.startNativeMic(host, 8002);
+            return;
+          }
+
+          const ok = window.AndroidApp.startNativeMic(host, 8002);
+          if (ok) {
+            micActive = true;
+            window.onNativeMicVu = (pct) => {
+              if (!micActive) return;
+              if (vuFill) vuFill.style.width = `${pct}%`;
+              if (vuDb) vuDb.textContent = `${pct > 0 ? '-' + (100 - pct) : '-inf'} dB`;
+            };
+            if (btnToggle) {
+              btnToggle.className = 'neo-btn btn-pink';
+              btnToggle.innerHTML = '<span id="mic-btn-icon" class="btn-svg-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></span><span id="mic-btn-text">Stop Mic</span>';
+            }
+            if (btnMute) btnMute.style.display = 'inline-flex';
+            if (statusBadge) {
+              statusBadge.className = 'mini-status-chip online';
+              statusBadge.textContent = 'LIVE';
+            }
+            const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
+            if (quickMicBtn) {
+              quickMicBtn.style.background = 'var(--neo-pink)';
+              quickMicBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Mic: ON</span>';
+            }
+            const toolMicSub = document.getElementById('tool-mic-status');
+            if (toolMicSub) toolMicSub.textContent = 'Active (Native Direct)';
+            showToast('Microphone Active (Hardware Low-Latency)', 'success', '🎙️');
+            return;
+          }
+        } catch (nativeErr) {
+          console.warn('[Mic] Native mic start failed, falling back to WebAudio', nativeErr);
+        }
+      }
+
+      // 2. Browser WebAudio Fallback
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+        let stream = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e1) {
+          console.warn('[Mic] Basic audio:true failed, trying with audio constraints...', e1);
+          stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+        }
         micMediaStream = stream;
-        micAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+
+        try {
+          micAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+        } catch (eCtx) {
+          micAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        if (micAudioContext.state === 'suspended') {
+          await micAudioContext.resume();
+        }
         const source = micAudioContext.createMediaStreamSource(stream);
 
         micGainNode = micAudioContext.createGain();
@@ -7470,15 +9709,25 @@
         micGainNode.connect(analyser);
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/mic`;
+        const port = state.serverPort || 8000;
+        const storedToken = localStorage.getItem('pcdeck_token') || '';
+        const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+        const wsUrl = `${protocol}//${host}:${port}/ws/mic${tokenParam}`;
         micWs = new WebSocket(wsUrl);
         micWs.binaryType = 'arraybuffer';
+
+        micWs.onopen = () => {
+          console.log('[Mic] WebSocket connected to', wsUrl);
+        };
+        micWs.onerror = (e) => {
+          console.warn('[Mic] WebSocket connection error:', e);
+        };
 
         // Stream 16-bit PCM Audio
         const scriptNode = micAudioContext.createScriptProcessor(2048, 1, 1);
         const pcmData = new Int16Array(2048);
         scriptNode.onaudioprocess = (e) => {
-          if (!micActive || micMuted || micWs.readyState !== WebSocket.OPEN) return;
+          if (!micActive || micMuted || !micWs || micWs.readyState !== WebSocket.OPEN) return;
           const input = e.inputBuffer.getChannelData(0);
           for (let i = 0; i < input.length; i++) {
             let s = Math.max(-1, Math.min(1, input[i]));
@@ -7508,17 +9757,17 @@
         micActive = true;
         if (btnToggle) {
           btnToggle.className = 'neo-btn btn-pink';
-          btnToggle.innerHTML = '<span>⏹️</span><span>STOP MICROPHONE</span>';
+          btnToggle.innerHTML = '<span id="mic-btn-icon" class="btn-svg-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></span><span id="mic-btn-text">Stop Mic</span>';
         }
-        if (btnMute) btnMute.style.display = 'inline-block';
+        if (btnMute) btnMute.style.display = 'inline-flex';
         if (statusBadge) {
           statusBadge.className = 'mini-status-chip online';
-          statusBadge.textContent = 'TRANSMITTING';
+          statusBadge.textContent = 'LIVE';
         }
         const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
         if (quickMicBtn) {
           quickMicBtn.style.background = 'var(--neo-pink)';
-          quickMicBtn.textContent = '🎙️ Mic: ON';
+          quickMicBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Mic: ON</span>';
         }
         const toolMicSub = document.getElementById('tool-mic-status');
         if (toolMicSub) toolMicSub.textContent = 'Active';
@@ -7526,12 +9775,26 @@
         showToast('Microphone Active (Streaming to PC)', 'success', '🎙️');
         updateVu();
       } catch (err) {
-        showToast('Mic Access Denied: ' + err.message, 'error', '⚠️');
+        console.error('[Mic] Start error:', err);
+        const msg = (err && err.message) ? err.message : String(err);
+        if (err.name === 'NotAllowedError' || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('permission')) {
+          showToast('Mic Permission Needed: Allow in Phone Settings > Apps > PCDeck', 'error', '🎙️');
+          if (window.AndroidApp && typeof window.AndroidApp.openAppPermissionsSettings === 'function') {
+            setTimeout(() => {
+              window.AndroidApp.openAppPermissionsSettings();
+            }, 800);
+          }
+        } else {
+          showToast('Mic Access Denied: ' + msg, 'error', '⚠️');
+        }
       }
     }
 
     function stopMic() {
       micActive = false;
+      if (window.AndroidApp && typeof window.AndroidApp.stopNativeMic === 'function') {
+        try { window.AndroidApp.stopNativeMic(); } catch (e) {}
+      }
       if (micMediaStream) {
         micMediaStream.getTracks().forEach(t => t.stop());
         micMediaStream = null;
@@ -7546,19 +9809,19 @@
       }
       if (btnToggle) {
         btnToggle.className = 'neo-btn btn-lime';
-        btnToggle.innerHTML = '<span>🎙️</span><span>START TRANSMITTING</span>';
+        btnToggle.innerHTML = '<span id="mic-btn-icon" class="btn-svg-wrap"><svg class="deck-icon" width="18" height="18"><use href="#icon-mic"/></svg></span><span id="mic-btn-text">Transmit Mic</span>';
       }
       if (btnMute) btnMute.style.display = 'none';
       if (statusBadge) {
         statusBadge.className = 'mini-status-chip offline';
-        statusBadge.textContent = 'OFFLINE';
+        statusBadge.textContent = 'STANDBY';
       }
       if (vuFill) vuFill.style.width = '0%';
 
       const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
       if (quickMicBtn) {
         quickMicBtn.style.background = 'var(--neo-lime)';
-        quickMicBtn.textContent = '🎙️ Mic';
+        quickMicBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Mic</span>';
       }
       const toolMicSub = document.getElementById('tool-mic-status');
       if (toolMicSub) toolMicSub.textContent = 'Offline';
@@ -7611,6 +9874,7 @@
     const statusBadge = document.getElementById('cam-status-badge');
     const videoPreview = document.getElementById('webcam-preview-video');
     const placeholder = document.getElementById('cam-idle-placeholder');
+    const liveBadge = document.getElementById('cam-live-indicator');
     const resChips = document.querySelectorAll('.cam-res-selector .neo-chip-toggle');
 
     // Enumerate hardware cameras
@@ -7641,6 +9905,38 @@
         console.warn('Camera enumeration error:', e);
       }
     }
+    const btnInstallCam = document.getElementById('btn-install-cam-driver');
+    if (btnInstallCam) {
+      btnInstallCam.onclick = () => {
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          mainWs.send('install_cam_driver_request');
+        } else {
+          showToast('PC not connected', 'error', '⚠️');
+        }
+      };
+    }
+
+    const btnCamRear = document.getElementById('btn-cam-rear');
+    const btnCamFront = document.getElementById('btn-cam-front');
+
+    function applyFacingMode(mode) {
+      camFacingMode = mode;
+      camSelectedDeviceId = '';
+      if (btnCamRear && btnCamFront) {
+        btnCamRear.classList.toggle('active', mode === 'environment');
+        btnCamFront.classList.toggle('active', mode === 'user');
+      }
+      if (videoPreview) {
+        videoPreview.style.transform = mode === 'user' ? 'scaleX(-1)' : 'none';
+      }
+      if (camActive) {
+        stopCam();
+        startCam();
+      }
+    }
+
+    if (btnCamRear) btnCamRear.onclick = () => { if (typeof vibrate === 'function') vibrate(15); applyFacingMode('environment'); };
+    if (btnCamFront) btnCamFront.onclick = () => { if (typeof vibrate === 'function') vibrate(15); applyFacingMode('user'); };
 
     if (deviceSelect) {
       deviceSelect.onchange = () => {
@@ -7703,10 +9999,12 @@
         await enumerateCameras();
 
         if (videoPreview) {
+          videoPreview.style.display = 'block';
           videoPreview.srcObject = stream;
           videoPreview.play();
         }
         if (placeholder) placeholder.style.display = 'none';
+        if (liveBadge) liveBadge.style.display = 'inline-flex';
 
         // Check torch capabilities
         const track = stream.getVideoTracks()[0];
@@ -7718,8 +10016,20 @@
         }
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/cam`;
+        const storedToken = localStorage.getItem('pcdeck_token') || '';
+        const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+        const wsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/cam${tokenParam}`;
         camWs = new WebSocket(wsUrl);
+
+        camWs.onopen = () => {
+          console.log('[PCDeck Webcam] Stream connected to PC');
+        };
+        camWs.onerror = (e) => {
+          console.warn('[PCDeck Webcam] Socket error:', e);
+        };
+        camWs.onclose = () => {
+          console.log('[PCDeck Webcam] Socket disconnected');
+        };
 
         // Hardware-accelerated canvas frame grabber
         const canvas = document.createElement('canvas');
@@ -7731,17 +10041,65 @@
 
         const frameInterval = 1000 / camFps;
         let lastFrameTime = 0;
+        let isEncodingFrame = false;
 
         const captureFrame = (time) => {
           if (!camActive) return;
           if (time - lastFrameTime >= frameInterval && camWs && camWs.readyState === WebSocket.OPEN && videoPreview && videoPreview.readyState >= 2) {
-            lastFrameTime = time;
-            ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
-              if (blob && camWs && camWs.readyState === WebSocket.OPEN) {
-                blob.arrayBuffer().then(buf => camWs.send(buf));
+            // Buffer protection: if network backlogs over 64KB, skip frame to keep zero-latency real-time video
+            if (camWs.bufferedAmount > 65536) {
+              requestAnimationFrame(captureFrame);
+              return;
+            }
+            if (!isEncodingFrame) {
+              lastFrameTime = time;
+              isEncodingFrame = true;
+              // Aspect-Fit (Pillarbox/Letterbox): Natural physical view, NO ZOOM-IN, NO STRETCHING
+              const srcW = videoPreview.videoWidth || canvas.width;
+              const srcH = videoPreview.videoHeight || canvas.height;
+              const srcAspect = srcW / srcH;
+              const dstAspect = canvas.width / canvas.height;
+
+              // Solid black backdrop
+              ctx.fillStyle = '#000000';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+              let dw = canvas.width;
+              let dh = canvas.height;
+              let dx = 0;
+              let dy = 0;
+
+              if (srcAspect < dstAspect) {
+                // Portrait camera (phone vertical): Fit full height (720), pillarbox sides
+                // Gives 100% full view of head to shoulders, zero zoom-in, exactly proportional!
+                dw = canvas.height * srcAspect;
+                dx = (canvas.width - dw) / 2;
+              } else if (srcAspect > dstAspect) {
+                // Extra-wide landscape: Fit full width, letterbox top/bottom
+                dh = canvas.width / srcAspect;
+                dy = (canvas.height - dh) / 2;
               }
-            }, 'image/jpeg', 0.82);
+
+              // Mirror camera horizontally for natural orientation
+              ctx.save();
+              ctx.translate(canvas.width, 0);
+              ctx.scale(-1, 1);
+              // Draw destination in flipped coordinate system
+              ctx.drawImage(videoPreview, 0, 0, srcW, srcH, canvas.width - dx - dw, dy, dw, dh);
+              ctx.restore();
+
+              // Super-fast JPEG compression (0.65 quality gives 4x faster encode & 70% smaller packets)
+              canvas.toBlob((blob) => {
+                isEncodingFrame = false;
+                if (blob && camWs && camWs.readyState === WebSocket.OPEN) {
+                  blob.arrayBuffer().then((buf) => {
+                    if (camWs && camWs.readyState === WebSocket.OPEN) {
+                      camWs.send(buf);
+                    }
+                  });
+                }
+              }, 'image/jpeg', 0.65);
+            }
           }
           requestAnimationFrame(captureFrame);
         };
@@ -7749,22 +10107,22 @@
         camActive = true;
         if (btnToggle) {
           btnToggle.className = 'neo-btn btn-pink';
-          btnToggle.innerHTML = '<span>⏹️</span><span>STOP WEBCAM</span>';
+          btnToggle.innerHTML = '<span id="cam-btn-icon" class="btn-svg-wrap"><svg class="deck-icon" width="18" height="18"><use href="#icon-close"/></svg></span><span id="cam-btn-text">Stop Camera</span>';
         }
-        if (btnSwitch) btnSwitch.style.display = 'inline-block';
+        if (btnSwitch) btnSwitch.style.display = 'inline-flex';
         if (statusBadge) {
           statusBadge.className = 'mini-status-chip online';
-          statusBadge.textContent = 'STREAMING ' + camTargetRes + 'p';
+          statusBadge.textContent = 'LIVE ' + camTargetRes + 'p';
         }
         const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
         if (quickCamBtn) {
           quickCamBtn.style.background = 'var(--neo-pink)';
-          quickCamBtn.textContent = '📹 Cam: ON';
+          quickCamBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Cam: ON</span>';
         }
         const toolCamSub = document.getElementById('tool-cam-status');
         if (toolCamSub) toolCamSub.textContent = 'Active';
 
-        showToast('Webcam Broadcasting to PC DirectShow', 'success', '📹');
+        showToast('Camera Broadcasting to PC', 'success', '📷');
         requestAnimationFrame(captureFrame);
       } catch (err) {
         showToast('Camera Access Denied: ' + err.message, 'error', '⚠️');
@@ -7782,25 +10140,29 @@
         camMediaStream.getTracks().forEach(t => t.stop());
         camMediaStream = null;
       }
-      if (videoPreview) videoPreview.srcObject = null;
+      if (videoPreview) {
+        videoPreview.srcObject = null;
+        videoPreview.style.display = 'none';
+      }
       if (placeholder) placeholder.style.display = 'flex';
+      if (liveBadge) liveBadge.style.display = 'none';
       if (camWs) {
         camWs.close();
         camWs = null;
       }
       if (btnToggle) {
         btnToggle.className = 'neo-btn btn-cyan';
-        btnToggle.innerHTML = '<span>📹</span><span>START WEBCAM</span>';
+        btnToggle.innerHTML = '<span id="cam-btn-icon" class="btn-svg-wrap"><svg class="deck-icon" width="18" height="18"><use href="#icon-camera"/></svg></span><span id="cam-btn-text">Start Camera</span>';
       }
       if (btnSwitch) btnSwitch.style.display = 'none';
       if (statusBadge) {
         statusBadge.className = 'mini-status-chip offline';
-        statusBadge.textContent = 'OFFLINE';
+        statusBadge.textContent = 'STANDBY';
       }
       const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
       if (quickCamBtn) {
         quickCamBtn.style.background = 'var(--neo-cyan)';
-        quickCamBtn.textContent = '📹 Cam';
+        quickCamBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Cam</span>';
       }
       const toolCamSub = document.getElementById('tool-cam-status');
       if (toolCamSub) toolCamSub.textContent = 'Offline';
@@ -7826,7 +10188,7 @@
       };
     }
 
-    // Cycle Next Lens / Sensor
+    // Cycle Next Lens / Flip Camera
     if (btnSwitch) {
       btnSwitch.onclick = () => {
         vibrate(15);
@@ -7835,13 +10197,14 @@
           let nextIdx = (currentIdx + 1) % availableVideoDevices.length;
           camSelectedDeviceId = availableVideoDevices[nextIdx].deviceId;
           if (deviceSelect) deviceSelect.value = camSelectedDeviceId;
+          let label = (availableVideoDevices[nextIdx].label || '').toLowerCase();
+          if (label.includes('front') || label.includes('user')) {
+            applyFacingMode('user');
+          } else {
+            applyFacingMode('environment');
+          }
         } else {
-          camFacingMode = camFacingMode === 'user' ? 'environment' : 'user';
-          camSelectedDeviceId = '';
-        }
-        if (camActive) {
-          stopCam();
-          startCam();
+          applyFacingMode(camFacingMode === 'user' ? 'environment' : 'user');
         }
       };
     }
@@ -7922,7 +10285,15 @@
     const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
     const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
     const onboardingDone = localStorage.getItem('pcdeck_onboarding_completed');
-    const savedIp = localStorage.getItem('neontrack_ip') || (isHttp ? `${state.serverHost}:${state.serverPort}` : null);
+    const savedIp = localStorage.getItem('pcdeck_ip') || localStorage.getItem('neontrack_ip') || (isHttp ? `${state.serverHost}:${state.serverPort}` : null);
+
+    if (isNativeApp) {
+      document.body.classList.add('is-native-app');
+      document.body.classList.remove('is-web-browser');
+    } else {
+      document.body.classList.add('is-web-browser');
+      document.body.classList.remove('is-native-app');
+    }
 
     if (isHttp && !isNativeApp) {
       // In web browser mode: seamlessly auto-connect with ZERO modal popups!
@@ -7947,10 +10318,10 @@
 
     // Dynamic Wake-Up & Proactive Instant Reconnection Engine
     function checkAndResumeConnection() {
-      triggerDiscoveryAndSweep();
       if (document.visibilityState === 'visible') {
         if (!state.connected || !mainWs || mainWs.readyState !== WebSocket.OPEN) {
           reconnectAttempts = 0;
+          triggerDiscoveryAndSweep();
           connect();
         } else if (!screenWs || screenWs.readyState !== WebSocket.OPEN) {
           connectScreenWs();
@@ -7961,9 +10332,11 @@
     window.addEventListener('focus', checkAndResumeConnection);
     window.addEventListener('pageshow', checkAndResumeConnection);
     window.addEventListener('online', () => {
-      reconnectAttempts = 0;
-      triggerDiscoveryAndSweep();
-      connect(true);
+      if (!state.connected || !mainWs || mainWs.readyState !== WebSocket.OPEN) {
+        reconnectAttempts = 0;
+        triggerDiscoveryAndSweep();
+        connect(true);
+      }
     });
     window.onAppResume = checkAndResumeConnection;
 
@@ -8065,9 +10438,42 @@
       }
     }
 
+    window.onApkUpdateError = function(err) {
+      if (progressContainer) progressContainer.style.display = 'none';
+      if (updateStatusText) {
+        updateStatusText.innerText = `Update error: ${err}`;
+        updateStatusText.style.color = '#ff2a85';
+      }
+      showToast(`Update failed: ${err}`, 'warn', '⚠️');
+    };
+
     if (btnCheckUpdates) {
-      btnCheckUpdates.onclick = () => {
+      btnCheckUpdates.onclick = async () => {
         vibrate(15);
+        if (updateStatusText) updateStatusText.innerText = 'Checking PC for updates...';
+        
+        // Priority 1: If connected to PC or PC is reachable on LAN, update directly from PC
+        const host = state.serverHost || (localStorage.getItem('pcdeck_ip') || '').split(':')[0] || '10.189.70.215';
+        const port = state.serverPort || '8000';
+        try {
+          const pcPing = await fetch(`http://${host}:${port}/api/ping`, { mode: 'cors', cache: 'no-store' });
+          if (pcPing.ok) {
+            const pcApkUrl = `http://${host}:${port}/PCDeck.apk`;
+            showToast('Downloading latest update from PC...', 'success', '⚡');
+            if (updateStatusText) updateStatusText.innerText = 'Downloading update from PC...';
+            if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
+              window.AndroidApp.downloadAndInstallApk(pcApkUrl);
+              return;
+            } else {
+              window.open(pcApkUrl, '_blank');
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('PC update probe failed, falling back to web check', e);
+        }
+
+        // Priority 2: Web version check
         checkVersionUpdates(true);
       };
     }
@@ -8088,9 +10494,15 @@
           updateModal.style.display = 'none';
         }
 
-        showToast(isPlayStoreTarget ? 'Opening Google Play Store...' : 'Opening PCDeck Website...', 'success', '🌐');
+        const host = state.serverHost || (localStorage.getItem('pcdeck_ip') || '').split(':')[0] || '10.189.70.215';
+        const port = state.serverPort || '8000';
+        const pcApkUrl = `http://${host}:${port}/PCDeck.apk`;
 
-        if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
+        if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
+          showToast('Downloading update from PC...', 'success', '⚡');
+          window.AndroidApp.downloadAndInstallApk(pcApkUrl);
+        } else if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
+          showToast(isPlayStoreTarget ? 'Opening Google Play Store...' : 'Opening PCDeck Website...', 'success', '🌐');
           window.AndroidApp.openUrl(targetUpdateUrl);
         } else {
           window.open(targetUpdateUrl, '_blank');

@@ -26,30 +26,72 @@ import urllib.request
 import webbrowser
 import winreg
 
+# Ensure root directory is in sys.path so 'server.*' packages resolve
+_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT_DIR not in sys.path:
+    sys.path.insert(0, _ROOT_DIR)
+
 from PIL import Image, ImageTk
 import qrcode
 import uvicorn
 
 LOG_FILE = os.path.join(os.path.expanduser("~"), "pcdeck_pro_debug.log")
-LICENSE_DIR = os.path.join(os.path.expanduser("~"), ".pcdeck")
-LICENSE_FILE = os.path.join(LICENSE_DIR, "license.json")
+from server.license_manager import verify_license, activate_license_online, save_license
 
 def load_pc_license() -> dict:
-    try:
-        if os.path.exists(LICENSE_FILE):
-            with open(LICENSE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return {"pro_active": False, "key": ""}
+    return verify_license()
 
-def save_pc_license(key: str, active: bool = True):
+def is_first_run_startup_prompt_done() -> bool:
+    """Checks whether the first-run 'Start with Windows' prompt has already been shown."""
+    if sys.platform == "win32":
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\PCDeck", 0, winreg.KEY_READ)
+            val, _ = winreg.QueryValueEx(key, "StartupPromptShown")
+            winreg.CloseKey(key)
+            if val == 1:
+                return True
+        except Exception:
+            pass
+
     try:
-        os.makedirs(LICENSE_DIR, exist_ok=True)
-        with open(LICENSE_FILE, "w", encoding="utf-8") as f:
-            json.dump({"pro_active": active, "key": key, "activated_at": datetime.datetime.now().isoformat()}, f, indent=2)
+        config_path = os.path.join(os.path.expanduser("~"), ".pcdeck", "app_settings.json")
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return bool(data.get("startup_prompt_shown", False))
     except Exception:
         pass
+
+    return False
+
+
+def mark_first_run_startup_prompt_done():
+    """Marks the first-run 'Start with Windows' prompt as completed so it does not reappear."""
+    if sys.platform == "win32":
+        try:
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\PCDeck")
+            winreg.SetValueEx(key, "StartupPromptShown", 0, winreg.REG_DWORD, 1)
+            winreg.CloseKey(key)
+        except Exception:
+            pass
+
+    try:
+        cfg_dir = os.path.join(os.path.expanduser("~"), ".pcdeck")
+        os.makedirs(cfg_dir, exist_ok=True)
+        config_path = os.path.join(cfg_dir, "app_settings.json")
+        data = {}
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                data = {}
+        data["startup_prompt_shown"] = True
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +227,7 @@ try:
         update_wifi_config,
         start_watchdog,
         stop_watchdog,
+        restore_all_wlan_autoconfig,
     )
 except ImportError:
     from wifi_manager import (
@@ -198,7 +241,16 @@ except ImportError:
         update_wifi_config,
         start_watchdog,
         stop_watchdog,
+        restore_all_wlan_autoconfig,
     )
+
+try:
+    from server.wifi_latency_manager import wifi_latency_manager
+except ImportError:
+    try:
+        from wifi_latency_manager import wifi_latency_manager
+    except ImportError:
+        wifi_latency_manager = None
 
 
 def get_asset_search_dirs():
@@ -420,10 +472,18 @@ def apply_crisp_window_icon(window):
 
 
 class PCDeckProGUI:
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk, start_minimized: bool = False):
         self.root = root
+        self.start_minimized = start_minimized
         self.root.title("PCDeck - Wireless PC Touch Deck & Streamer")
-        self.root.geometry("960x640")
+        try:
+            sw = self.root.winfo_screenwidth()
+            sh = self.root.winfo_screenheight()
+            rx = max(0, (sw - 960) // 2)
+            ry = max(0, (sh - 640) // 2)
+            self.root.geometry(f"960x640+{rx}+{ry}")
+        except Exception:
+            self.root.geometry("960x640")
         self.root.minsize(920, 600)
         self.root.configure(bg=C_BG)
 
@@ -454,7 +514,8 @@ class PCDeckProGUI:
         self.start_time = time.time()
 
         # State Variables
-        self.start_boot_var = tk.BooleanVar(value=self.check_autostart_registry())
+        self.autostart_enabled = self.check_autostart_registry()
+        self.start_boot_var = tk.BooleanVar(value=self.autostart_enabled)
         self.reconnect_var = tk.StringVar(value="auto")
         self.fps_var = tk.StringVar(value="30")
         self.qr_photo = None
@@ -485,7 +546,37 @@ class PCDeckProGUI:
         self._init_wifi_reconnector()
         self._start_metrics_loop()
 
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        # Connect driver progress notifications from backend
+        try:
+            from server.main import set_driver_progress_callback
+            set_driver_progress_callback(self.on_driver_progress)
+        except Exception:
+            pass
+
+        # System Tray & Background Service Integration
+        self._tray_minimized_notified = False
+        self.flyout = None
+        self.tray_icon = None
+        self._init_tray_icon()
+
+        # Ensure elevated autostart task is registered and synced if enabled
+        if self.autostart_enabled:
+            threading.Thread(target=self._ensure_autostart_task_scheduler, daemon=True).start()
+
+        if self.start_minimized:
+            self.root.withdraw()
+            try:
+                self.show_notification(
+                    "PCDeck is running quietly in the tray. Ready to connect.",
+                    "PCDeck Server Active",
+                )
+            except Exception:
+                pass
+        else:
+            # First-run onboarding: Prompt user to enable Start with Windows
+            self.root.after(700, self._check_first_run_startup_prompt)
+
+        self.root.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
 
     def _build_ui(self):
         # 1. Top Cyber-Neon Header Bar
@@ -609,9 +700,61 @@ class PCDeckProGUI:
             pady=3,
         )
 
+        # 1.5 Driver Installation Live Progress Card (Appears during install)
+        self.driver_prog_frame = tk.Frame(
+            self.root,
+            bg=C_SURFACE,
+            bd=1,
+            relief="solid",
+            highlightbackground=C_ACCENT,
+            highlightthickness=1,
+        )
+        dp_inner = tk.Frame(self.driver_prog_frame, bg=C_SURFACE, padx=14, pady=8)
+        dp_inner.pack(fill="x", expand=True)
+
+        dp_top = tk.Frame(dp_inner, bg=C_SURFACE)
+        dp_top.pack(fill="x")
+
+        self.driver_prog_title = tk.Label(
+            dp_top,
+            text="DRIVER INSTALLATION",
+            font=F_BODY_STRONG,
+            fg=C_ACCENT,
+            bg=C_SURFACE,
+        )
+        self.driver_prog_title.pack(side="left")
+
+        self.driver_prog_pct = tk.Label(
+            dp_top,
+            text="0%",
+            font=F_BODY_STRONG,
+            fg=C_TEXT,
+            bg=C_SURFACE_2,
+            padx=8,
+            pady=1,
+        )
+        self.driver_prog_pct.pack(side="right")
+
+        dp_bar_bg = tk.Frame(dp_inner, bg=C_SURFACE_2, height=6, bd=0)
+        dp_bar_bg.pack(fill="x", pady=(6, 4))
+        dp_bar_bg.pack_propagate(False)
+
+        self.driver_prog_fill = tk.Frame(dp_bar_bg, bg=C_ACCENT, height=6)
+        self.driver_prog_fill.place(x=0, y=0, relwidth=0.0, relheight=1.0)
+
+        self.driver_prog_stage = tk.Label(
+            dp_inner,
+            text="Initializing driver installation...",
+            font=F_SMALL,
+            fg=C_TEXT_DIM,
+            bg=C_SURFACE,
+        )
+        self.driver_prog_stage.pack(anchor="w")
+
         # 2. Main 2-Column Content Layout
         content = tk.Frame(self.root, bg=C_BG)
         content.pack(fill="both", expand=True, padx=16, pady=4)
+        self.content_frame = content
 
         # Cyber-Neon Combobox styling with strict dark background mapping
         try:
@@ -672,13 +815,14 @@ class PCDeckProGUI:
             bg=C_SURFACE,
         ).pack(side="left")
 
-        tk.Label(
+        self.qr_sub_lbl = tk.Label(
             qr_hdr,
             text="Scan to Connect",
             font=F_SMALL,
             fg=C_TEXT_DIM,
             bg=C_SURFACE,
-        ).pack(side="right")
+        )
+        self.qr_sub_lbl.pack(side="right")
 
         # QR Code Card
         qr_card = tk.Frame(
@@ -842,7 +986,7 @@ class PCDeckProGUI:
 
         self.screen_lbl = tk.Label(
             diag_box,
-            text=f"🖥️ PC: {controller.screen_width} x {controller.screen_height} (60 FPS)",
+            text=f"Display: {controller.screen_width} x {controller.screen_height} @ 60 Hz",
             font=(F_MONO, 8),
             fg=C_TEXT_DIM,
             bg=C_SURFACE_3,
@@ -867,7 +1011,7 @@ class PCDeckProGUI:
 
         self.uptime_lbl = tk.Label(
             top_status_card,
-            text="⏱️ Uptime: 00:00:00",
+            text="Uptime: 00:00:00",
             font=F_SMALL_STRONG,
             fg=C_TEXT,
             bg=C_SURFACE_2,
@@ -878,24 +1022,25 @@ class PCDeckProGUI:
 
         self.network_health_lbl = tk.Label(
             top_status_card,
-            text="📶 Network: Excellent (100%)",
+            text="Network: Ready",
             font=F_SMALL_STRONG,
-            fg=C_SUCCESS,
+            fg=C_TEXT_DIM,
             bg=C_SURFACE_2,
             padx=8,
             pady=4,
         )
         self.network_health_lbl.pack(side="left", padx=8)
 
-        tk.Label(
+        self.latency_lbl = tk.Label(
             top_status_card,
-            text="⚡ Latency: < 1ms",
+            text="Latency: Standby",
             font=F_SMALL_STRONG,
-            fg=C_ACCENT,
+            fg=C_TEXT_DIM,
             bg=C_SURFACE_2,
             padx=8,
             pady=4,
-        ).pack(side="right")
+        )
+        self.latency_lbl.pack(side="right")
 
         # 2. HERO CARD: LIVE PHONE CONTROLLER
         hero_card = tk.Frame(
@@ -974,13 +1119,13 @@ class PCDeckProGUI:
         tools_grid = tk.Frame(right_col, bg=C_SURFACE)
         tools_grid.pack(fill="x", padx=14, pady=4)
 
-        # Tile 1: 📤 Send Files
+        # Tile 1: Send Files
         tile1 = tk.Frame(tools_grid, bg=C_SURFACE_2, bd=1, relief="solid")
         tile1.pack(side="left", fill="both", expand=True, padx=(0, 4))
 
         t1_hdr = tk.Frame(tile1, bg=C_SURFACE_2)
         t1_hdr.pack(fill="x", padx=8, pady=(4, 1))
-        tk.Label(t1_hdr, text="📤 SEND FILES", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE_2).pack(side="left")
+        tk.Label(t1_hdr, text="SEND FILES", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE_2).pack(side="left")
 
         tk.Label(tile1, text="Drop files to phone", font=F_SMALL, fg=C_TEXT_DIM, bg=C_SURFACE_2).pack(anchor="w", padx=8)
 
@@ -996,13 +1141,13 @@ class PCDeckProGUI:
             pady=3,
         ).pack(fill="x", padx=8, pady=(4, 6))
 
-        # Tile 2: 📂 Open Transfers
+        # Tile 2: Open Transfers
         tile2 = tk.Frame(tools_grid, bg=C_SURFACE_2, bd=1, relief="solid")
         tile2.pack(side="right", fill="both", expand=True, padx=(4, 0))
 
         t2_hdr = tk.Frame(tile2, bg=C_SURFACE_2)
         t2_hdr.pack(fill="x", padx=8, pady=(4, 1))
-        tk.Label(t2_hdr, text="📂 RECEIVED", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE_2).pack(side="left")
+        tk.Label(t2_hdr, text="RECEIVED FILES", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE_2).pack(side="left")
 
         tk.Label(tile2, text="View received files", font=F_SMALL, fg=C_TEXT_DIM, bg=C_SURFACE_2).pack(anchor="w", padx=8)
 
@@ -1022,13 +1167,13 @@ class PCDeckProGUI:
         tools_grid2 = tk.Frame(right_col, bg=C_SURFACE)
         tools_grid2.pack(fill="x", padx=14, pady=4)
 
-        # Tile 3: 🔊 Audio Streaming
+        # Tile 3: Audio Streaming
         tile3 = tk.Frame(tools_grid2, bg=C_SURFACE_2, bd=1, relief="solid")
         tile3.pack(side="left", fill="both", expand=True, padx=(0, 4))
 
         t3_hdr = tk.Frame(tile3, bg=C_SURFACE_2)
         t3_hdr.pack(fill="x", padx=8, pady=(4, 1))
-        tk.Label(t3_hdr, text="🔊 AUDIO STREAM", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE_2).pack(side="left")
+        tk.Label(t3_hdr, text="AUDIO STREAM", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE_2).pack(side="left")
 
         self.audio_status_lbl = tk.Label(t3_hdr, text="OFF", font=F_SMALL_STRONG, fg=C_TEXT_DIM, bg=C_SURFACE_3, padx=4)
         self.audio_status_lbl.pack(side="right")
@@ -1047,13 +1192,13 @@ class PCDeckProGUI:
             pady=3,
         ).pack(fill="x", padx=8, pady=(4, 6))
 
-        # Tile 4: ⚙️ Preferences
+        # Tile 4: Preferences
         tile4 = tk.Frame(tools_grid2, bg=C_SURFACE_2, bd=1, relief="solid")
         tile4.pack(side="right", fill="both", expand=True, padx=(4, 0))
 
         t4_hdr = tk.Frame(tile4, bg=C_SURFACE_2)
         t4_hdr.pack(fill="x", padx=8, pady=(4, 1))
-        tk.Label(t4_hdr, text="⚙️ PREFERENCES", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE_2).pack(side="left")
+        tk.Label(t4_hdr, text="PREFERENCES", font=F_LABEL, fg=C_TEXT, bg=C_SURFACE_2).pack(side="left")
 
         tk.Label(tile4, text="System startup settings", font=F_SMALL, fg=C_TEXT_DIM, bg=C_SURFACE_2).pack(anchor="w", padx=8)
 
@@ -1069,7 +1214,7 @@ class PCDeckProGUI:
             command=self.save_settings,
         ).pack(anchor="w", padx=8, pady=(4, 6))
 
-        # 4. PRO LICENSE CARD
+        # 4. PCDECK PRO & MOBILE APP (SIDE BY SIDE BUTTONS)
         lic_card = tk.Frame(
             right_col,
             bg=C_SURFACE_2,
@@ -1085,7 +1230,7 @@ class PCDeckProGUI:
 
         tk.Label(
             lic_hdr,
-            text="LICENSE & EDITION",
+            text="PCDECK PRO & MOBILE APP",
             font=F_LABEL,
             fg=C_ACCENT,
             bg=C_SURFACE_2,
@@ -1101,62 +1246,40 @@ class PCDeckProGUI:
         self.lic_status_lbl.pack(side="right")
 
         lic_body = tk.Frame(lic_card, bg=C_SURFACE_2)
-        lic_body.pack(fill="x", padx=10, pady=(0, 6))
+        lic_body.pack(fill="x", padx=10, pady=(4, 8))
 
-        self.lic_btn = tk.Button(
-            lic_body,
-            text="★ Manage Pro License" if self.is_pc_pro else "★ Activate PCDeck Pro ($3.99)",
-            font=F_SMALL_STRONG,
-            fg="#ffd700" if self.is_pc_pro else "#000000",
-            bg=C_SURFACE_3 if self.is_pc_pro else "#eab308",
-            bd=0,
-            cursor="hand2",
-            padx=8,
-            pady=4,
-            command=self.open_license_dialog,
-        )
-        self.lic_btn.pack(fill="x", pady=(2, 0))
+        btn_row = tk.Frame(lic_body, bg=C_SURFACE_2)
+        btn_row.pack(fill="x")
 
-        # 5. MOBILE COMPANION APP CARD
-        app_card = tk.Frame(
-            right_col,
-            bg=C_SURFACE_2,
-            bd=0,
-            relief="solid",
-            highlightbackground=C_BORDER,
-            highlightthickness=1,
-        )
-        app_card.pack(fill="x", padx=14, pady=4)
-
-        app_hdr = tk.Frame(app_card, bg=C_SURFACE_2)
-        app_hdr.pack(fill="x", padx=10, pady=(6, 2))
-
-        tk.Label(
-            app_hdr,
-            text="MOBILE COMPANION APP",
-            font=F_LABEL,
-            fg=C_ACCENT,
-            bg=C_SURFACE_2,
-        ).pack(side="left")
-
-        app_body = tk.Frame(app_card, bg=C_SURFACE_2)
-        app_body.pack(fill="x", padx=10, pady=(0, 6))
-
-        app_btn_row = tk.Frame(app_body, bg=C_SURFACE_2)
-        app_btn_row.pack(fill="x", pady=(2, 0))
-
-        tk.Button(
-            app_btn_row,
-            text="🌐 Download Android App (pcdeck.vercel.app)",
+        # Side-by-side Button 1: Download APK (Left)
+        self.apk_btn = tk.Button(
+            btn_row,
+            text="Download Mobile App",
             font=F_SMALL_STRONG,
             fg=C_BG,
             bg=C_ACCENT,
             bd=0,
             cursor="hand2",
-            padx=8,
-            pady=4,
-            command=lambda: webbrowser.open("https://pcdeck.vercel.app"),
-        ).pack(fill="x", expand=True)
+            padx=10,
+            pady=5,
+            command=lambda: webbrowser.open("https://pcdeck.vercel.app/PCDeck.apk"),
+        )
+        self.apk_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+
+        # Side-by-side Button 2: Upgrade to Pro (Right)
+        self.lic_btn = tk.Button(
+            btn_row,
+            text="Manage Pro" if self.is_pc_pro else "Upgrade to Pro ($3.99)",
+            font=F_SMALL_STRONG,
+            fg="#ffd700" if self.is_pc_pro else "#000000",
+            bg=C_SURFACE_3 if self.is_pc_pro else "#eab308",
+            bd=0,
+            cursor="hand2",
+            padx=10,
+            pady=5,
+            command=self.open_license_dialog,
+        )
+        self.lic_btn.pack(side="right", fill="x", expand=True, padx=(4, 0))
 
         # 5. SYSTEM POWER BAR (Restart & Stop)
         pwr_bar = tk.Frame(right_col, bg=C_SURFACE)
@@ -1164,7 +1287,7 @@ class PCDeckProGUI:
 
         tk.Button(
             pwr_bar,
-            text="🔄 RESTART SERVER",
+            text="RESTART SERVER",
             font=F_BODY_STRONG,
             fg=C_BG,
             bg=C_ACCENT,
@@ -1177,7 +1300,7 @@ class PCDeckProGUI:
 
         tk.Button(
             pwr_bar,
-            text="⏹️ STOP SERVER",
+            text="STOP SERVER",
             font=F_BODY_STRONG,
             fg=C_TEXT,
             bg=C_DANGER,
@@ -1200,20 +1323,69 @@ class PCDeckProGUI:
                 elapsed = int(time.time() - getattr(self, "start_time", time.time()))
                 hrs, rem = divmod(elapsed, 3600)
                 mins, secs = divmod(rem, 60)
-                self.uptime_lbl.config(text=f"⏱️ Uptime: {hrs:02d}:{mins:02d}:{secs:02d}")
-                self.root.after(1000, self._update_uptime_tick)
+                self.uptime_lbl.config(text=f"Uptime: {hrs:02d}:{mins:02d}:{secs:02d}")
+            self._update_network_health()
+            self.root.after(1000, self._update_uptime_tick)
         except Exception:
             pass
 
-    def _generate_qr_image(self):
-        """Generate and display Tk PhotoImage QR with maximum contrast."""
+    def _update_network_health(self):
+        """Updates network quality, latency, hardware band (2.4G/5G/6G), and link speed dynamically."""
+        try:
+            from server.wifi_latency_manager import wifi_latency_manager
+
+            health = wifi_latency_manager.get_network_health() if wifi_latency_manager else {"active": False}
+            hw = health.get("hardware", {})
+            band = hw.get("band", "Wi-Fi")
+            speed = hw.get("speed_mbps", 0.0)
+            speed_str = f" · {speed:.0f} Mbps" if speed > 0 else ""
+
+            if health.get("active"):
+                rtt = health.get("rtt_ms", 0)
+                status = health.get("status", "Good")
+                score = health.get("score_pct", 80)
+                color = health.get("color", C_SUCCESS)
+
+                if hasattr(self, "network_health_lbl") and self.network_health_lbl.winfo_exists():
+                    self.network_health_lbl.config(
+                        text=f"{band}{speed_str}: {status} ({score}%)",
+                        fg=color
+                    )
+                if hasattr(self, "latency_lbl") and self.latency_lbl.winfo_exists():
+                    self.latency_lbl.config(
+                        text=f"Latency: {int(rtt)} ms",
+                        fg=color
+                    )
+            else:
+                sig_pct = hw.get("signal_pct", 70)
+                quality_label = "Excellent" if sig_pct >= 80 else ("Good" if sig_pct >= 60 else "Fair")
+                q_color = C_SUCCESS if sig_pct >= 60 else C_WARNING
+
+                if hasattr(self, "network_health_lbl") and self.network_health_lbl.winfo_exists():
+                    self.network_health_lbl.config(
+                        text=f"{band}{speed_str}: {quality_label} ({sig_pct}%)",
+                        fg=q_color
+                    )
+                if hasattr(self, "latency_lbl") and self.latency_lbl.winfo_exists():
+                    self.latency_lbl.config(text="Latency: Standby", fg=C_TEXT_DIM)
+        except Exception:
+            pass
+
+    def _get_gateway_qr_url(self) -> str:
+        """Constructs the local pairing URL for lightning-fast camera QR scanning."""
         url = getattr(self, "server_url", SERVER_URL)
-        clean_ip = url.replace("http://", "").replace("https://", "")
-        gateway_url = f"https://pcdeck.vercel.app/connect?ip={clean_ip}"
+        clean_ip = url.replace("http://", "").replace("https://", "").rstrip("/")
+        return f"http://{clean_ip}/connect"
+
+    def _generate_qr_image(self):
+        """Generate and display Tk PhotoImage QR with maximum contrast and ultra-fast scan latency."""
+        gateway_url = self._get_gateway_qr_url()
+        # Medium error correction (15%) with compact URL yields chunky, high-contrast modules
+        # that scan in < 30ms off computer monitors without camera glare or moire interference.
         qr = qrcode.QRCode(
             version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_H,
-            box_size=5,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=6,
             border=2,
         )
         qr.add_data(gateway_url)
@@ -1223,14 +1395,22 @@ class PCDeckProGUI:
         self.qr_photo = ImageTk.PhotoImage(img)
         self.qr_label.config(image=self.qr_photo, bg=C_TEXT)
 
+        if hasattr(self, "qr_sub_lbl") and self.qr_sub_lbl.winfo_exists():
+            if "127.0.0.1" in gateway_url or "localhost" in gateway_url:
+                self.qr_sub_lbl.config(text="⚠️ Localhost Only (No Network)", fg=C_WARNING)
+            else:
+                self.qr_sub_lbl.config(text="Scan to Connect", fg=C_TEXT_DIM)
+
     def copy_ip(self):
         url = getattr(self, "server_url", SERVER_URL)
+        clean_ip = url.replace("http://", "").replace("https://", "").rstrip("/")
+        clean_url = f"http://{clean_ip}"
         self.root.clipboard_clear()
-        self.root.clipboard_append(url)
-        messagebox.showinfo("PCDeck Pro", f"Copied server address to clipboard:\n{url}")
+        self.root.clipboard_append(clean_url)
+        messagebox.showinfo("PCDeck", f"Copied server address to clipboard:\n{clean_url}")
 
     def refresh_network_ip(self):
-        """Manually force detect local Wi-Fi or Hotspot IP address."""
+        """Manually force detect local Wi-Fi, USB Tethering, or Hotspot IP address."""
         try:
             try:
                 from server.main import get_local_ip
@@ -1245,7 +1425,14 @@ class PCDeckProGUI:
             self.ip_entry.config(state="readonly", readonlybackground=C_INPUT, fg=C_ACCENT)
             self._generate_qr_image()
             if hasattr(self, "phone_status_lbl") and self.phone_status_lbl.winfo_exists():
-                mode = "Offline Hotspot" if new_ip.startswith("192.168.43.") or new_ip.startswith("172.") else "Wi-Fi Ready"
+                if new_ip.startswith("192.168.42."):
+                    mode = "USB Tethered"
+                elif new_ip.startswith("192.168.43.") or new_ip.startswith("172."):
+                    mode = "Phone Hotspot"
+                elif not new_ip.startswith("127."):
+                    mode = "Wi-Fi Ready"
+                else:
+                    mode = "Waiting for Network (Localhost)"
                 self.phone_status_lbl.config(
                     text=f"● {mode}: {new_ip}",
                     fg=C_SUCCESS if not new_ip.startswith("127.") else C_WARNING,
@@ -1279,17 +1466,22 @@ class PCDeckProGUI:
         except Exception:
             pass
 
-    def _get_autostart_cmd(self) -> str:
-        if getattr(sys, "frozen", False):
-            return f'"{sys.executable}"'
+    def _get_autostart_exe_path(self) -> str:
+        """Returns the absolute path to the main PCDeck executable."""
+        if getattr(sys, "frozen", False) and sys.executable:
+            return os.path.abspath(sys.executable)
         parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         pcdeck_exe = os.path.join(parent_dir, "PCDeck.exe")
         if os.path.exists(pcdeck_exe):
-            return f'"{pcdeck_exe}"'
-        return f'"{sys.executable}" "{os.path.abspath(__file__)}"'
+            return os.path.abspath(pcdeck_exe)
+        return os.path.abspath(sys.executable)
 
-    def _cleanup_legacy_autostart(self):
-        """Removes obsolete registry entries and startup folder shortcuts from older versions."""
+    def _get_autostart_cmd(self) -> str:
+        exe_path = self._get_autostart_exe_path()
+        return f'"{exe_path}" --tray'
+
+    def _cleanup_run_key_entry(self):
+        """Cleans up Run registry keys because Windows blocks elevated binaries from starting via Run keys."""
         if sys.platform != "win32":
             return
         try:
@@ -1297,28 +1489,57 @@ class PCDeckProGUI:
                 winreg.HKEY_CURRENT_USER,
                 r"Software\Microsoft\Windows\CurrentVersion\Run",
                 0,
-                winreg.KEY_SET_VALUE | winreg.KEY_READ,
+                winreg.KEY_SET_VALUE,
             )
-            for legacy_name in ["NeonTrack", "PCDeckPro", "PCDeck_Server", "PCDeck_Pro"]:
+            for kname in ["PCDeck", "PCDeck_Pro", "NeonTrack", "PCDeckPro", "PCDeck_Server"]:
                 try:
-                    winreg.DeleteValue(key, legacy_name)
+                    winreg.DeleteValue(key, kname)
                 except Exception:
                     pass
-            # If PCDeck is registered, verify that the target path still exists and is updated
-            try:
-                val, _ = winreg.QueryValueEx(key, "PCDeck")
-                clean_path = str(val).strip('"').split('"')[0]
-                if not os.path.exists(clean_path):
-                    # Path is stale, update with current executable path
-                    current_cmd = self._get_autostart_cmd()
-                    winreg.SetValueEx(key, "PCDeck", 0, winreg.REG_SZ, current_cmd)
-            except Exception:
-                pass
             winreg.CloseKey(key)
         except Exception:
             pass
 
-        # Check Windows Startup Folder for outdated .lnk shortcuts
+    def _ensure_start_menu_shortcut(self):
+        """Ensures a valid Start Menu shortcut exists with AppUserModelID and icon for Windows 10/11 Action Center."""
+        if sys.platform != "win32":
+            return
+        try:
+            exe_path = self._get_autostart_exe_path()
+            if not os.path.exists(exe_path):
+                return
+            appdata = os.environ.get("APPDATA", "")
+            if not appdata:
+                return
+            programs_dir = os.path.join(appdata, r"Microsoft\Windows\Start Menu\Programs")
+            if not os.path.exists(programs_dir):
+                return
+            shortcut_path = os.path.join(programs_dir, "PCDeck.lnk")
+            app_dir = os.path.dirname(exe_path)
+
+            ps_script = (
+                f"$ws = New-Object -ComObject WScript.Shell; "
+                f"$s = $ws.CreateShortcut('{shortcut_path}'); "
+                f"$s.TargetPath = '{exe_path}'; "
+                f"$s.WorkingDirectory = '{app_dir}'; "
+                f"$s.IconLocation = '{exe_path},0'; "
+                f"$s.Description = 'PCDeck Pro - Wireless PC Touch Deck & Streamer'; "
+                f"$s.Save()"
+            )
+            subprocess.run(
+                ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
+                capture_output=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                timeout=5
+            )
+        except Exception as e:
+            log_debug(f"Failed to create Start Menu shortcut: {e}")
+
+    def _cleanup_legacy_autostart(self):
+        """Removes obsolete registry entries and startup folder shortcuts from older versions."""
+        if sys.platform != "win32":
+            return
+        self._cleanup_run_key_entry()
         try:
             startup_dir = os.path.join(os.environ.get("APPDATA", ""), r"Microsoft\Windows\Start Menu\Programs\Startup")
             if os.path.exists(startup_dir):
@@ -1332,7 +1553,111 @@ class PCDeckProGUI:
         except Exception:
             pass
 
+    def _update_task_scheduler_autostart(self, enabled: bool):
+        """
+        Registers PCDeck in Windows Task Scheduler with /rl highest.
+        This allows PCDeck to launch as Administrator at Windows logon
+        WITHOUT prompting for UAC every time the PC turns on.
+        """
+        if sys.platform != "win32":
+            return
+        task_name = "PCDeck"
+        if enabled:
+            exe_path = self._get_autostart_exe_path()
+            if not os.path.exists(exe_path):
+                return
+
+            success = False
+            # 1. Primary: Native PowerShell Register-ScheduledTask with Highest RunLevel and no timeout
+            ps_script = (
+                f"$action = New-ScheduledTaskAction -Execute '{exe_path}' -Argument '--tray'; "
+                f"$trigger = New-ScheduledTaskTrigger -AtLogOn; "
+                f"$principal = New-ScheduledTaskPrincipal -UserId \"$env:USERDOMAIN\\$env:USERNAME\" -LogonType Interactive -RunLevel Highest; "
+                f"$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero); "
+                f"Register-ScheduledTask -TaskName '{task_name}' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force"
+            )
+            try:
+                res = subprocess.run(
+                    ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=8
+                )
+                if res.returncode == 0:
+                    success = True
+                    log_debug("[Autostart] Registered elevated Task Scheduler logon task via PowerShell.")
+            except Exception as e:
+                log_debug(f"PowerShell scheduled task registration error: {e}")
+
+            # 2. Fallback: schtasks.exe command line
+            if not success:
+                try:
+                    res = subprocess.run(
+                        ["schtasks", "/create", "/tn", task_name, "/tr", f'"{exe_path}" --tray', "/sc", "onlogon", "/rl", "highest", "/f"],
+                        capture_output=True,
+                        text=True,
+                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                        timeout=5
+                    )
+                    if res.returncode == 0:
+                        success = True
+                        log_debug("[Autostart] Registered elevated Task Scheduler logon task via schtasks.")
+                except Exception as e:
+                    log_debug(f"schtasks fallback failed: {e}")
+
+            # Always clean up legacy Run key to prevent Windows UAC logon block
+            self._cleanup_run_key_entry()
+            self._ensure_start_menu_shortcut()
+        else:
+            try:
+                subprocess.run(
+                    ["schtasks", "/delete", "/tn", task_name, "/f"],
+                    capture_output=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=5
+                )
+            except Exception:
+                pass
+            self._cleanup_run_key_entry()
+
+    def _ensure_autostart_task_scheduler(self):
+        """Verifies and registers the elevated Task Scheduler startup task and Start Menu shortcut."""
+        if sys.platform != "win32":
+            return
+        try:
+            self._ensure_start_menu_shortcut()
+            self._cleanup_run_key_entry()
+            if getattr(self, "autostart_enabled", False):
+                res = subprocess.run(
+                    ["schtasks", "/query", "/tn", "PCDeck"],
+                    capture_output=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=3
+                )
+                if res.returncode != 0:
+                    self._update_task_scheduler_autostart(True)
+        except Exception as e:
+            log_debug(f"Error ensuring autostart task scheduler: {e}")
+
     def check_autostart_registry(self) -> bool:
+        if sys.platform != "win32":
+            return False
+
+        # 1. Primary check: Elevated Task Scheduler task (silent admin at logon)
+        try:
+            res = subprocess.run(
+                ["schtasks", "/query", "/tn", "PCDeck"],
+                capture_output=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                timeout=3
+            )
+            if res.returncode == 0:
+                return True
+        except Exception:
+            pass
+
+        # 2. Secondary check: Standard Windows Run registry key (for migration)
         try:
             key = winreg.OpenKey(
                 winreg.HKEY_CURRENT_USER,
@@ -1358,48 +1683,255 @@ class PCDeckProGUI:
 
     def save_settings(self):
         autostart = self.start_boot_var.get()
-        cmd = self._get_autostart_cmd()
+        self.autostart_enabled = bool(autostart)
 
+        # Update elevated Windows Task Scheduler task (zero UAC popup on boot)
+        self._update_task_scheduler_autostart(self.autostart_enabled)
+
+        if getattr(self, "tray_icon", None):
+            try:
+                self.tray_icon.update_menu()
+            except Exception:
+                pass
+
+    def _check_first_run_startup_prompt(self):
+        """Checks if this is the first run and prompts user to enable Start with Windows."""
         try:
-            key = winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                r"Software\Microsoft\Windows\CurrentVersion\Run",
-                0,
-                winreg.KEY_SET_VALUE,
-            )
-            if autostart:
-                winreg.SetValueEx(key, "PCDeck", 0, winreg.REG_SZ, cmd)
-                for legacy in ["NeonTrack", "PCDeck_Pro", "PCDeckPro"]:
-                    try:
-                        winreg.DeleteValue(key, legacy)
-                    except Exception:
-                        pass
-            else:
-                for kname in ["PCDeck", "PCDeck_Pro", "NeonTrack", "PCDeckPro"]:
-                    try:
-                        winreg.DeleteValue(key, kname)
-                    except Exception:
-                        pass
-            winreg.CloseKey(key)
+            if not self.root or not self.root.winfo_exists():
+                return
+            if is_first_run_startup_prompt_done():
+                return
+            # If autostart is already active, register as handled so prompt isn't shown
+            if self.check_autostart_registry():
+                mark_first_run_startup_prompt_done()
+                return
+
+            self.show_startup_onboarding_dialog()
+        except Exception as e:
+            log_debug(f"Error checking first-run startup prompt: {e}")
+
+    def show_startup_onboarding_dialog(self):
+        """
+        Presents a centered, simple popup on first launch asking the user to
+        enable Start with Windows so they don't have to manually re-run PCDeck.
+        """
+        dlg = tk.Toplevel(self.root)
+        dlg.withdraw()  # Prevent top-left flashing during construction
+        dlg.title("PCDeck — Start with Windows")
+        dlg.resizable(False, False)
+        dlg.configure(bg=C_SURFACE)
+        dlg.transient(self.root)
+
+        apply_crisp_window_icon(dlg)
+
+        # Center dead-middle on user's screen
+        dw = 460
+        dh = 295
+        try:
+            sw = self.root.winfo_screenwidth()
+            sh = self.root.winfo_screenheight()
+            x = max(0, (sw - dw) // 2)
+            y = max(0, (sh - dh) // 2)
+            dlg.geometry(f"{dw}x{dh}+{x}+{y}")
+        except Exception:
+            dlg.geometry(f"{dw}x{dh}")
+
+        pad = tk.Frame(dlg, bg=C_SURFACE, padx=20, pady=16)
+        pad.pack(fill="both", expand=True)
+
+        # Header Badge
+        top_hdr = tk.Frame(pad, bg=C_SURFACE)
+        top_hdr.pack(fill="x", pady=(0, 2))
+
+        tk.Label(
+            top_hdr,
+            text="STARTUP SETTINGS",
+            font=F_LABEL,
+            fg=C_ACCENT,
+            bg=C_SURFACE,
+        ).pack(anchor="w")
+
+        # Title
+        tk.Label(
+            pad,
+            text="Start PCDeck with Windows?",
+            font=F_TITLE,
+            fg=C_TEXT,
+            bg=C_SURFACE,
+        ).pack(anchor="w", pady=(2, 4))
+
+        # Easy to understand description
+        tk.Label(
+            pad,
+            text="Enable PCDeck to run in the background when your computer starts. Your mobile device can connect immediately without needing to open the app manually.",
+            font=F_BODY,
+            fg=C_TEXT_DIM,
+            bg=C_SURFACE,
+            wraplength=420,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
+
+        # Simple benefits box
+        box = tk.Frame(pad, bg=C_SURFACE_2, bd=1, relief="solid", highlightbackground=C_BORDER, highlightthickness=1)
+        box.pack(fill="x", pady=(0, 12), ipady=5, ipadx=8)
+
+        bullets = [
+            ("Always Available", "Connect your phone anytime while your PC is on"),
+            ("Silent Startup", "Runs quietly in the system tray on Windows boot"),
+            ("Low Resource Usage", "Minimal background footprint without impacting performance")
+        ]
+
+        for title, desc in bullets:
+            row = tk.Frame(box, bg=C_SURFACE_2)
+            row.pack(fill="x", padx=8, pady=2)
+            tk.Label(
+                row,
+                text=title,
+                font=F_BODY_STRONG,
+                fg=C_ACCENT,
+                bg=C_SURFACE_2,
+                width=18,
+                anchor="w"
+            ).pack(side="left")
+            tk.Label(
+                row,
+                text=desc,
+                font=F_SMALL,
+                fg=C_TEXT,
+                bg=C_SURFACE_2,
+                anchor="w"
+            ).pack(side="left", fill="x", expand=True)
+
+        # Action Buttons Row
+        btn_row = tk.Frame(pad, bg=C_SURFACE)
+        btn_row.pack(fill="x", side="bottom", pady=(4, 0))
+
+        def _on_enable():
+            self.start_boot_var.set(True)
+            self.save_settings()
+            mark_first_run_startup_prompt_done()
+            dlg.destroy()
+
+        def _on_skip():
+            mark_first_run_startup_prompt_done()
+            dlg.destroy()
+
+        dlg.protocol("WM_DELETE_WINDOW", _on_skip)
+
+        # Secondary Button ("Not Now")
+        tk.Button(
+            btn_row,
+            text="Not Now",
+            font=F_BODY,
+            fg=C_TEXT_DIM,
+            bg=C_SURFACE_2,
+            activeforeground=C_TEXT,
+            activebackground=C_SURFACE_3,
+            bd=0,
+            relief="flat",
+            cursor="hand2",
+            padx=14,
+            pady=6,
+            command=_on_skip,
+        ).pack(side="right", padx=(10, 0))
+
+        # Primary Button ("Enable Start with Windows")
+        tk.Button(
+            btn_row,
+            text="Enable Start with Windows",
+            font=F_BODY_STRONG,
+            fg=C_BLACK,
+            bg=C_ACCENT,
+            activeforeground=C_BLACK,
+            activebackground="#06b6d4",
+            bd=0,
+            relief="flat",
+            cursor="hand2",
+            padx=16,
+            pady=6,
+            command=_on_enable,
+        ).pack(side="right")
+
+        dlg.update_idletasks()
+        dlg.deiconify()
+        dlg.grab_set()
+
+    def on_driver_progress(self, driver_name: str, percent: int, stage_text: str, status: str = "running"):
+        """Thread-safe entry point for backend driver installation progress updates."""
+        try:
+            if not self.root or not self.root.winfo_exists():
+                return
+            self.root.after(0, lambda: self._update_driver_progress_ui(driver_name, percent, stage_text, status))
         except Exception:
             pass
+
+    def _update_driver_progress_ui(self, driver_name: str, percent: int, stage_text: str, status: str = "running"):
+        """Updates the PC GUI live progress banner for driver installations."""
+        try:
+            if not hasattr(self, "driver_prog_frame") or not self.driver_prog_frame.winfo_exists():
+                return
+
+            if status == "running":
+                # Ensure card is visible above content frame
+                if not self.driver_prog_frame.winfo_ismapped():
+                    self.driver_prog_frame.pack(fill="x", padx=16, pady=(0, 6), before=self.content_frame)
+
+                self.driver_prog_frame.config(highlightbackground=C_ACCENT)
+                self.driver_prog_title.config(text=f"Installing: {driver_name.upper()}", fg=C_ACCENT)
+                self.driver_prog_pct.config(text=f"{percent}%", fg=C_TEXT)
+                self.driver_prog_fill.config(bg=C_ACCENT)
+                self.driver_prog_fill.place(x=0, y=0, relwidth=max(0.04, min(1.0, percent / 100.0)), relheight=1.0)
+                self.driver_prog_stage.config(text=stage_text, fg=C_TEXT)
+
+            elif status == "success":
+                if not self.driver_prog_frame.winfo_ismapped():
+                    self.driver_prog_frame.pack(fill="x", padx=16, pady=(0, 6), before=self.content_frame)
+
+                self.driver_prog_frame.config(highlightbackground="#3fb950")
+                self.driver_prog_title.config(text=f"Driver Ready: {driver_name.upper()}", fg="#3fb950")
+                self.driver_prog_pct.config(text="100%", fg="#3fb950")
+                self.driver_prog_fill.config(bg="#3fb950")
+                self.driver_prog_fill.place(x=0, y=0, relwidth=1.0, relheight=1.0)
+                self.driver_prog_stage.config(text=stage_text or "Driver installed and verified in Windows.", fg=C_TEXT)
+
+                # Auto-hide after 4 seconds
+                self.root.after(4000, lambda: self.driver_prog_frame.pack_forget() if self.driver_prog_frame.winfo_exists() else None)
+
+            elif status == "failed":
+                if not self.driver_prog_frame.winfo_ismapped():
+                    self.driver_prog_frame.pack(fill="x", padx=16, pady=(0, 6), before=self.content_frame)
+
+                self.driver_prog_frame.config(highlightbackground="#f85149")
+                self.driver_prog_title.config(text=f"Install Failed: {driver_name.upper()}", fg="#f85149")
+                self.driver_prog_pct.config(text="ERROR", fg="#f85149")
+                self.driver_prog_fill.config(bg="#f85149")
+                self.driver_prog_fill.place(x=0, y=0, relwidth=1.0, relheight=1.0)
+                self.driver_prog_stage.config(text=stage_text, fg="#f85149")
+
+                # Auto-hide failed banner after 8 seconds
+                self.root.after(8000, lambda: self.driver_prog_frame.pack_forget() if self.driver_prog_frame.winfo_exists() else None)
+
+        except Exception as e:
+            log_debug(f"Error updating driver progress UI: {e}")
 
     def open_license_dialog(self):
         """Open native license activation and management dialog."""
         dlg = tk.Toplevel(self.root)
+        dlg.withdraw()  # Prevent top-left flash
         dlg.title("PCDeck Pro - License Activation")
-        dlg.geometry("460x310")
         dlg.resizable(False, False)
         dlg.configure(bg=C_SURFACE)
         dlg.transient(self.root)
-        dlg.grab_set()
 
         apply_crisp_window_icon(dlg)
 
         # Center on parent window
-        x = self.root.winfo_x() + max(0, (self.root.winfo_width() // 2) - 230)
-        y = self.root.winfo_y() + max(0, (self.root.winfo_height() // 2) - 155)
-        dlg.geometry(f"+{x}+{y}")
+        try:
+            x = self.root.winfo_x() + max(0, (self.root.winfo_width() // 2) - 230)
+            y = self.root.winfo_y() + max(0, (self.root.winfo_height() // 2) - 155)
+            dlg.geometry(f"460x310+{x}+{y}")
+        except Exception:
+            dlg.geometry("460x310")
 
         pad = tk.Frame(dlg, bg=C_SURFACE, padx=20, pady=16)
         pad.pack(fill="both", expand=True)
@@ -1455,44 +1987,15 @@ class PCDeckProGUI:
                 messagebox.showwarning("PCDeck License", "Please enter a license key.", parent=dlg)
                 return
 
-            if k.upper() == "PCDECK-DEV-TEST-KEY-2026":
-                save_pc_license(k, True)
+            ok, msg, _ = activate_license_online(k)
+            if ok:
                 self.is_pc_pro = True
                 self.license_info = load_pc_license()
                 self._apply_pro_state()
-                messagebox.showinfo("PCDeck Pro", "Developer Pro License activated successfully!", parent=dlg)
+                messagebox.showinfo("PCDeck Pro", msg, parent=dlg)
                 dlg.destroy()
-                return
-
-            # Call Lemon Squeezy API
-            try:
-                req_data = json.dumps({
-                    "license_key": k,
-                    "instance_name": f"PCDeck Windows Host ({socket.gethostname()})"
-                }).encode("utf-8")
-                req = urllib.request.Request(
-                    "https://api.lemonsqueezy.com/v1/licenses/activate",
-                    data=req_data,
-                    headers={
-                        "Accept": "application/json",
-                        "Content-Type": "application/json",
-                        "User-Agent": "PCDeck-Windows-Client/2.7.0"
-                    }
-                )
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    res_json = json.loads(resp.read().decode("utf-8"))
-                    if res_json.get("activated"):
-                        save_pc_license(k, True)
-                        self.is_pc_pro = True
-                        self.license_info = load_pc_license()
-                        self._apply_pro_state()
-                        messagebox.showinfo("PCDeck Pro", "PCDeck Pro license activated successfully!", parent=dlg)
-                        dlg.destroy()
-                    else:
-                        err_msg = res_json.get("error", "Invalid license key.")
-                        messagebox.showerror("Activation Failed", f"License activation failed: {err_msg}", parent=dlg)
-            except Exception as ex:
-                messagebox.showerror("Activation Error", f"Could not verify license: {ex}\nPlease check your internet connection.", parent=dlg)
+            else:
+                messagebox.showerror("Activation Failed", msg, parent=dlg)
 
         tk.Button(
             btn_row,
@@ -1520,6 +2023,10 @@ class PCDeckProGUI:
             command=lambda: webbrowser.open("https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3"),
         ).pack(side="right", padx=(6, 0))
 
+        dlg.update_idletasks()
+        dlg.deiconify()
+        dlg.grab_set()
+
     def _apply_pro_state(self):
         try:
             from server.main import set_pro_client
@@ -1536,7 +2043,7 @@ class PCDeckProGUI:
 
         if hasattr(self, "lic_btn") and self.lic_btn.winfo_exists():
             self.lic_btn.config(
-                text="★ Manage Pro License",
+                text="★ Manage Pro",
                 fg="#ffd700",
                 bg=C_SURFACE_3,
             )
@@ -1544,7 +2051,7 @@ class PCDeckProGUI:
         self.update_fps()
 
     def start_server(self):
-        if self.is_running:
+        if self.is_running and self.server_thread and self.server_thread.is_alive():
             return
 
         def run_uvicorn():
@@ -1560,13 +2067,18 @@ class PCDeckProGUI:
                 log_debug(f"Starting uvicorn server on port {SERVER_PORT}...")
                 self.server.run()
                 log_debug("Uvicorn server finished.")
-            except Exception as e:
-                log_debug(f"Uvicorn server error: {traceback.format_exc()}")
+            except BaseException as e:
+                log_debug(f"Uvicorn server exited or failed: {e}")
+            finally:
+                self.is_running = False
+                if hasattr(self, "status_pill") and self.status_pill.winfo_exists():
+                    self.root.after(0, lambda: self.status_pill.config(text="● SERVER STOPPED", bg=C_DANGER, fg=C_TEXT))
 
+        self.is_running = True
         self.server_thread = threading.Thread(target=run_uvicorn, daemon=True)
         self.server_thread.start()
-        self.is_running = True
-        self.status_pill.config(text="● SERVER ONLINE", bg=C_SUCCESS, fg=C_BG)
+        if hasattr(self, "status_pill") and self.status_pill.winfo_exists():
+            self.status_pill.config(text="● SERVER ONLINE", bg=C_SUCCESS, fg=C_BG)
 
     def restart_server(self):
         if self.server:
@@ -1596,6 +2108,12 @@ class PCDeckProGUI:
     def _startup_wifi_worker(self):
         """Passive background thread for startup Wi-Fi detection without channel sweeps."""
         try:
+            # Auto-heal: ensure Windows WLAN autoconfig is enabled in case a prior session or crash left it disabled
+            try:
+                restore_all_wlan_autoconfig()
+            except Exception:
+                pass
+
             current = get_current_wifi_status()
             if current["state"] == "connected" and current["ssid"]:
                 self.root.after(0, lambda: self._update_wifi_status_ui(
@@ -1692,10 +2210,9 @@ class PCDeckProGUI:
             selected_idx = 0
 
             for i, n in enumerate(nets):
-                icon = "★" if n.get("is_saved") else "·"
                 saved_tag = " [Saved]" if n.get("is_saved") else ""
                 sig = f" ({n['signal']})" if n.get("signal") and n["signal"] != "Saved" else ""
-                label = f"{icon} {n['ssid']}{saved_tag}{sig}"
+                label = f"{n['ssid']}{saved_tag}{sig}"
                 display_items.append(label)
                 if active_ssid and n["ssid"].lower() == active_ssid.lower():
                     selected_idx = i
@@ -1718,7 +2235,7 @@ class PCDeckProGUI:
             return
 
         # Extract clean SSID
-        clean_ssid = re.sub(r"^[★·📶⚡]\s*", "", val)
+        clean_ssid = re.sub(r"^[^\w\s-]+\s*", "", val)
         clean_ssid = re.sub(r"\s*\[Saved\].*", "", clean_ssid)
         clean_ssid = re.sub(r"\s*\(\d+%\).*", "", clean_ssid).strip()
 
@@ -1817,12 +2334,22 @@ class PCDeckProGUI:
                 if hasattr(self, "phone_status_lbl") and self.phone_status_lbl.winfo_exists():
                     if latest_ip.startswith("127."):
                         self.phone_status_lbl.config(
-                            text="● Connect Wi-Fi / Phone Hotspot",
+                            text="● Connect USB Tethering or Phone Wi-Fi",
                             fg=C_WARNING,
+                        )
+                    elif latest_ip.startswith("192.168.42."):
+                        self.phone_status_lbl.config(
+                            text=f"● USB Tethered ({latest_ip})",
+                            fg=C_SUCCESS,
+                        )
+                    elif latest_ip.startswith("192.168.43.") or latest_ip.startswith("172."):
+                        self.phone_status_lbl.config(
+                            text=f"● Phone Hotspot ({latest_ip})",
+                            fg=C_SUCCESS,
                         )
                     else:
                         self.phone_status_lbl.config(
-                            text=f"● Wi-Fi Online ({latest_ip})",
+                            text=f"● Network Online ({latest_ip})",
                             fg=C_SUCCESS,
                         )
 
@@ -1880,6 +2407,13 @@ class PCDeckProGUI:
                         # Audio is optional - a missing loopback device or a
                         # PyAudio import failure must not break the whole loop.
                         self.audio_status_lbl.config(text="● Unavailable", fg=C_WARNING)
+
+                # 6. Auto-revive Uvicorn Server Watchdog
+                # If server thread terminated (e.g. initial port collision), automatically restart it
+                if not self.is_running or not (self.server_thread and self.server_thread.is_alive()):
+                    log_debug("[Watchdog] Uvicorn server thread is inactive, auto-starting server...")
+                    self.is_running = False
+                    self.start_server()
             except Exception:
                 pass
             finally:
@@ -1918,6 +2452,472 @@ class PCDeckProGUI:
             if hasattr(self, "phone_remote_win") and self.phone_remote_win:
                 self.phone_remote_win.open_wireless_dialog()
 
+    # ---------------------------------------------------------------------------
+    # System Tray & Quick-Access Taskbar Flyout Card
+    # ---------------------------------------------------------------------------
+    def _init_tray_icon(self):
+        """Initializes the Windows System Tray icon using pystray."""
+        try:
+            import pystray
+            icon_image = self._get_tray_icon_image()
+            menu = pystray.Menu(
+                pystray.MenuItem(
+                    "Quick Connect (QR Code)",
+                    lambda: self.root.after(0, self.toggle_quick_flyout),
+                    default=True,
+                ),
+                pystray.MenuItem(
+                    "Open Full Dashboard",
+                    lambda: self.root.after(0, self.open_dashboard),
+                ),
+                pystray.MenuItem(
+                    "Copy Web Remote Link",
+                    lambda: self.root.after(0, self.copy_ip),
+                ),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem(
+                    "Start with Windows",
+                    lambda: self.root.after(0, self.toggle_autostart_from_tray),
+                    checked=lambda item: bool(getattr(self, "autostart_enabled", False)),
+                ),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem(
+                    "Exit PCDeck",
+                    lambda: self.root.after(0, self.quit_application),
+                ),
+            )
+            self.tray_icon = pystray.Icon(
+                "PCDeck",
+                icon_image,
+                f"PCDeck — {getattr(self, 'current_ip', '127.0.0.1')}:{SERVER_PORT}",
+                menu=menu,
+            )
+            self.tray_icon.run_detached()
+        except Exception as e:
+            log_debug(f"Failed to initialize system tray icon: {e}")
+            self.tray_icon = None
+
+    def _get_tray_icon_image(self):
+        """Loads or renders a crisp 64x64 icon for the Windows taskbar tray."""
+        master_png = find_asset(
+            "PCDeck_Mouse_Logo.png",
+            "PCDeck_Master_Logo.png",
+            "PCDeck_Logo.png",
+            "icon.png",
+            "favicon.png",
+        )
+        if master_png:
+            try:
+                img = Image.open(master_png).convert("RGBA")
+                return img.resize((64, 64), Image.Resampling.LANCZOS)
+            except Exception:
+                pass
+        fallback = Image.new("RGBA", (64, 64), (24, 24, 27, 255))
+        from PIL import ImageDraw
+        d = ImageDraw.Draw(fallback)
+        d.rounded_rectangle([8, 8, 56, 56], radius=12, fill=(56, 189, 248, 255))
+        return fallback
+
+    def show_notification(self, message: str, title: str = "PCDeck"):
+        """Displays a desktop notification with the PCDeck custom app icon."""
+        if not getattr(self, "tray_icon", None):
+            return
+        try:
+            if sys.platform == "win32":
+                import pystray._win32 as w
+                hicon = getattr(self.tray_icon, "_icon_handle", None)
+                # dwInfoFlags: NIIF_USER (0x04) | NIIF_LARGE_ICON (0x20) = 0x24 (36)
+                flags = 0x24 if hicon else 0x01
+                kwargs = {
+                    "szInfo": message,
+                    "szInfoTitle": title or "PCDeck",
+                    "dwInfoFlags": flags,
+                }
+                if hicon:
+                    kwargs["hBalloonIcon"] = hicon
+                self.tray_icon._message(
+                    w.win32.NIM_MODIFY,
+                    w.win32.NIF_INFO,
+                    **kwargs
+                )
+                return
+        except Exception as e:
+            log_debug(f"Custom notification icon dispatch error: {e}")
+        try:
+            self.tray_icon.notify(message, title)
+        except Exception:
+            pass
+
+    def toggle_autostart_from_tray(self):
+        """Toggles the 'Start with Windows' setting from the system tray context menu."""
+        cur = not getattr(self, "autostart_enabled", False)
+        self.autostart_enabled = cur
+        self.start_boot_var.set(cur)
+        self.save_settings()
+        if self.tray_icon:
+            try:
+                self.tray_icon.update_menu()
+            except Exception:
+                pass
+
+    def minimize_to_tray(self):
+        """Minimizes the main window to the system tray so the server remains active."""
+        try:
+            if hasattr(self, "flyout") and self.flyout and self.flyout.winfo_exists():
+                self.flyout.withdraw()
+            self.root.withdraw()
+            if not getattr(self, "_tray_minimized_notified", False):
+                self._tray_minimized_notified = True
+                self.show_notification(
+                    "PCDeck is running in the background. Click icon to view QR code or dashboard.",
+                    "PCDeck Server Active",
+                )
+        except Exception as e:
+            log_debug(f"minimize_to_tray error: {e}")
+
+    def open_dashboard(self):
+        """Brings the main window to the foreground."""
+        try:
+            if hasattr(self, "flyout") and self.flyout and self.flyout.winfo_exists():
+                self.flyout.withdraw()
+            self.root.deiconify()
+            self.root.state("normal")
+            self.root.lift()
+            self.root.focus_force()
+        except Exception as e:
+            log_debug(f"open_dashboard error: {e}")
+
+    def quit_application(self):
+        """Clean shutdown of background server, tray icon, and application."""
+        try:
+            if self.tray_icon:
+                self.tray_icon.stop()
+        except Exception:
+            pass
+        try:
+            if self.server:
+                self.server.should_exit = True
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "flyout") and self.flyout and self.flyout.winfo_exists():
+                self.flyout.destroy()
+        except Exception:
+            pass
+        try:
+            self.root.destroy()
+        except Exception:
+            pass
+
+    def toggle_quick_flyout(self):
+        """Toggles the clean, modern taskbar flyout card above the Windows system tray."""
+        if hasattr(self, "flyout") and self.flyout and self.flyout.winfo_exists():
+            if self.flyout.winfo_viewable():
+                self.flyout.withdraw()
+                return
+            else:
+                self.flyout.withdraw()
+                self._update_flyout_content()
+                self._position_flyout()
+                self.flyout.deiconify()
+                self.flyout.lift()
+                self.flyout.focus_force()
+                return
+
+        self._build_quick_flyout()
+
+    def _build_quick_flyout(self):
+        """Creates the clean, modern Windows 11 flyout card above the system tray."""
+        self.flyout = tk.Toplevel(self.root)
+        self.flyout.withdraw()  # Crucial: keep hidden from OS window manager during construction to prevent top-left flash
+        self.flyout.title("PCDeck Quick Access")
+        self.flyout.overrideredirect(True)
+        self.flyout.configure(bg="#18181b")
+        self.flyout.attributes("-topmost", True)
+
+        apply_crisp_window_icon(self.flyout)
+
+        # Main container with subtle 1px border
+        container = tk.Frame(
+            self.flyout,
+            bg="#18181b",
+            highlightbackground="#3f3f46",
+            highlightcolor="#3f3f46",
+            highlightthickness=1,
+            padx=14,
+            pady=12,
+        )
+        container.pack(fill="both", expand=True)
+
+        # 1. Top Header Row: Hostname, Status Pill, Close 'X'
+        top_row = tk.Frame(container, bg="#18181b")
+        top_row.pack(fill="x", pady=(0, 10))
+
+        title_col = tk.Frame(top_row, bg="#18181b")
+        title_col.pack(side="left")
+
+        tk.Label(
+            title_col,
+            text="PCDeck",
+            font=(F_FAMILY, 11, "bold"),
+            fg="#f4f4f5",
+            bg="#18181b",
+        ).pack(anchor="w")
+
+        try:
+            hostname = socket.gethostname()
+        except Exception:
+            hostname = "PC"
+        self.flyout_host_lbl = tk.Label(
+            title_col,
+            text=f"{hostname} • Port {SERVER_PORT}",
+            font=(F_FAMILY, 8),
+            fg="#a1a1aa",
+            bg="#18181b",
+        )
+        self.flyout_host_lbl.pack(anchor="w")
+
+        right_col = tk.Frame(top_row, bg="#18181b")
+        right_col.pack(side="right")
+
+        # Status Pill
+        status_pill = tk.Frame(
+            right_col,
+            bg="#27272a",
+            padx=8,
+            pady=3,
+            highlightbackground="#3f3f46",
+            highlightthickness=1,
+        )
+        status_pill.pack(side="left", padx=(0, 6))
+
+        tk.Label(
+            status_pill,
+            text="● Active",
+            font=(F_FAMILY, 8, "bold"),
+            fg="#22c55e",
+            bg="#27272a",
+        ).pack()
+
+        # Close X
+        close_btn = tk.Label(
+            right_col,
+            text="✕",
+            font=(F_FAMILY, 9),
+            fg="#a1a1aa",
+            bg="#18181b",
+            cursor="hand2",
+            padx=4,
+            pady=2,
+        )
+        close_btn.pack(side="right")
+        close_btn.bind("<Button-1>", lambda e: self.flyout.withdraw())
+        close_btn.bind("<Enter>", lambda e: close_btn.config(fg="#f4f4f5"))
+        close_btn.bind("<Leave>", lambda e: close_btn.config(fg="#a1a1aa"))
+
+        # 2. QR Code Display Card
+        qr_frame = tk.Frame(
+            container,
+            bg="#27272a",
+            padx=10,
+            pady=10,
+            highlightbackground="#3f3f46",
+            highlightthickness=1,
+        )
+        qr_frame.pack(fill="x", pady=(0, 8))
+
+        self.flyout_qr_lbl = tk.Label(qr_frame, bg="#ffffff")
+        self.flyout_qr_lbl.pack(pady=(0, 6))
+
+        tk.Label(
+            qr_frame,
+            text="Scan with phone camera or PCDeck app",
+            font=(F_FAMILY, 8),
+            fg="#a1a1aa",
+            bg="#27272a",
+        ).pack()
+
+        # 3. Web Remote URL Box
+        web_box = tk.Frame(
+            container,
+            bg="#27272a",
+            padx=8,
+            pady=6,
+            highlightbackground="#3f3f46",
+            highlightthickness=1,
+        )
+        web_box.pack(fill="x", pady=(0, 10))
+
+        web_hdr = tk.Frame(web_box, bg="#27272a")
+        web_hdr.pack(fill="x", pady=(0, 4))
+        tk.Label(
+            web_hdr,
+            text="WEB REMOTE",
+            font=(F_FAMILY, 8, "bold"),
+            fg="#38bdf8",
+            bg="#27272a",
+        ).pack(side="left")
+
+        self.flyout_url_entry = tk.Entry(
+            web_box,
+            font=(F_MONO, 8),
+            bg="#18181b",
+            fg="#38bdf8",
+            insertbackground="#f4f4f5",
+            relief="flat",
+            bd=0,
+            highlightthickness=1,
+            highlightbackground="#3f3f46",
+            highlightcolor="#38bdf8",
+        )
+        self.flyout_url_entry.pack(fill="x", ipady=3, pady=(0, 6))
+
+        btn_row = tk.Frame(web_box, bg="#27272a")
+        btn_row.pack(fill="x")
+
+        self.flyout_copy_btn = tk.Button(
+            btn_row,
+            text="Copy Link",
+            font=(F_FAMILY, 8, "bold"),
+            fg="#f4f4f5",
+            bg="#3f3f46",
+            activeforeground="#f4f4f5",
+            activebackground="#52525b",
+            bd=0,
+            relief="flat",
+            cursor="hand2",
+            padx=10,
+            pady=3,
+            command=self._on_flyout_copy_link,
+        )
+        self.flyout_copy_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+
+        open_browser_btn = tk.Button(
+            btn_row,
+            text="Open in Browser",
+            font=(F_FAMILY, 8),
+            fg="#a1a1aa",
+            bg="#27272a",
+            activeforeground="#f4f4f5",
+            activebackground="#3f3f46",
+            bd=1,
+            relief="solid",
+            highlightthickness=0,
+            cursor="hand2",
+            padx=10,
+            pady=3,
+            command=lambda: webbrowser.open(self.flyout_url_entry.get()),
+        )
+        open_browser_btn.pack(side="right", fill="x", expand=True)
+
+        # 4. Bottom Actions: Open Full Dashboard & Exit
+        bottom_row = tk.Frame(container, bg="#18181b")
+        bottom_row.pack(fill="x", side="bottom")
+
+        dash_btn = tk.Button(
+            bottom_row,
+            text="Open Dashboard",
+            font=(F_FAMILY, 8, "bold"),
+            fg="#18181b",
+            bg="#38bdf8",
+            activeforeground="#18181b",
+            activebackground="#0284c7",
+            bd=0,
+            relief="flat",
+            cursor="hand2",
+            padx=10,
+            pady=4,
+            command=self.open_dashboard,
+        )
+        dash_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+
+        exit_btn = tk.Button(
+            bottom_row,
+            text="Exit",
+            font=(F_FAMILY, 8),
+            fg="#a1a1aa",
+            bg="#27272a",
+            activeforeground="#f4f4f5",
+            activebackground="#3f3f46",
+            bd=1,
+            relief="solid",
+            highlightthickness=0,
+            cursor="hand2",
+            padx=10,
+            pady=4,
+            command=self.quit_application,
+        )
+        exit_btn.pack(side="right")
+
+        # Auto-dismiss when user clicks outside the window
+        def _on_focus_out(event):
+            try:
+                def _check():
+                    if hasattr(self, "flyout") and self.flyout and self.flyout.winfo_exists():
+                        f = self.flyout.focus_get()
+                        if f is None or not str(f).startswith(str(self.flyout)):
+                            self.flyout.withdraw()
+                self.root.after(150, _check)
+            except Exception:
+                pass
+
+        self.flyout.bind("<FocusOut>", _on_focus_out)
+
+        self._update_flyout_content()
+        self._position_flyout()
+        self.flyout.deiconify()
+        self.flyout.lift()
+        self.flyout.focus_force()
+
+    def _position_flyout(self):
+        """Positions the flyout cleanly in the bottom-right above the Windows taskbar without any top-left flash."""
+        card_w = 320
+        card_h = 425
+        try:
+            sw = self.root.winfo_screenwidth()
+            sh = self.root.winfo_screenheight()
+            pos_x = max(10, sw - card_w - 14)
+            pos_y = max(10, sh - card_h - 50)
+            self.flyout.geometry(f"{card_w}x{card_h}+{pos_x}+{pos_y}")
+            self.flyout.update_idletasks()
+        except Exception:
+            self.flyout.geometry(f"{card_w}x{card_h}")
+
+    def _update_flyout_content(self):
+        """Updates the flyout's QR code and Web Remote URL with the latest local IP and token."""
+        try:
+            gateway_url = self._get_gateway_qr_url()
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_M,
+                box_size=4,
+                border=1,
+            )
+            qr.add_data(gateway_url)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="#000000", back_color="#ffffff")
+            self.flyout_qr_photo = ImageTk.PhotoImage(img)
+            self.flyout_qr_lbl.config(image=self.flyout_qr_photo)
+
+            clean_url = gateway_url.replace("/connect", "")
+            self.flyout_url_entry.config(state="normal")
+            self.flyout_url_entry.delete(0, tk.END)
+            self.flyout_url_entry.insert(0, clean_url)
+            self.flyout_url_entry.config(state="readonly")
+        except Exception as e:
+            log_debug(f"_update_flyout_content error: {e}")
+
+    def _on_flyout_copy_link(self):
+        """Copies the web remote URL to the clipboard with quick visual feedback."""
+        try:
+            url = self.flyout_url_entry.get()
+            self.root.clipboard_clear()
+            self.root.clipboard_append(url)
+            self.flyout_copy_btn.config(text="Copied", fg="#22c55e")
+            self.root.after(1500, lambda: self.flyout_copy_btn.config(text="Copy Link", fg="#f4f4f5") if hasattr(self, "flyout_copy_btn") and self.flyout_copy_btn.winfo_exists() else None)
+        except Exception:
+            pass
+
     def on_closing(self):
         try:
             # 0. Stop the Wi-Fi watchdog so its thread cannot fire Tk callbacks
@@ -1950,11 +2950,23 @@ class PCDeckProGUI:
                 except Exception:
                     pass
 
-            # 4. Destroy main Tk window
+            # 4. Restore Windows WLAN AutoConfig to guarantee Wi-Fi is never left disabled
+            try:
+                if wifi_latency_manager:
+                    wifi_latency_manager._cleanup_on_exit()
+                restore_all_wlan_autoconfig()
+            except Exception:
+                pass
+
+            # 5. Destroy main Tk window
             self.root.destroy()
         except Exception:
             pass
         finally:
+            try:
+                restore_all_wlan_autoconfig()
+            except Exception:
+                pass
             os._exit(0)
 
 
@@ -1966,8 +2978,16 @@ class PhoneRemoteWindow:
         self.parent = parent
         self.gui_app = gui_app
         self.win = tk.Toplevel(parent)
+        self.win.withdraw()  # Prevent top-left flash during construction
         self.win.title("PCDeck Pro - Live Phone Controller")
-        self.win.geometry("450x740")
+        try:
+            sw = self.parent.winfo_screenwidth()
+            sh = self.parent.winfo_screenheight()
+            px = max(0, (sw - 450) // 2)
+            py = max(0, (sh - 740) // 2)
+            self.win.geometry(f"450x740+{px}+{py}")
+        except Exception:
+            self.win.geometry("450x740")
         self.win.minsize(380, 580)
         self.win.configure(bg=C_BG)
 
@@ -2169,6 +3189,9 @@ class PhoneRemoteWindow:
             pady=3,
         )
         btn_paste.pack(side="left", padx=(2, 4), pady=4)
+
+        self.win.update_idletasks()
+        self.win.deiconify()
 
     def refresh_devices_and_connect(self):
         """Run the ADB preflight and update status with whatever it found.
@@ -2712,8 +3735,16 @@ class PhoneRemoteWindow:
     def open_wireless_dialog(self):
         """Modern dialog to pair via wireless ADB (Direct connect & Android 11+ code pairing)."""
         dlg = tk.Toplevel(self.win)
+        dlg.withdraw()  # Prevent top-left flash during construction
         dlg.title("PCDeck Pro - Wireless ADB Setup")
-        dlg.geometry("440x360")
+        try:
+            sw = self.win.winfo_screenwidth()
+            sh = self.win.winfo_screenheight()
+            dx = max(0, (sw - 440) // 2)
+            dy = max(0, (sh - 360) // 2)
+            dlg.geometry(f"440x360+{dx}+{dy}")
+        except Exception:
+            dlg.geometry("440x360")
         dlg.configure(bg=C_SURFACE)
         apply_crisp_window_icon(dlg)
 
@@ -2853,6 +3884,9 @@ class PhoneRemoteWindow:
         )
         btn_conn.pack(fill="x", padx=8, pady=(4, 6))
 
+        dlg.update_idletasks()
+        dlg.deiconify()
+
     def take_phone_screenshot(self):
         """Take screenshot from phone and save to PC Downloads."""
         def _bg():
@@ -2887,13 +3921,91 @@ class PhoneRemoteWindow:
         self.win.destroy()
 
 
+def is_admin() -> bool:
+    """Check if current process has Administrator privileges on Windows."""
+    if sys.platform != "win32":
+        return True
+    try:
+        import ctypes
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+    except Exception:
+        return False
+
+
+def elevate_if_needed():
+    """
+    If running on Windows without Administrator rights, relaunches with UAC prompt
+    so PCDeck can inject inputs into elevated apps/games (Elden Ring, Task Manager).
+    """
+    if sys.platform == "win32" and not is_admin():
+        try:
+            import ctypes
+            if getattr(sys, "frozen", False):
+                target = sys.executable
+                params = " ".join([f'"{arg}"' for arg in sys.argv[1:]])
+            else:
+                target = sys.executable
+                script = os.path.abspath(sys.argv[0])
+                args = [f'"{script}"'] + [f'"{arg}"' for arg in sys.argv[1:]]
+                params = " ".join(args)
+
+            ret = ctypes.windll.shell32.ShellExecuteW(None, "runas", target, params, None, 1)
+            if ret > 32:
+                sys.exit(0)
+        except Exception as e:
+            log_debug(f"Elevation request failed: {e}")
+
+
+_single_instance_mutex = None
+
+def acquire_single_instance_lock() -> bool:
+    """Ensure only one instance of PCDeck runs at any time, restoring existing window if already open."""
+    global _single_instance_mutex
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            MUTEX_NAME = "Global\\PCDeck_SingleInstance_Mutex_Pro"
+            kernel32 = ctypes.windll.kernel32
+            _single_instance_mutex = kernel32.CreateMutexW(None, False, MUTEX_NAME)
+            last_error = kernel32.GetLastError()
+            ERROR_ALREADY_EXISTS = 183
+            if last_error == ERROR_ALREADY_EXISTS:
+                log_debug("PCDeck is already running in background or system tray. Focusing existing instance...")
+                try:
+                    user32 = ctypes.windll.user32
+                    for title in [
+                        "PCDeck - Wireless PC Touch Deck & Streamer",
+                        "PCDeck Pro - Wireless PC Touch Deck & Streamer"
+                    ]:
+                        hwnd = user32.FindWindowW(None, title)
+                        if hwnd:
+                            user32.ShowWindow(hwnd, 9)  # 9 = SW_RESTORE
+                            user32.SetForegroundWindow(hwnd)
+                            break
+                except Exception:
+                    pass
+                return False
+        except Exception as e:
+            log_debug(f"Mutex creation exception: {e}")
+    return True
+
+
 def main():
     import multiprocessing
     multiprocessing.freeze_support()
+    elevate_if_needed()
+    if not acquire_single_instance_lock():
+        log_debug("Exiting duplicate PCDeck instance.")
+        return
+    start_minimized = any(arg in sys.argv for arg in ["--tray", "--minimized", "--startup", "-m"])
     try:
-        log_debug("Starting PCDeck Pro GUI Application...")
+        log_debug(f"Starting PCDeck Pro GUI Application... (start_minimized={start_minimized}, admin={is_admin()})")
         root = tk.Tk()
-        app_gui = PCDeckProGUI(root)
+        root.withdraw()  # Prevent top-left flashing while GUI builds and calculates centered position
+        app_gui = PCDeckProGUI(root, start_minimized=start_minimized)
+        if not start_minimized:
+            root.update_idletasks()
+            root.deiconify()
         log_debug("Entering root.mainloop()...")
         root.mainloop()
     except Exception as e:

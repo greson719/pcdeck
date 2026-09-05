@@ -1104,6 +1104,8 @@ class WiFiWatchdog:
         self._last: Dict[str, Any] = {"status": "unknown", "checked_at": 0}
         self._failures = 0
         self._repairs = 0
+        self._paused = False
+        self._pause_reason = ""
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -1123,6 +1125,25 @@ class WiFiWatchdog:
             thread.join(timeout=timeout)
         self._thread = None
 
+    def pause_monitoring(self, reason: str = "") -> None:
+        """Puts watchdog to sleep during high-throughput tasks like screen streaming."""
+        with self._lock:
+            self._paused = True
+            self._pause_reason = reason
+        print(f"[WiFiWatchdog] Background link monitoring PAUSED ({reason or 'Low-Latency Streaming Active'})", flush=True)
+
+    def resume_monitoring(self) -> None:
+        """Resumes background Wi-Fi health monitoring."""
+        with self._lock:
+            self._paused = False
+            self._pause_reason = ""
+        print("[WiFiWatchdog] Background link monitoring RESUMED", flush=True)
+
+    @property
+    def is_paused(self) -> bool:
+        with self._lock:
+            return self._paused
+
     @property
     def running(self) -> bool:
         return bool(self._thread and self._thread.is_alive())
@@ -1130,6 +1151,8 @@ class WiFiWatchdog:
     def status(self) -> Dict[str, Any]:
         with self._lock:
             snapshot = dict(self._last)
+            snapshot["paused"] = self._paused
+            snapshot["pause_reason"] = self._pause_reason
         snapshot["watchdog_running"] = self.running
         snapshot["consecutive_failures"] = self._failures
         snapshot["repairs"] = self._repairs
@@ -1157,6 +1180,10 @@ class WiFiWatchdog:
             pass
 
         while not self._stop.is_set():
+            if self._paused:
+                self._stop.wait(1.0)
+                continue
+
             config = load_wifi_config()
             interval = max(5, int(config.get("poll_interval", 6)))
 
@@ -1232,6 +1259,120 @@ def watchdog_status() -> Dict[str, Any]:
     health = get_link_health()
     health["watchdog_running"] = False
     return health
+
+
+def pause_watchdog(reason: str = "") -> None:
+    """Puts the shared Wi-Fi watchdog to sleep during high-throughput tasks."""
+    global _watchdog
+    with _watchdog_lock:
+        if _watchdog is not None:
+            _watchdog.pause_monitoring(reason=reason)
+
+
+def resume_watchdog() -> None:
+    """Resumes the shared Wi-Fi watchdog."""
+    global _watchdog
+    with _watchdog_lock:
+        if _watchdog is not None:
+            _watchdog.resume_monitoring()
+
+
+def set_wlan_autoconfig(enabled: bool, interface: str = "") -> Tuple[bool, str]:
+    """
+    Enables or disables Windows WLAN AutoConfig background roaming scanning.
+    Disabling autoconfig on the connected interface completely eliminates the
+    periodic 100ms-300ms ping spikes caused by Windows background Wi-Fi scanning.
+    Requires administrator elevation. Safe no-op on non-Windows or when unelevated.
+    """
+    if sys.platform != "win32":
+        return False, "Not Windows"
+    if not is_admin():
+        return False, "Administrator elevation required to toggle WLAN autoconfig"
+
+    val = "yes" if enabled else "no"
+    if not interface:
+        # If no interface was specified, target all known wireless interfaces
+        interfaces = [i.get("interface") for i in get_wireless_interfaces() if i.get("interface")]
+        if not interfaces:
+            interfaces = ["Wi-Fi"]
+    else:
+        interfaces = [interface]
+
+    results = []
+    all_ok = True
+    for iface in interfaces:
+        cmd = ["wlan", "set", "autoconfig", f"enabled={val}", f'interface="{iface}"']
+        out = run_netsh_cmd(cmd, timeout=6)
+        ok = "successfully" in out.lower() or "erfolgreich" in out.lower() or "correcto" in out.lower() or "completed" in out.lower()
+        if not ok:
+            all_ok = False
+        results.append(out.strip())
+
+    return all_ok, " | ".join(results)
+
+
+def get_disabled_autoconfig_interfaces() -> List[str]:
+    """Returns a list of WLAN interface names where auto configuration logic is currently disabled."""
+    if sys.platform != "win32":
+        return []
+    out = run_netsh_cmd(["wlan", "show", "autoconfig"], timeout=6)
+    disabled_ifaces = []
+    for line in out.splitlines():
+        line_clean = line.strip()
+        # Look for phrases like: 'Auto configuration logic is disabled on interface "Wi-Fi"'
+        if any(w in line_clean.lower() for w in ("disabled", "desactivado", "deaktiviert", "désactivé", "disattivato")):
+            if '"' in line_clean:
+                parts = line_clean.split('"')
+                if len(parts) >= 2 and parts[1].strip():
+                    disabled_ifaces.append(parts[1].strip())
+    # Fallback if interface quotes were omitted or localized differently
+    if not disabled_ifaces and any(w in out.lower() for w in ("disabled", "desactivado", "deaktiviert", "désactivé")):
+        for iface_info in get_wireless_interfaces():
+            iface_name = iface_info.get("interface")
+            if iface_name and iface_name not in disabled_ifaces:
+                disabled_ifaces.append(iface_name)
+    return disabled_ifaces
+
+
+def restore_all_wlan_autoconfig() -> int:
+    """
+    Scans all WLAN interfaces and automatically restores autoconfig if disabled.
+    Safe and idempotent. Returns the number of interfaces restored.
+    """
+    if sys.platform != "win32" or not is_admin():
+        return 0
+    try:
+        disabled = get_disabled_autoconfig_interfaces()
+        restored = 0
+        for iface in disabled:
+            ok, _ = set_wlan_autoconfig(True, interface=iface)
+            if ok:
+                restored += 1
+        return restored
+    except Exception as e:
+        print(f"[WiFiManager] Error restoring WLAN autoconfig: {e}", flush=True)
+        return 0
+
+
+def optimize_multimedia_network_profile() -> bool:
+    """
+    Configures Windows Multimedia SystemProfile to disable network throttling and prioritize
+    real-time packet delivery (NetworkThrottlingIndex = 0xFFFFFFFF, SystemResponsiveness = 0).
+    Requires administrator elevation.
+    """
+    if sys.platform != "win32" or not is_admin():
+        return False
+    try:
+        import winreg
+        key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE) as key:
+            # 0xffffffff disables Windows multimedia network throttling completely
+            winreg.SetValueEx(key, "NetworkThrottlingIndex", 0, winreg.REG_DWORD, 0xffffffff)
+            # 0 gives 100% responsiveness priority to real-time streaming/gaming
+            winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 0)
+        return True
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 [project]
-name = "neontrack-pc-mouse"
+name = "pcdeck"
 version = "1.0.0"
-description = "Ultra-low latency Mobile Trackpad, Keyboard & Remote Controller for PC"
+description = "PCDeck Pro - Wireless PC Touch Deck, Trackpad, Streamer & Controller"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -18,4 +18,6 @@ dependencies = [
     "psutil>=7.2.2",
     "pytest>=9.1.1",
     "httpx>=0.28.1",
+    "vgamepad",
+    "pystray",
 ]

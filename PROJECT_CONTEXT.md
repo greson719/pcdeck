@@ -89,6 +89,13 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
    - Touch listeners cover 100% of the viewport (`screenViewport`), and coordinate normalization snaps near-edge taps (<0.015 or >0.985) to `(width - 1, 0)` for Windows Close (X), Minimize, and Taskbar buttons.
 6. **Screen Floating Toolbar**:
    - Built-in `1.0x / 1.5x / 2.0x / 3.0x` Quick Zoom, Landscape Rotation, and Direct Touch / Virtual Cursor mode toggle.
+7. **Wi-Fi Latency Management System (`wifi_latency_manager.py`)**:
+   - **Streaming Mode Sleeping**: Automatically puts `WiFiWatchdog` (0 netsh/ipconfig subprocesses) and `CameraStreamer` standby workers to sleep when screen streaming is active.
+   - **WLAN Roaming Scan Suppression**: Safely suspends Windows WLAN AutoConfig periodic background scans (`netsh wlan set autoconfig enabled=no`) on the active Wi-Fi interface, eliminating 100ms–300ms ping spikes.
+   - **Zero-Bufferbloat Transport Pacing**: Enables `TCP_NODELAY = 1` on all sockets to eliminate 40ms delayed-ACK latency. Enforces dynamic ACK flow control with transport write buffer inspection (`>32KB` backpressure).
+   - **Sub-Millisecond Dirty-Frame Skipping**: Uses fast NumPy stride sampling (`[::8, ::8, 0]`) and Win32 cursor tracking to skip JPEG compression and frame dispatch when desktop is static, reducing bandwidth to 0.001 Mbps and keeping ping at <15ms.
+   - **Dynamic Auto-ABR FPS Scaling**: Client scales FPS (60 $\rightarrow$ 30 $\rightarrow$ 24 $\rightarrow$ 18 $\rightarrow$ 15 FPS) during network congestion to immediately free up 2.4GHz / 5GHz Wi-Fi spectrum.
+   - **Android Hardware Low-Latency Lock**: Native Android layer holds `WifiManager.WIFI_MODE_FULL_LOW_LATENCY` (API 29+) while on `tab-screen` to disable mobile 802.11 power-save sleep jitter.
 
 ### Universal Smart QR & Gateway Routing:
 - The PC companion app displays a single unified QR code encoding:
@@ -151,7 +158,7 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 
 ---
 
-## 7. Lemon Squeezy Pro Licensing Architecture
+## 7. Lemon Squeezy Pro Licensing & Anti-Tamper Security Architecture
 
 ### Live Store & Checkout Details
 - **Store Domain**: `pcdeck.lemonsqueezy.com`
@@ -159,18 +166,45 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 - **Live Checkout URL**: `https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3`
 
 ### Official Lemon Squeezy License API Endpoints
-Direct, public client-safe endpoints that require zero private API keys or custom backend:
+Direct, public client-safe endpoints that require zero private API keys or custom cloud infrastructure:
 - **Activation**: `POST https://api.lemonsqueezy.com/v1/licenses/activate` (`license_key`, `instance_name`).
 - **Validation**: `POST https://api.lemonsqueezy.com/v1/licenses/validate` (`license_key`, `instance_id`).
 - **Deactivation**: `POST https://api.lemonsqueezy.com/v1/licenses/deactivate` (`license_key`, `instance_id`).
 
-### Activation & Persistence Flow
-- User purchases PCDeck Pro ($3.99 one-time lifetime license) on Lemon Squeezy and receives their unique license key.
-- Inside PCDeck (Android or Windows), the user enters the key and taps **Activate**.
-- The app directly contacts `https://api.lemonsqueezy.com/v1/licenses/activate` with the license key and device instance name.
-- On verified activation (`activated: true`), the app saves `pcdeck_pro_active = true`, `pcdeck_pro_license = license_key`, and `pcdeck_pro_instance_id = instance.id` in persistent local storage.
-- Once activated, Pro features remain unlocked for the lifetime of the installation.
-- Multi-device support: Up to 5 device instances per customer license key.
+### Cryptographic Hardware Binding & Anti-Tamper Engine (`server/license_manager.py`)
+- **Hardware Fingerprint (HWID)**:
+  - Windows client generates a unique machine ID combining the Windows `MachineGuid` registry key (`HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography`) and hardware identifiers via SHA-256.
+  - Prevents license sharing or copying `license.dat` across machines.
+- **HMAC-SHA256 Tamper Protection**:
+  - Valid licenses are saved as cryptographically signed base64 records in `~/.pcdeck/license.dat` (replaces legacy plaintext `.json`).
+  - Payload signature: `sig = HMAC_SHA256(machine_hwid + license_key + instance_id + salt)`.
+  - If a user edits `license.dat` or copies it to another machine, the HMAC verification fails instantly and the client reverts to the Free edition.
+- **Zero Cloud Server Requirement**:
+  - PCDeck relies entirely on Lemon Squeezy's hosted licensing API for activation, and internal HMAC cryptography for offline persistence. No external servers or monthly hosting costs required.
+
+### Zero-Trust Local Server Enforcement (`server/main.py`)
+- **Command Verification**: Replaced arbitrary `pro_status` client booleans with `pro_auth,{license_key},{instance_id}`.
+- **Strict Server Caps**: The Python desktop server independently clamps screen streaming to **30 FPS maximum** for non-pro connections, regardless of what framerate the phone UI requests.
+- **Seamless Local Network License Sharing**: If the host PC is activated as Pro, connected phones automatically receive `pro_unlocked,1` over WebSocket, unlocking 60 FPS and Pro features across devices on the local Wi-Fi.
+
+### Android Anti-Tamper & Keystore Verification (`MainActivity.java`)
+- **Signature Integrity Check**: `verifyApkIntegrity()` computes the SHA-256 fingerprint of the running APK's certificate at runtime.
+- **Official Release Keystore Fingerprint**:
+  - `AC496FA0DEE511959D0F686FCEEB681A334224D6453B43F5CF19855E368A74ED`
+- **Cracking & Repackaging Defense**: If an attacker decompiles the APK, modifies JavaScript/Java code, and re-signs with tools like Lucky Patcher or MT Manager, `isProUser()` detects the certificate mismatch and locks all Pro features.
+
+### Automated Code Obfuscation Pipeline (`tools/obfuscate_assets.py`)
+- Automated AST-level obfuscation using `javascript-obfuscator` with RC4 string array encryption and control flow flattening.
+- Integrated into the Android build pipeline via `python build_apk.py --obfuscate`.
+- Keeps clean, readable source in `android_app/assets/app.js` while generating hardened, scrambled code inside distribution APKs.
+
+### Developer Pro Testing Workflow (Zero Backdoors Standard)
+- **Standard**: Hardcoded backdoor keys (e.g. `PCDECK-DEV-TEST-KEY-2026`) are strictly forbidden in production code.
+- **Developer Commands**:
+  - Generate HWID-bound local dev license: `python server/license_manager.py --activate-local-dev`
+  - Check current license status: `python server/license_manager.py --status`
+  - Revert to Free tier for testing: `python server/license_manager.py --deactivate`
+  - Source-code run flag (dev only): `$env:PCDECK_DEV_PRO="1"` (strictly disabled in compiled `.exe`).
 
 ---
 

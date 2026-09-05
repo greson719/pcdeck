@@ -7,6 +7,9 @@
 User-agent: Googlebot
 Allow: /
 
+User-agent: GoogleOther
+Allow: /
+
 User-agent: Bingbot
 Allow: /
 

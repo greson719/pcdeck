@@ -57,9 +57,23 @@ if _USE_WIN32_GDI:
         except Exception:
             pass
 
+    user32.OpenInputDesktop.restype = wintypes.HDESK
+    user32.OpenInputDesktop.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    user32.SetThreadDesktop.restype = wintypes.BOOL
+    user32.SetThreadDesktop.argtypes = [wintypes.HDESK]
+    user32.CloseDesktop.restype = wintypes.BOOL
+    user32.CloseDesktop.argtypes = [wintypes.HDESK]
+
     def _attach_desktop():
-        # Unlocked direct desktop DC access: avoids 28ms Win32 desktop switch sync stalls
-        pass
+        """Attach calling thread to active input desktop so GDI captures live display pixels."""
+        try:
+            # 0x01FF = MAXIMUM_ALLOWED / DESKTOP_ALL_ACCESS
+            hdesk = user32.OpenInputDesktop(0, False, 0x01FF)
+            if hdesk:
+                user32.SetThreadDesktop(hdesk)
+                user32.CloseDesktop(hdesk)
+        except Exception:
+            pass
 
     # Declare exact 64-bit types to prevent pointer sign-extension corruption
     user32.GetDC.restype = c_void_p
@@ -219,7 +233,23 @@ class ScreenStreamer:
         self._generation: int = 0
         self._frame_id: int = 0
         self._consumers: int = 0
+        self._active_viewers: int = 0
         self._stop_timer: Optional[threading.Timer] = None
+        self._wake_event = threading.Event()
+        self._wake_event.set()
+
+    def pause_consumer(self):
+        """Puts capture loop into zero-overhead sleep when client switches away from screen tab."""
+        with self._lock:
+            self._active_viewers = max(0, self._active_viewers - 1)
+            if self._active_viewers <= 0:
+                self._wake_event.clear()
+
+    def resume_consumer(self):
+        """Instantly wakes up capture loop when client focuses screen tab."""
+        with self._lock:
+            self._active_viewers += 1
+            self._wake_event.set()
 
     @property
     def monitor_info(self) -> dict:
@@ -265,11 +295,16 @@ class ScreenStreamer:
             old_bm = gdi32.SelectObject(hdc_mem, hbm)
             gdi32.SetStretchBltMode(hdc_mem, 3) # COLORONCOLOR
 
-            # Direct hardware Blit / StretchBlt
+            # Direct hardware Blit / StretchBlt with CAPTUREBLT for layered/accelerated windows
+            rop = 0x00CC0020 | 0x40000000
             if target_w != w or target_h != h:
-                gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, 0x00CC0020)
+                res = gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, rop)
+                if not res:
+                    gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, 0x00CC0020)
             else:
-                gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x00CC0020)
+                res = gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, rop)
+                if not res:
+                    gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x00CC0020)
 
             # Draw cursor into stream image
             try:
@@ -345,9 +380,17 @@ class ScreenStreamer:
         cur_target_w, cur_target_h = 0, 0
         buf = None
         bmi = None
+        last_sample = None
+        last_cursor_pos = None
+        last_keyframe_time = 0.0
 
         try:
             while self.running and self._generation == generation:
+                if self._active_viewers <= 0 and self._consumers > 0:
+                    # Viewers connected but screen tab paused -> sleep completely until resumed
+                    self._wake_event.wait(timeout=0.5)
+                    continue
+
                 start_t = time.perf_counter()
                 try:
                     w = user32.GetSystemMetrics(0)
@@ -384,18 +427,41 @@ class ScreenStreamer:
                         bmi.biBitCount = 32
                         bmi.biCompression = 0
                         buf = (ctypes.c_char * (target_w * target_h * 4))()
+                        last_sample = None
 
-                    # Blit/Stretch desktop directly to target memory DC using zero-flicker SRCCOPY (0x00CC0020)
+                    # Blit/Stretch desktop directly to target memory DC using SRCCOPY | CAPTUREBLT
+                    rop = 0x00CC0020 | 0x40000000
                     if target_w != w or target_h != h:
-                        gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, 0x00CC0020)
+                        res = gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, rop)
+                        if not res:
+                            res = gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, 0x00CC0020)
                     else:
-                        gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x00CC0020)
+                        res = gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, rop)
+                        if not res:
+                            res = gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x00CC0020)
+
+                    if not res:
+                        # Desktop switched or DC invalidated (e.g. UAC or screen lock) -> re-attach & re-init DC
+                        _attach_desktop()
+                        if hdc_mem:
+                            try:
+                                gdi32.SelectObject(hdc_mem, old_bm)
+                                gdi32.DeleteObject(hbm)
+                                gdi32.DeleteDC(hdc_mem)
+                                user32.ReleaseDC(None, hdc_screen)
+                            except Exception:
+                                pass
+                            hdc_mem = None
+                        time.sleep(0.03)
+                        continue
 
                     # Smoothly draw the mouse cursor into the offscreen buffer with zero PC physical monitor flicker
+                    cursor_pos = None
                     try:
                         ci = CURSORINFO()
                         ci.cbSize = sizeof(CURSORINFO)
                         if user32.GetCursorInfo(byref(ci)) and (ci.flags & 1) and ci.hCursor:
+                            cursor_pos = (ci.ptScreenPos.x, ci.ptScreenPos.y)
                             ii = ICONINFO()
                             if user32.GetIconInfo(ci.hCursor, byref(ii)):
                                 cx = ci.ptScreenPos.x - ii.xHotspot
@@ -413,21 +479,38 @@ class ScreenStreamer:
 
                     gdi32.GetDIBits(hdc_mem, hbm, 0, target_h, buf, byref(bmi), 0)
 
-                    # Turbo JPEG compression
-                    jpeg = encode_frame_to_jpeg(buf, target_w, target_h, self.quality)
+                    # --- Sub-millisecond NumPy Dirty-Frame Detection ---
+                    # If screen content & cursor have not changed, skip compression & don't increment frame_id!
+                    # Forces periodic keyframe every 2.0s to ensure pixel integrity.
+                    now_perf = time.perf_counter()
+                    is_dirty = True
+                    if _HAS_NUMPY and last_sample is not None and (now_perf - last_keyframe_time) < 2.0:
+                        raw_np = np.frombuffer(buf, dtype=np.uint8).reshape((target_h, target_w, 4))
+                        sample = raw_np[::8, ::8, 0]
+                        if cursor_pos == last_cursor_pos and np.array_equal(sample, last_sample):
+                            is_dirty = False
 
-                    with self._condition:
-                        if self._generation != generation:
-                            break
-                        self._latest_jpeg = jpeg
-                        self._frame_id += 1
-                        self._condition.notify_all()
-                        # Notify all async listeners directly on their event loops
-                        for loop, event in list(self._async_listeners):
-                            try:
-                                loop.call_soon_threadsafe(event.set)
-                            except Exception:
-                                pass
+                    if is_dirty:
+                        # Turbo JPEG compression
+                        jpeg = encode_frame_to_jpeg(buf, target_w, target_h, self.quality)
+                        if _HAS_NUMPY:
+                            raw_np = np.frombuffer(buf, dtype=np.uint8).reshape((target_h, target_w, 4))
+                            last_sample = raw_np[::8, ::8, 0].copy()
+                        last_cursor_pos = cursor_pos
+                        last_keyframe_time = now_perf
+
+                        with self._condition:
+                            if self._generation != generation:
+                                break
+                            self._latest_jpeg = jpeg
+                            self._frame_id += 1
+                            self._condition.notify_all()
+                            # Notify all async listeners directly on their event loops
+                            for loop, event in list(self._async_listeners):
+                                try:
+                                    loop.call_soon_threadsafe(event.set)
+                                except Exception:
+                                    pass
 
                 except Exception as e:
                     time.sleep(0.02)
@@ -458,6 +541,10 @@ class ScreenStreamer:
 
         try:
             while self.running and self._generation == generation:
+                if self._active_viewers <= 0 and self._consumers > 0:
+                    # Viewers connected but screen tab paused -> sleep completely until resumed
+                    self._wake_event.wait(timeout=0.5)
+                    continue
                 start_t = time.perf_counter()
                 try:
                     if sct is None:
@@ -522,6 +609,7 @@ class ScreenStreamer:
         if hasattr(self, "_stop_timer") and self._stop_timer:
             self._stop_timer.cancel()
             self._stop_timer = None
+        self._wake_event.set()
         if not self.running or self._thread is None or not self._thread.is_alive():
             self._generation += 1
             generation = self._generation
@@ -538,6 +626,7 @@ class ScreenStreamer:
             self._stop_timer = None
         self.running = False
         self._generation += 1
+        self._wake_event.set()
         thread = self._thread
         self._thread = None
         self._latest_jpeg = None
@@ -559,12 +648,14 @@ class ScreenStreamer:
                 self._stop_timer.cancel()
                 self._stop_timer = None
             self._consumers += 1
+            self._active_viewers += 1
             self._start_locked()
 
     def release(self):
         """Unregisters a viewer with a graceful 4s warm cooldown instead of immediate thread kill."""
         with self._lock:
             self._consumers = max(0, self._consumers - 1)
+            self._active_viewers = max(0, self._active_viewers - 1)
             if self._consumers > 0:
                 return
             # Keep capture engine warm for 4 seconds in case client is switching tabs or reconnecting

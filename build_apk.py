@@ -47,6 +47,16 @@ def main():
     print("\n[+] Syncing static assets into android_app/assets/...")
     os.makedirs("android_app/assets", exist_ok=True)
     ignore_exts = {".apk", ".exe", ".zip", ".aab", ".idsig", ".msix"}
+
+    # Purge any nested binary packages from android_app/assets to prevent APK bloating
+    for fname in os.listdir("android_app/assets"):
+        if any(fname.lower().endswith(ext) for ext in ignore_exts):
+            try:
+                os.remove(os.path.join("android_app/assets", fname))
+                print(f"    Purged stale binary artifact from assets: {fname}")
+            except Exception:
+                pass
+
     for fname in os.listdir("static"):
         if any(fname.lower().endswith(ext) for ext in ignore_exts):
             continue
@@ -55,6 +65,24 @@ def main():
         if os.path.isfile(src):
             shutil.copy2(src, dst)
     print("    OK: Static assets synced without binary artifacts.")
+
+    # 64-bit Architecture Optimization (arm64-v8a only, strip 32-bit slices)
+    TARGET_ABI = "arm64-v8a"
+    lib_dir = os.path.join("android_app", "lib")
+    if os.path.exists(lib_dir):
+        for abi in os.listdir(lib_dir):
+            abi_path = os.path.join(lib_dir, abi)
+            if abi != TARGET_ABI and os.path.isdir(abi_path):
+                shutil.rmtree(abi_path, ignore_errors=True)
+                print(f"    Purged 32-bit / non-64-bit ABI slice: lib/{abi}")
+
+    if "--obfuscate" in sys.argv:
+        print("\n[+] Hardening and obfuscating JavaScript for release...")
+        try:
+            from tools.obfuscate_assets import process_target
+            process_target("android_app/assets/app.js", backup=False)
+        except Exception as e:
+            print(f"[-] Obfuscation warning: {e}")
 
     # Ensure build directories exist
     os.makedirs(BUILD_DIR, exist_ok=True)
@@ -115,6 +143,17 @@ def main():
         apk_zip.write(dex_path, "classes.dex")
     print("    OK: classes.dex embedded into APK")
 
+    # If 64-bit native libraries exist, embed only arm64-v8a
+    if os.path.exists(lib_dir):
+        print(f"\n[+] Packaging 64-bit ({TARGET_ABI}) native slices...")
+        with zipfile.ZipFile(apk_path, "a", compression=zipfile.ZIP_DEFLATED) as apk_zip:
+            for root, _, files in os.walk(lib_dir):
+                for f in files:
+                    full_p = os.path.join(root, f)
+                    rel_p = os.path.relpath(full_p, "android_app")
+                    apk_zip.write(full_p, rel_p)
+        print(f"    OK: 64-bit ({TARGET_ABI}) native slices embedded into APK.")
+
     # 7. Zipalign the APK
     aligned_apk = os.path.join(BUILD_DIR, "aligned.apk")
     run(
@@ -137,8 +176,14 @@ def main():
 
     if os.path.exists(OUTPUT_APK):
         size_kb = os.path.getsize(OUTPUT_APK) / 1024
+        # Sync fresh 64-bit APK for local offline download from the PC server
+        static_apk = os.path.join("static", "PCDeck.apk")
+        shutil.copy2(OUTPUT_APK, static_apk)
+        if os.path.exists("website"):
+            shutil.copy2(OUTPUT_APK, os.path.join("website", "PCDeck.apk"))
         print("\n" + "=" * 55)
-        print(f"OK: SUCCESS: Android APK generated at '{OUTPUT_APK}' ({size_kb:.1f} KB)")
+        print(f"OK: SUCCESS: 64-bit Android APK generated at '{OUTPUT_APK}' ({size_kb:.1f} KB)")
+        print(f"             Synced to '{static_apk}' for direct local download")
         print("=======================================================\n")
     else:
         print("[-] Failed to generate APK.")

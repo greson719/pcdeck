@@ -22,9 +22,12 @@ def build():
         "--noconfirm",
         "--onefile",
         "--windowed",
+        "--uac-admin",
         "--name", "PCDeck",
         "--icon", "app_icon.ico",
         "--add-data", "static;static",
+        "--add-data", "drivers;drivers",
+        "--add-data", "PCDeck.apk;.",
         "--add-data", "app_icon.ico;.",
         "--add-data", "PCDeck.ico;.",
         "--add-data", "icon.ico;.",
@@ -35,7 +38,11 @@ def build():
         "--add-data", "icon-512.png;.",
         "--hidden-import", "server.gui",
         "--hidden-import", "server.main",
+        "--hidden-import", "server.binary_protocol",
+        "--hidden-import", "server.license_manager",
         "--hidden-import", "server.screen_streamer",
+        "--hidden-import", "server.wifi_manager",
+        "--hidden-import", "server.wifi_latency_manager",
         "--hidden-import", "server.gamepad_manager",
         "--hidden-import", "server.audio_streamer",
         "--hidden-import", "server.camera_streamer",
@@ -43,6 +50,9 @@ def build():
         "--hidden-import", "simplejpeg",
         "--hidden-import", "numpy",
         "--hidden-import", "vgamepad",
+        "--collect-all", "vgamepad",
+        "--hidden-import", "pystray",
+        "--collect-all", "pystray",
         "--hidden-import", "sounddevice",
         "--hidden-import", "pyaudiowpatch",
         "--hidden-import", "pyvirtualcam",
@@ -68,11 +78,25 @@ def build():
     dist_exe = ROOT / "dist" / "PCDeck.exe"
     target_exe = ROOT / "PCDeck.exe"
     if dist_exe.exists():
-        try:
-            shutil.copy2(dist_exe, target_exe)
-            print(f"\n[OK] SUCCESS: Built and updated PCDeck.exe at root ({target_exe.stat().st_size / (1024*1024):.1f} MB)")
-        except PermissionError:
-            print(f"\n[OK] SUCCESS: Built PCDeck.exe in dist/ ({dist_exe.stat().st_size / (1024*1024):.1f} MB). (Root PCDeck.exe is currently running - close it to overwrite).")
+        for target in [target_exe, ROOT / "website" / "PCDeck.exe"]:
+            if target == target_exe or target.parent.exists():
+                try:
+                    shutil.copy2(dist_exe, target)
+                    print(f"\n[OK] SUCCESS: Copied PCDeck.exe to {target.relative_to(ROOT)} ({target.stat().st_size / (1024*1024):.1f} MB)")
+                except PermissionError:
+                    # Windows allows renaming a locked/running executable so the new binary can take its place
+                    backup = target.with_name(f"{target.name}.old")
+                    try:
+                        if backup.exists():
+                            try:
+                                backup.unlink()
+                            except Exception:
+                                pass
+                        target.rename(backup)
+                        shutil.copy2(dist_exe, target)
+                        print(f"\n[OK] SUCCESS: Replaced running {target.relative_to(ROOT)} (old binary moved to {backup.name})")
+                    except Exception as e:
+                        print(f"[-] Could not overwrite {target.name}: {e}. Standalone is available at dist/PCDeck.exe")
 
 if __name__ == "__main__":
     build()

@@ -15,7 +15,7 @@ from typing import Dict, Optional, Tuple, Any
 try:
     import vgamepad as vg
     _HAS_VGAMEPAD = True
-except ImportError:
+except Exception:
     vg = None
     _HAS_VGAMEPAD = False
 
@@ -59,42 +59,90 @@ def is_vigem_installed() -> bool:
     return False
 
 
+def get_drivers_dir() -> str:
+    """Returns absolute path to the drivers directory (handles dev & PyInstaller frozen modes)."""
+    if getattr(sys, "frozen", False):
+        meipass_drivers = os.path.join(getattr(sys, "_MEIPASS", ""), "drivers")
+        if os.path.exists(meipass_drivers):
+            return meipass_drivers
+        exe_drivers = os.path.join(os.path.dirname(sys.executable), "drivers")
+        if os.path.exists(exe_drivers):
+            return exe_drivers
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_dir, "drivers")
+
+
+def has_internet_connection() -> bool:
+    """Checks if host PC has an active internet connection."""
+    import socket
+    try:
+        sock = socket.create_connection(("1.1.1.1", 53), timeout=2.0)
+        sock.close()
+        return True
+    except Exception:
+        try:
+            sock = socket.create_connection(("8.8.8.8", 53), timeout=2.0)
+            sock.close()
+            return True
+        except Exception:
+            return False
+
+
 def install_vigem_silently(msi_path: Optional[str] = None) -> Tuple[bool, str]:
     """
-    Installs the bundled Microsoft WHQL-signed ViGEmBus MSI completely silently.
+    Installs the bundled Microsoft WHQL-signed ViGEmBus installer completely silently.
     Returns (success: bool, message: str).
     """
     if sys.platform != "win32":
         return False, "ViGEmBus is only supported on Windows 10/11."
 
-    if not msi_path:
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        msi_path = os.path.join(base_dir, "drivers", "ViGEmBus_x64.msi")
+    drivers_dir = get_drivers_dir()
+    exe_path = os.path.join(drivers_dir, "ViGEmBus_Setup.exe")
+    msi_path = msi_path or os.path.join(drivers_dir, "ViGEmBus_x64.msi")
 
-    if not os.path.exists(msi_path):
-        return False, f"Driver installer package not found at: {msi_path}"
+    # 1. Prefer ViGEmBus_Setup.exe bundle if available locally
+    if os.path.exists(exe_path):
+        try:
+            cmd = [exe_path, "/quiet", "/norestart"]
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+            )
+            if proc.returncode in (0, 3010):
+                return True, "ViGEmBus driver installed successfully from local package."
+            else:
+                return False, f"ViGEm installer returned code {proc.returncode}"
+        except Exception as e:
+            return False, f"Driver execution error: {str(e)}"
 
-    try:
-        cmd = [
-            "msiexec.exe",
-            "/i", msi_path,
-            "/qn",           # Quiet mode, zero user interface
-            "/norestart",    # Do not restart Windows
-            "ALLUSERS=1"
-        ]
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            creationflags=subprocess.CREATE_NO_WINDOW
-        )
-        # 0 = success, 3010 = success reboot deferred
-        if proc.returncode in (0, 3010):
-            return True, "ViGEmBus driver installed successfully."
-        else:
-            return False, f"msiexec returned code {proc.returncode}: {proc.stderr}"
-    except Exception as e:
-        return False, f"Driver execution error: {str(e)}"
+    # 2. Check for MSI package
+    if os.path.exists(msi_path):
+        try:
+            cmd = [
+                "msiexec.exe",
+                "/i", msi_path,
+                "/qn",           # Quiet mode, zero user interface
+                "/norestart",    # Do not restart Windows
+                "ALLUSERS=1"
+            ]
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+            )
+            if proc.returncode in (0, 3010):
+                return True, "ViGEmBus driver installed successfully."
+            else:
+                return False, f"msiexec returned code {proc.returncode}: {proc.stderr}"
+        except Exception as e:
+            return False, f"Driver execution error: {str(e)}"
+
+    # 3. Fallback check: prompt user for offline package or internet
+    return False, "Offline driver package not found in drivers/ folder. Connect to internet or place ViGEmBus installer in drivers/."
+
 
 
 class GamepadManager:
@@ -137,14 +185,31 @@ class GamepadManager:
             "BACK": "tab",
             "GUIDE": "win",
             "THUMBL": "shift",
-            "THUMBR": "ctrl"
+            "THUMBR": "ctrl",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "TAB": "tab",
+            "ESC": "esc"
         }
 
         self.init_backend()
 
     def init_backend(self) -> str:
         """Initializes ViGEmBus virtual Xbox controller or falls back to SendInput."""
+        global vg, _HAS_VGAMEPAD
         with self.lock:
+            # Re-attempt import if previously failed (e.g. driver was installed after boot)
+            if not _HAS_VGAMEPAD:
+                try:
+                    import vgamepad as _vg
+                    vg = _vg
+                    _HAS_VGAMEPAD = True
+                except Exception:
+                    vg = None
+                    _HAS_VGAMEPAD = False
+
             # Check ViGEmBus availability
             if _HAS_VGAMEPAD and is_vigem_installed():
                 try:
@@ -272,6 +337,37 @@ class GamepadManager:
                     self._handle_fallback_wasd(clamped_x, clamped_y)
                 elif stick_lower in ("right", "r", "r3"):
                     self._handle_fallback_aim(clamped_x, clamped_y)
+
+    def apply_gyro_steer(self, steer_val: float):
+        """
+        Applies motion gyroscope steering (-1.0 left to 1.0 right).
+        Blends with current left stick deflection.
+        """
+        with self.lock:
+            cur_y = self._axis_states.get("left", (0.0, 0.0))[1]
+            clamped_steer = max(-1.0, min(1.0, float(steer_val)))
+            self._axis_states["left"] = (clamped_steer, cur_y)
+
+            if self.mode == "xinput" and self.x360:
+                self.x360.left_joystick_float(x_value_float=clamped_steer, y_value_float=cur_y)
+                self.x360.update()
+            else:
+                self._handle_fallback_wasd(clamped_steer, cur_y)
+
+    def apply_gyro_aim(self, aim_x: float, aim_y: float):
+        """
+        Applies motion gyroscope aiming (-1.0 to 1.0).
+        """
+        with self.lock:
+            clamped_x = max(-1.0, min(1.0, float(aim_x)))
+            clamped_y = max(-1.0, min(1.0, float(aim_y)))
+            self._axis_states["right"] = (clamped_x, clamped_y)
+
+            if self.mode == "xinput" and self.x360:
+                self.x360.right_joystick_float(x_value_float=clamped_x, y_value_float=clamped_y)
+                self.x360.update()
+            else:
+                self._handle_fallback_aim(clamped_x, clamped_y)
 
     def reset_all(self):
         """Resets all sticks and buttons to neutral rest state."""

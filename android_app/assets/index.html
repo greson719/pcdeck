@@ -10,14 +10,304 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&family=Inter:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&family=Inter:wght@400;600;700;800&display=swap">
+  </noscript>
   
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="PCDeck_Master_Logo.png">
-  <link rel="stylesheet" href="style.css?v=2.6.4">
-  <script src="jsqr.js"></script>
+  <link rel="stylesheet" href="style.css?v=2.7.0">
 </head>
 <body class="on-screen-tab">
+  <!-- ==========================================================================
+       PC DECK - COMPLETE EXTENDED ACTION & KEY SVG REGISTRY
+       ========================================================================== -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <defs>
+
+      <!-- LOCK -->
+      <g id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </g>
+
+      <!-- MIC / MICROPHONE -->
+      <g id="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </g>
+
+      <!-- GAMEPAD -->
+      <g id="icon-gamepad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="6" y1="12" x2="10" y2="12"/>
+        <line x1="8" y1="10" x2="8" y2="14"/>
+        <line x1="15" y1="13" x2="15.01" y2="13"/>
+        <line x1="18" y1="11" x2="18.01" y2="11"/>
+        <rect x="2" y="6" width="20" height="12" rx="6"/>
+      </g>
+
+      <!-- CAMERA -->
+      <g id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+        <circle cx="12" cy="13" r="3"/>
+      </g>
+
+      <!-- KEYS / KEYBOARD (keyc) -->
+      <g id="icon-keys" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
+      </g>
+
+      <!-- INSERT KEY -->
+      <g id="icon-insert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+      </g>
+
+      <!-- HOME KEY -->
+      <g id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </g>
+
+      <!-- PAGE UP -->
+      <g id="icon-page-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"/>
+        <polyline points="18 9 12 3 6 9"/>
+      </g>
+
+      <!-- PAGE DOWN -->
+      <g id="icon-page-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+        <polyline points="6 15 12 21 18 15"/>
+      </g>
+
+      <!-- END KEY -->
+      <g id="icon-end" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="5 12 19 12"/>
+        <polyline points="13 6 19 12 13 18"/>
+        <line x1="21" y1="6" x2="21" y2="18"/>
+      </g>
+
+      <!-- FILE UPLOAD / FILE UP -->
+      <g id="icon-file-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 12 15 15"/>
+      </g>
+
+      <!-- SEND FILES -->
+      <g id="icon-send-files" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+        <polyline points="13 2 13 9 20 9"/>
+        <path d="M8 16l4-4 4 4"/>
+        <line x1="12" y1="12" x2="12" y2="20"/>
+      </g>
+
+      <!-- FOLDER -->
+      <g id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/>
+      </g>
+
+      <!-- PC / MONITOR -->
+      <g id="icon-pc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </g>
+
+      <!-- PHONE / MOBILE -->
+      <g id="icon-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+        <line x1="12" y1="18" x2="12.01" y2="18"/>
+      </g>
+
+      <!-- MUTE (mure) -->
+      <g id="icon-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <line x1="23" y1="9" x2="17" y2="15"/>
+        <line x1="17" y1="9" x2="23" y2="15"/>
+      </g>
+
+      <!-- VOLUME DOWN (vol -) -->
+      <g id="icon-vol-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        <line x1="18" y1="12" x2="22" y2="12"/>
+      </g>
+
+      <!-- VOLUME UP (vol +) -->
+      <g id="icon-vol-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      </g>
+
+      <!-- SHOW DESKTOP -->
+      <g id="icon-show-desktop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="2" y1="13" x2="22" y2="13"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+      </g>
+
+      <!-- SWITCH APP -->
+      <g id="icon-switch-app" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="7" y="7" width="13" height="13" rx="2"/>
+        <path d="M4 17V5a2 2 0 0 1 2-2h12"/>
+      </g>
+
+      <!-- SCREENSHOT -->
+      <g id="icon-screenshot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 9V5a1 1 0 0 1 1-1h4"/>
+        <path d="M20 9V5a1 1 0 0 0-1-1h-4"/>
+        <path d="M4 15v4a1 1 0 0 0 1 1h4"/>
+        <path d="M20 15v4a1 1 0 0 1-1 1h-4"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+        <line x1="12" y1="8" x2="12" y2="16"/>
+      </g>
+
+      <!-- TASK MANAGER -->
+      <g id="icon-task-manager" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M7 12h2l2-4 3 8 2-4h2"/>
+      </g>
+
+      <!-- CLOSE WINDOW -->
+      <g id="icon-close-window" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+      </g>
+
+      <!-- SEND (Message / Action trigger) -->
+      <g id="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </g>
+
+      <!-- QR CODE / SCANNER VIEWFINDER -->
+      <g id="icon-qr-scanner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 8V5a1 1 0 0 1 1-1h3"/>
+        <path d="M16 4h3a1 1 0 0 1 1 1v3"/>
+        <path d="M20 16v3a1 1 0 0 1-1 1h-3"/>
+        <path d="M8 20H5a1 1 0 0 1-1-1v-3"/>
+        <rect x="7" y="7" width="3" height="3" rx="0.5"/>
+        <rect x="14" y="7" width="3" height="3" rx="0.5"/>
+        <rect x="7" y="14" width="3" height="3" rx="0.5"/>
+        <path d="M14 14h3v3h-3z"/>
+      </g>
+
+      <!-- CAMERA LOADING SPINNER / RADAR RETICLE -->
+      <g id="icon-camera-loading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        <circle cx="12" cy="12" r="4"/>
+      </g>
+
+      <!-- GENERIC FILE / DOCUMENT -->
+      <g id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <line x1="10" y1="9" x2="8" y2="9"/>
+      </g>
+
+      <!-- IMAGE / MEDIA FILE -->
+      <g id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </g>
+
+      <!-- VIDEO FILE -->
+      <g id="icon-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="23 7 16 12 23 17 23 7"/>
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+      </g>
+
+      <!-- WI-FI / NETWORK SYNC -->
+      <g id="icon-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+        <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+        <line x1="12" y1="20" x2="12.01" y2="20"/>
+      </g>
+
+      <!-- SETTINGS / GEAR -->
+      <g id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </g>
+
+      <!-- CLOSE / DISCONNECT / CANCEL -->
+      <g id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </g>
+
+      <!-- REFRESH -->
+      <g id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 4v6h-6M1 20v-6h6"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </g>
+
+      <!-- FOLDER PLUS -->
+      <g id="icon-folder-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/>
+        <line x1="12" y1="10" x2="12" y2="16"/>
+        <line x1="9" y1="13" x2="15" y2="13"/>
+      </g>
+
+      <!-- SEARCH -->
+      <g id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </g>
+
+      <!-- TRASH -->
+      <g id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      </g>
+
+      <!-- DOWNLOAD -->
+      <g id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </g>
+
+      <!-- MUSIC -->
+      <g id="icon-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"/>
+        <circle cx="6" cy="18" r="3"/>
+        <circle cx="18" cy="16" r="3"/>
+      </g>
+
+      <!-- BACKSPACE -->
+      <g id="icon-backspace" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+        <line x1="18" y1="9" x2="12" y2="15"/>
+        <line x1="12" y1="9" x2="18" y2="15"/>
+      </g>
+
+      <!-- CHEVRON UP -->
+      <g id="icon-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"/>
+      </g>
+
+      <!-- CHEVRON DOWN -->
+      <g id="icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </g>
+    </defs>
+  </svg>
   <div class="glow-orb orb-1"></div>
   <div class="glow-orb orb-2"></div>
 
@@ -125,15 +415,18 @@
   <div id="connect-modal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header" style="position: relative;">
-        <button id="btn-close-connect-modal" class="onboarding-skip-btn" style="position: absolute; right: 0; top: 0;">✕ CLOSE</button>
+        <button id="btn-close-connect-modal" class="onboarding-skip-btn" style="position: absolute; right: 0; top: 0; display: inline-flex; align-items: center; gap: 4px;">
+          <svg class="deck-icon" width="12" height="12"><use href="#icon-close"/></svg>
+          <span>CLOSE</span>
+        </button>
         <img src="PCDeck_Master_Logo.png" alt="PC Deck Pro" class="modal-logo">
         <h2>Connect to PC</h2>
         <p>Scan the QR code on your PC screen or enter the IP address</p>
       </div>
 
       <div class="modal-body">
-        <button id="modal-btn-scan-qr" class="neo-btn btn-yellow" style="width: 100%;">
-          <span>📷</span>
+        <button id="modal-btn-scan-qr" class="neo-btn btn-yellow" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+          <svg class="deck-icon" width="16" height="16"><use href="#icon-camera"/></svg>
           <span>SCAN PC QR CODE</span>
         </button>
 
@@ -149,9 +442,9 @@
       </div>
 
       <div class="modal-footer">
-        <button id="btn-open-setup-guide" style="background: none; border: none; color: var(--neo-cyan); font-family: var(--font-heading); font-size: 0.76rem; font-weight: 800; text-decoration: underline; cursor: pointer; margin-bottom: 6px; display: inline-block;">📖 Need PC Server? Open Setup Guide</button>
+        <button id="btn-open-setup-guide" style="background: none; border: none; color: var(--neo-cyan); font-family: var(--font-heading); font-size: 0.76rem; font-weight: 800; text-decoration: underline; cursor: pointer; margin-bottom: 6px; display: inline-block;">Need PC Server? Open Setup Guide</button>
         <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; display: block;">Ensure phone &amp; PC are on the same Wi-Fi / Hotspot</span>
-        <span style="font-size: 0.68rem; color: var(--neo-yellow); font-weight: 600; display: block; margin-top: 4px;">⚠️ If VPN is ON, pause it or enable &ldquo;Allow Local Network&rdquo; in VPN settings</span>
+        <span style="font-size: 0.68rem; color: var(--neo-yellow); font-weight: 600; display: block; margin-top: 4px;">If VPN is ON, pause it or enable &ldquo;Allow Local Network&rdquo; in VPN settings</span>
       </div>
     </div>
   </div>
@@ -159,13 +452,42 @@
   <!-- Neobrutalist QR Scanner Modal Overlay -->
   <div id="qr-scanner-modal">
     <div class="scanner-header">
-      <span class="scanner-badge">📷 SCAN PC QR CODE</span>
-      <button id="btn-close-scanner" class="scanner-close-btn">✕ CLOSE</button>
+      <span class="scanner-badge" style="display: inline-flex; align-items: center; gap: 6px;">
+        <svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg>
+        <span>SCAN PC QR CODE</span>
+      </span>
+      <button id="btn-close-scanner" class="scanner-close-btn" style="display: inline-flex; align-items: center; gap: 4px;">
+        <svg class="deck-icon" width="12" height="12"><use href="#icon-close"/></svg>
+        <span>CLOSE</span>
+      </button>
     </div>
 
     <div class="scanner-viewfinder-box">
       <video id="qr-video" playsinline></video>
       <canvas id="qr-canvas" style="display: none;"></canvas>
+      <!-- Modern Camera Initializing / Scanner Loading State -->
+      <div id="qr-camera-loading" class="qr-camera-loading-overlay">
+        <div class="qr-loading-radar-wrap">
+          <svg class="deck-icon qr-scanner-radar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 8V5a1 1 0 0 1 1-1h3"/>
+            <path d="M16 4h3a1 1 0 0 1 1 1v3"/>
+            <path d="M20 16v3a1 1 0 0 1-1 1h-3"/>
+            <path d="M8 20H5a1 1 0 0 1-1-1v-3"/>
+            <rect x="7" y="7" width="3" height="3" rx="0.5"/>
+            <rect x="14" y="7" width="3" height="3" rx="0.5"/>
+            <rect x="7" y="14" width="3" height="3" rx="0.5"/>
+            <path d="M14 14h3v3h-3z"/>
+          </svg>
+          <svg class="deck-icon deck-spin qr-loading-spin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+        </div>
+        <div class="qr-loading-texts">
+          <span class="qr-loading-label">Initializing camera...</span>
+          <span class="qr-loading-sublabel">Preparing scanner...</span>
+        </div>
+      </div>
       <div class="scanner-laser"></div>
       <div class="viewfinder-corner corner-tl"></div>
       <div class="viewfinder-corner corner-tr"></div>
@@ -178,8 +500,14 @@
         Point camera at the QR code displayed on your PC screen
       </div>
       <div class="scanner-controls">
-        <button id="btn-switch-camera" class="neo-btn btn-cyan" style="height: 40px; font-size: 0.8rem;">🔄 Switch Camera</button>
-        <button id="btn-toggle-torch" class="neo-btn btn-yellow" style="height: 40px; font-size: 0.8rem;">💡 Flashlight</button>
+        <button id="btn-switch-camera" class="neo-btn btn-cyan" style="height: 40px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+          <svg class="deck-icon" width="16" height="16"><use href="#icon-camera"/></svg>
+          <span>Switch Camera</span>
+        </button>
+        <button id="btn-toggle-torch" class="neo-btn btn-yellow" style="height: 40px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+          <svg class="deck-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Flashlight</span>
+        </button>
       </div>
     </div>
   </div>
@@ -189,10 +517,12 @@
     <div class="modal-card tools-sheet-card">
       <div class="tools-sheet-header">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.2rem;">🛠️</span>
+          <svg class="deck-icon" width="20" height="20" style="color: var(--neo-cyan);"><use href="#icon-settings"/></svg>
           <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; text-transform: uppercase;">Quick Tools &amp; Actions</h3>
         </div>
-        <button id="btn-close-tools" class="sheet-close-btn">✕</button>
+        <button id="btn-close-tools" class="sheet-close-btn">
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-close"/></svg>
+        </button>
       </div>
 
       <div class="tools-sheet-grid">
@@ -245,13 +575,17 @@
         </button>
 
         <button id="tool-mic-quick" class="tool-tile">
-          <span class="tool-tile-icon" style="color: var(--neo-lime);">🎙️</span>
+          <span class="tool-tile-icon" style="color: var(--neo-lime);">
+            <svg class="deck-icon" width="22" height="22"><use href="#icon-mic"/></svg>
+          </span>
           <span class="tool-tile-name">PC Mic</span>
           <span id="tool-mic-status" class="tool-tile-sub">Offline</span>
         </button>
 
         <button id="tool-cam-quick" class="tool-tile">
-          <span class="tool-tile-icon" style="color: var(--neo-cyan);">📹</span>
+          <span class="tool-tile-icon" style="color: var(--neo-cyan);">
+            <svg class="deck-icon" width="22" height="22"><use href="#icon-camera"/></svg>
+          </span>
           <span class="tool-tile-name">HD Webcam</span>
           <span id="tool-cam-status" class="tool-tile-sub">Offline</span>
         </button>
@@ -272,7 +606,7 @@
 
       <div class="nav-status-pill" id="pill-status">
         <div id="status-indicator" class="status-dot"></div>
-        <span id="status-label">Online</span>
+        <span id="status-label">Connecting...</span>
       </div>
 
       <div class="nav-actions">
@@ -331,11 +665,32 @@
             <div class="hud-badge-group">
               <span class="hud-badge">🎮 GAME HUD</span>
               <button type="button" id="btn-hud-emulation-mode" class="hud-chip-btn" title="Toggle XInput / PC Keyboard Mode">Mode: XInput</button>
+              <button type="button" id="btn-hud-install-driver" class="hud-chip-btn btn-hud-driver" style="display: none; background: rgba(0, 240, 255, 0.15); border-color: var(--neo-cyan); color: var(--neo-cyan);" title="Install Virtual Controller Driver on PC">Install Driver</button>
             </div>
 
             <div class="hud-actions-group">
               <button type="button" id="btn-hud-edit-layout" class="hud-chip-btn btn-hud-edit" title="Customize & Drag Layout (PUBG Style)">✏️ Edit Layout</button>
               <button type="button" id="btn-hud-close" class="hud-chip-btn btn-hud-exit" title="Exit Gaming HUD">✕</button>
+            </div>
+          </div>
+
+          <!-- HUD In-Display Driver Alert & Live Progress Banner -->
+          <div id="hud-driver-banner" class="hud-driver-banner" style="display: none; position: absolute; top: 48px; left: 50%; transform: translateX(-50%); z-index: 1000; min-width: 280px; max-width: 90%; padding: 8px 14px; background: rgba(10, 15, 25, 0.95); border: 1px solid var(--neo-cyan); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <span id="hud-driver-status-text" style="font-size: 0.72rem; color: var(--neo-cyan); font-weight: 700;">Driver Installation Required</span>
+              <button type="button" id="btn-hud-driver-action" class="neo-btn btn-cyan" style="padding: 4px 10px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-gamepad"/></svg>
+                <span>Install Driver</span>
+              </button>
+            </div>
+            <div id="hud-driver-progress-box" style="display: none; margin-top: 6px;">
+              <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden;">
+                <div id="hud-driver-progress-fill" style="width: 0%; height: 100%; background: #00f0ff; transition: width 0.3s ease;"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #a0aec0; margin-top: 4px; font-weight: 600;">
+                <span id="hud-driver-stage-text">Preparing installation...</span>
+                <span id="hud-driver-pct-text">0%</span>
+              </div>
             </div>
           </div>
 
@@ -473,13 +828,31 @@
     <section id="tab-trackpad" class="tab-view">
       <div class="trackpad-options-strip">
         <button id="btn-speed-quick" class="neo-chip-toggle" style="background: var(--neo-yellow); color: #000; font-weight: 900;">1.0x</button>
-        <button id="tool-drag-lock" class="neo-chip-toggle">🔒 Drag: Off</button>
+        <button id="tool-drag-lock" class="neo-chip-toggle" style="display: inline-flex; align-items: center; gap: 4px;">
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-lock"/></svg>
+          <span id="label-drag-lock">Drag: Off</span>
+        </button>
         <button id="btn-esc-quick" class="neo-chip-toggle">ESC</button>
-        <button id="btn-desktop-quick" class="neo-chip-toggle" data-hotkey="win+d">Desktop</button>
-        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle" style="background: var(--neo-cyan); color: #000; font-weight: 800;">🎮 Gamepad</button>
-        <button id="btn-quick-mic-toggle" class="neo-chip-toggle" style="background: var(--neo-lime); color: #000; font-weight: 800;">🎙️ Mic</button>
-        <button id="btn-quick-cam-toggle" class="neo-chip-toggle" style="background: var(--neo-cyan); color: #000; font-weight: 800;">📹 Cam</button>
-        <button id="btn-kbd-quick" class="neo-chip-toggle" style="background: var(--neo-pink); color: #fff;">⌨️ Keys</button>
+        <button id="btn-desktop-quick" class="neo-chip-toggle" data-hotkey="win+d" style="display: inline-flex; align-items: center; gap: 4px;">
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-show-desktop"/></svg>
+          <span>Desktop</span>
+        </button>
+        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle native-only-feature" style="background: var(--neo-cyan); color: #000; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
+          <span>Gamepad</span>
+        </button>
+        <button id="btn-quick-mic-toggle" class="neo-chip-toggle native-only-feature" style="background: var(--neo-lime); color: #000; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg>
+          <span>Mic</span>
+        </button>
+        <button id="btn-quick-cam-toggle" class="neo-chip-toggle native-only-feature" style="background: var(--neo-cyan); color: #000; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg>
+          <span>Cam</span>
+        </button>
+        <button id="btn-kbd-quick" class="neo-chip-toggle" style="background: var(--neo-pink); color: #fff; display: inline-flex; align-items: center; gap: 4px;">
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-keys"/></svg>
+          <span>Keys</span>
+        </button>
       </div>
 
       <!-- Standard Touchpad Surface -->
@@ -523,17 +896,30 @@
       <div id="gamepad-container" class="gamepad-main-layout" style="display: none;">
         <!-- Top Shoulder Triggers & System Header Bar -->
         <div class="gp-top-shoulder-bar" id="gp-top-shoulder-bar">
-          <!-- Back to Trackpad Button (Top Left) -->
-          <button type="button" id="btn-gp-top-back-trackpad" class="gp-top-action-btn gp-top-back-btn" title="Exit Gamepad & Return to Trackpad">
-            <span class="gp-top-back-icon">←</span>
-            <span>🖱️ Trackpad</span>
-          </button>
+          <!-- Back to Trackpad & Gyro Super Quick Toggles (Top Left) -->
+          <div class="gp-top-nav-group">
+            <button type="button" id="btn-gp-top-back-trackpad" class="gp-top-action-btn gp-top-back-btn" title="Exit Gamepad & Return to Trackpad">
+              <span class="gp-top-back-icon">←</span>
+              <span>🖱️ Trackpad</span>
+            </button>
+            <button type="button" id="btn-gp-gyro-toggle" class="gp-top-action-btn gp-gyro-badge-btn" title="Toggle Gyro Super Motion Sensor">
+              <span class="pulse-gyro-dot" id="gp-gyro-pulse-dot"></span>
+              <span class="gyro-label" id="gp-gyro-status-label">⚡ GYRO SUPER</span>
+            </button>
+            <button type="button" id="btn-gp-gyro-calib" class="gp-top-action-btn gp-gyro-calib-btn" title="1-Tap Calibrate / Center Neutral Angle">
+              <span>🎯</span>
+              <span>CENTER</span>
+            </button>
+            <button type="button" id="btn-gp-gyro-settings" class="gp-top-action-btn gp-gyro-settings-btn" title="Gyro Super Mode & Settings">
+              <span>⚙️</span>
+            </button>
+          </div>
 
           <!-- Left Triggers: LT & LB -->
           <div class="gp-shoulder-cluster gp-shoulder-left">
             <div class="gp-control-pod gp-trigger-pod" data-elem-id="elem-lt">
               <div class="gp-trigger-wrapper">
-                <button type="button" class="gp-btn gp-trigger-btn" data-gp="lt" title="Left Trigger (Aim / Brake)">
+                <button type="button" class="gp-btn gp-trigger-btn monect-trigger" data-gp="lt" title="Left Trigger (Aim / Brake)">
                   <span class="trigger-title" id="lt-btn-title">LT</span>
                   <span class="trigger-sub" id="lt-btn-sub">AIM</span>
                 </button>
@@ -541,7 +927,7 @@
               </div>
             </div>
             <div class="gp-control-pod gp-bumper-pod" data-elem-id="elem-lb">
-              <button type="button" class="gp-btn gp-bumper-btn" data-gp="lb" title="Left Bumper (Sprint / Alt)">
+              <button type="button" class="gp-btn gp-bumper-btn monect-bumper" data-gp="lb" title="Left Bumper (Sprint / Alt)">
                 <span class="bumper-title" id="lb-btn-title">LB</span>
               </button>
             </div>
@@ -551,7 +937,7 @@
           <div class="gp-system-hub" data-elem-id="elem-sys">
             <div class="gp-menu-buttons">
               <button type="button" class="gp-sys-pill" id="btn-gp-view-mode" data-gp="back" title="View / Select / Back">VIEW ⧉</button>
-              <button type="button" class="gp-guide-orb" id="btn-gp-guide-orb" data-gp="guide" title="Console Options & Presets (Xbox / PlayStation / Racing / WASD)">
+              <button type="button" class="gp-guide-orb monect-guide-orb" id="btn-gp-guide-orb" data-gp="guide" title="Console Options & Presets (Xbox / PlayStation / Racing / WASD)">
                 <div class="guide-orb-inner">🎮</div>
               </button>
               <button type="button" class="gp-sys-pill gp-sys-menu-highlight" id="btn-gp-top-menu" data-gp="start" title="Console Layout Options (Xbox, PlayStation, Racing, WASD)">MENU ☰</button>
@@ -566,13 +952,13 @@
           <!-- Right Triggers: RB & RT -->
           <div class="gp-shoulder-cluster gp-shoulder-right">
             <div class="gp-control-pod gp-bumper-pod" data-elem-id="elem-rb">
-              <button type="button" class="gp-btn gp-bumper-btn" data-gp="rb" title="Right Bumper (Melee / Skill)">
+              <button type="button" class="gp-btn gp-bumper-btn monect-bumper" data-gp="rb" title="Right Bumper (Melee / Skill)">
                 <span class="bumper-title" id="rb-btn-title">RB</span>
               </button>
             </div>
             <div class="gp-control-pod gp-trigger-pod" data-elem-id="elem-rt">
               <div class="gp-trigger-wrapper">
-                <button type="button" class="gp-btn gp-trigger-btn" data-gp="rt" title="Right Trigger (Fire / Gas)">
+                <button type="button" class="gp-btn gp-trigger-btn monect-trigger" data-gp="rt" title="Right Trigger (Fire / Gas)">
                   <span class="trigger-title" id="rt-btn-title">RT</span>
                   <span class="trigger-sub" id="rt-btn-sub">FIRE</span>
                 </button>
@@ -582,19 +968,46 @@
           </div>
         </div>
 
+        <!-- Virtual Gamepad Driver Status / 1-Click Installer -->
+        <div id="gamepad-driver-banner" class="driver-alert-box" style="display: none; margin: 4px 16px 10px 16px; padding: 10px 14px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.28); border-radius: 8px; transition: all 0.3s ease;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span id="gamepad-driver-status-text" style="font-size: 0.76rem; color: var(--neo-cyan); font-weight: 700;">Driver Installation Required</span>
+              <span id="gamepad-driver-subtext" style="font-size: 0.65rem; color: #94a3b8; font-weight: 500;">Virtual controller driver needed to control PC games</span>
+            </div>
+            <button type="button" id="btn-install-gamepad-driver" class="neo-btn btn-cyan" style="padding: 5px 12px; font-size: 0.70rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
+              <span>Install Driver</span>
+            </button>
+          </div>
+          <div id="gamepad-driver-progress-box" style="display: none; margin-top: 8px;">
+            <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden;">
+              <div id="gamepad-driver-progress-fill" style="width: 0%; height: 100%; background: #00f0ff; transition: width 0.4s ease;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #a0aec0; margin-top: 4px; font-weight: 600;">
+              <span id="gamepad-driver-stage-text">Preparing installation...</span>
+              <span id="gamepad-driver-pct-text">0%</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Main Body Deck: Left Pod (Movement Stick + D-Pad) | Center Spine | Right Pod (Actions Diamond + Look Stick) -->
-        <div class="gp-body-layout" id="gp-body-layout">
+        <div class="gp-body-layout monect-body-layout" id="gp-body-layout">
           <!-- Left Column: Primary Movement Stick (Top) + D-Pad (Bottom) -->
           <div class="gp-col gp-col-left">
             <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-left-stick">
               <span class="gp-pod-label" id="gp-left-stick-label">🕹️ MOVE (LEFT STICK)</span>
               <div class="gp-stick-zone" id="gp-left-stick-zone">
-                <div class="gp-stick-base">
+                <div class="gp-stick-base monect-stick-base">
                   <div class="gp-stick-ticks">
-                    <span></span><span></span><span></span><span></span>
+                    <span class="tick-0"></span><span class="tick-90"></span><span class="tick-180"></span><span class="tick-270"></span>
                   </div>
-                  <div class="gp-stick-thumb" id="gp-left-thumb">
+                  <div class="gp-stick-gimbal-ring"></div>
+                  <div class="gp-stick-thumb monect-stick-thumb" id="gp-left-thumb">
                     <div class="thumb-grip-ring"></div>
+                    <div class="thumb-cross-notches">
+                      <span></span><span></span><span></span><span></span>
+                    </div>
                     <div class="thumb-center-dot"></div>
                   </div>
                 </div>
@@ -604,33 +1017,57 @@
 
             <div class="gp-control-pod gp-dpad-pod" data-elem-id="elem-dpad">
               <span class="gp-pod-label">➕ D-PAD</span>
-              <div class="gp-dpad-cross-deck">
+              <div class="gp-dpad-cross-deck monect-dpad-disc" id="gp-dpad-disc">
                 <button type="button" class="gp-dpad-btn gp-dpad-up" data-gp="dpad_up" title="D-Pad Up">
-                  <svg viewBox="0 0 24 24"><polygon points="12,5 4,19 20,19" fill="currentColor"/></svg>
+                  <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="12,4 5,18 19,18" fill="currentColor"/></svg>
                 </button>
                 <div class="gp-dpad-mid-row">
                   <button type="button" class="gp-dpad-btn gp-dpad-left" data-gp="dpad_left" title="D-Pad Left">
-                    <svg viewBox="0 0 24 24"><polygon points="5,12 19,4 19,20" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="4,12 18,5 18,19" fill="currentColor"/></svg>
                   </button>
-                  <div class="gp-dpad-core"></div>
+                  <div class="gp-dpad-core"><div class="dpad-cup-well"></div></div>
                   <button type="button" class="gp-dpad-btn gp-dpad-right" data-gp="dpad_right" title="D-Pad Right">
-                    <svg viewBox="0 0 24 24"><polygon points="19,12 5,4 5,20" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="20,12 6,5 6,19" fill="currentColor"/></svg>
                   </button>
                 </div>
                 <button type="button" class="gp-dpad-btn gp-dpad-down" data-gp="dpad_down" title="D-Pad Down">
-                  <svg viewBox="0 0 24 24"><polygon points="12,19 4,5 20,5" fill="currentColor"/></svg>
+                  <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="12,20 5,6 19,6" fill="currentColor"/></svg>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Center Column: Helpful Status & Guide -->
+          <!-- Center Column: Monect-Style Live Artificial Horizon & Gyro Gimbal HUD -->
           <div class="gp-col gp-col-center" data-elem-id="elem-center-spine">
-            <div class="gp-center-emblem">
-              <span class="gp-emblem-text">PCDECK PRO GAMEPAD</span>
-            </div>
-            <div class="gp-center-instructions">
-              <span>Left: Move &amp; Steer • Right: Aim &amp; Actions</span>
+            <div class="gp-monect-spine-cluster">
+              <div class="gp-center-emblem">
+                <span class="gp-emblem-icon">🎮</span>
+                <span class="gp-emblem-text">PCDECK PRO</span>
+              </div>
+              <!-- Live Artificial Horizon & Gyro Gimbal HUD -->
+              <div class="gp-gyro-horizon-hud" id="gp-gyro-horizon-hud" title="Live Gyro Super Motion Tracking (Tap to Center)">
+                <div class="horizon-gimbal-ring">
+                  <div class="horizon-pitch-scale">
+                    <span class="pitch-mark mark-pos">+15°</span>
+                    <span class="pitch-mark mark-zero">0°</span>
+                    <span class="pitch-mark mark-neg">-15°</span>
+                  </div>
+                  <div class="horizon-level-line" id="gyro-horizon-line">
+                    <div class="horizon-reticle-left"></div>
+                    <div class="horizon-reticle-center"></div>
+                    <div class="horizon-reticle-right"></div>
+                  </div>
+                  <div class="horizon-fixed-crosshair"></div>
+                </div>
+                <div class="gyro-hud-status-bar">
+                  <span class="gyro-stat-val" id="gyro-live-roll">R: 0.0°</span>
+                  <span class="gyro-stat-badge" id="gyro-live-mode">STEER</span>
+                  <span class="gyro-stat-val" id="gyro-live-pitch">P: 0.0°</span>
+                </div>
+              </div>
+              <div class="gp-center-instructions">
+                <span id="gp-gyro-quick-desc">Tilt Phone to Steer / Aim</span>
+              </div>
             </div>
           </div>
 
@@ -638,23 +1075,35 @@
           <div class="gp-col gp-col-right">
             <div class="gp-control-pod gp-action-pod" data-elem-id="elem-actions">
               <span class="gp-pod-label" id="gp-action-diamond-label">🎯 ACTION BUTTONS</span>
-              <div class="gp-abxy-diamond" id="gp-action-diamond">
-                <button type="button" class="gp-action-btn btn-y" data-gp="y" title="Y / Use / Switch Weapon">
-                  <span class="gp-btn-jewel">Y</span>
+              <div class="gp-abxy-diamond monect-abxy-diamond" id="gp-action-diamond">
+                <button type="button" class="gp-action-btn btn-y monect-jewel-btn" data-gp="y" title="Y / Use / Switch Weapon">
+                  <span class="gp-jewel-bezel">
+                    <span class="gp-btn-jewel">Y</span>
+                    <span class="gp-jewel-glare"></span>
+                  </span>
                   <span class="gp-action-sublabel" id="sub-y">USE</span>
                 </button>
                 <div class="gp-abxy-mid-row">
-                  <button type="button" class="gp-action-btn btn-x" data-gp="x" title="X / Reload / Interact">
-                    <span class="gp-btn-jewel">X</span>
+                  <button type="button" class="gp-action-btn btn-x monect-jewel-btn" data-gp="x" title="X / Reload / Interact">
+                    <span class="gp-jewel-bezel">
+                      <span class="gp-btn-jewel">X</span>
+                      <span class="gp-jewel-glare"></span>
+                    </span>
                     <span class="gp-action-sublabel" id="sub-x">RELOAD</span>
                   </button>
-                  <button type="button" class="gp-action-btn btn-b" data-gp="b" title="B / Crouch / Cancel">
-                    <span class="gp-btn-jewel">B</span>
+                  <button type="button" class="gp-action-btn btn-b monect-jewel-btn" data-gp="b" title="B / Crouch / Cancel">
+                    <span class="gp-jewel-bezel">
+                      <span class="gp-btn-jewel">B</span>
+                      <span class="gp-jewel-glare"></span>
+                    </span>
                     <span class="gp-action-sublabel" id="sub-b">CROUCH</span>
                   </button>
                 </div>
-                <button type="button" class="gp-action-btn btn-a" data-gp="a" title="A / Jump / Accept">
-                  <span class="gp-btn-jewel">A</span>
+                <button type="button" class="gp-action-btn btn-a monect-jewel-btn" data-gp="a" title="A / Jump / Accept">
+                  <span class="gp-jewel-bezel">
+                    <span class="gp-btn-jewel">A</span>
+                    <span class="gp-jewel-glare"></span>
+                  </span>
                   <span class="gp-action-sublabel" id="sub-a">JUMP</span>
                 </button>
               </div>
@@ -663,12 +1112,16 @@
             <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-right-stick">
               <span class="gp-pod-label" id="gp-right-stick-label">🕹️ AIM / CAMERA (RIGHT STICK)</span>
               <div class="gp-stick-zone" id="gp-right-stick-zone">
-                <div class="gp-stick-base gp-look-base">
+                <div class="gp-stick-base gp-look-base monect-stick-base">
                   <div class="gp-stick-ticks">
-                    <span></span><span></span><span></span><span></span>
+                    <span class="tick-0"></span><span class="tick-90"></span><span class="tick-180"></span><span class="tick-270"></span>
                   </div>
-                  <div class="gp-stick-thumb" id="gp-right-thumb">
+                  <div class="gp-stick-gimbal-ring"></div>
+                  <div class="gp-stick-thumb monect-stick-thumb" id="gp-right-thumb">
                     <div class="thumb-grip-ring"></div>
+                    <div class="thumb-cross-notches">
+                      <span></span><span></span><span></span><span></span>
+                    </div>
                     <div class="thumb-center-dot"></div>
                   </div>
                 </div>
@@ -700,27 +1153,67 @@
             <span class="gp-tool-val" id="gp-size-val">100%</span>
           </div>
           <div class="gp-toolbar-sec gp-toolbar-actions-sec">
-            <button type="button" class="gp-tool-btn gp-tool-warn" id="btn-gp-delete-selected" style="display: none;" title="Remove Selected Control">🗑️ Remove</button>
-            <button type="button" class="gp-tool-btn gp-tool-accent" id="btn-gp-open-add-modal" title="Add Control / Button">➕ Add</button>
-            <button type="button" class="gp-tool-btn" id="btn-gp-reset-layout" title="Reset to Factory Defaults">🔄 Reset</button>
-            <button type="button" class="gp-tool-btn gp-tool-save" id="btn-gp-save-layout" title="Save Custom Setup">💾 Save</button>
-            <button type="button" class="gp-tool-btn gp-tool-exit" id="btn-gp-exit-editor" title="Exit Edit Mode">✓ Done</button>
+            <button type="button" class="gp-tool-btn gp-tool-warn" id="btn-gp-delete-selected" style="display: none;" title="Remove Selected Control">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-trash"/></svg>
+              <span>Remove</span>
+            </button>
+            <button type="button" class="gp-tool-btn gp-tool-accent" id="btn-gp-open-add-modal" title="Add Control / Button">
+              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Add</span>
+            </button>
+            <button type="button" class="gp-tool-btn" id="btn-gp-reset-layout" title="Reset to Factory Defaults">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-refresh"/></svg>
+              <span>Reset</span>
+            </button>
+            <button type="button" class="gp-tool-btn gp-tool-save" id="btn-gp-save-layout" title="Save Custom Setup">
+              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span>Save</span>
+            </button>
+            <button type="button" class="gp-tool-btn gp-tool-exit" id="btn-gp-exit-editor" title="Exit Edit Mode">
+              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Done</span>
+            </button>
           </div>
         </div>
 
         <!-- Bottom Console Mode Selection & Quick Settings Bar -->
         <div class="gp-bottom-preset-bar" id="gp-bottom-preset-bar">
           <div class="gp-preset-selector">
-            <button type="button" class="gp-preset-chip active" data-preset="xbox" title="Xbox 360 / Series X Layout">🎮 XBOX 360</button>
-            <button type="button" class="gp-preset-chip" data-preset="ps" title="PlayStation DualShock / DualSense Layout">🎮 PLAYSTATION</button>
-            <button type="button" class="gp-preset-chip" data-preset="racing" title="Racing Wheel & Pedals Layout">🏎️ RACING</button>
-            <button type="button" class="gp-preset-chip" data-preset="wasd" title="PC Keyboard WASD & Mouse Layout">⌨️ WASD/FPS</button>
+            <button type="button" class="gp-preset-chip active" data-preset="xbox" title="Xbox 360 / Series X Layout">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
+              <span>XBOX 360</span>
+            </button>
+            <button type="button" class="gp-preset-chip" data-preset="ps" title="PlayStation DualShock / DualSense Layout">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
+              <span>PLAYSTATION</span>
+            </button>
+            <button type="button" class="gp-preset-chip" data-preset="racing" title="Racing Wheel & Pedals Layout">
+              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/></svg>
+              <span>RACING</span>
+            </button>
+            <button type="button" class="gp-preset-chip" data-preset="wasd" title="PC Keyboard WASD & Mouse Layout">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-keys"/></svg>
+              <span>WASD/FPS</span>
+            </button>
           </div>
           <div class="gp-quick-settings">
-            <button type="button" id="btn-gp-edit-layout" class="gp-mini-chip" style="background: rgba(0, 240, 255, 0.18); border-color: var(--neo-cyan); color: #fff;" title="Customize & Edit Gamepad Layout">✏️ Edit Layout</button>
+            <button type="button" id="btn-gp-gyro-bottom-chip" class="gp-mini-chip" style="background: rgba(0, 255, 102, 0.15); border-color: var(--neo-lime); color: var(--neo-lime);" title="Toggle Gyro Super (Tilt Steering & Aiming)">
+              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20M2 12a10 10 0 0 0 20 0"/></svg>
+              <span>Gyro: ON</span>
+            </button>
+            <button type="button" id="btn-gp-edit-layout" class="gp-mini-chip" style="background: rgba(0, 240, 255, 0.18); border-color: var(--neo-cyan); color: #fff;" title="Customize & Edit Gamepad Layout">
+              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span>Edit Layout</span>
+            </button>
             <button type="button" id="btn-gp-sens-toggle" class="gp-mini-chip" title="Stick Sensitivity (1.0x / 1.5x / 2.0x)">Sens: 1.0x</button>
-            <button type="button" id="btn-gp-haptic-toggle" class="gp-mini-chip active" title="Vibration Feedback">📳 Haptics: ON</button>
-            <button type="button" id="btn-return-trackpad" class="gp-mini-chip gp-exit-chip" title="Exit Gamepad & Return to Trackpad">🖱️ Trackpad</button>
+            <button type="button" id="btn-gp-haptic-toggle" class="gp-mini-chip active" title="Vibration Feedback">
+              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="1" y1="5" x2="1" y2="19"/><line x1="23" y1="5" x2="23" y2="19"/></svg>
+              <span>Haptics: ON</span>
+            </button>
+            <button type="button" id="btn-return-trackpad" class="gp-mini-chip gp-exit-chip" title="Exit Gamepad & Return to Trackpad">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-close"/></svg>
+              <span>Trackpad</span>
+            </button>
           </div>
         </div>
       </div>
@@ -729,13 +1222,24 @@
       <div id="gp-add-control-modal" class="cyber-modal-backdrop" style="display: none;">
         <div class="cyber-modal-card gp-add-modal-card">
           <div class="modal-header">
-            <h3>➕ Add Gamepad Control</h3>
-            <button type="button" class="modal-close-btn" id="btn-gp-modal-close">✕</button>
+            <h3>Add Gamepad Control</h3>
+            <button type="button" class="modal-close-btn" id="btn-gp-modal-close">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-close"/></svg>
+            </button>
           </div>
           <div class="gp-add-tabs">
-            <button type="button" class="gp-tab-btn active" data-tab="presets">🎮 Quick Controls</button>
-            <button type="button" class="gp-tab-btn" data-tab="keys">⌨️ PC Keys</button>
-            <button type="button" class="gp-tab-btn" data-tab="custom">⚙️ Custom Key</button>
+            <button type="button" class="gp-tab-btn active" data-tab="presets">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
+              <span>Quick Controls</span>
+            </button>
+            <button type="button" class="gp-tab-btn" data-tab="keys">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-keys"/></svg>
+              <span>PC Keys</span>
+            </button>
+            <button type="button" class="gp-tab-btn" data-tab="custom">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-settings"/></svg>
+              <span>Custom Key</span>
+            </button>
           </div>
 
           <!-- Tab 1: Quick Controls -->
@@ -823,228 +1327,366 @@
           </div>
         </div>
       </div>
+
+      <!-- ================= GYRO SUPER MOTION ENGINE MODAL ================= -->
+      <div id="gp-gyro-super-modal" class="cyber-modal-backdrop" style="display: none;">
+        <div class="cyber-modal-card gp-gyro-modal-card">
+          <div class="modal-header">
+            <h3>⚡ Gyro Super Motion Engine</h3>
+            <button type="button" class="modal-close-btn" id="btn-gp-gyro-modal-close">✕</button>
+          </div>
+          <div class="gyro-modal-body">
+            <!-- Master Switch & Quick Calibrate -->
+            <div class="gyro-master-row">
+              <div class="gyro-master-toggle-box">
+                <span class="gyro-master-title">Gyro Super Motion</span>
+                <span class="gyro-master-subtitle">Control steering & aim with phone tilt</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="gyro-master-enable" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="gyro-quick-actions">
+              <button type="button" class="gyro-action-btn gyro-btn-calib" id="btn-modal-gyro-calib">
+                <span>🎯</span> Calibrate Neutral Center
+              </button>
+              <span class="gyro-calib-hint">Hold phone at comfortable angle and tap Center</span>
+            </div>
+
+            <!-- Mode Selection -->
+            <div class="gyro-section">
+              <label class="gyro-sec-label">Motion Target Mode:</label>
+              <div class="gyro-mode-grid">
+                <button type="button" class="gyro-mode-card active" data-gyro-mode="steer">
+                  <span class="mode-icon">🏎️</span>
+                  <span class="mode-name">Gyro Steering</span>
+                  <span class="mode-sub">Left Stick / Wheel</span>
+                </button>
+                <button type="button" class="gyro-mode-card" data-gyro-mode="aim">
+                  <span class="mode-icon">🎯</span>
+                  <span class="mode-name">Gyro Aim</span>
+                  <span class="mode-sub">Right Stick (Console FPS)</span>
+                </button>
+                <button type="button" class="gyro-mode-card" data-gyro-mode="mouse">
+                  <span class="mode-icon">🖱️</span>
+                  <span class="mode-name">Air Mouse</span>
+                  <span class="mode-sub">Raw Mouse Delta (PC FPS)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Activation Trigger -->
+            <div class="gyro-section">
+              <label class="gyro-sec-label">Engagement Trigger:</label>
+              <div class="gyro-trigger-options">
+                <label class="gyro-radio-label">
+                  <input type="radio" name="gyro-trigger-type" value="always" checked>
+                  <span>⚡ Always Active (Continuous)</span>
+                </label>
+                <label class="gyro-radio-label">
+                  <input type="radio" name="gyro-trigger-type" value="ads">
+                  <span>🎯 Hold LT / L2 to Aim (ADS Mode)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Super Sensitivity Multiplier -->
+            <div class="gyro-section">
+              <div class="gyro-slider-header">
+                <label class="gyro-sec-label">Super Sensitivity Multiplier:</label>
+                <span class="gyro-slider-val" id="gyro-sens-text">1.5x</span>
+              </div>
+              <div class="hud-quick-pills gyro-sens-pills">
+                <button type="button" class="gp-pill-btn" data-sens="1.0">1.0x</button>
+                <button type="button" class="gp-pill-btn active" data-sens="1.5">1.5x</button>
+                <button type="button" class="gp-pill-btn" data-sens="2.0">2.0x</button>
+                <button type="button" class="gp-pill-btn" data-sens="3.0">3.0x SUPER</button>
+                <button type="button" class="gp-pill-btn" data-sens="4.0">4.0x ULTRA</button>
+              </div>
+              <input type="range" id="gyro-sens-slider" min="0.5" max="4.0" step="0.1" value="1.5" class="gp-tool-slider">
+            </div>
+
+            <!-- Deadzone & Smoothing -->
+            <div class="gyro-dual-sliders">
+              <div class="gyro-slider-col">
+                <div class="gyro-slider-header">
+                  <label class="gyro-sec-label">Deadzone (Noise filter):</label>
+                  <span class="gyro-slider-val" id="gyro-deadzone-text">0.8°</span>
+                </div>
+                <input type="range" id="gyro-deadzone-slider" min="0.1" max="3.0" step="0.1" value="0.8" class="gp-tool-slider">
+              </div>
+              <div class="gyro-slider-col">
+                <div class="gyro-slider-header">
+                  <label class="gyro-sec-label">Smoothing (EMA):</label>
+                  <span class="gyro-slider-val" id="gyro-smooth-text">65%</span>
+                </div>
+                <input type="range" id="gyro-smooth-slider" min="10" max="95" step="5" value="65" class="gp-tool-slider">
+              </div>
+            </div>
+
+            <!-- Invert Toggles -->
+            <div class="gyro-toggles-row">
+              <label class="gyro-toggle-item">
+                <input type="checkbox" id="gyro-invert-x">
+                <span>Invert Roll / Steer (X)</span>
+              </label>
+              <label class="gyro-toggle-item">
+                <input type="checkbox" id="gyro-invert-y">
+                <span>Invert Pitch / Aim (Y)</span>
+              </label>
+            </div>
+
+            <!-- Live Horizon Gimbal Preview in Modal -->
+            <div class="gyro-preview-box">
+              <div class="gyro-preview-gimbal">
+                <div class="gyro-preview-horizon" id="modal-gyro-horizon-line"></div>
+                <div class="gyro-preview-cross"></div>
+              </div>
+              <div class="gyro-preview-text">
+                <span id="modal-live-roll">Roll: 0.0°</span> | <span id="modal-live-pitch">Pitch: 0.0°</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-primary" id="btn-gp-gyro-done">Done</button>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- ================= TAB 3: ⌨️ KEYBOARD & SHORTCUTS ================= -->
     <!-- ================= TAB 3: ⌨️ KEYS, NUMPAD & NAVIGATION ================= -->
     <section id="tab-keyboard" class="tab-view">
       <div class="scroll-container">
-        <!-- 🔴 Dual Typing Mode: Live Interactive PC Keyboard + Quick Text Sender -->
-        <div class="neo-card card-full-span" style="border-color: var(--neo-lime); box-shadow: 3.5px 3.5px 0px var(--neo-lime);">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <span class="card-header-badge" style="background: var(--neo-lime); color: #000; margin-bottom: 0;">⌨️ Live PC Typing Mode</span>
-            <span style="font-size: 0.65rem; color: var(--neo-lime); font-family: var(--font-mono); font-weight: 800;">REAL-TIME KEYSTROKES</span>
+        <!-- Live PC Typing Mode -->
+        <div class="neo-card card-full-span" style="border-color: rgba(57, 255, 20, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-lime"></span>
+              <span class="card-title-text">Live Typing</span>
+            </div>
+            <span class="mini-status-chip">KEYBOARD</span>
           </div>
-          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin: 2px 0 8px 0;">
-            Tap below to open phone keyboard. Everything you type is sent instantly to your PC!
-          </p>
 
           <!-- Live Real-Time Typing Input Strip -->
           <div class="quick-input-row">
-            <input type="text" id="live-typing-input" class="cyber-input" placeholder="Tap here &amp; type in real-time or paste text / links..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-            <button id="btn-clear-live-text" class="neo-btn btn-dark" style="height: 44px; padding: 0 12px;" title="Clear Field">✕</button>
+            <input type="text" id="live-typing-input" class="cyber-input" placeholder="Tap here to type on PC..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <button id="btn-clear-live-text" class="neo-btn btn-dark" style="height: 42px; padding: 0 12px;" title="Clear Field">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-close"/></svg>
+            </button>
           </div>
 
           <!-- Quick Actions under Live Typing -->
-          <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
-            <button class="grid-key" data-key="space" style="flex: 2; height: 36px; font-size: 0.75rem;">Space ␣</button>
-            <button class="grid-key key-accent" data-key="enter" style="flex: 1.5; height: 36px; font-size: 0.75rem;">↵ Enter</button>
-            <button class="grid-key key-warn" data-key="backspace" style="flex: 1.5; height: 36px; font-size: 0.75rem;">⌫ Bksp</button>
-            <button class="grid-key" data-key="tab" style="flex: 1; height: 36px; font-size: 0.75rem;">Tab ⇥</button>
-            <button class="grid-key key-warn" data-key="escape" style="flex: 1; height: 36px; font-size: 0.75rem;">Esc</button>
+          <div class="live-quick-keys">
+            <button class="grid-key" data-key="space" style="flex: 2;">Space ␣</button>
+            <button class="grid-key key-accent" data-key="enter" style="flex: 1.5;">↵ Enter</button>
+            <button class="grid-key key-warn" data-key="backspace" style="flex: 1.2; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-backspace"/></svg>
+              <span>Bksp</span>
+            </button>
+            <button class="grid-key" data-key="tab" style="flex: 1;">Tab ⇥</button>
+            <button class="grid-key key-warn" data-key="escape" style="flex: 1;">Esc</button>
           </div>
         </div>
 
-        <!-- 🔢 Mechanical Cyber Numpad -->
-        <div class="neo-card" style="border-color: var(--neo-cyan); box-shadow: 3.5px 3.5px 0px var(--neo-cyan);">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span class="card-header-badge" style="background: var(--neo-cyan); color: #000;">🔢 Cyber Numpad</span>
-            <span style="font-size: 0.68rem; color: var(--neo-cyan); font-family: var(--font-mono); font-weight: 800;">17-KEY MECHANICAL</span>
+        <!-- Numeric Keypad -->
+        <div class="neo-card" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-cyan"></span>
+              <span class="card-title-text">Numpad</span>
+            </div>
+            <span class="mini-status-chip">NUMERIC</span>
           </div>
 
           <div class="cyber-numpad-grid">
             <button class="num-key num-fn" data-key="numlock">
               <span class="num-main">NumLk</span>
-              <span class="num-sub">Lock</span>
             </button>
             <button class="num-key num-op" data-key="num_slash">
               <span class="num-main">/</span>
-              <span class="num-sub">Div</span>
             </button>
             <button class="num-key num-op" data-key="num_mult">
               <span class="num-main">*</span>
-              <span class="num-sub">Mul</span>
             </button>
             <button class="num-key num-op" data-key="num_minus">
               <span class="num-main">-</span>
-              <span class="num-sub">Sub</span>
             </button>
 
             <button class="num-key" data-key="num7">
               <span class="num-main">7</span>
-              <span class="num-sub">Home</span>
             </button>
             <button class="num-key" data-key="num8">
               <span class="num-main">8</span>
-              <span class="num-sub">▲</span>
             </button>
             <button class="num-key" data-key="num9">
               <span class="num-main">9</span>
-              <span class="num-sub">PgUp</span>
             </button>
             <button class="num-key num-op" data-key="num_plus">
               <span class="num-main">+</span>
-              <span class="num-sub">Add</span>
             </button>
 
             <button class="num-key" data-key="num4">
               <span class="num-main">4</span>
-              <span class="num-sub">◀</span>
             </button>
             <button class="num-key" data-key="num5">
               <span class="num-main">5</span>
-              <span class="num-sub">•</span>
             </button>
             <button class="num-key" data-key="num6">
               <span class="num-main">6</span>
-              <span class="num-sub">▶</span>
             </button>
-            <button class="num-key num-fn num-warn" data-key="backspace">
-              <span class="num-main">⌫</span>
-              <span class="num-sub">Bksp</span>
+            <button class="num-key num-warn" data-key="backspace" style="display: inline-flex; align-items: center; justify-content: center;">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-backspace"/></svg>
             </button>
 
             <button class="num-key" data-key="num1">
               <span class="num-main">1</span>
-              <span class="num-sub">End</span>
             </button>
             <button class="num-key" data-key="num2">
               <span class="num-main">2</span>
-              <span class="num-sub">▼</span>
             </button>
             <button class="num-key" data-key="num3">
               <span class="num-main">3</span>
-              <span class="num-sub">PgDn</span>
             </button>
             <button class="num-key num-enter" data-key="enter">
               <span class="num-main">↵</span>
-              <span class="num-sub">Enter</span>
             </button>
 
             <button class="num-key num-zero" data-key="num0">
               <span class="num-main">0</span>
-              <span class="num-sub">Ins</span>
             </button>
             <button class="num-key" data-key="num_dot">
               <span class="num-main">.</span>
-              <span class="num-sub">Del</span>
             </button>
             <button class="num-key num-op" data-key="space">
               <span class="num-main">␣</span>
-              <span class="num-sub">Space</span>
             </button>
           </div>
         </div>
 
-        <!-- 🧭 Navigation Pad & Directional Cross Cluster -->
-        <div class="neo-card" style="border-color: var(--neo-yellow); box-shadow: 3.5px 3.5px 0px var(--neo-yellow);">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span class="card-header-badge" style="background: var(--neo-yellow); color: #000;">🧭 Navigation Pad</span>
-            <span style="font-size: 0.68rem; color: var(--neo-yellow); font-family: var(--font-mono); font-weight: 800;">PRECISION D-PAD</span>
+        <!-- Navigation & D-Pad -->
+        <div class="neo-card" style="border-color: rgba(255, 230, 0, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-yellow"></span>
+              <span class="card-title-text">Navigation</span>
+            </div>
+            <span class="mini-status-chip">D-PAD</span>
           </div>
 
-          <!-- 6-Key Document / Page Navigation Cluster -->
+          <!-- Document / Page Navigation Cluster -->
           <div class="nav-cluster-grid">
             <button class="nav-cluster-btn" data-key="insert">
-              <span class="nav-btn-icon">📥</span>
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-insert"/></svg>
               <span>Insert</span>
             </button>
             <button class="nav-cluster-btn" data-key="home">
-              <span class="nav-btn-icon">🏠</span>
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-home"/></svg>
               <span>Home</span>
             </button>
             <button class="nav-cluster-btn" data-key="pageup">
-              <span class="nav-btn-icon">⏫</span>
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-page-up"/></svg>
               <span>Page Up</span>
             </button>
             <button class="nav-cluster-btn nav-btn-warn" data-key="delete">
-              <span class="nav-btn-icon">⌦</span>
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-close"/></svg>
               <span>Delete</span>
             </button>
             <button class="nav-cluster-btn" data-key="end">
-              <span class="nav-btn-icon">🏁</span>
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-end"/></svg>
               <span>End</span>
             </button>
             <button class="nav-cluster-btn" data-key="pagedown">
-              <span class="nav-btn-icon">⏬</span>
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-page-down"/></svg>
               <span>Page Down</span>
             </button>
           </div>
 
-          <!-- Ergonomic Cross D-Pad with Central OK/Enter -->
+          <!-- Ergonomic Cross D-Pad with Central Enter -->
           <div class="cyber-cross-dpad">
             <div class="dpad-spacer"></div>
-            <button class="dpad-arrow-btn dpad-up" data-key="up">
+            <button class="dpad-arrow-btn dpad-up" data-key="up" aria-label="Up">
               <span class="dpad-arrow">▲</span>
-              <span class="dpad-sub">UP</span>
             </button>
             <div class="dpad-spacer"></div>
 
-            <button class="dpad-arrow-btn dpad-left" data-key="left">
+            <button class="dpad-arrow-btn dpad-left" data-key="left" aria-label="Left">
               <span class="dpad-arrow">◀</span>
-              <span class="dpad-sub">LEFT</span>
             </button>
-            <button class="dpad-center-btn" data-key="enter">
+            <button class="dpad-center-btn" data-key="enter" aria-label="Enter">
               <span class="dpad-center-icon">↵</span>
-              <span class="dpad-center-sub">ENTER</span>
             </button>
-            <button class="dpad-arrow-btn dpad-right" data-key="right">
+            <button class="dpad-arrow-btn dpad-right" data-key="right" aria-label="Right">
               <span class="dpad-arrow">▶</span>
-              <span class="dpad-sub">RIGHT</span>
             </button>
 
             <div class="dpad-spacer"></div>
-            <button class="dpad-arrow-btn dpad-down" data-key="down">
+            <button class="dpad-arrow-btn dpad-down" data-key="down" aria-label="Down">
               <span class="dpad-arrow">▼</span>
-              <span class="dpad-sub">DOWN</span>
             </button>
             <div class="dpad-spacer"></div>
           </div>
         </div>
 
-        <!-- ⌨️ Essential Modifier Keys & System Hotkeys -->
-        <div class="neo-card">
-          <span class="card-header-badge">Essential Modifiers</span>
+        <!-- Essential Modifier Keys & System Hotkeys -->
+        <div class="neo-card" style="border-color: rgba(255, 42, 133, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-pink"></span>
+              <span class="card-title-text">Modifiers</span>
+            </div>
+            <span class="mini-status-chip">SYSTEM</span>
+          </div>
           <div class="keys-matrix-4">
             <button class="grid-key key-warn" data-key="escape">Esc</button>
             <button class="grid-key" data-key="tab">Tab ⇥</button>
             <button class="grid-key" data-key="win">⊞ Win</button>
             <button class="grid-key" data-key="capslock">Caps</button>
-            <button class="grid-key key-warn" data-key="backspace">⌫ Bksp</button>
-            <button class="grid-key" data-key="delete">Del ⌦</button>
+            <button class="grid-key key-warn" data-key="backspace" style="display: inline-flex; align-items: center; justify-content: center; gap: 3px;">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-backspace"/></svg>
+              <span>Bksp</span>
+            </button>
+            <button class="grid-key" data-key="delete" style="display: inline-flex; align-items: center; justify-content: center; gap: 3px;">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-close"/></svg>
+              <span>Del</span>
+            </button>
             <button class="grid-key" data-key="space">Space ␣</button>
             <button class="grid-key key-accent" data-key="enter">↵ Enter</button>
           </div>
         </div>
 
-        <!-- 📋 Clipboard & Editing Hotkeys -->
-        <div class="neo-card">
-          <span class="card-header-badge">Editing &amp; Clipboard</span>
+        <!-- Clipboard & Editing Hotkeys -->
+        <div class="neo-card" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-cyan"></span>
+              <span class="card-title-text">Shortcuts</span>
+            </div>
+            <span class="mini-status-chip">CLIPBOARD</span>
+          </div>
           <div class="keys-matrix-4">
-            <button class="grid-key key-cyan" data-hotkey="ctrl+c">Ctrl+C (Copy)</button>
-            <button class="grid-key key-cyan" data-hotkey="ctrl+v">Ctrl+V (Paste)</button>
-            <button class="grid-key key-cyan" data-hotkey="ctrl+x">Ctrl+X (Cut)</button>
-            <button class="grid-key key-cyan" data-hotkey="ctrl+a">Ctrl+A (Select)</button>
-            <button class="grid-key key-cyan" data-hotkey="ctrl+z">Ctrl+Z (Undo)</button>
-            <button class="grid-key key-cyan" data-hotkey="ctrl+y">Ctrl+Y (Redo)</button>
-            <button class="grid-key key-cyan" data-hotkey="ctrl+s">Ctrl+S (Save)</button>
-            <button class="grid-key key-warn" data-hotkey="alt+f4">Alt+F4 (Close)</button>
+            <button class="grid-key key-cyan" data-hotkey="ctrl+c">Ctrl+C</button>
+            <button class="grid-key key-cyan" data-hotkey="ctrl+v">Ctrl+V</button>
+            <button class="grid-key key-cyan" data-hotkey="ctrl+x">Ctrl+X</button>
+            <button class="grid-key key-cyan" data-hotkey="ctrl+a">Ctrl+A</button>
+            <button class="grid-key key-cyan" data-hotkey="ctrl+z">Ctrl+Z</button>
+            <button class="grid-key key-cyan" data-hotkey="ctrl+y">Ctrl+Y</button>
+            <button class="grid-key key-cyan" data-hotkey="ctrl+s">Ctrl+S</button>
+            <button class="grid-key key-warn" data-hotkey="alt+f4">Alt+F4</button>
           </div>
         </div>
 
-        <!-- 🎮 Function Keys Bar (F1 - F12) -->
-        <div class="neo-card card-full-span">
-          <span class="card-header-badge">Function Keys (F1 - F12)</span>
+        <!-- Function Keys Bar (F1 - F12) -->
+        <div class="neo-card card-full-span" style="border-color: rgba(255, 230, 0, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-yellow"></span>
+              <span class="card-title-text">Function Keys</span>
+            </div>
+            <span class="mini-status-chip">F1 – F12</span>
+          </div>
           <div class="fkeys-grid">
             <button class="fkey-btn" data-key="f1">F1</button>
             <button class="fkey-btn" data-key="f2">F2</button>
@@ -1067,11 +1709,13 @@
     <section id="tab-files" class="tab-view fs-manager-view">
       <!-- 📂 Mode Switcher: PC Files vs Phone Files -->
       <div class="fs-mode-bar">
-        <button id="btn-fs-mode-pc" class="fs-mode-tab active" title="Browse PC Folders and Drives">
-          <span>💻 PC Files</span>
+        <button id="btn-fs-mode-pc" class="fs-mode-tab active" title="Browse PC Folders and Drives" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+          <svg class="deck-icon" width="16" height="16"><use href="#icon-pc"/></svg>
+          <span>PC Files</span>
         </button>
-        <button id="btn-fs-mode-phone" class="fs-mode-tab" title="View Phone Downloads & Send from Phone">
-          <span>📱 Phone Files</span>
+        <button id="btn-fs-mode-phone" class="fs-mode-tab" title="View Phone Downloads & Send from Phone" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+          <svg class="deck-icon" width="16" height="16"><use href="#icon-phone"/></svg>
+          <span>Phone Files</span>
         </button>
       </div>
 
@@ -1080,48 +1724,82 @@
         <!-- Sleek Top Header & Navigation Bar -->
         <div class="fs-nav-header">
           <button id="btn-fs-up" class="neo-btn btn-yellow fs-btn-up" title="Go Up Parent Directory">
-            ⬆️ UP
+            <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            <span>UP</span>
           </button>
           <div id="fs-current-path" class="fs-path-banner" title="Current PC Directory">
-            💻 Received from Phone
+            <svg class="deck-icon" width="14" height="14" style="vertical-align: text-bottom; margin-right: 4px;"><use href="#icon-pc"/></svg>
+            <span>Received from Phone</span>
           </div>
           <div class="fs-header-actions">
-            <button id="btn-fs-refresh" class="neo-icon-btn fs-icon-action" title="Refresh Directory">🔄</button>
-            <button id="btn-fs-new-folder" class="neo-icon-btn fs-icon-action" title="New Folder">➕📁</button>
-            <button id="btn-fs-upload-here" class="neo-btn btn-lime fs-btn-upload">
-              <span>📤</span>
+            <button id="btn-fs-refresh" class="neo-icon-btn fs-icon-action" title="Refresh Directory">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-refresh"/></svg>
+            </button>
+            <button id="btn-fs-new-folder" class="neo-icon-btn fs-icon-action" title="New Folder">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-folder-plus"/></svg>
+            </button>
+            <button id="btn-fs-upload-here" class="neo-btn btn-lime fs-btn-upload" style="display: inline-flex; align-items: center; gap: 5px;">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-send-files"/></svg>
               <span>SEND FILES</span>
+            </button>
+            <button id="btn-fs-toggle-cards" class="neo-icon-btn fs-icon-action fs-cards-toggle-btn" title="Toggle quick places & search cards">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-chevron-up"/></svg>
             </button>
             <input type="file" id="file-picker" multiple style="display: none;">
           </div>
         </div>
 
-        <!-- Quick Places & Drives Bar -->
-        <div class="fs-quick-bar">
-          <div id="fs-places-strip" class="fs-places-strip">
-            <button class="fs-place-chip active" data-path="">📥 Received from Phone</button>
-            <button class="fs-place-chip" data-path="downloads">⬇️ Downloads</button>
-            <button class="fs-place-chip" data-path="desktop">🖥️ Desktop</button>
-            <button class="fs-place-chip" data-path="documents">📄 Documents</button>
-            <button class="fs-place-chip" data-path="pictures">🖼️ Pictures</button>
-            <button class="fs-place-chip" data-path="videos">🎥 Videos</button>
+        <!-- Collapsible Top Cards Group (Auto-collapses on scroll) -->
+        <div id="fs-pc-collapsible-cards" class="fs-collapsible-group">
+          <!-- Quick Places & Drives Bar -->
+          <div class="fs-quick-bar">
+            <div id="fs-places-strip" class="fs-places-strip">
+              <button class="fs-place-chip active" data-path="">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-phone"/></svg>
+                <span>Received from Phone</span>
+              </button>
+              <button class="fs-place-chip" data-path="downloads">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-download"/></svg>
+                <span>Downloads</span>
+              </button>
+              <button class="fs-place-chip" data-path="desktop">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-pc"/></svg>
+                <span>Desktop</span>
+              </button>
+              <button class="fs-place-chip" data-path="documents">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-file"/></svg>
+                <span>Documents</span>
+              </button>
+              <button class="fs-place-chip" data-path="pictures">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-image"/></svg>
+                <span>Pictures</span>
+              </button>
+              <button class="fs-place-chip" data-path="videos">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-video"/></svg>
+                <span>Videos</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Live Search & Item Count Bar with Tip -->
-        <div class="fs-search-strip">
-          <div class="fs-search-wrapper">
-            <span class="fs-search-icon">🔍</span>
-            <input type="text" id="fs-search-input" class="cyber-input fs-search-input-field" placeholder="Search files & folders...">
+          <!-- Live Search & Item Count Bar with Tip -->
+          <div class="fs-search-strip">
+            <div class="fs-search-wrapper">
+              <span class="fs-search-icon">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-search"/></svg>
+              </span>
+              <input type="text" id="fs-search-input" class="cyber-input fs-search-input-field" placeholder="Search files & folders...">
+            </div>
+            <span id="fs-item-count" class="fs-count-badge">0 items</span>
           </div>
-          <span id="fs-item-count" class="fs-count-badge">0 items</span>
-        </div>
 
-        <div id="fs-tip-strip" class="fs-tip-strip">
-          <div class="fs-tip-content">
-            <span>💡 <b>Tip:</b> Check ☑ to select • Tap 📥 Save to download • Tap 📁 to open</span>
+          <div id="fs-tip-strip" class="fs-tip-strip">
+            <div class="fs-tip-content">
+              <span>Check to select • Tap Save to download • Tap to open folder</span>
+            </div>
+            <button id="btn-fs-dismiss-tip" class="fs-tip-close" title="Dismiss tip">
+              <svg class="deck-icon" width="12" height="12"><use href="#icon-close"/></svg>
+            </button>
           </div>
-          <button id="btn-fs-dismiss-tip" class="fs-tip-close" title="Dismiss tip">✕</button>
         </div>
 
         <!-- 📦 Multi-Select / Marked Batch Actions Bar (One-by-One Queue Download) -->
@@ -1132,14 +1810,16 @@
           </div>
           <div class="fs-batch-right">
             <button id="btn-fs-batch-download" class="neo-btn btn-cyan fs-batch-action-btn" title="Download marked files one-by-one directly to phone">
-              <span>📥</span>
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-download"/></svg>
               <span id="fs-batch-dl-label">SAVE TO PHONE</span>
             </button>
             <button id="btn-fs-batch-delete" class="neo-btn btn-pink fs-batch-action-btn" title="Delete marked files on PC">
-              <span>🗑️</span>
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-trash"/></svg>
               <span>DELETE</span>
             </button>
-            <button id="btn-fs-batch-clear" class="neo-icon-btn fs-batch-close-btn" title="Unmark all">✕</button>
+            <button id="btn-fs-batch-clear" class="neo-icon-btn fs-batch-close-btn" title="Unmark all">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-close"/></svg>
+            </button>
           </div>
         </div>
 
@@ -1147,12 +1827,17 @@
         <div id="pc-file-transfer-box" class="file-transfer-card" style="display: none;">
           <div class="transfer-header-row">
             <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
-              <span class="transfer-badge badge-upload">📤 UPLOAD</span>
+              <span class="transfer-badge badge-upload">
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-file-up"/></svg>
+                UPLOAD
+              </span>
               <span class="transfer-filename">file.zip</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="transfer-percent">0%</span>
-              <button class="neo-icon-btn transfer-close-btn" style="width: 22px; height: 22px; font-size: 0.7rem; border-radius: 4px; padding: 0;" title="Dismiss">✕</button>
+              <button class="neo-icon-btn transfer-close-btn" style="width: 22px; height: 22px; font-size: 0.7rem; border-radius: 4px; padding: 0;" title="Dismiss">
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-close"/></svg>
+              </button>
             </div>
           </div>
           <div class="transfer-track">
@@ -1163,10 +1848,12 @@
             <div style="display: flex; align-items: center; gap: 6px;">
               <span class="transfer-speed">-- MB/s</span>
               <button id="btn-transfer-open-phone" class="neo-btn btn-lime" data-transfer-action="open-phone" style="display: none; height: 26px; font-size: 0.65rem; padding: 2px 8px; font-weight: 800;" title="Open in Phone File Manager">
-                📂 SHOW IN PHONE FILES
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-phone"/></svg>
+                <span>SHOW IN PHONE FILES</span>
               </button>
               <button id="btn-transfer-open-pc" class="neo-btn btn-cyan" data-transfer-action="open-pc" style="display: none; height: 26px; font-size: 0.65rem; padding: 2px 8px; font-weight: 800;" title="Reveal in Windows File Explorer">
-                📂 OPEN ON PC
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-folder"/></svg>
+                <span>OPEN ON PC</span>
               </button>
             </div>
           </div>
@@ -1175,7 +1862,7 @@
         <!-- Interactive File & Folder Browser Container -->
         <div id="fs-browser-items" class="fs-browser-container">
           <div class="empty-files-placeholder">
-            <span>📂</span>
+            <svg class="deck-icon" width="40" height="40" style="opacity: 0.6;"><use href="#icon-folder"/></svg>
             <p>Loading files from PC...</p>
           </div>
         </div>
@@ -1186,55 +1873,95 @@
         <!-- Top Header & Navigation Bar for Phone Files -->
         <div class="fs-nav-header">
           <button id="btn-phone-fs-up" class="neo-btn btn-yellow fs-btn-up" title="Go Up Parent Folder on Phone">
-            ⬆️ UP
+            <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            <span>UP</span>
           </button>
           <div id="phone-fs-current-path" class="fs-path-banner" title="Current Phone Directory">
-            📱 Received from PC
+            <svg class="deck-icon" width="14" height="14" style="vertical-align: text-bottom; margin-right: 4px;"><use href="#icon-phone"/></svg>
+            <span>Received from PC</span>
           </div>
           <div class="fs-header-actions">
-            <button id="btn-phone-fs-refresh" class="neo-icon-btn fs-icon-action" title="Refresh Phone Files">🔄</button>
-            <button id="btn-phone-fs-new-folder" class="neo-icon-btn fs-icon-action" title="New Folder on Phone">➕📁</button>
-            <button id="btn-phone-fs-upload-to-pc" class="neo-btn btn-cyan fs-btn-upload" title="Select files from phone to send to PC">
-              <span>📤</span>
+            <button id="btn-phone-fs-refresh" class="neo-icon-btn fs-icon-action" title="Refresh Phone Files">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-refresh"/></svg>
+            </button>
+            <button id="btn-phone-fs-new-folder" class="neo-icon-btn fs-icon-action" title="New Folder on Phone">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-folder-plus"/></svg>
+            </button>
+            <button id="btn-phone-fs-upload-to-pc" class="neo-btn btn-cyan fs-btn-upload" title="Select files from phone to send to PC" style="display: inline-flex; align-items: center; gap: 5px;">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-file-up"/></svg>
               <span>SEND TO PC</span>
+            </button>
+            <button id="btn-phone-fs-toggle-cards" class="neo-icon-btn fs-icon-action fs-cards-toggle-btn" title="Toggle quick places & search cards">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-chevron-up"/></svg>
             </button>
           </div>
         </div>
 
-        <!-- Quick Places Bar for Phone Storage -->
-        <div class="fs-quick-bar">
-          <div id="phone-fs-places-strip" class="fs-places-strip">
-            <button class="fs-place-chip phone-place-chip active" data-phone-path="default">📥 Received from PC</button>
-            <button class="fs-place-chip phone-place-chip" data-phone-path="root">📱 Internal Storage</button>
-            <button class="fs-place-chip phone-place-chip" data-phone-path="dcim">📸 Camera / DCIM</button>
-            <button class="fs-place-chip phone-place-chip" data-phone-path="pictures">🖼️ Pictures</button>
-            <button class="fs-place-chip phone-place-chip" data-phone-path="movies">🎬 Videos</button>
-            <button class="fs-place-chip phone-place-chip" data-phone-path="downloads">⬇️ Downloads</button>
-            <button class="fs-place-chip phone-place-chip" data-phone-path="documents">📄 Documents</button>
-            <button class="fs-place-chip phone-place-chip" data-phone-path="music">🎵 Music</button>
+        <!-- Collapsible Top Cards Group for Phone Files (Auto-collapses on scroll) -->
+        <div id="phone-fs-collapsible-cards" class="fs-collapsible-group">
+          <!-- Quick Places Bar for Phone Storage -->
+          <div class="fs-quick-bar">
+            <div id="phone-fs-places-strip" class="fs-places-strip">
+              <button class="fs-place-chip phone-place-chip active" data-phone-path="default">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-pc"/></svg>
+                <span>Received from PC</span>
+              </button>
+              <button class="fs-place-chip phone-place-chip" data-phone-path="root">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-phone"/></svg>
+                <span>Internal Storage</span>
+              </button>
+              <button class="fs-place-chip phone-place-chip" data-phone-path="dcim">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg>
+                <span>Camera / DCIM</span>
+              </button>
+              <button class="fs-place-chip phone-place-chip" data-phone-path="pictures">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-image"/></svg>
+                <span>Pictures</span>
+              </button>
+              <button class="fs-place-chip phone-place-chip" data-phone-path="movies">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-video"/></svg>
+                <span>Videos</span>
+              </button>
+              <button class="fs-place-chip phone-place-chip" data-phone-path="downloads">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-download"/></svg>
+                <span>Downloads</span>
+              </button>
+              <button class="fs-place-chip phone-place-chip" data-phone-path="documents">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-file"/></svg>
+                <span>Documents</span>
+              </button>
+              <button class="fs-place-chip phone-place-chip" data-phone-path="music">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-music"/></svg>
+                <span>Music</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Storage Permission Notice Banner if limited -->
-        <div id="phone-fs-permission-banner" class="fs-permission-banner" style="display: none;">
-          <span>⚠️ Storage access is limited. Tap to enable All Files Access:</span>
-          <button id="btn-grant-storage" class="neo-btn btn-lime" style="padding: 4px 10px; font-size: 0.72rem; font-weight: 800;">GRANT ACCESS</button>
-        </div>
-
-        <!-- Live Search & Count Bar for Phone Files -->
-        <div class="fs-search-strip">
-          <div class="fs-search-wrapper">
-            <span class="fs-search-icon">🔍</span>
-            <input type="text" id="phone-fs-search-input" class="cyber-input fs-search-input-field" placeholder="Search phone files & folders...">
+          <!-- Storage Permission Notice Banner if limited -->
+          <div id="phone-fs-permission-banner" class="fs-permission-banner" style="display: none;">
+            <span>Storage access is limited. Tap to enable All Files Access:</span>
+            <button id="btn-grant-storage" class="neo-btn btn-lime" style="padding: 4px 10px; font-size: 0.72rem; font-weight: 800;">GRANT ACCESS</button>
           </div>
-          <span id="phone-fs-item-count" class="fs-count-badge">0 items</span>
-        </div>
 
-        <div id="phone-fs-tip-strip" class="fs-tip-strip">
-          <div class="fs-tip-content">
-            <span>📱 <b>Phone Storage:</b> Tap 📁 to open • Tap 📱 to preview • Tap 📤 PC to send to PC</span>
+          <!-- Live Search & Count Bar for Phone Files -->
+          <div class="fs-search-strip">
+            <div class="fs-search-wrapper">
+              <span class="fs-search-icon">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-search"/></svg>
+              </span>
+              <input type="text" id="phone-fs-search-input" class="cyber-input fs-search-input-field" placeholder="Search phone files & folders...">
+            </div>
+            <span id="phone-fs-item-count" class="fs-count-badge">0 items</span>
           </div>
-          <button id="btn-phone-dismiss-tip" class="fs-tip-close" title="Dismiss tip">✕</button>
+
+          <div id="phone-fs-tip-strip" class="fs-tip-strip">
+            <div class="fs-tip-content">
+              <span>Tap to open • Tap to preview • Tap Send to PC</span>
+            </div>
+            <button id="btn-phone-dismiss-tip" class="fs-tip-close" title="Dismiss tip">
+              <svg class="deck-icon" width="12" height="12"><use href="#icon-close"/></svg>
+            </button>
+          </div>
         </div>
 
         <!-- Multi-Select Batch Bar for Phone Files -->
@@ -1245,14 +1972,16 @@
           </div>
           <div class="fs-batch-right">
             <button id="btn-phone-fs-batch-send-pc" class="neo-btn btn-lime fs-batch-action-btn" title="Send marked phone files to PC">
-              <span>📤</span>
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-send-files"/></svg>
               <span id="phone-fs-batch-send-label">SEND TO PC</span>
             </button>
             <button id="btn-phone-fs-batch-delete" class="neo-btn btn-pink fs-batch-action-btn" title="Delete marked files on Phone">
-              <span>🗑️</span>
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-trash"/></svg>
               <span>DELETE</span>
             </button>
-            <button id="btn-phone-fs-batch-clear" class="neo-icon-btn fs-batch-close-btn" title="Unmark all">✕</button>
+            <button id="btn-phone-fs-batch-clear" class="neo-icon-btn fs-batch-close-btn" title="Unmark all">
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-close"/></svg>
+            </button>
           </div>
         </div>
 
@@ -1260,12 +1989,17 @@
         <div id="phone-file-transfer-box" class="file-transfer-card" style="display: none;">
           <div class="transfer-header-row">
             <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
-              <span class="transfer-badge badge-upload">📤 UPLOAD</span>
+              <span class="transfer-badge badge-upload">
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-file-up"/></svg>
+                UPLOAD
+              </span>
               <span class="transfer-filename">file.zip</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="transfer-percent">0%</span>
-              <button class="neo-icon-btn transfer-close-btn" style="width: 22px; height: 22px; font-size: 0.7rem; border-radius: 4px; padding: 0;" title="Dismiss">✕</button>
+              <button class="neo-icon-btn transfer-close-btn" style="width: 22px; height: 22px; font-size: 0.7rem; border-radius: 4px; padding: 0;" title="Dismiss">
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-close"/></svg>
+              </button>
             </div>
           </div>
           <div class="transfer-track">
@@ -1276,10 +2010,12 @@
             <div style="display: flex; align-items: center; gap: 6px;">
               <span class="transfer-speed">-- MB/s</span>
               <button class="neo-btn btn-lime" data-transfer-action="open-phone" style="display: none; height: 26px; font-size: 0.65rem; padding: 2px 8px; font-weight: 800;" title="Open in Phone File Manager">
-                📂 SHOW IN PHONE FILES
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-phone"/></svg>
+                <span>SHOW IN PHONE FILES</span>
               </button>
               <button class="neo-btn btn-cyan" data-transfer-action="open-pc" style="display: none; height: 26px; font-size: 0.65rem; padding: 2px 8px; font-weight: 800;" title="Reveal in Windows File Explorer">
-                📂 OPEN ON PC
+                <svg class="deck-icon" width="12" height="12"><use href="#icon-folder"/></svg>
+                <span>OPEN ON PC</span>
               </button>
             </div>
           </div>
@@ -1288,7 +2024,7 @@
         <!-- Interactive Phone File & Folder Items Container (Takes full viewport height) -->
         <div id="phone-fs-browser-items" class="fs-browser-container">
           <div class="empty-files-placeholder">
-            <span>📱</span>
+            <svg class="deck-icon" width="40" height="40" style="opacity: 0.6;"><use href="#icon-phone"/></svg>
             <p>Loading phone storage...</p>
           </div>
         </div>
@@ -1298,114 +2034,202 @@
     <!-- ================= TAB 5: 🎛️ MEDIA, MIC & WEBCAM ================= -->
     <section id="tab-media" class="tab-view">
       <div class="scroll-container">
-        <!-- ================= WIRELESS PC MICROPHONE CARD ================= -->
-        <div class="neo-card" style="border-color: var(--neo-lime); box-shadow: 4px 4px 0px var(--neo-lime);">
-          <div class="card-header-with-status">
-            <span class="card-header-badge" style="background: var(--neo-lime); color: #000;">🎙️ Wireless PC Microphone</span>
-            <span id="mic-status-badge" class="mini-status-chip offline">OFFLINE</span>
+        <!-- Web Browser Exclusive Recommendation (Visible ONLY on web browser) -->
+        <div class="neo-card web-only-feature" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none; padding: 14px 16px; margin-bottom: 12px; background: rgba(0, 240, 255, 0.05);">
+          <div class="card-header-clean" style="margin-bottom: 6px;">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-cyan"></span>
+              <span class="card-title-text">Hardware Tools</span>
+            </div>
+            <span class="mini-status-chip" style="background: rgba(0, 240, 255, 0.15); color: var(--neo-cyan); border-color: var(--neo-cyan);">APP EXCLUSIVE</span>
           </div>
-          <p class="card-caption" style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 8px 0;">
-            Turns your phone into a studio microphone on Windows (Discord, Zoom, OBS, in-game voice chat).
+          <p style="font-size: 0.74rem; color: #a0aec0; margin: 4px 0 12px 0; line-height: 1.4;">
+            Hardware low-latency Microphone, Webcam, and Gamepad streaming require direct hardware access via the native PCDeck Android App (browsers restrict HTTP hardware access).
           </p>
+          <a href="/PCDeck.apk" download="PCDeck.apk" class="neo-btn btn-cyan" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; font-size: 0.8rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>DOWNLOAD PCDECK APP (1.5 MB)</span>
+          </a>
+        </div>
 
-          <div class="vu-meter-container">
+        <!-- ================= MICROPHONE CARD ================= -->
+        <div id="mic-panel-card" class="neo-card native-only-feature" style="border-color: rgba(57, 255, 20, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-lime"></span>
+              <span class="card-title-text">Microphone</span>
+            </div>
+            <span id="mic-status-badge" class="mini-status-chip offline">STANDBY</span>
+          </div>
+          
+          <!-- Virtual Mic Driver Status / 1-Click Installer -->
+          <div id="mic-driver-banner" class="driver-alert-box" style="display: none; margin: 6px 0 10px 0; padding: 9px 12px; background: rgba(255, 68, 68, 0.12); border: 1px solid rgba(255, 68, 68, 0.35); border-radius: 6px; transition: all 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <span id="mic-driver-status-text" style="font-size: 0.72rem; color: #ff6b6b; font-weight: 700;">Virtual Audio Driver Required</span>
+              <button type="button" id="btn-install-mic-driver" class="neo-btn btn-lime" style="padding: 4px 10px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg>
+                <span>Install Driver</span>
+              </button>
+            </div>
+            <div id="mic-driver-progress-box" style="display: none; margin-top: 8px;">
+              <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden;">
+                <div id="mic-driver-progress-fill" style="width: 0%; height: 100%; background: #39ff14; transition: width 0.4s ease;"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #a0aec0; margin-top: 4px; font-weight: 600;">
+                <span id="mic-driver-stage-text">Preparing installation...</span>
+                <span id="mic-driver-pct-text">0%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="vu-meter-container" style="margin: 10px 0 12px 0;">
             <div class="vu-meter-labels">
-              <span>MIC INPUT LEVEL</span>
-              <span id="vu-meter-db">0 dB</span>
+              <span>INPUT LEVEL</span>
+              <span id="vu-meter-db">-inf dB</span>
             </div>
             <div class="vu-meter-bar">
               <div id="vu-meter-fill" class="vu-meter-fill"></div>
             </div>
           </div>
 
-          <div class="tools-control-row">
+          <div class="tools-control-row" style="display: flex; gap: 8px;">
             <button id="btn-toggle-mic" class="neo-btn btn-lime" style="flex: 1;">
-              <span id="mic-btn-icon">🎙️</span>
-              <span id="mic-btn-text">START TRANSMITTING</span>
+              <span id="mic-btn-icon" class="btn-svg-wrap">
+                <svg class="deck-icon" width="18" height="18"><use href="#icon-mic"/></svg>
+              </span>
+              <span id="mic-btn-text">Transmit Mic</span>
             </button>
             <button id="btn-mute-mic" class="neo-btn btn-dark" style="display: none; padding: 0 14px;">
-              <span>🔇 MUTE</span>
+              <span class="btn-svg-wrap">
+                <svg class="deck-icon" width="18" height="18"><use href="#icon-mute"/></svg>
+              </span>
+              <span>Mute</span>
             </button>
           </div>
 
-          <div class="gain-control-row" style="margin-top: 10px;">
+          <div class="gain-control-row" style="margin-top: 12px;">
             <label style="font-size: 0.75rem; color: #fff;">Input Gain: <span id="mic-gain-val">100%</span></label>
             <input type="range" id="mic-gain-slider" min="0" max="200" value="100" class="cyber-slider">
           </div>
         </div>
 
-        <!-- ================= WIRELESS HD WEBCAM CARD ================= -->
-        <div class="neo-card" style="border-color: var(--neo-cyan); box-shadow: 4px 4px 0px var(--neo-cyan);">
-          <div class="card-header-with-status">
-            <span class="card-header-badge" style="background: var(--neo-cyan); color: #000;">📷 Wireless HD Webcam</span>
-            <span id="cam-status-badge" class="mini-status-chip offline">OFFLINE</span>
+        <!-- ================= CAMERA CARD ================= -->
+        <div id="cam-panel-card" class="neo-card native-only-feature" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-cyan"></span>
+              <span class="card-title-text">Camera</span>
+            </div>
+            <span id="cam-status-badge" class="mini-status-chip offline">STANDBY</span>
           </div>
-          <p class="card-caption" style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 8px 0;">
-            Exposes your phone’s camera as a virtual DirectShow webcam in OBS Studio, Teams, and Google Meet.
-          </p>
 
-          <div class="webcam-preview-box">
-            <video id="webcam-preview-video" autoplay playsinline muted></video>
-            <div id="cam-idle-placeholder" class="cam-placeholder">
-              <span>📷</span>
-              <p>Camera is currently idle</p>
+          <!-- Virtual Camera Driver Status / 1-Click Installer -->
+          <div id="cam-driver-banner" class="driver-alert-box" style="display: none; margin: 6px 0 10px 0; padding: 9px 12px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.28); border-radius: 6px; transition: all 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <span id="cam-driver-status-text" style="font-size: 0.72rem; color: var(--neo-cyan); font-weight: 700;">Virtual Camera Driver Required</span>
+              <button type="button" id="btn-install-cam-driver" class="neo-btn btn-cyan" style="padding: 4px 10px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
+                <svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg>
+                <span>Install Driver</span>
+              </button>
+            </div>
+            <div id="cam-driver-progress-box" style="display: none; margin-top: 8px;">
+              <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden;">
+                <div id="cam-driver-progress-fill" style="width: 0%; height: 100%; background: #00f0ff; transition: width 0.4s ease;"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #a0aec0; margin-top: 4px; font-weight: 600;">
+                <span id="cam-driver-stage-text">Preparing installation...</span>
+                <span id="cam-driver-pct-text">0%</span>
+              </div>
             </div>
           </div>
 
-          <div class="cam-lens-select-row" style="margin: 6px 0; display: flex; gap: 6px;">
-            <select id="cam-device-select" class="cyber-input" style="flex: 1; padding: 6px 8px; font-size: 0.75rem; font-weight: 700;">
-              <option value="environment">Rear Main Camera (Back)</option>
-              <option value="user">Front Selfie Camera</option>
-            </select>
+          <!-- Clean Segmented Lens Selector (Rear vs Front) -->
+          <div class="camera-lens-segment">
+            <button type="button" id="btn-cam-rear" class="cam-segment-btn active" data-facing="environment">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-camera"/></svg>
+              <span>Rear Camera</span>
+            </button>
+            <button type="button" id="btn-cam-front" class="cam-segment-btn" data-facing="user">
+              <svg class="deck-icon" width="16" height="16"><use href="#icon-camera"/></svg>
+              <span>Front Camera</span>
+            </button>
           </div>
 
-          <div class="tools-control-row">
-            <button id="btn-toggle-cam" class="neo-btn btn-cyan" style="flex: 1.5;">
-              <span id="cam-btn-icon">📹</span>
-              <span id="cam-btn-text">START WEBCAM</span>
+          <!-- Hidden select for compatibility with device enumeration logic -->
+          <select id="cam-device-select" style="display: none;">
+            <option value="environment">Rear Camera</option>
+            <option value="user">Front Camera</option>
+          </select>
+
+          <div class="webcam-preview-box">
+            <video id="webcam-preview-video" autoplay playsinline muted style="display: none; transform: none;"></video>
+            <div id="cam-live-indicator" class="cam-live-badge" style="display: none;">
+              <span class="live-dot"></span>
+              <span>LIVE</span>
+            </div>
+            <div id="cam-idle-placeholder" class="cam-placeholder">
+              <div class="cam-placeholder-lens-ring">
+                <svg class="deck-icon" width="44" height="44">
+                  <use href="#icon-camera"/>
+                </svg>
+              </div>
+              <span class="cam-placeholder-title">Camera Standby</span>
+              <span class="cam-placeholder-sub">Tap Start Camera to broadcast video to PC</span>
+            </div>
+          </div>
+
+          <div class="tools-control-row" style="display: flex; gap: 8px;">
+            <button id="btn-toggle-cam" class="neo-btn btn-cyan" style="flex: 1;">
+              <span id="cam-btn-icon" class="btn-svg-wrap">
+                <svg class="deck-icon" width="18" height="18"><use href="#icon-camera"/></svg>
+              </span>
+              <span id="cam-btn-text">Start Camera</span>
             </button>
-            <button id="btn-switch-cam-lens" class="neo-btn btn-dark" title="Switch Next Lens / Sensor" style="display: none; padding: 0 10px;">
-              <span>🔄 LENS</span>
+            <button type="button" id="btn-switch-cam-lens" class="neo-btn btn-dark" title="Switch Lens" style="display: none; padding: 0 12px;">
+              <span class="btn-svg-wrap">
+                <svg class="deck-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              </span>
             </button>
-            <button id="btn-toggle-torch" class="neo-btn btn-yellow" title="Toggle Flash Torch" style="display: none; padding: 0 10px; color: #000; font-weight: 900;">
-              <span>💡 TORCH</span>
+            <button type="button" id="btn-toggle-torch" class="neo-btn btn-yellow" title="Toggle Torch" style="display: none; padding: 0 12px; color: #000;">
+              <span class="btn-svg-wrap">
+                <svg class="deck-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </span>
             </button>
           </div>
 
           <div class="cam-res-selector">
-            <button class="neo-chip-toggle" data-res="480">480p (60 FPS)</button>
-            <button class="neo-chip-toggle active" data-res="720">720p HD (30 FPS)</button>
-            <button class="neo-chip-toggle" data-res="1080" style="color: #ffd700; border-color: #ffd700;">1080p (60 FPS Pro)</button>
+            <button class="neo-chip-toggle" data-res="480">480p</button>
+            <button class="neo-chip-toggle active" data-res="720">720p HD</button>
+            <button class="neo-chip-toggle" data-res="1080" style="color: #ffd700; border-color: #ffd700;">1080p Pro</button>
           </div>
         </div>
 
         <!-- ================= PC AUDIO RECEIVER CARD ================= -->
-        <div class="neo-card" style="border-color: var(--neo-yellow); box-shadow: 4px 4px 0px var(--neo-yellow);">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span class="card-header-badge" style="background: var(--neo-yellow); color: #000;">📻 Live PC Audio</span>
-              <span id="audio-stream-status-badge" class="mini-status-chip offline">OFFLINE</span>
+        <div class="neo-card" style="border-color: rgba(255, 230, 0, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-yellow"></span>
+              <span class="card-title-text">PC Audio</span>
             </div>
+            <span id="audio-stream-status-badge" class="mini-status-chip offline">STANDBY</span>
           </div>
 
-          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin: 4px 0 8px 0;">
-            Hear your Windows PC sound directly on your phone earphones with zero lag.
-          </p>
-
           <!-- Primary Stream Controls Action Row -->
-          <div style="display: flex; gap: 8px;">
-            <button id="btn-toggle-audio-stream" class="neo-btn btn-yellow" style="flex: 1; height: 48px; font-size: 0.9rem; gap: 8px; color: #000; font-weight: 900;">
-              <span id="audio-btn-icon">🔊</span>
-              <span id="audio-btn-label">START HEARING PC AUDIO</span>
+          <div style="display: flex; gap: 8px; margin: 10px 0 12px 0;">
+            <button id="btn-toggle-audio-stream" class="neo-btn btn-yellow" style="flex: 1; height: 46px; gap: 8px; color: #000; font-weight: 800;">
+              <span id="audio-btn-icon" class="btn-svg-wrap">
+                <svg class="deck-icon" width="18" height="18"><use href="#icon-vol-up"/></svg>
+              </span>
+              <span id="audio-btn-label">Listen to PC</span>
             </button>
           </div>
 
           <!-- Audio Volume & Visualizer Panel -->
-          <div id="audio-controls-panel" style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+          <div id="audio-controls-panel" style="display: flex; flex-direction: column; gap: 8px;">
             <div class="setting-item" style="padding: 2px 0;">
               <div>
-                <div class="item-title" style="font-size: 0.8rem;">Phone Audio Volume</div>
-                <div class="item-desc" style="font-size: 0.65rem;">Stream playback output level</div>
+                <div class="item-title" style="font-size: 0.8rem;">Volume</div>
+                <div class="item-desc" style="font-size: 0.65rem;">Earphone output level</div>
               </div>
               <div class="range-box" style="flex: 0 0 140px;">
                 <input type="range" id="audio-volume-slider" min="0" max="1.0" step="0.05" value="1.0" class="cyber-range">
@@ -1423,41 +2247,78 @@
               <div class="eq-bar"></div>
               <div class="eq-bar"></div>
               <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
             </div>
           </div>
         </div>
 
         <!-- ================= MEDIA PLAYBACK CARD ================= -->
-        <div class="neo-card">
-          <span class="card-header-badge">Media Playback</span>
+        <div class="neo-card" style="border-color: rgba(255, 0, 85, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-pink"></span>
+              <span class="card-title-text">Media Playback</span>
+            </div>
+            <span class="mini-status-chip">AUDIO</span>
+          </div>
           <div class="media-deck">
-            <button class="media-deck-btn" data-media="prev">
-              <span class="media-deck-icon">⏮</span>
+            <button class="media-deck-btn" data-media="prev" title="Previous Track">
+              <span class="media-deck-icon">
+                <svg class="deck-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+              </span>
               <span>Prev</span>
             </button>
-            <button class="media-deck-btn play-deck-btn" data-media="play_pause">
-              <span class="media-deck-icon">⏯</span>
+            <button class="media-deck-btn play-deck-btn" data-media="play_pause" title="Play / Pause">
+              <span class="media-deck-icon">
+                <svg class="deck-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                  <polygon points="5 3 14 12 5 21 5 3"/>
+                  <rect x="16" y="4" width="2.5" height="16" rx="1"/>
+                  <rect x="20.5" y="4" width="2.5" height="16" rx="1"/>
+                </svg>
+              </span>
               <span>Play/Pause</span>
             </button>
-            <button class="media-deck-btn" data-media="next">
-              <span class="media-deck-icon">⏭</span>
+            <button class="media-deck-btn" data-media="next" title="Next Track">
+              <span class="media-deck-icon">
+                <svg class="deck-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+              </span>
               <span>Next</span>
             </button>
           </div>
 
           <div class="volume-row">
-            <button class="vol-btn vol-mute" data-media="mute">🔇 Mute</button>
-            <button class="vol-btn" data-media="vol_down">🔉 Vol -</button>
-            <button class="vol-btn vol-up" data-media="vol_up">🔊 Vol +</button>
+            <button class="vol-btn vol-mute" data-media="mute">
+              <svg class="deck-icon" width="18" height="18"><use href="#icon-mute"/></svg>
+              <span>Mute</span>
+            </button>
+            <button class="vol-btn" data-media="vol_down">
+              <svg class="deck-icon" width="18" height="18"><use href="#icon-vol-down"/></svg>
+              <span>Vol -</span>
+            </button>
+            <button class="vol-btn vol-up" data-media="vol_up">
+              <svg class="deck-icon" width="18" height="18"><use href="#icon-vol-up"/></svg>
+              <span>Vol +</span>
+            </button>
           </div>
         </div>
 
         <!-- ================= WINDOWS SHORTCUTS CARD ================= -->
-        <div class="neo-card card-full-span">
-          <span class="card-header-badge">Windows Shortcuts</span>
+        <div class="neo-card card-full-span" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-cyan"></span>
+              <span class="card-title-text">Windows Shortcuts</span>
+            </div>
+            <span class="mini-status-chip">SYSTEM</span>
+          </div>
           <div class="shortcuts-deck">
             <div class="shortcut-tile" data-hotkey="win+d">
-              <span class="tile-emoji">🖥️</span>
+              <span class="tile-emoji">
+                <svg class="deck-icon" width="24" height="24"><use href="#icon-show-desktop"/></svg>
+              </span>
               <div>
                 <div class="tile-name">Show Desktop</div>
                 <div class="tile-code">Win + D</div>
@@ -1465,7 +2326,9 @@
             </div>
 
             <div class="shortcut-tile" data-hotkey="alt+tab">
-              <span class="tile-emoji">📑</span>
+              <span class="tile-emoji">
+                <svg class="deck-icon" width="24" height="24"><use href="#icon-switch-app"/></svg>
+              </span>
               <div>
                 <div class="tile-name">Switch App</div>
                 <div class="tile-code">Alt + Tab</div>
@@ -1473,7 +2336,9 @@
             </div>
 
             <div class="shortcut-tile" data-hotkey="win+shift+s">
-              <span class="tile-emoji">✂️</span>
+              <span class="tile-emoji">
+                <svg class="deck-icon" width="24" height="24"><use href="#icon-screenshot"/></svg>
+              </span>
               <div>
                 <div class="tile-name">Screenshot</div>
                 <div class="tile-code">Win + Shift + S</div>
@@ -1481,7 +2346,9 @@
             </div>
 
             <div class="shortcut-tile" data-hotkey="ctrl+shift+esc">
-              <span class="tile-emoji">📊</span>
+              <span class="tile-emoji">
+                <svg class="deck-icon" width="24" height="24"><use href="#icon-task-manager"/></svg>
+              </span>
               <div>
                 <div class="tile-name">Task Manager</div>
                 <div class="tile-code">Ctrl+Shift+Esc</div>
@@ -1489,7 +2356,9 @@
             </div>
 
             <div class="shortcut-tile" data-hotkey="win+e">
-              <span class="tile-emoji">📁</span>
+              <span class="tile-emoji">
+                <svg class="deck-icon" width="24" height="24"><use href="#icon-folder"/></svg>
+              </span>
               <div>
                 <div class="tile-name">File Explorer</div>
                 <div class="tile-code">Win + E</div>
@@ -1497,7 +2366,9 @@
             </div>
 
             <div class="shortcut-tile" data-hotkey="alt+f4">
-              <span class="tile-emoji">❌</span>
+              <span class="tile-emoji">
+                <svg class="deck-icon" width="24" height="24"><use href="#icon-close-window"/></svg>
+              </span>
               <div>
                 <div class="tile-name">Close Window</div>
                 <div class="tile-code">Alt + F4</div>
@@ -1508,84 +2379,45 @@
       </div>
     </section>
 
-    <!-- ================= TAB 6: ⚙️ SETTINGS & PREFERENCES ================= -->
+    <!-- ================= TAB 6: ⚙️ SETTINGS ================= -->
     <section id="tab-settings" class="tab-view">
       <div class="scroll-container">
-        <!-- PC Connection Card -->
-        <div class="neo-card">
-          <span class="card-header-badge">PC Connection &amp; Pairing</span>
-          <button id="settings-btn-scan-qr" class="neo-btn btn-yellow" style="width: 100%;">
-            <span>📷</span>
-            <span>SCAN QR CODE TO RECONNECT</span>
-          </button>
 
-          <div class="quick-input-row" style="flex-direction: column; gap: 8px; margin-top: 6px;">
-            <input type="text" id="settings-ip-input" class="cyber-input" placeholder="192.168.1.xxx:8000">
-            <button id="btn-save-ip" class="neo-btn btn-cyan">RECONNECT / RETRY</button>
-          </div>
-        </div>
-
-        <!-- Wi-Fi Network & 2.4 GHz / 5 GHz Performance Advisor Card -->
-        <div class="neo-card">
-          <span class="card-header-badge">Wi-Fi &amp; Latency Advisor</span>
-          <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 8px;">
-            <strong style="color: var(--neo-cyan);">2.4 GHz Wi-Fi / Dongles:</strong> Input controls (touch &amp; gamepad) are 100% smooth (&lt;10ms). For screen streaming on 2.4 GHz, use <strong style="color: #fff;">30 FPS</strong> for maximum stability.
-          </div>
-          <div style="background: rgba(0, 240, 255, 0.08); border-left: 3px solid var(--neo-cyan); padding: 8px 10px; border-radius: 4px; font-size: 0.72rem; color: #fff;">
-            🚀 <strong>60 FPS Esports Streaming:</strong> Connect to <strong>5 GHz Wi-Fi</strong> or turn on <strong>Phone Mobile Hotspot (5 GHz)</strong> for ultra-low latency (&lt;8ms).
-          </div>
-        </div>
-
-        <!-- Display & Pinch-to-Zoom Settings -->
-        <div class="neo-card">
-          <span class="card-header-badge">Display &amp; Pinch Zoom</span>
-          <div class="setting-item">
-            <div>
-              <div class="item-title">Screen Orientation</div>
-              <div class="item-desc">Toggle Portrait or Landscape Mode</div>
+        <!-- ================= CARD 1: CONNECTION ================= -->
+        <div class="neo-card" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-cyan"></span>
+              <span class="card-title-text">Connection</span>
             </div>
-            <button id="settings-btn-rotate" class="neo-btn btn-yellow" style="height: 38px; padding: 0 12px; font-size: 0.8rem;">
-              🔄 Rotate
+            <span id="settings-conn-chip" class="mini-status-chip offline">STANDBY</span>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin: 6px 0 10px 0; width: 100%; box-sizing: border-box;">
+            <input type="text" id="settings-ip-input" class="cyber-input" placeholder="192.168.1.xxx:8000" style="flex: 1 1 auto; min-width: 0; box-sizing: border-box; font-size: 0.82rem; font-family: var(--font-mono);">
+            <button id="btn-save-ip" class="neo-btn btn-cyan" style="flex: 0 0 auto; padding: 0 16px; font-weight: 800; font-size: 0.78rem; white-space: nowrap;">
+              Connect
             </button>
           </div>
 
-          <div class="setting-item">
-            <div>
-              <div class="item-title">Gaming Controller HUD</div>
-              <div class="item-desc">Show on-screen gamepad HUD button on screen streaming</div>
-            </div>
-            <label class="switch-toggle">
-              <input type="checkbox" id="setting-gamepad-hud">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <div>
-              <div class="item-title">Pinch to Zoom &amp; Pan</div>
-              <div class="item-desc">2-finger zoom up to 5x with pan navigation</div>
-            </div>
-            <label class="switch-toggle">
-              <input type="checkbox" id="setting-pinch-zoom" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <div>
-              <div class="item-title">Zoom Sensitivity</div>
-              <div class="item-desc">Pinch scale multiplier</div>
-            </div>
-            <div class="range-box">
-              <input type="range" id="setting-zoom-sens" min="0.5" max="2.5" step="0.1" value="1.0" class="cyber-range">
-              <span id="val-zoom-sens" class="range-val">1.0x</span>
-            </div>
-          </div>
+          <button id="settings-btn-scan-qr" class="neo-btn btn-dark" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 0.76rem; border: 1px dashed rgba(255,255,255,0.25);">
+            <span class="btn-svg-wrap">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+            </span>
+            <span>Scan QR Code</span>
+          </button>
         </div>
 
-        <!-- Speed & Motion Settings -->
-        <div class="neo-card">
-          <span class="card-header-badge">Speed &amp; Physics</span>
+        <!-- ================= CARD 2: CONTROLS & TRACKPAD ================= -->
+        <div class="neo-card" style="border-color: rgba(57, 255, 20, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-lime"></span>
+              <span class="card-title-text">Controls</span>
+            </div>
+            <span class="mini-status-chip">INPUT</span>
+          </div>
+
           <div class="setting-item">
             <div>
               <div class="item-title">Cursor Speed</div>
@@ -1611,7 +2443,7 @@
           <div class="setting-item">
             <div>
               <div class="item-title">Smooth Acceleration</div>
-              <div class="item-desc">Dynamic acceleration curve for fast swipes</div>
+              <div class="item-desc">Dynamic curve for fast swipes</div>
             </div>
             <label class="switch-toggle">
               <input type="checkbox" id="setting-accel" checked>
@@ -1629,167 +2461,204 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-        </div>
 
-        <!-- Feedback & Power Settings -->
-        <div class="neo-card">
-          <span class="card-header-badge">Feedback &amp; Power</span>
           <div class="setting-item">
             <div>
               <div class="item-title">Haptic Vibration</div>
-              <div class="item-desc">Tactile vibration on buttons and clicks</div>
+              <div class="item-desc">Tactile response on taps and buttons</div>
             </div>
             <label class="switch-toggle">
               <input type="checkbox" id="setting-haptics" checked>
               <span class="toggle-slider"></span>
             </label>
           </div>
+        </div>
+
+        <!-- ================= CARD 3: DISPLAY & VIEWPORT ================= -->
+        <div class="neo-card" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-cyan"></span>
+              <span class="card-title-text">Display</span>
+            </div>
+            <span class="mini-status-chip">VIEWPORT</span>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="item-title">Screen Orientation</div>
+              <div class="item-desc">Toggle portrait or landscape view</div>
+            </div>
+            <button id="settings-btn-rotate" class="neo-btn btn-yellow" style="height: 36px; padding: 0 12px; font-size: 0.78rem; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+              <span class="btn-svg-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+              </span>
+              <span>Rotate</span>
+            </button>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="item-title">Pinch to Zoom</div>
+              <div class="item-desc">2-finger zoom up to 5x with panning</div>
+            </div>
+            <label class="switch-toggle">
+              <input type="checkbox" id="setting-pinch-zoom" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="item-title">Zoom Sensitivity</div>
+              <div class="item-desc">Pinch scale multiplier</div>
+            </div>
+            <div class="range-box">
+              <input type="range" id="setting-zoom-sens" min="0.5" max="2.5" step="0.1" value="1.0" class="cyber-range">
+              <span id="val-zoom-sens" class="range-val">1.0x</span>
+            </div>
+          </div>
 
           <div class="setting-item">
             <div>
               <div class="item-title">Keep Screen Awake</div>
-              <div class="item-desc">Prevent phone screen from dimming/sleeping</div>
+              <div class="item-desc">Prevent display from sleeping</div>
             </div>
             <label class="switch-toggle">
               <input type="checkbox" id="setting-wakelock" checked>
               <span class="toggle-slider"></span>
             </label>
           </div>
+
+          <div class="setting-item" id="setting-row-gamepad-hud">
+            <div>
+              <div class="item-title">Gaming Controller HUD</div>
+              <div class="item-desc">Show on-screen gamepad overlay on screen stream</div>
+            </div>
+            <label class="switch-toggle">
+              <input type="checkbox" id="setting-gamepad-hud">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
         </div>
 
-        <!-- Performance & Refresh Rate (FPS) -->
-        <div class="neo-card">
-          <span class="card-header-badge">Performance &amp; Refresh Rate</span>
+        <!-- ================= CARD 4: PERFORMANCE & QUALITY ================= -->
+        <div class="neo-card" style="border-color: rgba(255, 230, 0, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-yellow"></span>
+              <span class="card-title-text">Performance</span>
+            </div>
+            <span class="mini-status-chip">STREAM</span>
+          </div>
+
           <div class="setting-item">
             <div>
-              <div class="item-title">Screen Streaming FPS</div>
-              <div class="item-desc">Refresh rate for live desktop mirroring</div>
+              <div class="item-title">Refresh Rate</div>
+              <div class="item-desc">Target screen streaming FPS</div>
             </div>
             <select id="setting-stream-fps" class="cyber-input" style="width: auto; padding: 6px 10px; font-size: 0.8rem; font-weight: 700;">
               <option value="30">30 FPS (Standard)</option>
-              <option value="60">60 FPS (Ultra Smooth — Pro)</option>
-              <option value="120">120 FPS (Extreme — Pro)</option>
+              <option value="60">60 FPS (Pro)</option>
+              <option value="120">120 FPS (Extreme)</option>
             </select>
           </div>
 
           <div class="setting-item">
             <div>
-              <div class="item-title">Adaptive Stream Quality</div>
-              <div class="item-desc">Auto-adjusts according to real-time network latency &amp; stability</div>
+              <div class="item-title">Stream Resolution</div>
+              <div class="item-desc">Image scale and compression quality</div>
             </div>
             <select id="setting-stream-clarity" class="cyber-input" style="width: auto; padding: 6px 10px; font-size: 0.8rem; font-weight: 700;">
-              <option value="auto" selected>✨ Auto Dynamic (Real-Time AI-Tuned)</option>
-              <option value="ultrahd">Ultra HD Crystal (100% Native · 90Q)</option>
-              <option value="sharp">High Clarity (90% Scale · 80Q)</option>
-              <option value="balanced">Balanced Fast (80% Scale · 70Q)</option>
-              <option value="speed">Low Latency Speed (65% Scale · 55Q)</option>
+              <option value="auto" selected>Auto (Adaptive)</option>
+              <option value="ultrahd">Ultra (1080p · 90Q)</option>
+              <option value="sharp">High (900p · 80Q)</option>
+              <option value="balanced">Balanced (720p · 70Q)</option>
+              <option value="speed">Performance (480p · 55Q)</option>
             </select>
           </div>
 
           <div class="setting-item">
             <div>
-              <div class="item-title">File Transfer Acceleration</div>
-              <div class="item-desc">High-speed chunked multi-stream transfers</div>
+              <div class="item-title">File Transfer Engine</div>
+              <div class="item-desc">Wi-Fi throughput mode</div>
             </div>
             <select id="setting-transfer-speed" class="cyber-input" style="width: auto; padding: 6px 10px; font-size: 0.8rem; font-weight: 700;">
               <option value="standard">Standard Speed</option>
               <option value="turbo">Turbo Multi-Stream (Pro)</option>
             </select>
           </div>
-        </div>
 
-        <!-- Cyber Chroma Themes (0 KB Size Impact) -->
-        <div class="neo-card">
-          <span class="card-header-badge">Chroma Themes</span>
           <div class="setting-item">
             <div>
-              <div class="item-title">Active Color Theme</div>
-              <div class="item-desc">Personalize your workspace aesthetic</div>
+              <div class="item-title">Workspace Theme</div>
+              <div class="item-desc">UI color palette</div>
             </div>
             <select id="setting-theme-picker" class="cyber-input" style="width: auto; padding: 6px 10px; font-size: 0.8rem; font-weight: 700;">
-              <option value="default">Cyber Cyan (Default)</option>
+              <option value="default">Cyber Cyan</option>
               <option value="lime">Matrix Lime (Pro)</option>
               <option value="gold">Solar Gold (Pro)</option>
-              <option value="purple">Synthwave Purple (Pro)</option>
-              <option value="oled">Pure OLED Dark (Pro)</option>
+              <option value="purple">Synthwave (Pro)</option>
+              <option value="oled">Pure Dark (Pro)</option>
             </select>
           </div>
         </div>
 
-        <!-- PCDeck Pro Membership & Activation Card -->
-        <div class="neo-card" style="border-color: #ffd700;">
-          <span class="card-header-badge" style="background: linear-gradient(90deg, #ffd700, #ff9100); color: #000;">PCDeck Pro Status</span>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <div>
-              <div id="settings-pro-status-title" style="font-weight: 800; font-size: 0.95rem; color: #fff;">Free Edition</div>
-              <div id="settings-pro-status-desc" style="font-size: 0.72rem; color: var(--text-muted);">Standard 30 FPS screen streaming &amp; file sharing</div>
+        <!-- ================= CARD 5: SYSTEM & ABOUT ================= -->
+        <div class="neo-card" style="border-color: rgba(255, 215, 0, 0.4); box-shadow: none;" id="settings-update-card">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-gold"></span>
+              <span class="card-title-text">System &amp; License</span>
             </div>
-            <button id="btn-open-pro-upgrade" class="neo-btn" style="background: linear-gradient(90deg, #ffd700, #ff9100); color: #000; font-weight: 900; font-size: 0.75rem; padding: 8px 12px;">
+            <span id="app-current-version-label" class="mini-status-chip">v2.6.6</span>
+          </div>
+
+          <!-- License / Pro Status Row -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1.5px dashed rgba(255, 255, 255, 0.1);">
+            <div>
+              <div id="settings-pro-status-title" style="font-weight: 800; font-size: 0.92rem; color: #fff;">Free Edition</div>
+              <div id="settings-pro-status-desc" style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">Standard 30 FPS screen streaming</div>
+            </div>
+            <button id="btn-open-pro-upgrade" class="neo-btn" style="background: linear-gradient(90deg, #ffd700, #ff9100); color: #000; font-weight: 900; font-size: 0.72rem; padding: 6px 12px; white-space: nowrap;">
               UNLOCK PRO
             </button>
           </div>
-          <div id="settings-pro-key-row" style="display: flex; gap: 6px; margin-top: 6px;">
-            <input type="text" id="input-license-key-settings" class="cyber-input" placeholder="PCDK-XXXX-YYYY-ZZZZ" style="font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase;">
-            <button id="btn-activate-key-settings" class="neo-btn btn-yellow" style="padding: 0 12px; font-size: 0.75rem; font-weight: 800; white-space: nowrap;">ACTIVATE</button>
-          </div>
-        </div>
 
-        <!-- In-App Auto-Update & Version Card -->
-        <div class="neo-card" style="border-color: var(--neo-cyan);" id="settings-update-card">
-          <span class="card-header-badge" style="background: var(--neo-cyan); color: #000;">App Version &amp; Updates</span>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div>
-              <div style="font-weight: 800; font-size: 0.92rem; color: #fff;">PCDeck <span id="app-current-version-label">v2.6.4</span></div>
-              <div id="app-update-status-text" style="font-size: 0.72rem; color: var(--text-muted);">Up to date</div>
-            </div>
-            <button id="btn-check-for-updates" class="neo-btn btn-cyan" style="padding: 6px 12px; font-size: 0.75rem; font-weight: 800; white-space: nowrap;">
-              <span>🔄 CHECK FOR UPDATES</span>
+          <!-- License Key Activation -->
+          <div id="settings-pro-key-row" style="display: flex; gap: 6px; margin: 10px 0; width: 100%; box-sizing: border-box;">
+            <input type="text" id="input-license-key-settings" class="cyber-input" placeholder="PCDK-XXXX-YYYY-ZZZZ" style="font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; flex: 1 1 auto; min-width: 0; box-sizing: border-box;">
+            <button id="btn-activate-key-settings" class="neo-btn btn-yellow" style="flex: 0 0 auto; padding: 0 14px; font-size: 0.74rem; font-weight: 800; white-space: nowrap;">ACTIVATE</button>
+          </div>
+
+          <!-- Updates & Guide Row -->
+          <div style="display: flex; gap: 8px; margin: 10px 0;">
+            <button id="btn-check-for-updates" class="neo-btn btn-cyan" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.74rem; font-weight: 800; padding: 8px 10px;">
+              <span class="btn-svg-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              </span>
+              <span>Check Updates</span>
+            </button>
+            <button id="btn-settings-open-guide" class="neo-btn btn-dark" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.74rem; font-weight: 700; padding: 8px 10px; border: 1px solid rgba(255,255,255,0.15);">
+              <span class="btn-svg-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              </span>
+              <span>Setup Guide</span>
+            </button>
+          </div>
+          <div id="app-update-status-text" style="font-size: 0.68rem; color: var(--text-muted); text-align: center; margin-bottom: 6px;">App is up to date</div>
+
+          <!-- Save / Reset Row -->
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button id="btn-save-all-settings" class="neo-btn btn-lime" style="flex: 2; padding: 9px; font-size: 0.78rem; font-weight: 900;">
+              SAVE SETTINGS
+            </button>
+            <button id="btn-reset-settings" class="neo-btn btn-dark" style="flex: 1; padding: 9px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.15);">
+              RESET
             </button>
           </div>
         </div>
 
-        <!-- Android App & Official Website -->
-        <div class="neo-card" style="border-color: var(--neo-lime);">
-          <span class="card-header-badge" style="background: var(--neo-lime); color: #000;">Android App &amp; Website</span>
-          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
-            Download the native Android app (APK) or visit the official website for tutorials, updates, and downloads.
-          </p>
-          <div class="settings-action-row">
-            <a href="https://pcdeck.vercel.app" target="_blank" rel="noopener" class="neo-btn btn-lime" style="width: 100%; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <span>🌐</span>
-              <span>VISIT PCDECK.VERCEL.APP (DOWNLOAD APK)</span>
-            </a>
-          </div>
-        </div>
-
-        <div class="neo-card" style="border-color: var(--neo-cyan);">
-          <span class="card-header-badge" style="background: var(--neo-cyan); color: #000;">PC Server &amp; Setup</span>
-          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
-            Download the PC server if you don't have it on your computer, or review the 3-step setup guide and tutorials.
-          </p>
-          <div class="settings-action-row">
-            <button id="btn-settings-open-guide" class="neo-btn btn-cyan" style="width: 100%;">
-              <span>💻</span>
-              <span>DOWNLOAD PC SERVER / SETUP GUIDE</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Save & Reset Action Buttons -->
-        <div class="neo-card" style="border-color: var(--neo-lime);">
-          <span class="card-header-badge" style="background: var(--neo-lime);">Settings Storage</span>
-          <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">
-            All your custom sensitivities, IP configuration, and display preferences can be permanently stored.
-          </p>
-          <div class="settings-action-row">
-            <button id="btn-save-all-settings" class="neo-btn btn-lime">
-              <span>SAVE ALL SETTINGS</span>
-            </button>
-            <button id="btn-reset-settings" class="neo-btn btn-dark">
-              <span>RESET</span>
-            </button>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -1797,7 +2666,7 @@
     <nav class="floating-dock" id="main-floating-dock">
       <button class="dock-tab active" data-target="tab-screen" onclick="window.switchTabNav(this, 'tab-screen')">
         <span class="dock-icon">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <svg class="deck-icon" width="20" height="20"><use href="#icon-pc"/></svg>
         </span>
         <span class="dock-label">Screen</span>
       </button>
@@ -1811,28 +2680,28 @@
 
       <button class="dock-tab" data-target="tab-keyboard" onclick="window.switchTabNav(this, 'tab-keyboard')">
         <span class="dock-icon">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>
+          <svg class="deck-icon" width="20" height="20"><use href="#icon-keys"/></svg>
         </span>
         <span class="dock-label">Keys</span>
       </button>
 
       <button class="dock-tab" data-target="tab-files" onclick="window.switchTabNav(this, 'tab-files')">
         <span class="dock-icon">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <svg class="deck-icon" width="20" height="20"><use href="#icon-folder"/></svg>
         </span>
         <span class="dock-label">Files</span>
       </button>
 
       <button class="dock-tab" data-target="tab-media" onclick="window.switchTabNav(this, 'tab-media')">
         <span class="dock-icon">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          <svg class="deck-icon" width="20" height="20"><use href="#icon-vol-up"/></svg>
         </span>
         <span class="dock-label">Media</span>
       </button>
 
       <button class="dock-tab" data-target="tab-settings" onclick="window.switchTabNav(this, 'tab-settings')">
         <span class="dock-icon">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0 1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <svg class="deck-icon" width="20" height="20"><use href="#icon-settings"/></svg>
         </span>
         <span class="dock-label">Settings</span>
       </button>
@@ -2051,6 +2920,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=2.6.4"></script>
+  <script src="jsqr.js" defer></script>
+  <script src="app.js?v=2.7.1"></script>
 </body>
 </html>

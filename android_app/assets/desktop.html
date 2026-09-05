@@ -6,7 +6,10 @@
   <title>PCDeck - PC Server Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  </noscript>
   <style>
     :root {
       --bg-main: #0a0e17;
@@ -360,7 +363,23 @@
             <td class="diag-key">Port</td>
             <td class="diag-val">8000 (WebSocket)</td>
           </tr>
+          <tr>
+            <td class="diag-key">Network Latency</td>
+            <td class="diag-val" id="diag-latency">Standby</td>
+          </tr>
         </table>
+
+        <!-- Side-by-Side Action Buttons: Download APK & Upgrade Pro -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+          <a href="/PCDeck.apk" download id="btn-desktop-apk" class="neo-btn" style="text-decoration: none; font-size: 0.8rem; padding: 0 8px;">
+            <span>📱</span>
+            <span>DOWNLOAD APK</span>
+          </a>
+          <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="text-decoration: none; font-size: 0.8rem; padding: 0 8px;">
+            <span>★</span>
+            <span>UPGRADE PRO</span>
+          </a>
+        </div>
       </div>
 
       <!-- Right Column: Radio Settings & Controls -->
@@ -460,6 +479,19 @@
         document.getElementById('diag-ip').textContent = data.ip;
         document.getElementById('diag-clients').textContent = `${data.clients_connected} Active`;
         document.getElementById('diag-screen').textContent = `${data.screen.width} x ${data.screen.height}`;
+        if (data.network && document.getElementById('diag-latency')) {
+          const n = data.network;
+          const latEl = document.getElementById('diag-latency');
+          if (n.active) {
+            const hw = n.hardware && n.hardware.speed_mbps ? ` • ${n.hardware.band} (${Math.round(n.hardware.speed_mbps)} Mbps)` : '';
+            latEl.textContent = `${n.rtt_ms} ms (${n.status})${hw}`;
+            latEl.style.color = n.color || 'var(--neo-cyan)';
+          } else {
+            const hw = n.hardware && n.hardware.speed_mbps ? `${n.hardware.band} (${Math.round(n.hardware.speed_mbps)} Mbps) • ` : '';
+            latEl.textContent = `${hw}Standby`;
+            latEl.style.color = 'var(--text-muted)';
+          }
+        }
       } catch (e) {
         console.error(e);
       }

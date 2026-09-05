@@ -3,6 +3,13 @@ PCDeck_Pro.apk
 PCDeck_Pro.exe
 PCDeck_Pro_Package.zip
 
+# Temporary builds and backups
+*.old
+*.tmp
+*_temp.exe
+PCDeck.exe.old
+PCDeck_temp.exe
+
 # Python & virtual environments
 .venv/
 __pycache__/
@@ -22,12 +29,20 @@ dist/
 # Editor & local backups
 .claude/
 *BACKUP*
+scratch/
 
 # Local tools & test assets
 scrcpy_bin/
 test_*.png
+phone_screen.png
 test_input.py
 *.keystore
 *.pfx
 *.msix
+msstore_assets/
+*.original
+*.obf.tmp
+static/PCDeck.apk
+.agents/
+
 

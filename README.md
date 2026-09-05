@@ -1,21 +1,21 @@
-# ⚡ NeonTrack - Mobile Touch Display, Trackpad & Remote Control for PC
+# ⚡ PCDeck - Mobile Touch Display, Trackpad & Remote Control for PC
 
-Turn any smartphone (Android or iOS) into an ultra-low latency **Wireless Touchscreen Monitor**, **Multi-Touch Trackpad**, and **Keyboard Controller** for your Windows PC over local Wi-Fi.
+Turn any smartphone (Android or iOS) into an ultra-low latency **Wireless Touchscreen Monitor**, **Multi-Touch Trackpad**, **Virtual Webcam/Microphone**, and **Gamepad/Keyboard Controller** for your Windows PC over local Wi-Fi.
 
 ---
 
 ## 🚀 Quick Start in 3 Easy Steps
 
 ### 1. Run the PC Server (`.exe`)
-Double-click [`NeonTrack.exe`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/NeonTrack.exe) (or run [`run.bat`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/run.bat)) in this folder.
-- A terminal window will open showing your PC's Wi-Fi IP and a **QR Code**.
+Double-click [`PCDeck.exe`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/PCDeck.exe) (or run [`run.bat`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/run.bat)) in this folder.
+- A native Cyber-Neon dashboard will open showing your PC's Wi-Fi IP and a **QR Code**.
 - Keep this window running in the background.
 
 ### 2. Connect Your Phone (`.apk` or Web Browser)
 You have two easy ways to connect:
 
 - **Option A (Android APK)**:
-  - Copy [`NeonTrack.apk`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/NeonTrack.apk) to your Android phone and install it.
+  - Copy [`PCDeck.apk`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/PCDeck.apk) to your Android phone and install it.
   - Open the app, type your PC's IP (e.g. `192.168.1.100:8000`), and tap **Connect**.
 - **Option B (Instant Browser - No Install Needed)**:
   - Scan the QR code with your phone camera, or open `http://<your-pc-ip>:8000` in Safari/Chrome on your phone.
@@ -53,8 +53,8 @@ Switch to the **📺 Screen** tab to see your live Windows desktop right on your
 
 ## 📁 Generated Files
 
-- [`NeonTrack.exe`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/NeonTrack.exe) - Standalone Windows executable server.
-- [`NeonTrack.apk`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/NeonTrack.apk) - Standalone Android application package.
+- [`PCDeck.exe`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/PCDeck.exe) - Standalone Windows executable server.
+- [`PCDeck.apk`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/PCDeck.apk) - Standalone Android application package.
 - [`run.bat`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/run.bat) / [`start.ps1`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/start.ps1) - 1-click startup scripts.
 - [`server/`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/server) - Python FastAPI, screen streaming & native Win32 input simulator.
 - [`static/`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/static) - Cyber-Neon Glassmorphism web client with live canvas stream.

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.neontrack.mouse"
+    package="com.pcdeck.app"
     android:versionCode="266"
     android:versionName="2.6.6">
 
@@ -15,6 +15,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -23,6 +25,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
@@ -36,7 +39,8 @@
         android:theme="@style/AppTheme"
         android:hardwareAccelerated="true"
         android:requestLegacyExternalStorage="true"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:extractNativeLibs="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -54,12 +58,13 @@
                 <data android:scheme="https" android:host="pcdeck.vercel.app" android:pathPrefix="/connect" />
                 <data android:scheme="http" android:host="pcdeck.vercel.app" android:pathPrefix="/connect" />
                 <data android:scheme="pcdeck" android:host="connect" />
+                <data android:scheme="http" android:pathPrefix="/connect" />
             </intent-filter>
         </activity>
 
         <provider
             android:name=".GenericFileProvider"
-            android:authorities="com.neontrack.mouse.fileprovider"
+            android:authorities="com.pcdeck.app.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true" />
     </application>

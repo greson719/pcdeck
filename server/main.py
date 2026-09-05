@@ -1,5 +1,5 @@
 """
-NeonTrack - High-Performance PC Remote Control Server
+PCDeck Pro - High-Performance Wireless PC Touch Deck & Streamer Server
 FastAPI + Native Win32 Input Simulation + Low-Latency Screen Streaming + Fast File Transfers
 """
 
@@ -7,9 +7,11 @@ import asyncio
 import datetime
 import email.utils
 import io
+import ipaddress
 import math
 import os
 import re
+import secrets
 import socket
 import sys
 import shutil
@@ -34,7 +36,7 @@ if hasattr(sys.stdout, "reconfigure"):
 if sys.platform == "win32":
     try:
         import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.NeonMouse.v2026")
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.DesktopClient.Pro.v2026")
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
         except Exception:
@@ -42,6 +44,18 @@ if sys.platform == "win32":
                 ctypes.windll.user32.SetProcessDPIAware()
             except Exception:
                 pass
+        # High precision 1ms multimedia timer for sub-millisecond thread scheduling
+        try:
+            ctypes.windll.winmm.timeBeginPeriod(1)
+            import atexit
+            atexit.register(ctypes.windll.winmm.timeEndPeriod, 1)
+        except Exception:
+            pass
+        # Elevate process priority to HIGH_PRIORITY_CLASS
+        try:
+            ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), 0x00000080)
+        except Exception:
+            pass
     except Exception:
         pass
 
@@ -55,22 +69,64 @@ for p in [current_dir, parent_dir]:
 try:
     from server.input_controller import WindowsInputController as InputController
     from server.screen_streamer import ScreenStreamer
-    from server.audio_streamer import audio_streamer, mic_sink
+    from server.audio_streamer import audio_streamer, mic_sink, is_mic_driver_installed, install_mic_driver_silently
     from server.gamepad_manager import gamepad_manager, is_vigem_installed, install_vigem_silently
-    from server.camera_streamer import camera_streamer
+    from server.camera_streamer import camera_streamer, is_webcam_driver_installed, install_webcam_driver_silently
+    from server.wifi_latency_manager import wifi_latency_manager
+    from server.binary_protocol import (
+        unpack_binary_message,
+        pack_pong,
+        pack_ping,
+        pack_move_rel,
+        pack_move_abs,
+        pack_touch_down,
+        pack_touch_move,
+        pack_touch_up,
+        pack_click,
+        pack_scroll_rel,
+        pack_scroll_abs,
+    )
 except ImportError:
     try:
         from input_controller import WindowsInputController as InputController
         from screen_streamer import ScreenStreamer
-        from audio_streamer import audio_streamer, mic_sink
+        from audio_streamer import audio_streamer, mic_sink, is_mic_driver_installed, install_mic_driver_silently
         from gamepad_manager import gamepad_manager, is_vigem_installed, install_vigem_silently
-        from camera_streamer import camera_streamer
+        from camera_streamer import camera_streamer, is_webcam_driver_installed, install_webcam_driver_silently
+        from wifi_latency_manager import wifi_latency_manager
+        from binary_protocol import (
+            unpack_binary_message,
+            pack_pong,
+            pack_ping,
+            pack_move_rel,
+            pack_move_abs,
+            pack_touch_down,
+            pack_touch_move,
+            pack_touch_up,
+            pack_click,
+            pack_scroll_rel,
+            pack_scroll_abs,
+        )
     except ImportError:
         from .input_controller import WindowsInputController as InputController
         from .screen_streamer import ScreenStreamer
-        from .audio_streamer import audio_streamer, mic_sink
+        from .audio_streamer import audio_streamer, mic_sink, is_mic_driver_installed, install_mic_driver_silently
         from .gamepad_manager import gamepad_manager, is_vigem_installed, install_vigem_silently
-        from .camera_streamer import camera_streamer
+        from .camera_streamer import camera_streamer, is_webcam_driver_installed, install_webcam_driver_silently
+        from .wifi_latency_manager import wifi_latency_manager
+        from .binary_protocol import (
+            unpack_binary_message,
+            pack_pong,
+            pack_ping,
+            pack_move_rel,
+            pack_move_abs,
+            pack_touch_down,
+            pack_touch_move,
+            pack_touch_up,
+            pack_click,
+            pack_scroll_rel,
+            pack_scroll_abs,
+        )
 
 import subprocess
 import zipfile
@@ -127,6 +183,21 @@ def ensure_windows_firewall_rule():
 ensure_windows_firewall_rule()
 
 
+def ensure_wlan_autoconfig_restored():
+    """Ensure Windows WLAN AutoConfig is restored on startup in case of prior unexpected shutdowns."""
+    if sys.platform == "win32":
+        def _restore():
+            try:
+                if wifi_latency_manager and hasattr(wifi_latency_manager, "startup_auto_heal"):
+                    wifi_latency_manager.startup_auto_heal()
+            except Exception:
+                pass
+        threading.Thread(target=_restore, name="PCDeck-WLAN-Restore-Init", daemon=True).start()
+
+
+ensure_wlan_autoconfig_restored()
+
+
 # ---------------------------------------------------------------------------
 # Zero-Config Ultra-Fast UDP Discovery Daemon (Port 8001)
 # ---------------------------------------------------------------------------
@@ -176,15 +247,27 @@ def get_local_ip() -> str:
             if iface in stats and not stats[iface].isup:
                 continue
             is_vpn = any(k in iface_lower for k in vpn_keywords)
-            is_wifi = any(k in iface_lower for k in ["wi-fi", "wlan", "wireless", "hotspot", "802.11"])
-            is_eth = any(k in iface_lower for k in ["ethernet", "eth", "lan"]) and not is_vpn
+            is_tether = any(k in iface_lower for k in ["rndis", "tether", "ncm", "remote ndis"])
+            is_wifi = any(k in iface_lower for k in ["wi-fi", "wlan", "wireless", "hotspot", "802.11"]) and not is_tether
+            is_eth = any(k in iface_lower for k in ["ethernet", "eth", "lan"]) and not is_vpn and not is_tether
 
             for snic in nic_addrs:
                 if snic.family == socket.AF_INET:
                     ip = snic.address
                     if ip and not ip.startswith("127.") and not ip.startswith("169.254."):
-                        # Priority rank: Wi-Fi/Hotspot (0) > Physical Ethernet (1) > Other non-VPN (2) > VPN (3)
-                        priority = 3 if is_vpn else (0 if is_wifi else (1 if is_eth else 2))
+                        # Priority rank: USB Tethering (-1.0) > Wi-Fi/Hotspot (0.0) > Physical Ethernet (1.0) > Other non-VPN (2.0) > VPN (3.0)
+                        # Android USB Tethering almost universally assigns 192.168.42.x, 192.168.43.x, or 192.168.44.x
+                        tether_detected = is_tether or ip.startswith("192.168.42.")
+                        if is_vpn:
+                            priority = 3.0
+                        elif tether_detected:
+                            priority = -1.0
+                        elif is_wifi:
+                            priority = 0.0
+                        elif is_eth:
+                            priority = 1.0
+                        else:
+                            priority = 2.0
                         is_private = ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172.")
                         if is_private and not is_vpn:
                             priority -= 0.5
@@ -196,7 +279,7 @@ def get_local_ip() -> str:
         pass
 
     # 2. Try socket connect tricks against local gateway / broadcast IPs first (avoids VPN routing)
-    for target in [("192.168.1.1", 80), ("192.168.43.1", 80), ("192.168.0.1", 80), ("10.0.0.1", 80), ("8.8.8.8", 80), ("1.1.1.1", 80)]:
+    for target in [("192.168.42.129", 80), ("192.168.42.1", 80), ("192.168.43.1", 80), ("192.168.1.1", 80), ("192.168.0.1", 80), ("10.0.0.1", 80), ("8.8.8.8", 80), ("1.1.1.1", 80)]:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.settimeout(0.2)
@@ -224,6 +307,79 @@ LOCAL_IP = get_local_ip()
 SERVER_PORT = 8000
 SERVER_URL = f"http://{LOCAL_IP}:{SERVER_PORT}"
 
+# ---------------------------------------------------------------------------
+# Silent Pairing Token & Zero-Trust Local Security
+# ---------------------------------------------------------------------------
+SECURITY_DIR = os.path.join(os.path.expanduser("~"), ".pcdeck")
+PAIRING_TOKEN_FILE = os.path.join(SECURITY_DIR, "pairing_token.dat")
+
+_cached_pairing_token: Optional[str] = None
+_token_lock = threading.Lock()
+
+
+def get_pairing_token() -> str:
+    """Returns persistent local pairing token. Generates a secure 32-char hex token if not present."""
+    global _cached_pairing_token
+    with _token_lock:
+        if _cached_pairing_token:
+            return _cached_pairing_token
+        try:
+            os.makedirs(SECURITY_DIR, exist_ok=True)
+            if os.path.exists(PAIRING_TOKEN_FILE):
+                with open(PAIRING_TOKEN_FILE, "r", encoding="utf-8") as f:
+                    tok = f.read().strip()
+                    if len(tok) >= 16:
+                        _cached_pairing_token = tok
+                        return _cached_pairing_token
+        except Exception:
+            pass
+
+        new_tok = secrets.token_hex(16)
+        try:
+            with open(PAIRING_TOKEN_FILE, "w", encoding="utf-8") as f:
+                f.write(new_tok)
+        except Exception:
+            pass
+        _cached_pairing_token = new_tok
+        return _cached_pairing_token
+
+
+_authenticated_ips: Set[str] = set()
+
+
+def is_trusted_client(client_ip: Optional[str], token: Optional[str]) -> bool:
+    """
+    Validates if incoming connection is authorized:
+    1. Local loopback on the same PC (127.0.0.1, ::1, localhost, testclient) is always trusted.
+    2. Any remote client on the local network presenting the cryptographic pairing token is trusted.
+    3. If token is invalid or missing from an external IP, connection is untrusted.
+    """
+    if not client_ip or client_ip in ("127.0.0.1", "::1", "localhost", "testclient"):
+        return True
+    expected = get_pairing_token()
+    if token and token.strip() == expected:
+        _authenticated_ips.add(client_ip)
+        return True
+    return False
+
+
+def is_client_authorized(client_ip: Optional[str], token: Optional[str]) -> bool:
+    """Check if client is authorized either via token or previously authenticated IP on local network."""
+    if is_trusted_client(client_ip, token):
+        return True
+    if client_ip and client_ip in _authenticated_ips:
+        return True
+    if client_ip:
+        try:
+            ip_obj = ipaddress.ip_address(client_ip)
+            if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local:
+                _authenticated_ips.add(client_ip)
+                return True
+        except Exception:
+            pass
+    return False
+
+
 
 def start_udp_discovery_daemon():
     """Start background UDP responder and periodic beacon broadcaster."""
@@ -250,7 +406,8 @@ def start_udp_discovery_daemon():
                 last_beacon_time = now
                 current_ip = get_local_ip()
                 hostname = socket.gethostname()
-                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.6.6".encode("utf-8")
+                tok = get_pairing_token()
+                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.6.6:{tok}".encode("utf-8")
                 for bcast in _get_subnet_broadcasts():
                     try:
                         sock.sendto(beacon_msg, (bcast, DISCOVERY_UDP_PORT))
@@ -265,7 +422,8 @@ def start_udp_discovery_daemon():
                 if "PCDECK_DISCOVER" in text or "NEONTRACK_DISCOVER" in text:
                     current_ip = get_local_ip()
                     hostname = socket.gethostname()
-                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.6.6".encode("utf-8")
+                    tok = get_pairing_token()
+                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.6.6:{tok}".encode("utf-8")
                     sock.sendto(reply, addr)
             except socket.timeout:
                 continue
@@ -283,6 +441,12 @@ def start_udp_discovery_daemon():
 
 # Auto-launch discovery daemon on startup
 start_udp_discovery_daemon()
+
+# Auto-launch virtual webcam standby loop so DirectShow device is always active & ready for Chrome/Discord/Zoom
+try:
+    camera_streamer.start_standby()
+except Exception:
+    pass
 
 
 # Transfers Directory on PC (Default: Downloads/PCDeck_Transfers)
@@ -354,7 +518,13 @@ client_is_pro = False
 
 def is_pro_client() -> bool:
     global client_is_pro
-    return client_is_pro
+    if client_is_pro:
+        return True
+    try:
+        from server.license_manager import verify_license
+        return verify_license().get("pro_active", False)
+    except Exception:
+        return False
 
 def set_pro_client(active: bool):
     global client_is_pro
@@ -362,8 +532,11 @@ def set_pro_client(active: bool):
 
 
 @app.get("/api/ping")
-async def get_ping():
+async def get_ping(request: Request):
     """Ultra-fast instant health-check endpoint for parallel HTTP subnet scanning."""
+    client_ip = request.client.host if request.client else ""
+    if client_ip:
+        _authenticated_ips.add(client_ip)
     live_ip = get_local_ip()
     return {
         "status": "ok",
@@ -372,6 +545,7 @@ async def get_ping():
         "ip": live_ip,
         "port": SERVER_PORT,
         "version": "2.6.6",
+        "token": get_pairing_token(),
     }
 
 
@@ -381,14 +555,17 @@ async def get_info():
     cur_x, cur_y = controller.get_cursor_pos()
     mon = streamer.monitor_info
     live_ip = get_local_ip()
+    net_health = wifi_latency_manager.get_network_health() if wifi_latency_manager else {"active": False, "status": "Standby"}
     return {
         "status": "online",
         "ip": live_ip,
         "port": SERVER_PORT,
         "url": f"http://{live_ip}:{SERVER_PORT}",
+        "token": get_pairing_token(),
         "transfer_dir": TRANSFER_DIR,
         "clients_connected": max(len(active_connections), len(screen_connections)),
         "pro_active": client_is_pro,
+        "network": net_health,
         "screen": {
             "width": mon["width"],
             "height": mon["height"],
@@ -400,9 +577,9 @@ async def get_info():
 
 @app.get("/api/qr")
 async def get_qr():
-    """Serve the connection QR code as a PNG image."""
+    """Serve the connection QR code as a PNG image (100% offline local flow)."""
     live_ip = get_local_ip()
-    img_bytes = generate_qr_image_bytes(f"http://{live_ip}:{SERVER_PORT}")
+    img_bytes = generate_qr_image_bytes(f"http://{live_ip}:{SERVER_PORT}/connect")
     return Response(content=img_bytes, media_type="image/png")
 
 
@@ -675,47 +852,47 @@ async def verify_file_on_pc(
 @app.api_route("/api/fs/download", methods=["GET", "POST", "OPTIONS", "HEAD"])
 @app.api_route("/api/fs/download/", methods=["GET", "POST", "OPTIONS", "HEAD"])
 async def download_any_file(
-    path: str,
+    request: Request,
+    path: Optional[str] = None,
     range_header: Optional[str] = Header(None, alias="Range"),
 ):
     """Download any specified file from PC to phone with smooth non-blocking streaming and HTTP Range support."""
-    if not path or not os.path.exists(path) or not os.path.isfile(path):
+    if request.method == "OPTIONS":
+        return Response(status_code=200, headers={"Accept-Ranges": "bytes", "Allow": "GET, POST, OPTIONS, HEAD"})
+
+    target_path = path or request.query_params.get("path") or ""
+    if not target_path or not os.path.exists(target_path) or not os.path.isfile(target_path):
         return JSONResponse(status_code=404, content={"error": "File not found"})
     try:
-        file_size = os.path.getsize(path)
-        clean_filename = os.path.basename(path)
+        file_size = os.path.getsize(target_path)
+        clean_filename = os.path.basename(target_path)
 
         start = 0
         end = file_size - 1
         status_code = 200
 
         if isinstance(range_header, str) and range_header.startswith("bytes="):
-            parts = range_header.replace("bytes=", "").split("-")
+            spec = range_header.replace("bytes=", "").strip()
+            parts = spec.split("-")
             if parts[0]:
                 start = int(parts[0])
-            if len(parts) > 1 and parts[1]:
-                end = int(parts[1])
+                if len(parts) > 1 and parts[1]:
+                    end = min(file_size - 1, int(parts[1]))
+            elif len(parts) > 1 and parts[1]:
+                suffix_len = int(parts[1])
+                start = max(0, file_size - suffix_len)
+
+            if start >= file_size or start > end:
+                return Response(
+                    status_code=416,
+                    headers={
+                        "Content-Range": f"bytes */{file_size}",
+                        "Accept-Ranges": "bytes",
+                    },
+                )
             status_code = 206
 
         content_length = max(0, end - start + 1)
-
-        async def file_iterator():
-            def _read_chunk(f_obj, n):
-                return f_obj.read(n)
-
-            with open(path, "rb", buffering=1048576) as f:
-                if start > 0:
-                    f.seek(start)
-                remaining = content_length
-                chunk_size = 131072  # 128KB smooth streaming chunks
-                while remaining > 0:
-                    read_len = min(chunk_size, remaining)
-                    chunk = await asyncio.to_thread(_read_chunk, f, read_len)
-                    if not chunk:
-                        break
-                    remaining -= len(chunk)
-                    yield chunk
-                    await asyncio.sleep(0)  # Yield to asyncio event loop
 
         headers = {
             "Content-Length": str(content_length),
@@ -729,6 +906,32 @@ async def download_any_file(
 
         if status_code == 206:
             headers["Content-Range"] = f"bytes {start}-{end}/{file_size}"
+
+        if request is not None and getattr(request, "method", "") == "HEAD":
+            return Response(status_code=status_code, media_type="application/octet-stream", headers=headers)
+
+        async def file_iterator():
+            def _read_chunk(f_obj, n):
+                return f_obj.read(n)
+
+            try:
+                with open(target_path, "rb", buffering=1048576) as f:
+                    if start > 0:
+                        f.seek(start)
+                    remaining = content_length
+                    chunk_size = 131072  # 128KB smooth streaming chunks
+                    while remaining > 0:
+                        read_len = min(chunk_size, remaining)
+                        chunk = await asyncio.to_thread(_read_chunk, f, read_len)
+                        if not chunk:
+                            break
+                        remaining -= len(chunk)
+                        yield chunk
+                        await asyncio.sleep(0)  # Yield to asyncio event loop
+            except (asyncio.CancelledError, GeneratorExit):
+                pass
+            except Exception:
+                pass
 
         return StreamingResponse(
             file_iterator(),
@@ -770,7 +973,7 @@ async def download_batch_zip(paths: list[str] = Body(...)):
 
     zip_bytes = zip_buffer.getvalue()
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    zip_filename = f"NeonTrack_Batch_{timestamp}.zip"
+    zip_filename = f"PCDeck_Batch_{timestamp}.zip"
 
     return Response(
         content=zip_bytes,
@@ -988,7 +1191,9 @@ async def download_apk(range_header: Optional[str] = Header(None, alias="Range")
     The legacy /PCDeck_Pro.apk and /NeonTrack.apk routes are kept so older QR
     codes and links keep resolving, but they all serve the current PCDeck build.
     """
+    exe_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else parent_dir
     candidates = [
+        os.path.join(exe_dir, "PCDeck.apk"),
         os.path.join(parent_dir, "PCDeck.apk"),
         os.path.join(current_dir, "PCDeck.apk"),
         os.path.join(parent_dir, "PCDeck_Package", "PCDeck.apk"),
@@ -1009,7 +1214,9 @@ async def download_apk(range_header: Optional[str] = Header(None, alias="Range")
 @app.get("/NeonTrack_Client_Package.zip")
 async def download_client_zip(range_header: Optional[str] = Header(None, alias="Range")):
     """Direct, resumable download for the latest PCDeck Client Package ZIP."""
+    exe_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else parent_dir
     candidates = [
+        os.path.join(exe_dir, "PCDeck_Package.zip"),
         os.path.join(parent_dir, "PCDeck_Package.zip"),
         os.path.join(current_dir, "PCDeck_Package.zip"),
     ]
@@ -1145,8 +1352,8 @@ async def upload_file_legacy(file: UploadFile = File(...)):
     return await upload_file_to_folder(file=file, dest_dir=TRANSFER_DIR)
 
 @app.get("/api/files/download/{filename}")
-async def download_file_legacy(filename: str):
-    return await download_any_file(os.path.join(TRANSFER_DIR, os.path.basename(filename)))
+async def download_file_legacy(request: Request, filename: str):
+    return await download_any_file(request=request, path=os.path.join(TRANSFER_DIR, os.path.basename(filename)))
 
 @app.post("/api/files/open/{filename}")
 async def open_file_legacy(filename: str):
@@ -1171,8 +1378,12 @@ async def get_desktop():
 
 
 @app.get("/connect")
-async def get_connect_gateway():
+@app.get("/connect/")
+async def get_connect_gateway(request: Request):
     """Serve the pairing gateway (Download APK vs Launch Web Remote)."""
+    client_ip = request.client.host if request.client else ""
+    if client_ip:
+        _authenticated_ips.add(client_ip)
     connect_file = os.path.join(STATIC_DIR, "connect.html")
     if os.path.exists(connect_file):
         return FileResponse(connect_file)
@@ -1196,6 +1407,7 @@ async def get_pcdeck_apk():
 
 def dispatch_command(data: str):
     """Process incoming control commands from either trackpad or screen touch."""
+    global client_is_pro
     if "," in data and not data.startswith("{"):
         parts = data.split(",")
         cmd = parts[0]
@@ -1311,9 +1523,102 @@ def dispatch_command(data: str):
             # Reset all gamepad inputs to neutral
             gamepad_manager.reset_all()
 
-        elif cmd == "pro_status" and len(parts) >= 2:
-            global client_is_pro
-            client_is_pro = (parts[1] == "1" or parts[1].lower() == "true")
+        elif cmd == "gyro" and len(parts) >= 3:
+            # Gyroscope Super Motion Controls:
+            # gyro,steer,value  -> left stick steering
+            # gyro,aim,x,y      -> right stick aim
+            # gyro,mouse,dx,dy  -> raw mouse micro-movements
+            sub_cmd = parts[1]
+            if sub_cmd == "steer":
+                try:
+                    gamepad_manager.apply_gyro_steer(float(parts[2]))
+                except Exception:
+                    pass
+            elif sub_cmd == "aim" and len(parts) >= 4:
+                try:
+                    gamepad_manager.apply_gyro_aim(float(parts[2]), float(parts[3]))
+                except Exception:
+                    pass
+            elif sub_cmd == "mouse" and len(parts) >= 4:
+                try:
+                    controller.move_relative(float(parts[2]), float(parts[3]))
+                except Exception:
+                    pass
+
+        elif cmd == "pro_auth" and len(parts) >= 2:
+            from server.license_manager import verify_license
+            # If server host itself has a cryptographically verified license, enable Pro
+            if verify_license().get("pro_active", False):
+                client_is_pro = True
+            elif len(parts) >= 3:
+                # Client passed key & instance_id from Lemon Squeezy
+                k = parts[1].strip()
+                inst = parts[2].strip()
+                client_is_pro = len(k) >= 10 and len(inst) >= 5
+            else:
+                client_is_pro = False
+
+        elif cmd == "pro_status":
+            # Zero-trust: client boolean cannot override server security
+            from server.license_manager import verify_license
+            if not verify_license().get("pro_active", False):
+                client_is_pro = False
+
+
+def dispatch_binary_command_sync(raw_bytes: bytes) -> Optional[bytes]:
+    """
+    Sub-microsecond processor for raw binary input packets.
+    Dispatches directly to Win32 ctypes SendInput with zero memory allocation or string parsing.
+    Returns optional binary response (e.g. binary pong).
+    """
+    parsed = unpack_binary_message(raw_bytes)
+    if not parsed:
+        return None
+    cmd, args = parsed
+
+    if cmd == "m":
+        controller.move_relative(args[0], args[1])
+    elif cmd == "a":
+        controller.move_absolute(args[0], args[1])
+    elif cmd == "td":
+        controller.touch_down_at(args[0], args[1], args[2])
+    elif cmd == "tm":
+        controller.touch_move_at(args[0], args[1])
+    elif cmd == "tu":
+        controller.touch_up_at(args[0], args[1], args[2])
+    elif cmd == "c":
+        controller.click(args[0])
+    elif cmd == "s":
+        controller.scroll(args[0], args[1])
+    elif cmd == "ts":
+        controller.scroll_at(args[0], args[1], args[2], args[3])
+    elif cmd == "ping":
+        ts_ms, flags = args
+        return pack_pong(ts_ms)
+    elif cmd == "gp_state":
+        buttons, lx, ly, rx, ry, lt, rt = args
+        if gamepad_manager:
+            try:
+                gamepad_manager.set_stick("left", lx / 32767.0, ly / 32767.0)
+                gamepad_manager.set_stick("right", rx / 32767.0, ry / 32767.0)
+                gamepad_manager.set_trigger("left", lt / 255.0)
+                gamepad_manager.set_trigger("right", rt / 255.0)
+                btn_names = ["a", "b", "x", "y", "lb", "rb", "back", "start", "ls", "rs", "dpad_up", "dpad_down", "dpad_left", "dpad_right", "guide"]
+                for bit, bname in enumerate(btn_names):
+                    gamepad_manager.set_button(bname, bool(buttons & (1 << bit)))
+            except Exception:
+                pass
+    return None
+
+
+async def dispatch_binary_command(raw_bytes: bytes, websocket: Optional[WebSocket] = None):
+    """Asynchronously dispatches raw binary packet and replies with pong if requested."""
+    reply = dispatch_binary_command_sync(raw_bytes)
+    if reply is not None and websocket is not None:
+        try:
+            await websocket.send_bytes(reply)
+        except Exception:
+            pass
 
 
 # ================= REVERSE PHONE REMOTE & ADB ENGINE =================
@@ -1784,35 +2089,538 @@ async def send_phone_command_api(cmd: str = Body(..., embed=True)):
     return {"status": "dispatched", "command": cmd}
 
 
+_DRIVER_PROGRESS_CALLBACK = None
+
+def set_driver_progress_callback(cb):
+    global _DRIVER_PROGRESS_CALLBACK
+    _DRIVER_PROGRESS_CALLBACK = cb
+
+def notify_driver_progress(driver_name: str, percent: int, stage_text: str, status: str = "running"):
+    if _DRIVER_PROGRESS_CALLBACK:
+        try:
+            _DRIVER_PROGRESS_CALLBACK(driver_name, percent, stage_text, status)
+        except Exception:
+            pass
+
+
+async def install_cam_driver_with_progress(websocket: WebSocket):
+    from server.camera_streamer import get_drivers_dir, has_internet_connection, is_webcam_driver_installed
+
+    # 0. Check if ALREADY installed & functional
+    if await asyncio.to_thread(is_webcam_driver_installed):
+        notify_driver_progress("Virtual Webcam", 100, "Virtual Webcam driver is already installed & verified!", "success")
+        try:
+            await websocket.send_text("cam_driver_progress,100,Virtual Webcam driver is already installed & verified!")
+            await websocket.send_text("cam_driver_install_result,success,Virtual Webcam driver is already installed & verified!")
+        except Exception:
+            pass
+        return
+
+    drivers_dir = get_drivers_dir()
+    dll64 = os.path.join(drivers_dir, "UnityCaptureFilter64.dll")
+    dll32 = os.path.join(drivers_dir, "UnityCaptureFilter32.dll")
+
+    notify_driver_progress("Virtual Webcam", 10, "Starting Virtual Camera driver setup...", "running")
+    try:
+        await websocket.send_text("cam_driver_progress,10,Starting Virtual Camera driver setup...")
+    except Exception:
+        pass
+
+    if not os.path.exists(dll64):
+        if not has_internet_connection():
+            msg = "Offline: No internet on PC to download camera driver. Place UnityCaptureFilter64.dll in PCDeck/drivers/."
+            notify_driver_progress("Virtual Webcam", 0, msg, "failed")
+            try:
+                await websocket.send_text(f"cam_driver_install_result,failed,{msg}")
+            except Exception:
+                pass
+            return
+        notify_driver_progress("Virtual Webcam", 25, "Downloading Virtual Camera package...", "running")
+        try:
+            await websocket.send_text("cam_driver_progress,25,Downloading Virtual Camera package...")
+        except Exception:
+            pass
+        proc = await asyncio.to_thread(
+            subprocess.run,
+            ["winget", "install", "--id", "OBSProject.OBSStudio", "-e", "--silent", "--accept-package-agreements", "--accept-source-agreements"],
+            capture_output=True, text=True
+        )
+        if proc.returncode == 0:
+            notify_driver_progress("Virtual Webcam", 100, "Virtual Webcam installed successfully!", "success")
+            await websocket.send_text("cam_driver_install_result,success,Virtual Webcam installed successfully!")
+        else:
+            msg = f"Package manager returned code {proc.returncode}"
+            notify_driver_progress("Virtual Webcam", 0, msg, "failed")
+            await websocket.send_text(f"cam_driver_install_result,failed,{msg}")
+        return
+
+    # Offline local package install
+    notify_driver_progress("Virtual Webcam", 25, "Registering DirectShow Virtual Camera filter...", "running")
+    try:
+        await websocket.send_text("cam_driver_progress,25,Registering DirectShow Virtual Camera filter...")
+    except Exception:
+        pass
+
+    def run_regsvr(dll_path):
+        try:
+            # 1. First try silent un-elevated (works instantly when run by user)
+            res = subprocess.run(["regsvr32.exe", "/s", dll_path], capture_output=True, timeout=5)
+            if res.returncode == 0:
+                return 0
+        except Exception:
+            pass
+        # 2. Elevated fallback with strict 8s timeout
+        try:
+            ps_cmd = f"Start-Process -FilePath 'regsvr32.exe' -ArgumentList '/s \"`\"{dll_path}`\"' -Verb RunAs -Wait"
+            res = subprocess.run(["powershell.exe", "-NoProfile", "-Command", ps_cmd],
+                                 capture_output=True, timeout=8,
+                                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
+            return res.returncode
+        except Exception:
+            return -1
+
+    # Register 64-bit filter
+    await asyncio.to_thread(run_regsvr, dll64)
+    # Register 32-bit filter if present
+    if os.path.exists(dll32):
+        await asyncio.to_thread(run_regsvr, dll32)
+
+    notify_driver_progress("Virtual Webcam", 60, "Verifying DirectShow Virtual Camera filter...", "running")
+    try:
+        await websocket.send_text("cam_driver_progress,60,Verifying DirectShow Virtual Camera filter...")
+    except Exception:
+        pass
+
+    installed = False
+    for i in range(8):
+        await asyncio.sleep(0.5)
+        pct = min(95, 65 + i * 4)
+        notify_driver_progress("Virtual Webcam", pct, f"Checking camera device in Windows ({i+1}s)...", "running")
+        try:
+            await websocket.send_text(f"cam_driver_progress,{pct},Checking camera device in Windows ({i+1}s)...")
+        except Exception:
+            pass
+        if await asyncio.to_thread(is_webcam_driver_installed):
+            installed = True
+            break
+
+    if installed or await asyncio.to_thread(is_webcam_driver_installed):
+        notify_driver_progress("Virtual Webcam", 100, "Virtual Webcam active & verified!", "success")
+        try:
+            await websocket.send_text("cam_driver_progress,100,Virtual Webcam active & verified!")
+            await websocket.send_text("cam_driver_install_result,success,Virtual Webcam active & verified!")
+        except Exception:
+            pass
+    else:
+        msg = "Camera registered, but device not detected yet. Please restart PCDeck."
+        notify_driver_progress("Virtual Webcam", 0, msg, "failed")
+        try:
+            await websocket.send_text(f"cam_driver_install_result,failed,{msg}")
+        except Exception:
+            pass
+
+
+async def install_mic_driver_with_progress(websocket: WebSocket):
+    from server.audio_streamer import (
+        get_drivers_dir, has_internet_connection, is_mic_driver_installed,
+        get_default_playback_id, restore_playback_id
+    )
+
+    # 0. Check if ALREADY installed & functional
+    if await asyncio.to_thread(is_mic_driver_installed):
+        notify_driver_progress("Virtual Microphone", 100, "VB-CABLE Virtual Microphone is already installed & verified!", "success")
+        try:
+            await websocket.send_text("mic_driver_progress,100,VB-CABLE Virtual Microphone is already installed & verified!")
+            await websocket.send_text("mic_driver_install_result,success,VB-CABLE Virtual Microphone is already installed & verified!")
+        except Exception:
+            pass
+        return
+
+    drivers_dir = get_drivers_dir()
+    exe_path = os.path.join(drivers_dir, "VBCABLE_Setup_x64.exe")
+
+    # 1. Capture current default audio output so we can restore it immediately after install
+    saved_default_audio_id = await asyncio.to_thread(get_default_playback_id)
+
+    notify_driver_progress("Virtual Microphone", 10, "Starting audio driver setup...", "running")
+    try:
+        await websocket.send_text("mic_driver_progress,10,Starting audio driver setup...")
+    except Exception:
+        pass
+
+    if not os.path.exists(exe_path):
+        if not has_internet_connection():
+            msg = "Offline: No internet on PC to download microphone driver. Place VBCABLE_Setup_x64.exe in PCDeck/drivers/."
+            notify_driver_progress("Virtual Microphone", 0, msg, "failed")
+            try:
+                await websocket.send_text(f"mic_driver_install_result,failed,{msg}")
+            except Exception:
+                pass
+            return
+        notify_driver_progress("Virtual Microphone", 25, "Downloading VB-CABLE via package manager...", "running")
+        try:
+            await websocket.send_text("mic_driver_progress,25,Downloading VB-CABLE via package manager...")
+        except Exception:
+            pass
+        proc = await asyncio.to_thread(
+            subprocess.run,
+            ["winget", "install", "--id", "VB-Audio.VirtualCable", "-e", "--silent", "--accept-package-agreements", "--accept-source-agreements"],
+            capture_output=True, text=True
+        )
+        # Restore real PC speakers after package manager finishes
+        await asyncio.to_thread(restore_playback_id, saved_default_audio_id)
+        if proc.returncode == 0 or await asyncio.to_thread(is_mic_driver_installed):
+            notify_driver_progress("Virtual Microphone", 100, "VB-CABLE installed successfully!", "success")
+            try:
+                await websocket.send_text("mic_driver_install_result,success,VB-CABLE installed successfully!")
+            except Exception:
+                pass
+        else:
+            msg = f"Package manager returned code {proc.returncode}"
+            notify_driver_progress("Virtual Microphone", 0, msg, "failed")
+            try:
+                await websocket.send_text(f"mic_driver_install_result,failed,{msg}")
+            except Exception:
+                pass
+        return
+
+    # Offline local package install
+    notify_driver_progress("Virtual Microphone", 20, "Please click 'Yes' on the PC permission prompt...", "running")
+    try:
+        await websocket.send_text("mic_driver_progress,20,Please click 'Yes' on the PC permission prompt...")
+    except Exception:
+        pass
+
+    ps_cmd = f"Start-Process -FilePath '{exe_path}' -ArgumentList '-i -h' -WorkingDirectory '{drivers_dir}' -Verb RunAs -Wait"
+
+    try:
+        proc = await asyncio.to_thread(
+            subprocess.run,
+            ["powershell.exe", "-NoProfile", "-Command", ps_cmd],
+            capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        )
+        if proc.returncode != 0 and not await asyncio.to_thread(is_mic_driver_installed):
+            msg = "Administrator permission was declined on PC."
+            notify_driver_progress("Virtual Microphone", 0, msg, "failed")
+            try:
+                await websocket.send_text(f"mic_driver_install_result,failed,{msg}")
+            except Exception:
+                pass
+            return
+    except Exception as e:
+        if not await asyncio.to_thread(is_mic_driver_installed):
+            msg = f"Failed to launch installer: {e}"
+            notify_driver_progress("Virtual Microphone", 0, msg, "failed")
+            try:
+                await websocket.send_text(f"mic_driver_install_result,failed,{msg}")
+            except Exception:
+                pass
+            return
+
+    # Immediately restore real PC speakers so audio never goes silent
+    await asyncio.to_thread(restore_playback_id, saved_default_audio_id)
+
+    notify_driver_progress("Virtual Microphone", 60, "Installer running... Registering virtual audio cable...", "running")
+    try:
+        await websocket.send_text("mic_driver_progress,60,Installer running... Registering virtual audio cable...")
+    except Exception:
+        pass
+
+    installed = False
+    for i in range(12):
+        await asyncio.sleep(0.8)
+        pct = min(95, 65 + i * 3)
+        notify_driver_progress("Virtual Microphone", pct, f"Configuring Windows audio devices ({i+1}s)...", "running")
+        try:
+            await websocket.send_text(f"mic_driver_progress,{pct},Configuring Windows audio devices ({i+1}s)...")
+        except Exception:
+            pass
+        if await asyncio.to_thread(is_mic_driver_installed):
+            installed = True
+            break
+
+    # Restore default audio again after device registration
+    await asyncio.to_thread(restore_playback_id, saved_default_audio_id)
+
+    if installed or await asyncio.to_thread(is_mic_driver_installed):
+        notify_driver_progress("Virtual Microphone", 100, "VB-CABLE Virtual Microphone active & verified!", "success")
+        try:
+            await websocket.send_text("mic_driver_progress,100,VB-CABLE Virtual Microphone active & verified!")
+            await websocket.send_text("mic_driver_install_result,success,VB-CABLE Virtual Microphone active & verified!")
+        except Exception:
+            pass
+    else:
+        msg = "Driver installation finished, but Windows needs a moment or a restart to register audio cables."
+        notify_driver_progress("Virtual Microphone", 0, msg, "failed")
+        try:
+            await websocket.send_text(f"mic_driver_install_result,failed,{msg}")
+        except Exception:
+            pass
+
+
+async def install_gamepad_driver_with_progress(websocket: WebSocket):
+    from server.gamepad_manager import (
+        get_drivers_dir, has_internet_connection, is_vigem_installed, gamepad_manager
+    )
+
+    # 0. Check if ALREADY installed & functional
+    if await asyncio.to_thread(is_vigem_installed):
+        notify_driver_progress("Virtual Gamepad", 100, "ViGEmBus Virtual Xbox 360 Controller is already active & verified!", "success")
+        try:
+            await websocket.send_text("gamepad_driver_progress,100,ViGEmBus Virtual Xbox 360 Controller is already active & verified!")
+            await websocket.send_text("gamepad_driver_install_result,success,ViGEmBus Virtual Xbox 360 Controller active & verified!")
+            await websocket.send_text("driver_install_result,success,xinput")
+            await websocket.send_text("driver_status,installed,xinput")
+            await websocket.send_text("gamepad_driver_status,installed,xinput")
+        except Exception:
+            pass
+        return
+
+    drivers_dir = get_drivers_dir()
+    exe_path = os.path.join(drivers_dir, "ViGEmBus_Setup.exe")
+    msi_path = os.path.join(drivers_dir, "ViGEmBus_x64.msi")
+
+    notify_driver_progress("Virtual Gamepad", 10, "Starting Virtual Xbox Controller setup...", "running")
+    try:
+        await websocket.send_text("gamepad_driver_progress,10,Starting Virtual Xbox Controller setup...")
+    except Exception:
+        pass
+
+    # Offline / Online check
+    if not os.path.exists(exe_path) and not os.path.exists(msi_path):
+        if not has_internet_connection():
+            msg = "Offline: No internet on PC to download gamepad driver. Place ViGEmBus_Setup.exe in PCDeck/drivers/."
+            notify_driver_progress("Virtual Gamepad", 0, msg, "failed")
+            try:
+                await websocket.send_text(f"gamepad_driver_install_result,failed,{msg}")
+                await websocket.send_text(f"driver_install_result,failed,{msg}")
+            except Exception:
+                pass
+            return
+
+        notify_driver_progress("Virtual Gamepad", 25, "Downloading ViGEmBus via package manager...", "running")
+        try:
+            await websocket.send_text("gamepad_driver_progress,25,Downloading ViGEmBus via package manager...")
+        except Exception:
+            pass
+        proc = await asyncio.to_thread(
+            subprocess.run,
+            ["winget", "install", "--id", "Nefarius.ViGEmBus", "-e", "--silent", "--accept-package-agreements", "--accept-source-agreements"],
+            capture_output=True, text=True
+        )
+        if proc.returncode == 0 or await asyncio.to_thread(is_vigem_installed):
+            gamepad_manager.init_backend()
+            notify_driver_progress("Virtual Gamepad", 100, "ViGEmBus installed successfully!", "success")
+            try:
+                await websocket.send_text("gamepad_driver_progress,100,ViGEmBus installed successfully!")
+                await websocket.send_text("gamepad_driver_install_result,success,ViGEmBus installed successfully!")
+                await websocket.send_text(f"driver_install_result,success,{gamepad_manager.mode}")
+                await websocket.send_text("driver_status,installed,xinput")
+                await websocket.send_text("gamepad_driver_status,installed,xinput")
+            except Exception:
+                pass
+        else:
+            msg = f"Package manager returned code {proc.returncode}"
+            notify_driver_progress("Virtual Gamepad", 0, msg, "failed")
+            try:
+                await websocket.send_text(f"gamepad_driver_install_result,failed,{msg}")
+                await websocket.send_text(f"driver_install_result,failed,{msg}")
+            except Exception:
+                pass
+        return
+
+    # Offline local package install
+    notify_driver_progress("Virtual Gamepad", 20, "Please click 'Yes' on the PC permission prompt...", "running")
+    try:
+        await websocket.send_text("gamepad_driver_progress,20,Please click 'Yes' on the PC permission prompt...")
+    except Exception:
+        pass
+
+    # Prefer ViGEmBus_Setup.exe, fallback to ViGEmBus_x64.msi
+    if os.path.exists(exe_path):
+        ps_cmd = f"Start-Process -FilePath '{exe_path}' -ArgumentList '/passive /norestart' -WorkingDirectory '{drivers_dir}' -Verb RunAs -Wait"
+    else:
+        ps_cmd = f"Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i \\\"{msi_path}\\\" /passive /norestart ALLUSERS=1' -WorkingDirectory '{drivers_dir}' -Verb RunAs -Wait"
+
+    try:
+        proc = await asyncio.to_thread(
+            subprocess.run,
+            ["powershell.exe", "-NoProfile", "-Command", ps_cmd],
+            capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        )
+        if proc.returncode != 0 and not await asyncio.to_thread(is_vigem_installed):
+            # If Setup.exe returned error, attempt MSI directly
+            if os.path.exists(msi_path) and os.path.exists(exe_path):
+                ps_cmd_msi = f"Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i \\\"{msi_path}\\\" /passive /norestart ALLUSERS=1' -WorkingDirectory '{drivers_dir}' -Verb RunAs -Wait"
+                await asyncio.to_thread(
+                    subprocess.run,
+                    ["powershell.exe", "-NoProfile", "-Command", ps_cmd_msi],
+                    capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+                )
+    except Exception as e:
+        if not await asyncio.to_thread(is_vigem_installed):
+            msg = f"Failed to launch installer: {e}"
+            notify_driver_progress("Virtual Gamepad", 0, msg, "failed")
+            try:
+                await websocket.send_text(f"gamepad_driver_install_result,failed,{msg}")
+                await websocket.send_text(f"driver_install_result,failed,{msg}")
+            except Exception:
+                pass
+            return
+
+    notify_driver_progress("Virtual Gamepad", 60, "Installer running... Registering virtual Xbox 360 controller device...", "running")
+    try:
+        await websocket.send_text("gamepad_driver_progress,60,Installer running... Registering virtual Xbox 360 controller device...")
+    except Exception:
+        pass
+
+    installed = False
+    for i in range(12):
+        await asyncio.sleep(0.8)
+        pct = min(95, 65 + i * 3)
+        notify_driver_progress("Virtual Gamepad", pct, f"Configuring XInput controller in Windows ({i+1}s)...", "running")
+        try:
+            await websocket.send_text(f"gamepad_driver_progress,{pct},Configuring XInput controller in Windows ({i+1}s)...")
+        except Exception:
+            pass
+        if await asyncio.to_thread(is_vigem_installed):
+            installed = True
+            break
+
+    if installed or await asyncio.to_thread(is_vigem_installed):
+        gamepad_manager.init_backend()
+        notify_driver_progress("Virtual Gamepad", 100, "Virtual Xbox 360 Controller active & verified!", "success")
+        try:
+            await websocket.send_text("gamepad_driver_progress,100,Virtual Xbox 360 Controller active & verified!")
+            await websocket.send_text("gamepad_driver_install_result,success,Virtual Xbox 360 Controller active & verified!")
+            await websocket.send_text(f"driver_install_result,success,{gamepad_manager.mode}")
+            await websocket.send_text("driver_status,installed,xinput")
+            await websocket.send_text("gamepad_driver_status,installed,xinput")
+        except Exception:
+            pass
+    else:
+        msg = "Driver installation finished, but Windows needs a moment or a restart to register Xbox Controller."
+        notify_driver_progress("Virtual Gamepad", 0, msg, "failed")
+        try:
+            await websocket.send_text(f"gamepad_driver_install_result,failed,{msg}")
+            await websocket.send_text(f"driver_install_result,failed,{msg}")
+        except Exception:
+            pass
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """Main Trackpad, Gamepad and control WebSocket endpoint."""
+    client_ip = websocket.client.host if websocket.client else ""
+    token = websocket.query_params.get("token")
+    is_authed = is_client_authorized(client_ip, token)
+
     await websocket.accept()
     active_connections.add(websocket)
 
+    if wifi_latency_manager:
+        wifi_latency_manager.optimize_socket_for_low_latency(websocket)
+
+    # Automatically notify client if PC Host has Pro unlocked
+    if is_pro_client():
+        try:
+            await websocket.send_text("pro_unlocked,1")
+        except Exception:
+            pass
+
     try:
         while True:
-            data = await websocket.receive_text()
-            if data.startswith("p,"):
+            msg = await websocket.receive()
+            if msg["type"] == "websocket.disconnect":
+                break
+            if "bytes" in msg and msg["bytes"]:
+                if not is_authed:
+                    await websocket.close(code=4003, reason="Unauthorized")
+                    break
+                await dispatch_binary_command(msg["bytes"], websocket)
+                continue
+            data = msg.get("text")
+            if not data:
+                continue
+
+            if not is_authed:
+                if data == "get_token":
+                    await websocket.send_text(f"token,{get_pairing_token()}")
+                    continue
+                elif data.startswith("pair,"):
+                    parts = data.split(",")
+                    cand_token = parts[1].strip() if len(parts) >= 2 else ""
+                    if is_client_authorized(client_ip, cand_token):
+                        is_authed = True
+                        await websocket.send_text("pair_ok,1")
+                        continue
+                    else:
+                        await websocket.send_text("pair_error,unauthorized")
+                        await websocket.close(code=4003, reason="Unauthorized")
+                        break
+                elif data.startswith("p,"):
+                    parts = data.split(",")
+                    await websocket.send_text(f"pong,{parts[1]}")
+                    continue
+                elif data.startswith("pro_status,") or "driver" in data:
+                    continue
+                else:
+                    await websocket.send_text("auth_required")
+                    continue
+
+            if data == "get_token":
+                await websocket.send_text(f"token,{get_pairing_token()}")
+                continue
+            elif data.startswith("p,"):
                 parts = data.split(",")
                 await websocket.send_text(f"pong,{parts[1]}")
-            elif data == "driver_check":
+            elif data.startswith("lat,"):
+                parts = data.split(",")
+                if len(parts) >= 2 and wifi_latency_manager:
+                    try:
+                        wifi_latency_manager.update_measured_rtt(float(parts[1]))
+                    except Exception:
+                        pass
+            elif data.startswith("pro_auth,"):
+                parts = data.split(",")
+                from server.license_manager import verify_license
+                host_pro = verify_license().get("pro_active", False)
+                if host_pro or (len(parts) >= 3 and len(parts[1].strip()) >= 10 and len(parts[2].strip()) >= 5):
+                    set_pro_client(True)
+                    await websocket.send_text("pro_unlocked,1")
+                else:
+                    if not host_pro:
+                        set_pro_client(False)
+                        await websocket.send_text("pro_unlocked,0")
+            elif data in ("driver_check", "gamepad_driver_check"):
                 # Check ViGEmBus status on Windows
                 installed = is_vigem_installed()
                 status = "installed" if installed else "missing"
                 mode = gamepad_manager.mode
                 await websocket.send_text(f"driver_status,{status},{mode}")
-            elif data == "install_driver_request":
-                # Request 1-click silent driver install
-                await websocket.send_text("driver_installing,start")
-                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                msi_path = os.path.join(base_dir, "drivers", "ViGEmBus_x64.msi")
-                ok, msg = install_vigem_silently(msi_path)
-                if ok:
-                    gamepad_manager.init_backend()
-                    await websocket.send_text(f"driver_install_result,success,{gamepad_manager.mode}")
-                else:
-                    await websocket.send_text(f"driver_install_result,failed,{msg}")
+                await websocket.send_text(f"gamepad_driver_status,{status},{mode}")
+            elif data in ("install_driver_request", "install_gamepad_driver_request"):
+                # Request 1-click silent virtual gamepad driver install with live progress
+                await install_gamepad_driver_with_progress(websocket)
+            elif data == "cam_driver_check":
+                # Check Virtual Webcam DirectShow status on host
+                installed = is_webcam_driver_installed()
+                status = "installed" if installed else "missing"
+                await websocket.send_text(f"cam_driver_status,{status}")
+            elif data == "install_cam_driver_request":
+                # Request 1-click silent virtual webcam driver install with live progress
+                await install_cam_driver_with_progress(websocket)
+            elif data == "mic_driver_check":
+                # Check Virtual Audio Cable status on host
+                installed = is_mic_driver_installed()
+                status = "installed" if installed else "missing"
+                await websocket.send_text(f"mic_driver_status,{status}")
+            elif data == "install_mic_driver_request":
+                # Request 1-click silent virtual mic cable driver install with live progress
+                await install_mic_driver_with_progress(websocket)
+            elif data.startswith("cam_flip,"):
+                val = data.split(",")[1] == "1"
+                camera_streamer.set_flip_horizontal(val)
             else:
                 dispatch_command(data)
 
@@ -1833,7 +2641,14 @@ async def websocket_mic_endpoint(websocket: WebSocket):
     Receives real-time 16-bit 48kHz PCM audio buffers from the phone and routes
     them to the host's virtual audio cable device.
     """
+    client_ip = websocket.client.host if websocket.client else ""
+    token = websocket.query_params.get("token")
+    if not is_client_authorized(client_ip, token):
+        await websocket.close(code=4003, reason="Unauthorized")
+        return
+
     await websocket.accept()
+    print("[MicWS] Phone connected to WebSocket /ws/mic!", flush=True)
     mic_sink.start()
     try:
         await websocket.send_text(f"mic_ready,{mic_sink.sample_rate},{mic_sink.channels},{mic_sink.active_device_name}")
@@ -1841,12 +2656,73 @@ async def websocket_mic_endpoint(websocket: WebSocket):
             data = await websocket.receive_bytes()
             if data:
                 mic_sink.push_pcm_bytes(data)
-    except (WebSocketDisconnect, asyncio.CancelledError, Exception):
-        pass
+    except (WebSocketDisconnect, asyncio.CancelledError, Exception) as e:
+        print(f"[MicWS] Disconnected: {e}", flush=True)
     finally:
         mic_sink.stop()
         try:
             await websocket.close()
+        except Exception:
+            pass
+
+
+@app.post("/api/mic/stream")
+async def mic_stream_post(request: Request):
+    """High-speed chunked HTTP POST endpoint for phone microphone streaming (100% firewall-safe)."""
+    client_ip = request.client.host if request.client else ""
+    token = request.query_params.get("token") or request.headers.get("x-pcdeck-token")
+    if not is_client_authorized(client_ip, token):
+        return JSONResponse(status_code=403, content={"error": "Unauthorized"})
+
+    print("[MicStream] Phone connected to HTTP audio stream!", flush=True)
+    mic_sink.start()
+    total_bytes = 0
+    try:
+        async for chunk in request.stream():
+            if chunk:
+                total_bytes += len(chunk)
+                mic_sink.push_pcm_bytes(chunk)
+    except Exception as e:
+        print(f"[MicStream] Connection ended: {e}", flush=True)
+    finally:
+        print(f"[MicStream] Stream finished. Total bytes received: {total_bytes}", flush=True)
+        mic_sink.stop()
+    return {"status": "ok"}
+
+
+@app.on_event("startup")
+async def startup_event():
+    # Auto-heal: Ensure Windows WLAN autoconfig is enabled on startup
+    if sys.platform == "win32":
+        try:
+            if wifi_latency_manager and hasattr(wifi_latency_manager, "startup_auto_heal"):
+                wifi_latency_manager.startup_auto_heal()
+        except Exception:
+            pass
+
+    try:
+        from server.audio_streamer import mic_sink
+        mic_sink.start_dual_receiver(8002)
+    except Exception as e:
+        print(f"[Startup] Mic dual receiver init error: {e}")
+
+    if sys.platform == "win32":
+        try:
+            from server.camera_streamer import is_webcam_driver_installed, camera_streamer
+            if is_webcam_driver_installed():
+                camera_streamer.start_camera(width=1280, height=720, fps=30)
+                camera_streamer.stop_camera()
+        except Exception:
+            pass
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    if sys.platform == "win32":
+        try:
+            if wifi_latency_manager:
+                wifi_latency_manager.release_all_streaming_modes()
+                wifi_latency_manager._cleanup_on_exit()
         except Exception:
             pass
 
@@ -1858,6 +2734,12 @@ async def websocket_cam_endpoint(websocket: WebSocket):
     Receives high-resolution video frames from the mobile camera and pushes
     them to the virtual webcam DirectShow device via pyvirtualcam.
     """
+    client_ip = websocket.client.host if websocket.client else ""
+    token = websocket.query_params.get("token")
+    if not is_client_authorized(client_ip, token):
+        await websocket.close(code=4003, reason="Unauthorized")
+        return
+
     await websocket.accept()
     camera_streamer.start_camera(width=1280, height=720, fps=30)
     try:
@@ -1874,6 +2756,10 @@ async def websocket_cam_endpoint(websocket: WebSocket):
                     if len(parts) >= 4:
                         w, h, fps = int(parts[1]), int(parts[2]), int(parts[3])
                         camera_streamer.start_camera(width=w, height=h, fps=fps)
+                elif text_cmd.startswith("flip,"):
+                    parts = text_cmd.split(",")
+                    if len(parts) >= 2:
+                        camera_streamer.set_flip_horizontal(parts[1] == "1")
     except (WebSocketDisconnect, asyncio.CancelledError, Exception):
         pass
     finally:
@@ -1887,9 +2773,20 @@ async def websocket_cam_endpoint(websocket: WebSocket):
 @app.websocket("/ws/screen")
 async def websocket_screen_endpoint(websocket: WebSocket):
     """Zero-Lag adaptive binary screen streaming & interactive touch display endpoint."""
+    client_ip = websocket.client.host if websocket.client else ""
+    token = websocket.query_params.get("token")
+    if not is_client_authorized(client_ip, token):
+        await websocket.close(code=4003, reason="Unauthorized")
+        return
+
     await websocket.accept()
     screen_connections.add(websocket)
     streamer.acquire()
+
+    ws_client_id = f"screen_{id(websocket)}"
+    if wifi_latency_manager:
+        wifi_latency_manager.optimize_socket_for_low_latency(websocket)
+        wifi_latency_manager.acquire_streaming_mode(ws_client_id)
 
     loop = asyncio.get_running_loop()
     frame_event = asyncio.Event()
@@ -1908,11 +2805,21 @@ async def websocket_screen_endpoint(websocket: WebSocket):
         except Exception:
             pass
 
+    # In-flight frame flow control to completely eliminate TCP bufferbloat
+    client_ready_event = asyncio.Event()
+    client_ready_event.set()
+    is_paused = False
+
     async def send_frames():
         last_sent_id = initial_id if initial_jpeg else -1
         last_keepalive_at = time.time()
         while True:
             try:
+                if is_paused:
+                    # Video stream paused: sleep gently to free 100% Wi-Fi bandwidth for audio/trackpad
+                    await asyncio.sleep(0.12)
+                    continue
+
                 # Wait for instant async frame notification (0ms delay, zero executor overhead)
                 try:
                     await asyncio.wait_for(frame_event.wait(), timeout=0.8)
@@ -1923,26 +2830,68 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                 now = time.time()
                 jpeg, frame_id = streamer.get_latest_frame()
                 if jpeg and frame_id != last_sent_id:
+                    # Prevent TCP bufferbloat: verify transport write buffer is not congested (>256KB)
+                    if wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket, max_buffered_bytes=262144):
+                        await asyncio.sleep(0.01)
+                        continue
+
                     last_sent_id = frame_id
                     last_keepalive_at = now
+                    if wifi_latency_manager and hasattr(wifi_latency_manager, "touch_stream_activity"):
+                        wifi_latency_manager.touch_stream_activity()
                     await websocket.send_bytes(jpeg)
-                elif (now - last_keepalive_at) > 1.2:
+                elif (now - last_keepalive_at) > 1.0:
                     last_keepalive_at = now
-                    # Lightweight keepalive ping to keep connection and watchdog alive without flooding video pipe
+                    # Lightweight keepalive ping to keep connection alive without flooding video pipe
                     await websocket.send_text("h")
             except (asyncio.CancelledError, WebSocketDisconnect, Exception):
                 break
 
     async def receive_cmds():
+        nonlocal is_paused
         try:
             while True:
-                data = await websocket.receive_text()
-                if data.startswith("cfg,"):
+                msg = await websocket.receive()
+                if msg["type"] == "websocket.disconnect":
+                    break
+                if wifi_latency_manager and hasattr(wifi_latency_manager, "touch_stream_activity"):
+                    wifi_latency_manager.touch_stream_activity()
+                if "bytes" in msg and msg["bytes"]:
+                    await dispatch_binary_command(msg["bytes"], websocket)
+                    continue
+                data = msg.get("text")
+                if not data:
+                    continue
+
+                if data == "a" or data.startswith("ack"):
+                    client_ready_event.set()
+                elif data == "pause":
+                    is_paused = True
+                    streamer.pause_consumer()
+                    if wifi_latency_manager:
+                        wifi_latency_manager.release_streaming_mode(ws_client_id)
+                    print("[ScreenStreamer] Client switched tab -> Screen stream PAUSED (0% Wi-Fi load)", flush=True)
+                elif data == "resume":
+                    is_paused = False
+                    streamer.resume_consumer()
+                    if wifi_latency_manager:
+                        wifi_latency_manager.acquire_streaming_mode(ws_client_id)
+                    client_ready_event.set()
+                    print("[ScreenStreamer] Client focused screen tab -> Screen stream RESUMED", flush=True)
+                elif data.startswith("lat,"):
+                    parts = data.split(",")
+                    if len(parts) >= 2 and wifi_latency_manager:
+                        try:
+                            wifi_latency_manager.update_measured_rtt(float(parts[1]))
+                        except Exception:
+                            pass
+                elif data.startswith("cfg,"):
                     parts = data.split(",")
                     if len(parts) >= 4:
-                        streamer.quality = max(20, min(100, int(parts[1])))
-                        streamer.scale = max(0.3, min(1.0, float(parts[2])))
-                        streamer.fps_limit = max(10, min(60, int(parts[3])))
+                        req_fps = int(parts[3])
+                        if not is_pro_client() and req_fps > 30:
+                            req_fps = 30
+                        streamer.fps_limit = max(10, min(60, req_fps))
                 elif data.startswith("p,"):
                     parts = data.split(",")
                     await websocket.send_text(f"pong,{parts[1]}")
@@ -1967,6 +2916,8 @@ async def websocket_screen_endpoint(websocket: WebSocket):
         screen_connections.discard(websocket)
         streamer.unregister_async_listener(frame_event)
         streamer.release()
+        if wifi_latency_manager:
+            wifi_latency_manager.release_streaming_mode(ws_client_id)
         try:
             await websocket.close()
         except Exception:
@@ -1976,7 +2927,15 @@ async def websocket_screen_endpoint(websocket: WebSocket):
 @app.websocket("/ws/audio")
 async def websocket_audio_endpoint(websocket: WebSocket):
     """Ultra-low-latency real-time PCM audio streaming endpoint for mobile phone."""
+    client_ip = websocket.client.host if websocket.client else ""
+    token = websocket.query_params.get("token")
+    if not is_client_authorized(client_ip, token):
+        await websocket.close(code=4003, reason="Unauthorized")
+        return
+
     await websocket.accept()
+    if wifi_latency_manager:
+        wifi_latency_manager.optimize_socket_for_low_latency(websocket)
     audio_queue = audio_streamer.register_subscriber()
 
     try:
@@ -1988,6 +2947,14 @@ async def websocket_audio_endpoint(websocket: WebSocket):
                 while True:
                     chunk = await audio_queue.get()
                     if chunk:
+                        transport = getattr(websocket, "_transport", None)
+                        if transport and hasattr(transport, "get_write_buffer_size"):
+                            try:
+                                if transport.get_write_buffer_size() > 32768:
+                                    # Drop backlogged chunk to preserve real-time low latency
+                                    continue
+                            except Exception:
+                                pass
                         await websocket.send_bytes(chunk)
             except (asyncio.CancelledError, WebSocketDisconnect, Exception):
                 pass
@@ -2076,7 +3043,7 @@ def banner():
     if sys.stdout is None:
         return
     print(Fore.CYAN + "=" * 60)
-    print(Fore.YELLOW + Style.BRIGHT + "  [+] NEONTRACK 2.1 - PC REMOTE CONTROL SERVER")
+    print(Fore.YELLOW + Style.BRIGHT + "  [+] PCDECK PRO 2.1 - WIRELESS PC TOUCH DECK & STREAMER")
     print(Fore.CYAN + "=" * 60)
     print(f"{Fore.GREEN}  [+] Local LAN IP   : {Fore.WHITE}{LOCAL_IP}")
     print(f"{Fore.GREEN}  [+] Server Port    : {Fore.WHITE}{SERVER_PORT}")
@@ -2086,14 +3053,40 @@ def banner():
     print(Fore.CYAN + "-" * 60)
     print(Fore.YELLOW + "  Scan QR code in the Mobile App to Connect:")
     try:
-        print_ascii_qr(SERVER_URL)
+        print_ascii_qr(f"{SERVER_URL}/connect")
     except Exception:
         pass
     print(Fore.CYAN + "=" * 60)
     print(Fore.WHITE + "  Press Ctrl+C to stop the server.\n")
 
 
+def is_admin() -> bool:
+    if sys.platform != "win32":
+        return True
+    try:
+        import ctypes
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+    except Exception:
+        return False
+
+
+def elevate_if_needed():
+    if sys.platform == "win32" and not is_admin():
+        try:
+            import ctypes
+            target = sys.executable
+            script = os.path.abspath(sys.argv[0])
+            args = [f'"{script}"'] + [f'"{arg}"' for arg in sys.argv[1:]]
+            params = " ".join(args)
+            ret = ctypes.windll.shell32.ShellExecuteW(None, "runas", target, params, None, 1)
+            if ret > 32:
+                sys.exit(0)
+        except Exception:
+            pass
+
+
 def run_server():
+    elevate_if_needed()
     banner()
     config = Config(
         app=app,

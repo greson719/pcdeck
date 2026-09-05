@@ -3,7 +3,7 @@ import sys
 if sys.platform == "win32":
     try:
         import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.NeonMouse.v2026")
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.DesktopClient.Pro.v2026")
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
         except Exception:

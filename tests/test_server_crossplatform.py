@@ -76,8 +76,13 @@ def test_linux_input_dispatch():
     ctrl.click('left')
     ctrl.click('right')
     ctrl.scroll(0, 3)
+    ctrl.scroll_at(0.5, 0.5, 0.0, -120.0)
     ctrl.type_text("Hello PCDeck")
     ctrl.hotkey(["ctrl", "c"])
+
+    # Also verify default active platform controller handles scroll_at
+    active_ctrl = InputController()
+    active_ctrl.scroll_at(0.5, 0.5, 0.0, 50.0)
 
 
 def test_websocket_reconnection_lifecycle(client):
@@ -92,4 +97,56 @@ def test_websocket_reconnection_lifecycle(client):
         ws2.send_text("p,2000")
         msg = ws2.receive_text()
         assert msg == "pong,2000"
+
+
+def test_fs_download_with_http_range(client, tmp_path):
+    """Verify /api/fs/download handles full downloads, HTTP 206 Range resume, HEAD, and OPTIONS."""
+    test_file = tmp_path / "stream_test.bin"
+    payload = b"PCDeckUltraResilientDownloadTestPayloadBytes1234567890"
+    test_file.write_bytes(payload)
+
+    path_str = str(test_file)
+
+    # 1. Full Download (200 OK)
+    resp = client.get(f"/api/fs/download?path={path_str}")
+    assert resp.status_code == 200
+    assert resp.content == payload
+    assert resp.headers.get("Accept-Ranges") == "bytes"
+
+    # 2. Resumed Partial Download (206 Partial Content)
+    range_offset = 12
+    resp_range = client.get(
+        f"/api/fs/download?path={path_str}",
+        headers={"Range": f"bytes={range_offset}-"}
+    )
+    assert resp_range.status_code == 206
+    assert resp_range.content == payload[range_offset:]
+    assert "Content-Range" in resp_range.headers
+    assert f"bytes {range_offset}-{len(payload)-1}/{len(payload)}" in resp_range.headers["Content-Range"]
+
+    # 3. HEAD Request (checks headers without streaming body)
+    resp_head = client.head(f"/api/fs/download?path={path_str}")
+    assert resp_head.status_code == 200
+    assert resp_head.headers.get("Content-Length") == str(len(payload))
+    assert len(resp_head.content) == 0
+
+    # 4. OPTIONS Request
+    resp_options = client.options(f"/api/fs/download?path={path_str}")
+    assert resp_options.status_code == 200
+    assert resp_options.headers.get("Accept-Ranges") == "bytes"
+
+
+def test_screen_streamer_sleep_and_wake_lifecycle():
+    """Verify ScreenStreamer deep sleep event clears when paused and sets when resumed."""
+    streamer = ScreenStreamer()
+    assert streamer._wake_event.is_set()
+
+    # Simulate client navigating to Trackpad tab (pause)
+    streamer.pause_consumer()
+    assert not streamer._wake_event.is_set()
+
+    # Simulate client navigating back to Screen tab (resume)
+    streamer.resume_consumer()
+    assert streamer._wake_event.is_set()
+
 

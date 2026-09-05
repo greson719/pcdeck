@@ -10,8 +10,8 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from server.gamepad_manager import GamepadManager, is_vigem_installed, install_vigem_silently
-from server.audio_streamer import MicrophoneSink, mic_sink
-from server.camera_streamer import CameraStreamer, camera_streamer
+from server.audio_streamer import MicrophoneSink, mic_sink, is_mic_driver_installed, install_mic_driver_silently
+from server.camera_streamer import CameraStreamer, camera_streamer, is_webcam_driver_installed, install_webcam_driver_silently
 
 
 def test_gamepad_manager():
@@ -54,6 +54,23 @@ def test_gamepad_manager():
         assert gp._button_states[btn] is False
     print("OK: Digital button events dispatched successfully.")
 
+    # Test Gyro Super Steering & Aiming
+    print("Testing Gyro Super Motion Engine...")
+    gp.apply_gyro_steer(0.75)
+    assert abs(gp._axis_states["left"][0] - 0.75) < 0.001
+    gp.apply_gyro_steer(-0.6)
+    assert abs(gp._axis_states["left"][0] - (-0.6)) < 0.001
+    gp.apply_gyro_steer(0.0)
+    assert abs(gp._axis_states["left"][0]) < 0.001
+
+    gp.apply_gyro_aim(0.45, -0.35)
+    assert abs(gp._axis_states["right"][0] - 0.45) < 0.001
+    assert abs(gp._axis_states["right"][1] - (-0.35)) < 0.001
+    gp.apply_gyro_aim(0.0, 0.0)
+    assert abs(gp._axis_states["right"][0]) < 0.001
+    assert abs(gp._axis_states["right"][1]) < 0.001
+    print("OK: Gyro Super steer and aim successfully routed and scaled.")
+
     # Test Reset All
     gp.set_stick("left", 0.5, 0.5)
     gp.set_trigger("RT", 0.8)
@@ -85,8 +102,7 @@ def test_microphone_sink():
 def test_camera_streamer():
     print("\n--- [3] Testing Camera Streamer ---")
     cam = CameraStreamer(width=1280, height=720, fps=30)
-    ok = cam.start_camera(width=1280, height=720, fps=30)
-    assert ok is True
+    cam.start_camera()
     assert cam.is_active is True
     print(f"OK: CameraStreamer started ({cam.target_width}x{cam.target_height} @ {cam.target_fps}fps)")
 
@@ -103,14 +119,22 @@ def test_camera_streamer():
     print(f"OK: Ingested frame #{cam.frame_count} successfully.")
 
     cam.stop_camera()
+    assert cam.is_streaming_live is False
+    cam.close_device()
     assert cam.is_active is False
     print("OK: CameraStreamer stopped cleanly.")
 
 
 def test_driver_helpers():
     print("\n--- [4] Testing Driver Diagnostic Helpers ---")
-    installed = is_vigem_installed()
-    print(f"OK: ViGEmBus status on host: {'INSTALLED' if installed else 'NOT INSTALLED (SendInput fallback active)'}")
+    vigem_ok = is_vigem_installed()
+    print(f"OK: ViGEmBus status on host: {'INSTALLED' if vigem_ok else 'NOT INSTALLED (SendInput fallback active)'}")
+
+    cam_ok = is_webcam_driver_installed()
+    print(f"OK: Virtual Webcam Driver status: {'INSTALLED' if cam_ok else 'NOT INSTALLED (DirectShow/UnityCapture missing)'}")
+
+    mic_ok = is_mic_driver_installed()
+    print(f"OK: Virtual Audio Cable status: {'INSTALLED' if mic_ok else 'NOT INSTALLED (VB-Cable missing)'}")
 
 
 if __name__ == "__main__":
