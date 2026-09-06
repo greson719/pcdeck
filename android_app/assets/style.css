@@ -6928,6 +6928,15 @@ body.is-web-browser #cam-panel-card {
   display: none !important;
 }
 
+/* Temporarily hide Gamepad & Gaming HUD until ViGEm driver integration is completed */
+#btn-gamepad-mode-toggle,
+#btn-screen-gamepad-hud,
+#screen-gamepad-overlay,
+#gamepad-container,
+#setting-row-gamepad-hud {
+  display: none !important;
+}
+
 /* Hide web-only promo when inside native APK */
 html.is-native-app .web-only-feature,
 body.is-native-app .web-only-feature {
