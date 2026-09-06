@@ -28,7 +28,7 @@ for h in site_htmls:
         issues.append(f'{h}: Mismatched <header> tags')
     if content.count('<main') != content.count('</main>'):
         issues.append(f'{h}: Mismatched <main> tags')
-    if content.count('<footer>') != content.count('</footer>'):
+    if content.count('<footer') != content.count('</footer>'):
         issues.append(f'{h}: Mismatched <footer> tags')
 
 # Check guide.css
