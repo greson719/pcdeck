@@ -1,10 +1,11 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ==============================================================================
 # PCDeck Pro - Universal Linux Launcher
 # ==============================================================================
-set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-echo "🐧 Starting PCDeck Pro on Linux..."
+echo "🐧 Starting PCDeck v2.7.0 on Linux..."
 
 # Check for Python 3
 if ! command -v python3 &>/dev/null; then

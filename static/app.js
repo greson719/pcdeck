@@ -9560,7 +9560,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
         const port = state.serverPort || 8000;
         const apkUrl = `http://${host}:${port}/PCDeck.apk`;
-        showToast('Downloading and installing PCDeck v2.7.0 update...', 'info', '⬇️');
+        showToast(`Downloading and installing PCDeck v${CURRENT_APP_VERSION_NAME} update...`, 'info', '⬇️');
         if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
           window.AndroidApp.downloadAndInstallApk(apkUrl);
         } else {
