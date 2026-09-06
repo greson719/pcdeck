@@ -181,30 +181,30 @@
     {
       "@type": "HowTo",
       "@id": "https://pcdeck.vercel.app/#setup",
-      "name": "How to set up PCDeck",
-      "totalTime": "PT3M",
+      "name": "How to set up PCDeck in 30 seconds",
+      "totalTime": "PT1M",
       "tool": [
         { "@type": "HowToTool", "name": "Windows 10 or 11 PC" },
-        { "@type": "HowToTool", "name": "Android 5.0+ phone" }
+        { "@type": "HowToTool", "name": "Any Smartphone or Tablet (iPhone, Android, iPad)" }
       ],
       "step": [
         {
           "@type": "HowToStep",
           "position": 1,
-          "name": "Run PCDeck on the PC",
-          "text": "Start PCDeck.exe on Windows. It shows a QR code and a local address. Because the file is unsigned, click More info then Run anyway if SmartScreen appears."
+          "name": "Run PCDeck on your PC",
+          "text": "Start PCDeck.exe on Windows. It shows your local pairing QR code on screen immediately with no installation wizard."
         },
         {
           "@type": "HowToStep",
           "position": 2,
-          "name": "Install the app on the phone",
-          "text": "Install the PCDeck APK on the Android phone, allowing installation from unknown sources once when prompted."
+          "name": "Scan the QR Code with your Phone Camera",
+          "text": "Point your phone or tablet camera at the QR code displayed on your PC screen."
         },
         {
           "@type": "HowToStep",
           "position": 3,
-          "name": "Pair over Wi-Fi",
-          "text": "With both devices on the same Wi-Fi network or the phone's hotspot, scan the QR code from the app. The trackpad, keyboard, screen view and file browser become available immediately."
+          "name": "Instant Control in Browser — No App Required",
+          "text": "The trackpad, keyboard, and remote control open instantly in your mobile browser. No APK or app installation needed."
         }
       ]
     },
@@ -1180,30 +1180,64 @@ footer{padding:44px 0 56px}
     <div class="shell hero-grid">
 
       <div class="hero-col">
-        <p class="tag">Windows 10 / 11 · Linux · Android · iOS &amp; Mac</p>
-        <h1>Control Your PC From Your Phone or Browser — No Cloud Required</h1>
+        <p class="tag" style="display: inline-flex; align-items: center; gap: 6px; background: var(--signal-wash); color: var(--signal-ink); border: 1px solid rgba(27,68,216,0.2); padding: 5px 12px; border-radius: 999px; font-weight: 700; font-size: 11.5px; letter-spacing: .05em; margin-bottom: 14px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          ZERO MOBILE APP REQUIRED · SCAN &amp; CONTROL
+        </p>
+        <h1>Turn Your Phone into a Wireless Mouse &amp; Keyboard.<br><span style="color: var(--signal); display: inline-block; margin-top: 4px;">Just Scan the QR Code — That Easy.</span></h1>
         <p class="lede">
-          Use your phone, tablet or any modern browser as a wireless mouse, keyboard, live PC screen viewer, stereo audio receiver and file-transfer tool for Windows and Linux over local Wi-Fi. <b>Zero app installation required on iPhone, iPad, Mac, Linux &amp; Android.</b>
+          No phone apps or APK downloads required. Simply run PCDeck on your Windows PC, point your phone camera at the screen's QR code, and your trackpad opens instantly in your mobile browser over local Wi-Fi.
         </p>
 
-        <div class="get" id="get">
-          <div class="get-row">
-            <a class="btn" id="hero-exe" href="PCDeck.exe" download>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
-              <span>Download for Windows<small>v2.7.0 · Windows 10 / 11 · 46.8 MB</small></span>
+        <!-- 3-Step Instant Setup Card -->
+        <div class="easy-flow-card" style="margin: 24px 0 20px; background: var(--panel); border: 1px solid var(--grid); border-radius: 10px; padding: 16px 18px; box-shadow: 0 4px 16px rgba(18,22,28,0.04);">
+          <div style="font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--signal-ink); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+            Instant 3-Step Setup — Zero Install on Phone
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;">
+            <div style="display: flex; gap: 10px; align-items: flex-start;">
+              <span style="background: var(--ink); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">1</span>
+              <div>
+                <strong style="display: block; font-size: 13.5px; color: var(--ink);">1. Run on PC</strong>
+                <span style="font-size: 12px; color: var(--muted); line-height: 1.4; display: block;">Open PCDeck.exe. No install wizard or drivers.</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: flex-start;">
+              <span style="background: var(--signal); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">2</span>
+              <div>
+                <strong style="display: block; font-size: 13.5px; color: var(--ink);">2. Scan QR Code</strong>
+                <span style="font-size: 12px; color: var(--muted); line-height: 1.4; display: block;">Point your phone camera at the PC screen.</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: flex-start;">
+              <span style="background: #10b981; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">3</span>
+              <div>
+                <strong style="display: block; font-size: 13.5px; color: var(--ink);">3. That Easy!</strong>
+                <span style="font-size: 12px; color: var(--muted); line-height: 1.4; display: block;">Opens right in Safari/Chrome. Done!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="get" id="get" style="margin-top: 0;">
+          <div class="get-row" style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
+            <a class="btn" id="hero-exe" href="PCDeck.exe" download style="background: var(--signal); border-color: var(--signal); color: #fff; padding: 14px 24px; font-size: 16px; border-radius: 8px; box-shadow: 0 4px 18px rgba(27,68,216,0.22); display: inline-flex; align-items: center; gap: 14px; text-decoration: none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex-shrink: 0;"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+              <div>
+                <span style="display: block; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2;">Download PCDeck for Windows</span>
+                <small style="display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; opacity: 0.9; margin-top: 3px; letter-spacing: .03em;">v2.7.0 · Windows 10 / 11 · 46.8 MB · No Install Needed</small>
+              </div>
             </a>
-            <a class="btn" id="hero-apk" href="PCDeck.apk" download>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span>Download for Android<small>v2.7.0 · Direct APK · 739 KB</small></span>
-            </a>
-            <a class="btn ghost" id="hero-linux" href="#card-linux">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 8 3 3-3 3"/><path d="m13 14 4 0"/><rect width="20" height="14" x="2" y="3" rx="2"/></svg>
-              <span>Download for Linux<small>v2.7.0 · 1-Line Terminal Install</small></span>
-            </a>
-            <a class="btn ghost" id="hero-zip" href="PCDeck_Package.zip" download>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Offline ZIP Bundle<small>v2.7.0 · 47.1 MB · Windows + Android</small></span>
-            </a>
+
+            <div class="hero-alt-links" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: var(--graphite); padding: 4px 0 0 2px;">
+              <span>Other options:</span>
+              <a href="#card-apk" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Android APK (739 KB)</a>
+              <span style="color: var(--grid);">·</span>
+              <a href="#card-linux" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Linux 1-Line Install</a>
+              <span style="color: var(--grid);">·</span>
+              <a href="#card-zip" style="color: var(--muted); text-decoration: underline; text-underline-offset: 3px;">Offline ZIP (47.1 MB)</a>
+            </div>
           </div>
 
           <div class="hero-linux-box" style="margin-top: 14px; background: var(--panel); border: 1px solid var(--grid); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 12.5px;">
@@ -1214,12 +1248,8 @@ footer{padding:44px 0 56px}
             <button onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--signal); color: #fff; border: 0; padding: 5px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
           </div>
 
-          <p class="get-alt">
-            <b>Zero-Install on iPhone, iPad, Mac &amp; Browser:</b> Just launch PCDeck on your computer and point your phone camera at the on-screen QR code to open the Web Remote instantly in your browser.
-          </p>
-
-          <p class="get-note">
-            <b>Setup:</b> Launch PCDeck on your computer. It pairs instantly over your local Wi-Fi / Hotspot with zero cloud account or sign-in. <a href="#install-help">View setup guide &amp; checksums</a>.
+          <p class="get-note" style="margin-top: 14px;">
+            <b>Works on all phones:</b> iPhone, iPad, Android, Mac &amp; tablets. Connects directly over your local Wi-Fi or mobile hotspot. Zero cloud, zero sign-up. <a href="#install-help">View setup guide &amp; checksums</a>.
           </p>
         </div>
 
@@ -1732,36 +1762,37 @@ footer{padding:44px 0 56px}
       <div class="sec-head">
         <p class="tag">Download</p>
         <h2>Get PCDeck</h2>
-        <p>You need both halves: the app on your phone and the server on your PC. Read the <a href="#install-help">install warnings</a> first so the prompts are not a surprise.</p>
+        <p><strong>Zero phone install required:</strong> You only need to run PCDeck on your computer. When you launch it, simply scan the on-screen QR code with your phone camera (iPhone or Android) — your mobile browser opens the full touch trackpad and keyboard immediately. The Android APK is completely optional for users who want a permanent icon on their phone.</p>
         <p>Everything below is free: trackpad, keyboard, 30 FPS screen streaming, PC audio and the two-way file manager. Pro is a <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" rel="noopener" style="color: var(--signal-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px;">one-time $3.99 lifetime unlock</a> <em>inside</em> the app for 60/120 FPS streaming and faster transfers — there is nothing extra to download and no subscription.</p>
       </div>
 
       <div class="dl">
-        <div class="card" id="card-exe">
+        <div class="card" id="card-exe" style="border: 2px solid var(--signal); position: relative;">
+          <div style="position: absolute; top: -11px; right: 16px; background: var(--signal); color: #fff; font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; letter-spacing: .08em; text-transform: uppercase;">Primary · Instant Run</div>
           <p class="tag">PC · Windows</p>
           <h3>PCDeck for Windows (v2.7.0)</h3>
-          <p>The PC app for Windows 10 &amp; 11. Standalone executable, runs immediately with no install.</p>
+          <p>The main PC app for Windows 10 &amp; 11. Run it, scan the QR code with your phone camera, and control immediately.</p>
           <ul class="spec">
             <li>Windows 10 or 11 (64-bit)</li>
             <li>Standalone .exe (v2.7.0 · 46.8 MB) · No Python needed</li>
             <li>Unsigned — SmartScreen prompts once</li>
           </ul>
-          <a class="btn" id="dl-exe" href="PCDeck.exe" download>Download for Windows (v2.7.0 · 46.8 MB)</a>
+          <a class="btn" id="dl-exe" href="PCDeck.exe" download style="background: var(--signal); border-color: var(--signal); font-weight: 700;">Download for Windows (v2.7.0 · 46.8 MB)</a>
         </div>
 
         <div class="card" id="card-apk">
           <span class="card-icon"><img src="icon.png" alt="PCDeck app icon" width="48" height="48"></span>
-          <p class="tag">Phone · Android App</p>
+          <p class="tag">Phone · Android App (Optional)</p>
           <h3>PCDeck for Android (v2.7.0)</h3>
-          <p>The companion app: multi-touch trackpad, keyboard, screen view, audio and files.</p>
+          <p>Optional companion app for Android home screen. (Or simply use your browser by scanning the QR code).</p>
           <ul class="spec">
             <li>Android 5.0 or newer</li>
             <li>Direct APK download (v2.7.0 · 739 KB)</li>
             <li>Zero cloud accounts needed</li>
           </ul>
-          <a class="btn" id="dl-apk" href="PCDeck.apk" download>
+          <a class="btn ghost" id="dl-apk" href="PCDeck.apk" download>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-            <span>Download for Android (v2.7.0 · 739 KB)</span>
+            <span>Download APK (Optional · 739 KB)</span>
           </a>
         </div>
 
