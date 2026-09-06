@@ -89,6 +89,13 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
    - Touch listeners cover 100% of the viewport (`screenViewport`), and coordinate normalization snaps near-edge taps (<0.015 or >0.985) to `(width - 1, 0)` for Windows Close (X), Minimize, and Taskbar buttons.
 6. **Screen Floating Toolbar**:
    - Built-in `1.0x / 1.5x / 2.0x / 3.0x` Quick Zoom, Landscape Rotation, and Direct Touch / Virtual Cursor mode toggle.
+7. **Wi-Fi Latency Management System (`wifi_latency_manager.py`)**:
+   - **Streaming Mode Sleeping**: Automatically puts `WiFiWatchdog` (0 netsh/ipconfig subprocesses) and `CameraStreamer` standby workers to sleep when screen streaming is active.
+   - **WLAN Roaming Scan Suppression**: Safely suspends Windows WLAN AutoConfig periodic background scans (`netsh wlan set autoconfig enabled=no`) on the active Wi-Fi interface, eliminating 100ms–300ms ping spikes.
+   - **Zero-Bufferbloat Transport Pacing**: Enables `TCP_NODELAY = 1` on all sockets to eliminate 40ms delayed-ACK latency. Enforces dynamic ACK flow control with transport write buffer inspection (`>32KB` backpressure).
+   - **Sub-Millisecond Dirty-Frame Skipping**: Uses fast NumPy stride sampling (`[::8, ::8, 0]`) and Win32 cursor tracking to skip JPEG compression and frame dispatch when desktop is static, reducing bandwidth to 0.001 Mbps and keeping ping at <15ms.
+   - **Dynamic Auto-ABR FPS Scaling**: Client scales FPS (60 $\rightarrow$ 30 $\rightarrow$ 24 $\rightarrow$ 18 $\rightarrow$ 15 FPS) during network congestion to immediately free up 2.4GHz / 5GHz Wi-Fi spectrum.
+   - **Android Hardware Low-Latency Lock**: Native Android layer holds `WifiManager.WIFI_MODE_FULL_LOW_LATENCY` (API 29+) while on `tab-screen` to disable mobile 802.11 power-save sleep jitter.
 
 ### Universal Smart QR & Gateway Routing:
 - The PC companion app displays a single unified QR code encoding:
@@ -263,3 +270,69 @@ Before committing or releasing updates:
 6. **Keep Context Synchronized**: Update `PROJECT_CONTEXT.md` in root and `website/` to reflect every architecture change.
 7. **Commit & Push to GitHub**: Commit verified changes and push to `origin main` on `greson719/pcdeck`.
 
+---
+
+## 12. Wireless Debugging & Persistent Device Profile
+
+- **Primary Test Device**: `Motorola moto g35 5G` (`manila_g` / `manila`)
+- **Paired Hostname**: `greson@surma`
+- **Device LAN IP**: `10.23.32.178` (Subnet `10.23.32.0/24`)
+- **Pairing Key / GUID**: `adb-ZD222QY2JF-Cnk1ww`
+- **Active Wireless ADB Port**: `36589`
+- **Persistent Port Target**: `5555`
+- **Standard One-Click Wireless Deploy Command**:
+  ```powershell
+  adb connect 10.23.32.178:36589; adb push PCDeck.apk /data/local/tmp/PCDeck.apk; adb shell pm install -r -d /data/local/tmp/PCDeck.apk; adb shell am start -n com.neontrack.mouse/.MainActivity
+  ```
+
+---
+
+## 13. Production Release v2.7.0 Specifications
+
+| Target Binary | File Size | Version / Build | Verification Status |
+| :--- | :--- | :--- | :--- |
+| `PCDeck.exe` | **46.8 MB** (down from 60.5 MB) | v2.7.0 (2.7.0.0 Win32 meta) | Passed · Standalone PyInstaller UPX |
+| `PCDeck.apk` | **739 KB** (down from 3.76 MB) | v2.7.0 (Code 270) | Passed · v1/v2/v3 aligned & signed |
+| `PCDeck.aab` | **730 KB** | v2.7.0 (Code 270) | Passed · Google Play Bundletool signed |
+| `PCDeck_Package.zip` | **47.1 MB** (down from 63.9 MB) | v2.7.0 | Passed · Offline bundle (EXE + APK) |
+| `PCDeck.msix` | **45.7 MB** | v2.7.0.0 | Passed · Store manifest validated |
+
+- **Version Consistency Invariant**: All components (`pyproject.toml`, `MainActivity.java`, `app.js` `CURRENT_APP_VERSION_NAME`, `version_info.txt`, `version.json`, and website download cards) must strictly reflect the exact same version string and integer code.
+
+---
+
+## 14. Website Conversion Standard: Zero-Install "Scan & Control" Flow
+
+- **Core User Friction Insight**: 95% of users looking for emergency mouse control do not want to download multiple apps or figure out whether they need an APK, ZIP, or EXE first.
+- **The Golden 3-Step Flow**:
+  1. **Run on PC**: Download & open `PCDeck.exe` on Windows (no install wizard or drivers required).
+  2. **Scan the QR Code**: Point phone camera (iPhone or Android) at the screen's QR code.
+  3. **Instant Control**: Trackpad & keyboard open immediately in Safari, Chrome, or any browser over local Wi-Fi.
+- **Hierarchy of Download CTA**:
+  - **Primary**: Bold, glowing `Download PCDeck for Windows (.exe)`.
+  - **Secondary / Optional**: Clean inline links for Android APK (`739 KB`), Linux 1-line script, and offline recovery ZIP. Never clutter the hero section with 4 competing primary download buttons.
+- **Language & Tone Standard**: Zero technical jargon, zero AI buzzwords ("paradigm shifting", "AI-powered", "revolutionary"), and zero complex networking terms. Write for everyday humans whose physical mouse just broke.
+
+---
+
+## 15. Brand Identity & Anti-AI-Slop Standard
+
+- **Official Icon Design**: The community-voted Option A (authentic 3D mechanical mouse on solid pure black `#000000` background) is the sole official brand visual across all assets (`icon.png`, `icon-512.png`, `favicon.ico`, `favicon.png`, `og-image.png`, and app mipmaps).
+- **Anti-AI-Slop Policy**:
+  - Under no circumstances should AI-generated logos, abstract blobs, or non-mouse vector art replace the authentic mouse icon.
+  - Option B was permanently disqualified following independent community feedback identifying loss of mouse silhouette and inappropriate shapes.
+  - All copy must remain plainspoken, credible, and instrument-grade.
+
+---
+
+## 16. Web Analytics & SEO Performance
+
+- **Vercel Web Analytics**:
+  - Integrated via official non-blocking tag `<script defer src="/_vercel/insights/script.js"></script>` across all 22 static website HTML documents.
+  - Tracks live visitors, page views, referring countries, and OS/device breakdown without invading user privacy or collecting personal data.
+- **Server File & Active User Tracking**:
+  - Download metrics: Monitored in Vercel Dashboard Logs via requests to `/PCDeck.exe` and `/PCDeck.apk`.
+  - Daily Active Users (DAU): Monitored via launch update pings to `/version.json`.
+- **Search Console & Organic Ranking**:
+  - High-traffic ranking asset: `/use-pc-without-mouse/` (~500 impressions across 26 countries for queries like "how to use pc without mouse", "how to right click without a mouse").
+  - Schema.org rich results: Configured with `HowTo` structured data for "How to set up PCDeck in 30 seconds" to capture direct search answer cards.
