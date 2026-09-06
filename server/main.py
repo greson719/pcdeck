@@ -407,7 +407,7 @@ def start_udp_discovery_daemon():
                 current_ip = get_local_ip()
                 hostname = socket.gethostname()
                 tok = get_pairing_token()
-                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.6.6:{tok}".encode("utf-8")
+                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.7.0:{tok}".encode("utf-8")
                 for bcast in _get_subnet_broadcasts():
                     try:
                         sock.sendto(beacon_msg, (bcast, DISCOVERY_UDP_PORT))
@@ -423,7 +423,7 @@ def start_udp_discovery_daemon():
                     current_ip = get_local_ip()
                     hostname = socket.gethostname()
                     tok = get_pairing_token()
-                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.6.6:{tok}".encode("utf-8")
+                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.7.0:{tok}".encode("utf-8")
                     sock.sendto(reply, addr)
             except socket.timeout:
                 continue
@@ -544,7 +544,7 @@ async def get_ping(request: Request):
         "name": socket.gethostname(),
         "ip": live_ip,
         "port": SERVER_PORT,
-        "version": "2.6.6",
+        "version": "2.7.0",
         "token": get_pairing_token(),
     }
 

@@ -75,7 +75,7 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 - `media,action` — Media control (`play_pause`, `next`, `prev`, `vol_up`, `vol_down`, `mute`).
 - `cfg,quality,scale,fps` — Dynamically reconfigure screen stream encoder parameters on the fly.
 
-### Zero-Latency Screen Streaming Pipeline (v2.6.6):
+### Zero-Latency Screen Streaming Pipeline (v2.7.0):
 1. **100% Native 1.0x Resolution & 4:4:4 Lossless Chroma**:
    - `subsampling=0` (4:4:4 RGB chroma preservation) eliminates YUV color loss on font outlines.
    - 1.0x native scale delivers un-interpolated desktop pixels for readable text and code.
@@ -130,8 +130,8 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 - **Payload Schema**:
   ```json
   {
-    "versionCode": 266,
-    "versionName": "2.6.6",
+    "versionCode": 270,
+    "versionName": "2.7.0",
     "apkUrl": "https://pcdeck.vercel.app/PCDeck.apk",
     "websiteUrl": "https://pcdeck.vercel.app",
     "playStoreUrl": "",

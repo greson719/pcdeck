@@ -10298,8 +10298,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
   // ==========================================
   // IN-APP OTA AUTO-UPDATER SYSTEM
   // ==========================================
-  const CURRENT_APP_VERSION_CODE = 266;
-  const CURRENT_APP_VERSION_NAME = '2.6.6';
+  const CURRENT_APP_VERSION_CODE = 270;
+  const CURRENT_APP_VERSION_NAME = '2.7.0';
   let updateDownloadApkUrl = 'https://pcdeck.vercel.app/PCDeck.apk';
 
   function initAppUpdater() {

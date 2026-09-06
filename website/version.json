@@ -4,7 +4,7 @@
   "apkUrl": "https://pcdeck.vercel.app/PCDeck.apk",
   "websiteUrl": "https://pcdeck.vercel.app",
   "playStoreUrl": "",
-  "releaseNotes": "• Dynamic AI-Adaptive Bitrate & Quality (Auto-adapts to 2.4GHz / 5GHz / 6GHz Wi-Fi / Dongle latency)\n• Event-driven zero-delay frame streaming engine\n• Hardware-accelerated desynchronized screen renderer\n• Zero physical PC cursor flicker & fluid 1:1 touch scrolling\n• Cross-platform Linux & Windows standalone server support",
+  "releaseNotes": "• Refined high-contrast official icon with pure solid black background (#000000) for all Android launchers\n• Over 50% lighter APK footprint and optimized standalone executable\n• Dynamic AI-Adaptive Bitrate & Quality (Auto-adapts to 2.4GHz / 5GHz / 6GHz Wi-Fi / Dongle latency)\n• Zero physical PC cursor flicker & fluid 1:1 touch scrolling\n• Instant QR-Code Web Controller for iPhone, iPad, Mac & Linux",
   "minVersionCode": 1,
-  "publishedAt": "2026-09-01"
+  "publishedAt": "2026-09-06"
 }
