@@ -277,6 +277,17 @@ kbd{
 .guides-section{margin:44px 0 0}
 .guides-section:first-of-type{margin-top:24px}
 .guides-category-title{font-family:var(--display);font-size:22px;font-weight:700;margin:0 0 16px;color:var(--ink);display:flex;align-items:center;gap:10px}
+.guides-cat-icon{
+  width:28px;height:28px;border-radius:6px;
+  background:var(--signal-wash);color:var(--signal-ink);
+  border:1px solid #c8d5f9;
+  display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.guides-cat-icon svg{
+  width:16px;height:16px;stroke:currentColor;fill:none;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;
+}
 .guides-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin:0 0 10px}
 .guide-card{background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease}
 .guide-card:hover{border-color:var(--signal);box-shadow:0 4px 12px rgba(27,68,216,0.08);text-decoration:none;transform:translateY(-2px)}

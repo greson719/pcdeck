@@ -94,6 +94,9 @@ Allow: /
 User-agent: *
 Allow: /
 
+# Prevent duplicate indexing of repository subdirectory mirror
+Disallow: /website/
+
 # Binaries are large; there is nothing to index inside them.
 Disallow: /*.exe$
 Disallow: /*.apk$
