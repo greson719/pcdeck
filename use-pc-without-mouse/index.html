@@ -243,49 +243,68 @@
     </div>
 
     
-    <!-- ==================== WINDOWS 11 INTERACTIVE KEYBOARD LAB ==================== -->
+    <!-- ==================== WINDOWS 11 INTERACTIVE KEYBOARD TUTOR ==================== -->
     <section class="interactive-lab-container" id="practice-lab" style="margin: 32px 0 40px;">
       <div style="border: 1px solid #c8d3e0; border-radius: 12px; overflow: hidden; background: #f0f4f9; box-shadow: 0 16px 40px rgba(0, 20, 50, 0.12); font-family: 'Segoe UI', var(--body), -apple-system, sans-serif;">
         
-        <!-- Lab Header / Instructions -->
-        <div style="background: #ffffff; border-bottom: 1px solid #dce4ee; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <!-- Windows Logo (4 blue squares) -->
-              <svg width="15" height="15" viewBox="0 0 88 88" fill="none">
-                <rect width="42" height="42" fill="#0078d4"/>
-                <rect x="46" width="42" height="42" fill="#0078d4"/>
-                <rect y="46" width="42" height="42" fill="#0078d4"/>
-                <rect x="46" y="46" width="42" height="42" fill="#0078d4"/>
-              </svg>
-              <span style="background: #e5f1fb; color: #0067b8; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 4px; letter-spacing: .02em;">Windows 11 Practice Lab</span>
-            </div>
-            <h3 style="color: #1a202c; margin: 0; font-size: 18px; font-weight: 700;">Test Keyboard Navigation on Windows (No Mouse Needed)</h3>
-            <p style="margin: 3px 0 0; color: #5f6e82; font-size: 13.5px;">Click inside this simulated Windows desktop and press physical keyboard keys to test navigation.</p>
-          </div>
-          
-          <!-- Live Key Event HUD Toast -->
-          <div id="lab-hud" style="background: #f8fafc; border: 1px solid #0078d4; border-left: 4px solid #0078d4; border-radius: 6px; padding: 8px 14px; font-size: 12px; color: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;">
-            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#107c41;"></span>
+        <!-- Lab Header / Step-by-Step Mission Bar -->
+        <div style="background: #ffffff; border-bottom: 1px solid #dce4ee; padding: 16px 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
             <div>
-              <div style="font-size: 10.5px; color: #64748b; font-weight: 600; text-transform: uppercase;">Keyboard Status</div>
-              <strong id="hud-text" style="color: #0078d4; font-size: 12.5px;">Click here, then press Tab or Shift+F10</strong>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <!-- Windows Logo -->
+                <svg width="16" height="16" viewBox="0 0 88 88" fill="none">
+                  <rect width="42" height="42" fill="#0078d4"/>
+                  <rect x="46" width="42" height="42" fill="#0078d4"/>
+                  <rect y="46" width="42" height="42" fill="#0078d4"/>
+                  <rect x="46" y="46" width="42" height="42" fill="#0078d4"/>
+                </svg>
+                <span style="background: #e5f1fb; color: #0067b8; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 4px; letter-spacing: .02em;">Windows 11 Interactive Tutor</span>
+              </div>
+              <h3 style="color: #1a202c; margin: 0; font-size: 18px; font-weight: 700;">Practice Navigating Windows &amp; Opening Files (Zero Mouse Needed)</h3>
+              <p style="margin: 3px 0 0; color: #5f6e82; font-size: 13.5px;">Follow the missions below. Click the simulator window once to focus, then use your physical keyboard.</p>
+            </div>
+
+            <!-- Live Coach / HUD Banner -->
+            <div id="lab-hud" style="background: #f8fafc; border: 1px solid #0078d4; border-left: 4px solid #0078d4; border-radius: 6px; padding: 8px 14px; font-size: 12px; color: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-width: 240px;">
+              <div style="font-size: 10.5px; color: #64748b; font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                <span id="hud-dot" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#107c41;"></span>
+                <span>Tutor Feedback</span>
+              </div>
+              <div id="hud-text" style="color: #0078d4; font-size: 12.5px; font-weight: 600; margin-top: 2px;">Click inside the window to start</div>
+            </div>
+          </div>
+
+          <!-- Step-by-Step Training Missions Tracker -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; font-size: 11.5px; margin-top: 4px;">
+            <div id="m-step-1" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px;">
+              <span id="m-icon-1" style="width: 18px; height: 18px; border-radius: 50%; background: #94a3b8; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;">1</span>
+              <div><b>Press [Tab]</b> <span style="display:block; font-size:10px; color:#64748b;">Cycle to Files list</span></div>
+            </div>
+            <div id="m-step-2" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px;">
+              <span id="m-icon-2" style="width: 18px; height: 18px; border-radius: 50%; background: #94a3b8; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;">2</span>
+              <div><b>Use [Arrows]</b> <span style="display:block; font-size:10px; color:#64748b;">Pick Photo or Notes</span></div>
+            </div>
+            <div id="m-step-3" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px;">
+              <span id="m-icon-3" style="width: 18px; height: 18px; border-radius: 50%; background: #94a3b8; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;">3</span>
+              <div><b>[Shift + F10]</b> <span style="display:block; font-size:10px; color:#64748b;">Right-Click Menu</span></div>
+            </div>
+            <div id="m-step-4" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px;">
+              <span id="m-icon-4" style="width: 18px; height: 18px; border-radius: 50%; background: #94a3b8; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;">4</span>
+              <div><b>Press [Enter]</b> <span style="display:block; font-size:10px; color:#64748b;">Open File Viewer</span></div>
             </div>
           </div>
         </div>
 
         <!-- Simulated Windows 11 Desktop Viewport -->
-        <div id="sim-viewport" tabindex="0" style="outline: none; padding: 20px 16px 12px; background: radial-gradient(circle at 50% 10%, #d8e8f8 0%, #bdd5ea 50%, #9cbddb 100%); min-height: 400px; position: relative; user-select: none; cursor: default;">
+        <div id="sim-viewport" tabindex="0" style="outline: none; padding: 20px 16px 16px; background: radial-gradient(circle at 50% 10%, #d8e8f8 0%, #bdd5ea 50%, #9cbddb 100%); min-height: 440px; position: relative; user-select: none; cursor: default;">
           
           <!-- Windows 11 File Explorer Window -->
-          <div id="sim-win" style="background: #ffffff; border: 1px solid #bfd0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 32px rgba(15, 35, 65, 0.2); max-width: 720px; margin: 0 auto; transition: box-shadow .2s ease, border-color .2s ease;">
+          <div id="sim-win" style="background: #ffffff; border: 1px solid #bfd0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 32px rgba(15, 35, 65, 0.2); max-width: 740px; margin: 0 auto; transition: box-shadow .2s ease, border-color .2s ease;">
             
             <!-- Window Titlebar with Windows Controls -->
             <div style="background: #f3f6f9; border-bottom: 1px solid #e1e7ee; height: 38px; display: flex; align-items: center; justify-content: space-between; padding-left: 12px;">
-              
-              <!-- Tab / Title -->
               <div style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid #e1e7ee; border-bottom: 0; padding: 6px 16px; border-radius: 6px 6px 0 0; margin-top: 5px; font-size: 12px; font-weight: 600; color: #1f2937;">
-                <!-- Folder Icon -->
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffb900" stroke="#d49200" stroke-width="1.2">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
@@ -293,117 +312,121 @@
                 <span style="color: #9ca3af; font-size: 11px; margin-left: 4px;">&times;</span>
               </div>
 
-              <!-- Real Windows 11 Titlebar Buttons (Minimize, Maximize, Close) -->
+              <!-- Titlebar Buttons (Minimize, Maximize, Close) -->
               <div style="display: flex; height: 100%;">
-                <div style="width: 44px; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #374151; font-size: 12px; transition: background .12s ease;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='transparent'">
+                <div style="width: 44px; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #374151;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='transparent'">
                   <svg width="10" height="1" viewBox="0 0 10 1"><rect width="10" height="1" fill="currentColor"/></svg>
                 </div>
-                <div style="width: 44px; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #374151; font-size: 12px; transition: background .12s ease;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='transparent'">
+                <div style="width: 44px; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #374151;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='transparent'">
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1"><rect x="0.5" y="0.5" width="9" height="9"/></svg>
                 </div>
-                <div style="width: 46px; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #374151; font-size: 14px; transition: background .12s ease, color .12s ease;" onmouseover="this.style.background='#e81123'; this.style.color='#fff'" onmouseout="this.style.background='transparent'; this.style.color='#374151'">
+                <div style="width: 46px; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #374151; font-size: 14px;" onmouseover="this.style.background='#e81123'; this.style.color='#fff'" onmouseout="this.style.background='transparent'; this.style.color='#374151'">
                   <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.2"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
                 </div>
               </div>
-
             </div>
 
-            <!-- Windows 11 Command Bar -->
-            <div style="background: #ffffff; border-bottom: 1px solid #eaedf1; padding: 6px 12px; display: flex; align-items: center; gap: 12px; font-size: 12px; color: #374151;">
-              <div style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 4px; background: #f3f4f6; cursor: pointer; font-weight: 600;">
+            <!-- Windows 11 Command Bar (Region 1) -->
+            <div id="region-ribbon" style="background: #ffffff; border-bottom: 1px solid #eaedf1; padding: 6px 12px; display: flex; align-items: center; gap: 12px; font-size: 12px; color: #374151;">
+              <div class="sim-focusable" data-region="ribbon" data-id="ribbon-new" style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 4px; background: #f3f4f6; cursor: pointer; font-weight: 600;">
                 <span style="color: #0078d4; font-size: 14px; font-weight: 700;">+</span> New
               </div>
               <div style="height: 16px; width: 1px; background: #e5e7eb;"></div>
               <div style="display: flex; gap: 10px; align-items: center; color: #4b5563;">
-                <span title="Cut (Ctrl+X)" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 3px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg> Cut</span>
-                <span title="Copy (Ctrl+C)" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 3px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="13" height="13" x="9" y="9" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</span>
-                <span title="Rename (F2)" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 3px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Rename</span>
-                <span title="Delete (Del)" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 3px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> Delete</span>
+                <span class="sim-focusable" data-region="ribbon" data-id="ribbon-cut" title="Cut (Ctrl+X)" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 3px 6px; border-radius: 4px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg> Cut
+                </span>
+                <span class="sim-focusable" data-region="ribbon" data-id="ribbon-copy" title="Copy (Ctrl+C)" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 3px 6px; border-radius: 4px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="13" height="13" x="9" y="9" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy
+                </span>
+                <span class="sim-focusable" data-region="ribbon" data-id="ribbon-rename" title="Rename (F2)" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 3px 6px; border-radius: 4px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Rename
+                </span>
+                <span class="sim-focusable" data-region="ribbon" data-id="ribbon-delete" title="Delete (Del)" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 3px 6px; border-radius: 4px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> Delete
+                </span>
               </div>
             </div>
 
-            <!-- Address Bar & Search -->
+            <!-- Address Bar & Real Functional Search Input (Region 2 & 3) -->
             <div style="background: #f9fafb; border-bottom: 1px solid #e5e7eb; padding: 6px 12px; display: flex; gap: 8px; align-items: center; font-size: 12px;">
               <button class="sim-btn" id="btn-back" tabindex="-1" style="background:#ffffff; border:1px solid #d1d5db; color:#374151; border-radius:4px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer;">&larr;</button>
               <button class="sim-btn" tabindex="-1" style="background:#ffffff; border:1px solid #d1d5db; color:#374151; border-radius:4px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer;">&rarr;</button>
               <button class="sim-btn" tabindex="-1" style="background:#ffffff; border:1px solid #d1d5db; color:#374151; border-radius:4px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer;">&uarr;</button>
               
-              <!-- Windows Breadcrumb Address -->
-              <div id="sim-address" class="sim-focusable" data-id="address" style="flex:1; background:#ffffff; border:1px solid #d1d5db; border-radius:4px; padding:3px 10px; color:#1f2937; display:flex; align-items:center; gap:6px; font-size:12px;">
+              <!-- Address Breadcrumb (Region: Address) -->
+              <div id="sim-address" class="sim-focusable" data-region="address" data-id="address-bar" style="flex:1; background:#ffffff; border:1px solid #d1d5db; border-radius:4px; padding:3px 10px; color:#1f2937; display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffb900"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 <span>This PC</span>
                 <span style="color: #9ca3af;">&rsaquo;</span>
                 <span style="font-weight: 600;">Documents</span>
               </div>
 
-              <!-- Search Bar -->
-              <div id="sim-search" class="sim-focusable" data-id="search" style="width:140px; background:#ffffff; border:1px solid #d1d5db; border-radius:4px; padding:3px 8px; color:#6b7280; font-size:11.5px; display:flex; align-items:center; gap:5px;">
+              <!-- Real Search Input (Region: Search) -->
+              <div id="sim-search-container" class="sim-focusable" data-region="search" data-id="search-input" style="width: 170px; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; padding: 2px 8px; display: flex; align-items: center; gap: 6px;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <span>Search</span>
+                <input id="sim-search-field" type="text" placeholder="Search Documents" style="border: 0; outline: none; width: 100%; font-size: 11.5px; color: #1e293b; background: transparent; padding: 0;">
               </div>
             </div>
 
-            <!-- Main Explorer Area: Sidebar + Files Grid -->
-            <div style="display: flex; min-height: 220px; background: #ffffff;">
+            <!-- Main Explorer Split: Left Sidebar (Navigation Pane) + Files Grid -->
+            <div style="display: flex; min-height: 240px; background: #ffffff; position: relative;">
               
-              <!-- Windows Left Navigation Pane -->
-              <div style="width: 145px; border-right: 1px solid #f1f3f5; padding: 10px 8px; font-size: 11.5px; color: #374151; display: flex; flex-direction: column; gap: 4px; background: #fafbfc;">
-                <div style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer;">
+              <!-- Navigation Pane Sidebar (Region: Sidebar) -->
+              <div id="region-sidebar" style="width: 145px; border-right: 1px solid #f1f3f5; padding: 10px 8px; font-size: 11.5px; color: #374151; display: flex; flex-direction: column; gap: 3px; background: #fafbfc;">
+                <div class="sim-focusable side-item" data-region="sidebar" data-id="side-desktop" data-name="Desktop Folder" style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0078d4" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg> Desktop
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer;">
+                <div class="sim-focusable side-item" data-region="sidebar" data-id="side-downloads" data-name="Downloads Folder" style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#107c41" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Downloads
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; background: #e5f1fb; color: #0067b8; font-weight: 600; cursor: pointer;">
+                <div class="sim-focusable side-item selected-sidebar" data-region="sidebar" data-id="side-documents" data-name="Documents Folder" style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; background: #e5f1fb; color: #0067b8; font-weight: 600; cursor: pointer;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0067b8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Documents
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer;">
+                <div class="sim-focusable side-item" data-region="sidebar" data-id="side-pictures" data-name="Pictures Folder" style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d83b01" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Pictures
                 </div>
                 <div style="height: 1px; background: #e5e7eb; margin: 4px 0;"></div>
-                <div style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer; color: #6b7280;">
+                <div class="sim-focusable side-item" data-region="sidebar" data-id="side-pc" data-name="This PC" style="display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer; color: #6b7280;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect width="18" height="12" x="3" y="4" rx="2"/><line x1="2" x2="22" y1="20" y2="20"/></svg> This PC
                 </div>
               </div>
 
-              <!-- Files Grid Container -->
-              <div id="sim-files" style="flex: 1; padding: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 10px; align-content: start; position: relative;">
+              <!-- Main Files Grid (Region: Files) -->
+              <div id="region-files" style="flex: 1; padding: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 10px; align-content: start; position: relative;">
                 
                 <!-- File 0: Excel Budget -->
-                <div class="sim-file sim-focusable selected" data-id="file-0" data-name="Quarterly_Budget.xlsx" style="background: #e5f1fb; border: 1px solid #70b0e0; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer; box-shadow: 0 0 0 1px #0078d4;">
-                  <!-- Excel Green Sheet Icon -->
+                <div class="sim-file sim-focusable selected" data-region="files" data-type="excel" data-id="file-0" data-name="Quarterly_Budget.xlsx" style="background: #e5f1fb; border: 1px solid #70b0e0; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer; box-shadow: 0 0 0 1px #0078d4;">
                   <div style="width: 36px; height: 36px; margin: 0 auto 6px; background: #107c41; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 15px; box-shadow: 0 2px 5px rgba(16,124,65,0.3);">X</div>
                   <span style="font-size: 11px; color: #1e293b; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">Budget.xlsx</span>
                   <span style="font-size: 9.5px; color: #64748b; display: block;">14.2 KB</span>
                 </div>
 
                 <!-- File 1: Word Document -->
-                <div class="sim-file sim-focusable" data-id="file-1" data-name="Project_Notes.docx" style="background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer;">
-                  <!-- Word Blue Document Icon -->
+                <div class="sim-file sim-focusable" data-region="files" data-type="word" data-id="file-1" data-name="Meeting_Notes.docx" style="background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer;">
                   <div style="width: 36px; height: 36px; margin: 0 auto 6px; background: #185abd; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 15px; box-shadow: 0 2px 5px rgba(24,90,189,0.3);">W</div>
                   <span style="font-size: 11px; color: #1e293b; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">Notes.docx</span>
                   <span style="font-size: 9.5px; color: #64748b; display: block;">28.5 KB</span>
                 </div>
 
                 <!-- File 2: Vacation Photo -->
-                <div class="sim-file sim-focusable" data-id="file-2" data-name="Family_Trip.jpg" style="background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer;">
-                  <!-- Photo Icon -->
-                  <div style="width: 36px; height: 36px; margin: 0 auto 6px; background: #008272; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 2px 5px rgba(0,130,114,0.3);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></div>
+                <div class="sim-file sim-focusable" data-region="files" data-type="photo" data-id="file-2" data-name="Vacation_Mountain.jpg" style="background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer;">
+                  <div style="width: 36px; height: 36px; margin: 0 auto 6px; background: #008272; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 2px 5px rgba(0,130,114,0.3);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                  </div>
                   <span style="font-size: 11px; color: #1e293b; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">Photo.jpg</span>
                   <span style="font-size: 9.5px; color: #64748b; display: block;">2.4 MB</span>
                 </div>
 
                 <!-- File 3: Signed Contract PDF -->
-                <div class="sim-file sim-focusable" data-id="file-3" data-name="Contract_Signed.pdf" style="background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer;">
-                  <!-- PDF Red Icon -->
+                <div class="sim-file sim-focusable" data-region="files" data-type="pdf" data-id="file-3" data-name="Contract_Signed.pdf" style="background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer;">
                   <div style="width: 36px; height: 36px; margin: 0 auto 6px; background: #d83b01; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 11px; box-shadow: 0 2px 5px rgba(216,59,1,0.3);">PDF</div>
                   <span style="font-size: 11px; color: #1e293b; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;">Contract.pdf</span>
                   <span style="font-size: 9.5px; color: #64748b; display: block;">184 KB</span>
                 </div>
 
-                <!-- File 4: Work Folder -->
-                <div class="sim-file sim-focusable" data-id="file-4" data-name="Work_Projects" style="background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer;">
-                  <!-- Folder Icon -->
+                <!-- File 4: Work Projects Folder -->
+                <div class="sim-file sim-focusable" data-region="files" data-type="folder" data-id="file-4" data-name="Work_Projects" style="background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer;">
                   <div style="width: 36px; height: 36px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center;">
                     <svg width="34" height="34" viewBox="0 0 24 24" fill="#ffb900" stroke="#d49200" stroke-width="1.2">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -413,20 +436,15 @@
                   <span style="font-size: 9.5px; color: #64748b; display: block;">File folder</span>
                 </div>
 
-                <!-- Genuine Windows 11 Context Menu Popup -->
-                <div id="sim-context-menu" style="display: none; position: absolute; top: 25px; left: 130px; width: 180px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 12px 28px rgba(0,0,0,0.18); padding: 5px; z-index: 50; font-size: 12px; color: #1f2937;">
-                  
-                  <!-- Top Quick Actions Row (Windows 11 signature) -->
+                <!-- Windows 11 Context Menu Popup -->
+                <div id="sim-context-menu" style="display: none; position: absolute; top: 25px; left: 130px; width: 185px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 12px 28px rgba(0,0,0,0.18); padding: 5px; z-index: 50; font-size: 12px; color: #1f2937;">
                   <div style="display: flex; justify-content: space-around; padding: 4px 2px 6px; border-bottom: 1px solid #f3f4f6; margin-bottom: 4px; color: #4b5563;">
-                    <span title="Cut" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></span>
-                    <span title="Copy" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="13" height="13" x="9" y="9" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
-                    <span title="Rename" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
-                    <span title="Share" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>
-                    <span title="Delete" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></span>
+                    <span title="Cut" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/></svg></span>
+                    <span title="Copy" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="13" height="13" x="9" y="9" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
+                    <span title="Rename" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
+                    <span title="Delete" style="cursor: pointer; padding: 4px 6px; border-radius: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></span>
                   </div>
-
-                  <!-- Menu Options -->
-                  <div class="sim-ctx-item active" style="padding: 6px 10px; border-radius: 4px; color: #ffffff; background: #0078d4; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between;">
+                  <div id="sim-ctx-open" class="sim-ctx-item active" style="padding: 6px 10px; border-radius: 4px; color: #ffffff; background: #0078d4; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between;">
                     <span>Open</span>
                     <span style="font-size: 10px; opacity: 0.85;">Enter</span>
                   </div>
@@ -447,72 +465,154 @@
             <!-- Windows Explorer Status Bar -->
             <div style="background: #f9fafb; border-top: 1px solid #eaedf1; padding: 5px 14px; font-size: 11px; color: #6b7280; display: flex; justify-content: space-between; align-items: center;">
               <span id="sim-status-count">5 items | 1 item selected (14.2 KB)</span>
-              <span style="font-size: 10.5px; color: #0078d4; font-weight: 500;">Press Tab to step &bull; Shift+F10 to right click</span>
+              <span style="font-size: 10.5px; color: #0078d4; font-weight: 500;">Active Region: <b id="active-region-label" style="text-transform:uppercase;">FILES LIST</b></span>
             </div>
 
           </div>
 
-          <!-- Windows 11 Centered Taskbar -->
-          <div style="background: rgba(243, 246, 250, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.6); border-radius: 8px; height: 44px; max-width: 720px; margin: 12px auto 0; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
-            
-            <!-- Centered Icons in Windows 11 style -->
-            <div style="display: flex; align-items: center; gap: 8px; margin: 0 auto;">
-              <!-- Start Button (4 blue squares) -->
-              <div class="sim-focusable" data-id="tb-start" title="Start (Win)" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; background: transparent; transition: background .12s ease;" onmouseover="this.style.background='rgba(255,255,255,0.7)'" onmouseout="this.style.background='transparent'">
-                <svg width="18" height="18" viewBox="0 0 88 88" fill="none">
-                  <rect width="42" height="42" fill="#0078d4"/>
-                  <rect x="46" width="42" height="42" fill="#0078d4"/>
-                  <rect y="46" width="42" height="42" fill="#0078d4"/>
-                  <rect x="46" y="46" width="42" height="42" fill="#0078d4"/>
+          <!-- ==================== GENERIC RESULT WINDOWS (PHOTOS, NOTEPAD, EXCEL) ==================== -->
+          
+          <!-- 1. Windows Photos App Viewer Modal -->
+          <div id="app-photos" style="display: none; position: absolute; inset: 24px; background: #202020; border: 1px solid #454545; border-radius: 8px; box-shadow: 0 20px 48px rgba(0,0,0,0.6); z-index: 100; flex-direction: column; overflow: hidden;">
+            <!-- Photos Titlebar -->
+            <div style="background: #2c2c2c; border-bottom: 1px solid #3c3c3c; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; color: #fff; font-size: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                <span>Photos &mdash; Vacation_Mountain.jpg</span>
+              </div>
+              <button class="app-close-btn" style="background: transparent; border: 0; color: #fff; font-size: 14px; cursor: pointer; padding: 2px 8px; border-radius: 4px;" title="Close (Esc)">&times;</button>
+            </div>
+            <!-- Photos Body -->
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px; background: #181818; text-align: center;">
+              <!-- Beautiful SVG Vector Mountain Landscape Image -->
+              <div style="width: 100%; max-width: 440px; height: 180px; background: linear-gradient(180deg, #38bdf8 0%, #bae6fd 60%, #86efac 100%); border-radius: 6px; overflow: hidden; position: relative; box-shadow: 0 8px 24px rgba(0,0,0,0.4); margin-bottom: 10px;">
+                <!-- Sun -->
+                <div style="position: absolute; top: 20px; right: 45px; width: 34px; height: 34px; background: #fef08a; border-radius: 50%; box-shadow: 0 0 16px #fef08a;"></div>
+                <!-- Mountains -->
+                <svg width="100%" height="100%" viewBox="0 0 400 180" preserveAspectRatio="none" style="position: absolute; bottom: 0; left: 0;">
+                  <polygon points="40,180 140,55 240,180" fill="#475569" opacity="0.9"/>
+                  <polygon points="125,75 140,55 155,75" fill="#f8fafc"/>
+                  <polygon points="160,180 270,40 380,180" fill="#334155"/>
+                  <polygon points="252,65 270,40 288,65" fill="#f8fafc"/>
+                  <polygon points="260,180 340,90 420,180" fill="#64748b" opacity="0.8"/>
+                  <rect y="160" width="400" height="20" fill="#15803d"/>
                 </svg>
               </div>
+              <p style="margin: 0; color: #cbd5e1; font-size: 12.5px; font-weight: 600;">Vacation_Mountain.jpg (2.4 MB - 3840 &times; 2160)</p>
+              <span style="color: #94a3b8; font-size: 11px; margin-top: 4px;">Opened via keyboard Enter! Press <b>Esc</b> to close and return.</span>
+            </div>
+          </div>
 
+          <!-- 2. Windows Notepad App Modal -->
+          <div id="app-notepad" style="display: none; position: absolute; inset: 24px; background: #ffffff; border: 1px solid #bfd0e0; border-radius: 8px; box-shadow: 0 20px 48px rgba(0,0,0,0.3); z-index: 100; flex-direction: column; overflow: hidden;">
+            <!-- Notepad Titlebar -->
+            <div style="background: #f3f4f6; border-bottom: 1px solid #e5e7eb; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #1f2937;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#185abd" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>Meeting_Notes.docx &mdash; WordPad / Notepad</span>
+              </div>
+              <button class="app-close-btn" style="background: transparent; border: 0; color: #374151; font-size: 14px; cursor: pointer; padding: 2px 8px; border-radius: 4px;" title="Close (Esc)">&times;</button>
+            </div>
+            <!-- Menu bar -->
+            <div style="background: #fafafa; border-bottom: 1px solid #f1f3f5; padding: 3px 12px; display: flex; gap: 12px; font-size: 11px; color: #4b5563;">
+              <span>File</span><span>Edit</span><span>View</span>
+            </div>
+            <!-- Notepad Content -->
+            <div style="flex: 1; padding: 16px 20px; font-family: 'Consolas', monospace; font-size: 12.5px; color: #1e293b; line-height: 1.6; background: #fff; overflow-y: auto;">
+              <p style="margin: 0 0 8px; font-weight: 700; color: #0078d4;"># Project Recovery Meeting Notes</p>
+              <p style="margin: 0 0 8px;">Date: September 9, 2026<br>Attendees: IT Support, Engineering</p>
+              <p style="margin: 0 0 8px; background: #eff6ff; padding: 8px; border-left: 3px solid #0078d4; border-radius: 2px;">
+                Success! You navigated to this file and pressed <b>[Enter]</b> without touching a mouse.<br>
+                To return to the file manager, press <b>[Esc]</b> on your keyboard.
+              </p>
+              <p style="margin: 0; color: #64748b; font-size: 11.5px;">Tip: If you need to write long documents when your mouse is dead, PCDeck lets you use your phone as a full touch trackpad + wireless keyboard.</p>
+            </div>
+          </div>
+
+          <!-- 3. Windows Excel App Modal -->
+          <div id="app-excel" style="display: none; position: absolute; inset: 24px; background: #ffffff; border: 1px solid #107c41; border-radius: 8px; box-shadow: 0 20px 48px rgba(0,0,0,0.3); z-index: 100; flex-direction: column; overflow: hidden;">
+            <!-- Excel Titlebar -->
+            <div style="background: #107c41; color: #fff; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 800; background: #fff; color: #107c41; padding: 1px 4px; border-radius: 2px; font-size: 10px;">X</span>
+                <span>Quarterly_Budget.xlsx &mdash; Excel</span>
+              </div>
+              <button class="app-close-btn" style="background: transparent; border: 0; color: #fff; font-size: 14px; cursor: pointer; padding: 2px 8px; border-radius: 4px;" title="Close (Esc)">&times;</button>
+            </div>
+            <!-- Excel Table Body -->
+            <div style="flex: 1; padding: 12px; background: #fafafa; overflow: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; background: #fff; border: 1px solid #d1d5db;">
+                <thead>
+                  <tr style="background: #f3f4f6; color: #374151; text-align: left;">
+                    <th style="border: 1px solid #e5e7eb; padding: 6px 8px; width: 30px;">#</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 6px 8px;">Department Expense</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 6px 8px;">Allocated ($)</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 6px 8px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="border: 1px solid #e5e7eb; padding: 5px 8px; background: #f9fafb;">1</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">Wireless Hardware Replacement</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">$1,250.00</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px; color: #107c41; font-weight: 600;">Approved</td></tr>
+                  <tr><td style="border: 1px solid #e5e7eb; padding: 5px 8px; background: #f9fafb;">2</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">Office Wi-Fi Hotspots</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">$800.00</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px; color: #107c41; font-weight: 600;">Approved</td></tr>
+                  <tr><td style="border: 1px solid #e5e7eb; padding: 5px 8px; background: #f9fafb;">3</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">Emergency Remote Tools (PCDeck)</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">$0.00 (Free)</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px; color: #0078d4; font-weight: 600;">Deployed</td></tr>
+                  <tr style="background: #f0fdf4; font-weight: 700;"><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">&sum;</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">Total Budget Q3</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">$2,050.00</td><td style="border: 1px solid #e5e7eb; padding: 5px 8px;">Balanced</td></tr>
+                </tbody>
+              </table>
+              <div style="margin-top: 10px; font-size: 11px; color: #6b7280; text-align: center;">
+                Excel file successfully opened! Press <b>Esc</b> to close.
+              </div>
+            </div>
+          </div>
+
+          <!-- Windows 11 Centered Taskbar -->
+          <div style="background: rgba(243, 246, 250, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.6); border-radius: 8px; height: 44px; max-width: 740px; margin: 12px auto 0; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+            <div style="display: flex; align-items: center; gap: 8px; margin: 0 auto;">
+              <!-- Start Button -->
+              <div class="sim-focusable" data-region="taskbar" data-id="tb-start" title="Start (Win)" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer;">
+                <svg width="18" height="18" viewBox="0 0 88 88" fill="none"><rect width="42" height="42" fill="#0078d4"/><rect x="46" width="42" height="42" fill="#0078d4"/><rect y="46" width="42" height="42" fill="#0078d4"/><rect x="46" y="46" width="42" height="42" fill="#0078d4"/></svg>
+              </div>
               <!-- Search Pill -->
-              <div class="sim-focusable" data-id="tb-search" title="Search (Win+S)" style="background: #ffffff; border: 1px solid #d1d5db; border-radius: 999px; height: 28px; padding: 0 12px; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #6b7280; cursor: pointer;">
+              <div class="sim-focusable" data-region="taskbar" data-id="tb-search" title="Search (Win+S)" style="background: #ffffff; border: 1px solid #d1d5db; border-radius: 999px; height: 28px; padding: 0 12px; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #6b7280; cursor: pointer;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <span>Search</span>
               </div>
-
-              <!-- Active File Explorer Icon -->
-              <div class="sim-focusable selected-tb" data-id="tb-explorer" title="File Explorer" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: rgba(0, 120, 212, 0.12); border-bottom: 2px solid #0078d4; cursor: pointer;">
+              <!-- Explorer Icon -->
+              <div class="sim-focusable selected-tb" data-region="taskbar" data-id="tb-explorer" title="File Explorer" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: rgba(0, 120, 212, 0.12); border-bottom: 2px solid #0078d4; cursor: pointer;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffb900" stroke="#d49200" stroke-width="1.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
               </div>
-
-              <!-- Edge Browser Icon -->
-              <div class="sim-focusable" data-id="tb-edge" title="Microsoft Edge" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer;">
+              <!-- Edge Icon -->
+              <div class="sim-focusable" data-region="taskbar" data-id="tb-edge" title="Microsoft Edge" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#0078d4"/><path d="M7 14c2-4 6-5 9-2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
               </div>
             </div>
-
-            <!-- Windows System Tray on Right (Pure SVGs) -->
+            <!-- System Tray -->
             <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; color: #4b5563;">
               <span title="Internet access"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span>
-              <span title="Speakers: 100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span>
+              <span title="Volume: 100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
               <div style="text-align: right; line-height: 1.2;">
                 <div style="font-weight: 600; font-size: 11px;">12:45 PM</div>
                 <div style="font-size: 9.5px; color: #6b7280;">9/9/2026</div>
               </div>
             </div>
-
           </div>
 
-          <!-- Quick Interactive Simulation Buttons for Mobile & Quick Testing -->
+          <!-- Quick Simulation Action Buttons for Mobile / Touch Visitors -->
           <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px;">
-            <button id="btn-sim-tab" style="background: #ffffff; border: 1px solid #d1d5db; color: #1f2937; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">Press [Tab] (Walk Focus)</button>
-            <button id="btn-sim-rclick" style="background: #0078d4; border: 1px solid #0078d4; color: #ffffff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(0, 120, 212, 0.3);">Press [Shift + F10] (Right-Click)</button>
-            <button id="btn-sim-enter" style="background: #ffffff; border: 1px solid #d1d5db; color: #1f2937; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">Press [Enter] (Open)</button>
-            <button id="btn-sim-esc" style="background: #ffffff; border: 1px solid #d1d5db; color: #1f2937; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">Press [Esc] (Close Menu)</button>
+            <button id="btn-sim-tab" style="background: #ffffff; border: 1px solid #d1d5db; color: #1f2937; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">[Tab] Switch Region</button>
+            <button id="btn-sim-arrow" style="background: #ffffff; border: 1px solid #d1d5db; color: #1f2937; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">[&darr;] Next Item</button>
+            <button id="btn-sim-rclick" style="background: #0078d4; border: 1px solid #0078d4; color: #ffffff; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(0, 120, 212, 0.3);">[Shift + F10] Right-Click</button>
+            <button id="btn-sim-enter" style="background: #107c41; border: 1px solid #107c41; color: #ffffff; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(16, 124, 65, 0.3);">[Enter] Open File</button>
+            <button id="btn-sim-esc" style="background: #ffffff; border: 1px solid #d1d5db; color: #1f2937; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">[Esc] Close</button>
           </div>
 
         </div>
 
-        <!-- Real Screenshot Proof & Emergency Rescue Banner -->
+        <!-- Emergency Rescue Banner (Instant QR Trackpad Conversion) -->
         <div style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
           <div style="display: flex; align-items: center; gap: 14px;">
             <img src="/screenshots/qr-pairing.png" alt="PCDeck QR Code pairing on Windows" style="width: 80px; height: auto; border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
             <div>
-              <strong style="color: #0f172a; font-size: 14.5px; display: block;">Tired of memorizing Windows keyboard shortcuts?</strong>
-              <span style="color: #475569; font-size: 13px;">Scan the QR code with your phone camera &mdash; your phone turns into a wireless multi-touch mouse in 15 seconds. No phone app install required.</span>
+              <strong style="color: #0f172a; font-size: 14.5px; display: block;">Tired of stepping through menus with a keyboard?</strong>
+              <span style="color: #475569; font-size: 13px;">Turn your phone into a full wireless touch trackpad in 15 seconds. Point your camera at PCDeck&rsquo;s QR code &mdash; <b>zero phone app install needed</b>.</span>
             </div>
           </div>
           <a href="/#download" class="btn sm" style="background: #0078d4; color: #fff; border-color: #0078d4; font-weight: 700; font-size: 13.5px; padding: 9px 18px; border-radius: 6px;">Get PCDeck (Free)</a>
@@ -521,85 +621,258 @@
       </div>
     </section>
 
-    <!-- Lab Script (Windows Keyboard Event Handler) -->
+    <!-- Lab Script (Windows 11 Keyboard Tutor & App Preview Controller) -->
     <script>
     (function () {
       var viewport = document.getElementById('sim-viewport');
       var hudText = document.getElementById('hud-text');
+      var hudDot = document.getElementById('hud-dot');
       var ctxMenu = document.getElementById('sim-context-menu');
       var statusCount = document.getElementById('sim-status-count');
+      var regionLabel = document.getElementById('active-region-label');
+      var searchField = document.getElementById('sim-search-field');
       if (!viewport || !hudText) return;
 
-      var focusables = Array.from(document.querySelectorAll('.sim-focusable'));
-      var currentIdx = 2; // Start on Budget.xlsx
+      // The 4 Windows Regions cycled by TAB:
+      // 0: Sidebar (Left Navigation Pane)
+      // 1: Address Bar
+      // 2: Search Input
+      // 3: Files Grid
+      var regions = ['sidebar', 'address', 'search', 'files'];
+      var activeRegionIdx = 3; // Start in Files Grid
 
-      function updateFocus(idx, keyName) {
-        if (idx < 0) idx = focusables.length - 1;
-        if (idx >= focusables.length) idx = 0;
-        currentIdx = idx;
+      // Collect items per region
+      var regionItems = {
+        sidebar: Array.from(document.querySelectorAll('.sim-focusable[data-region="sidebar"]')),
+        address: [document.getElementById('sim-address')],
+        search: [document.getElementById('sim-search-container')],
+        files: Array.from(document.querySelectorAll('.sim-focusable[data-region="files"]'))
+      };
 
-        focusables.forEach(function (el, i) {
-          if (i === currentIdx) {
-            el.classList.add('selected');
-            if (el.classList.contains('sim-file')) {
-              el.style.background = '#e5f1fb';
-              el.style.borderColor = '#70b0e0';
-              el.style.boxShadow = '0 0 0 1px #0078d4';
-            } else {
-              el.style.outline = '2px solid #0078d4';
-              el.style.outlineOffset = '1px';
-            }
-          } else {
-            el.classList.remove('selected');
-            if (el.classList.contains('sim-file')) {
+      var itemIndices = {
+        sidebar: 2, // Documents
+        address: 0,
+        search: 0,
+        files: 0    // Budget.xlsx
+      };
+
+      // Modals
+      var appPhotos = document.getElementById('app-photos');
+      var appNotepad = document.getElementById('app-notepad');
+      var appExcel = document.getElementById('app-excel');
+
+      // Missions Completed State
+      var completed = { tab: false, arrows: false, rclick: false, enter: false };
+
+      function markMission(name, num) {
+        if (!completed[name]) {
+          completed[name] = true;
+          var stepEl = document.getElementById('m-step-' + num);
+          var iconEl = document.getElementById('m-icon-' + num);
+          if (stepEl && iconEl) {
+            stepEl.style.background = '#ecfdf5';
+            stepEl.style.borderColor = '#107c41';
+            iconEl.style.background = '#107c41';
+            iconEl.innerHTML = '&#10003;';
+          }
+        }
+      }
+
+      function updateActiveItem(keyAction) {
+        var curRegion = regions[activeRegionIdx];
+        if (regionLabel) regionLabel.innerText = curRegion + ' region';
+
+        // Remove focus styling from all focusables
+        document.querySelectorAll('.sim-focusable').forEach(function (el) {
+          el.classList.remove('selected');
+          if (el.classList.contains('sim-file')) {
+            el.style.background = 'transparent';
+            el.style.borderColor = 'transparent';
+            el.style.boxShadow = 'none';
+          } else if (el.classList.contains('side-item')) {
+            if (el.id !== 'side-documents') {
               el.style.background = 'transparent';
-              el.style.borderColor = 'transparent';
-              el.style.boxShadow = 'none';
-            } else {
-              el.style.outline = 'none';
+              el.style.color = '#374151';
             }
+            el.style.outline = 'none';
+          } else {
+            el.style.outline = 'none';
           }
         });
 
-        var focusedEl = focusables[currentIdx];
-        var name = focusedEl.getAttribute('data-name') || focusedEl.getAttribute('data-id') || 'Item';
-        
-        hudText.innerHTML = (keyName ? '<span style="color:#0f172a;">Key: ' + keyName + '</span> &rarr; ' : '') + 'Focused: <span style="color:#0078d4; font-weight:700;">' + name + '</span>';
-        if (statusCount && focusedEl.classList.contains('sim-file')) {
-          statusCount.innerText = '5 items | 1 item selected (' + name + ')';
+        // Highlight active item in active region
+        var idx = itemIndices[curRegion];
+        var items = regionItems[curRegion];
+        if (!items || items.length === 0) return;
+        if (idx < 0) idx = 0;
+        if (idx >= items.length) idx = items.length - 1;
+        itemIndices[curRegion] = idx;
+
+        var activeEl = items[idx];
+        if (!activeEl) return;
+        activeEl.classList.add('selected');
+
+        if (curRegion === 'files') {
+          activeEl.style.background = '#e5f1fb';
+          activeEl.style.borderColor = '#70b0e0';
+          activeEl.style.boxShadow = '0 0 0 1px #0078d4';
+          var name = activeEl.getAttribute('data-name') || 'File';
+          hudText.innerHTML = (keyAction ? '<span style="color:#1e293b;">' + keyAction + '</span> &rarr; ' : '') + 'Selected: <span style="color:#0078d4; font-weight:700;">' + name + '</span>';
+          if (statusCount) statusCount.innerText = '5 items | 1 item selected (' + name + ')';
+        } else if (curRegion === 'sidebar') {
+          activeEl.style.outline = '2px solid #0078d4';
+          activeEl.style.outlineOffset = '1px';
+          var sideName = activeEl.getAttribute('data-name') || 'Sidebar';
+          hudText.innerHTML = (keyAction ? '<span style="color:#1e293b;">' + keyAction + '</span> &rarr; ' : '') + 'Sidebar: <b>' + sideName + '</b>';
+        } else if (curRegion === 'search') {
+          activeEl.style.outline = '2px solid #0078d4';
+          if (searchField) searchField.focus();
+          hudText.innerHTML = '<b>Search Focused!</b> Type any keyword, or press Tab to continue.';
+        } else if (curRegion === 'address') {
+          activeEl.style.outline = '2px solid #0078d4';
+          hudText.innerHTML = '<b>Address Bar Focused!</b> Shows current path: C:\Users\Documents';
         }
+      }
+
+      function cycleRegion(forward) {
+        if (forward) {
+          activeRegionIdx = (activeRegionIdx + 1) % regions.length;
+        } else {
+          activeRegionIdx = (activeRegionIdx - 1 + regions.length) % regions.length;
+        }
+        markMission('tab', 1);
+        updateActiveItem(forward ? 'Tab &rarr; Switched Region' : 'Shift+Tab &rarr; Prev Region');
+      }
+
+      function moveWithinRegion(dir) {
+        var curRegion = regions[activeRegionIdx];
+        var items = regionItems[curRegion];
+        if (!items || items.length <= 1) return;
+
+        var cur = itemIndices[curRegion];
+        if (dir > 0) {
+          cur = (cur + 1) % items.length;
+        } else {
+          cur = (cur - 1 + items.length) % items.length;
+        }
+        itemIndices[curRegion] = cur;
+        markMission('arrows', 2);
+        updateActiveItem('Arrow ' + (dir > 0 ? '&darr;/&rarr;' : '&uarr;/&larr;'));
       }
 
       function toggleContextMenu() {
-        var focusedEl = focusables[currentIdx];
-        if (!focusedEl || !focusedEl.classList.contains('sim-file')) {
-          hudText.innerHTML = 'Press Tab or Arrows to select a file, then press Shift+F10';
+        var curRegion = regions[activeRegionIdx];
+        if (curRegion !== 'files') {
+          hudText.innerHTML = 'Tip: Press [Tab] until in Files region to right-click files!';
           return;
         }
-        var rect = focusedEl.getBoundingClientRect();
+        var activeFile = regionItems.files[itemIndices.files];
+        if (!activeFile) return;
+
+        var rect = activeFile.getBoundingClientRect();
         var parentRect = viewport.getBoundingClientRect();
-        ctxMenu.style.left = Math.max(10, Math.min(parentRect.width - 190, rect.left - parentRect.left + 15)) + 'px';
+        ctxMenu.style.left = Math.max(10, Math.min(parentRect.width - 200, rect.left - parentRect.left + 15)) + 'px';
         ctxMenu.style.top = Math.max(10, rect.top - parentRect.top + 25) + 'px';
         ctxMenu.style.display = 'block';
-        hudText.innerHTML = '<span style="color:#0f172a;">Key: [Shift + F10]</span> &rarr; <span style="color:#107c41; font-weight:700;">Windows Context Menu Opened!</span>';
+
+        markMission('rclick', 3);
+        hudText.innerHTML = '<span style="color:#0f172a;">[Shift + F10]</span> &rarr; <span style="color:#107c41; font-weight:700;">Windows Context Menu Opened!</span>';
       }
 
-      function closeContextMenu() {
-        ctxMenu.style.display = 'none';
-        hudText.innerHTML = '<span style="color:#0f172a;">Key: [Esc]</span> &rarr; Context Menu Closed';
+      function closeAllModals() {
+        var closedAny = false;
+        if (ctxMenu.style.display !== 'none') {
+          ctxMenu.style.display = 'none';
+          closedAny = true;
+        }
+        if (appPhotos.style.display === 'flex') {
+          appPhotos.style.display = 'none';
+          closedAny = true;
+        }
+        if (appNotepad.style.display === 'flex') {
+          appNotepad.style.display = 'none';
+          closedAny = true;
+        }
+        if (appExcel.style.display === 'flex') {
+          appExcel.style.display = 'none';
+          closedAny = true;
+        }
+        if (closedAny) {
+          hudText.innerHTML = '<span style="color:#0f172a;">[Esc]</span> &rarr; Closed active window / menu';
+        }
+        viewport.focus();
       }
 
-      function openItem() {
-        var focusedEl = focusables[currentIdx];
-        var name = focusedEl.getAttribute('data-name') || focusedEl.getAttribute('data-id');
+      function openActiveFile() {
         ctxMenu.style.display = 'none';
-        hudText.innerHTML = '<span style="color:#0f172a;">Key: [Enter]</span> &rarr; <span style="color:#107c41; font-weight:700;">Opened ' + name + ' in Windows!</span>';
+        var curRegion = regions[activeRegionIdx];
+        if (curRegion !== 'files') {
+          hudText.innerHTML = 'Press Tab to enter Files, then press Enter to open a file!';
+          return;
+        }
+
+        var activeFile = regionItems.files[itemIndices.files];
+        if (!activeFile) return;
+        var fileType = activeFile.getAttribute('data-type');
+        var fileName = activeFile.getAttribute('data-name');
+
+        markMission('enter', 4);
+
+        if (fileType === 'photo') {
+          appPhotos.style.display = 'flex';
+          hudText.innerHTML = '<span style="color:#107c41; font-weight:700;">Opened Windows Photos!</span> Press Esc to close.';
+        } else if (fileType === 'word') {
+          appNotepad.style.display = 'flex';
+          hudText.innerHTML = '<span style="color:#107c41; font-weight:700;">Opened WordPad / Notes!</span> Press Esc to close.';
+        } else if (fileType === 'excel') {
+          appExcel.style.display = 'flex';
+          hudText.innerHTML = '<span style="color:#107c41; font-weight:700;">Opened Excel Spreadsheet!</span> Press Esc to close.';
+        } else {
+          hudText.innerHTML = '<span style="color:#107c41; font-weight:700;">Opened ' + fileName + '!</span> Press Esc to return.';
+        }
+      }
+
+      // Close buttons on app modals
+      document.querySelectorAll('.app-close-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          closeAllModals();
+        });
+      });
+
+      // Context menu Open item click
+      var ctxOpen = document.getElementById('sim-ctx-open');
+      if (ctxOpen) {
+        ctxOpen.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openActiveFile();
+        });
+      }
+
+      // Search input typing feedback
+      if (searchField) {
+        searchField.addEventListener('input', function () {
+          hudText.innerHTML = '<b>Typing: &ldquo;' + searchField.value + '&rdquo;</b> &mdash; That is how text input works with no mouse!';
+        });
+        searchField.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            hudText.innerHTML = 'Search submitted for <b>&ldquo;' + searchField.value + '&rdquo;</b>! Press Tab to return to Files.';
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            searchField.value = '';
+            viewport.focus();
+            closeAllModals();
+          }
+        });
       }
 
       viewport.addEventListener('focus', function () {
         document.getElementById('sim-win').style.borderColor = '#0078d4';
         document.getElementById('sim-win').style.boxShadow = '0 16px 40px rgba(0, 120, 212, 0.25)';
-        hudText.innerHTML = '<span style="color:#107c41; font-weight:700;">Windows Active</span>: Press Tab, Arrow keys, or Shift+F10';
+        if (!completed.tab) {
+          hudText.innerHTML = '<b>Simulator Active:</b> Press <b>Tab</b> to switch regions or <b>Arrows</b> to select.';
+        }
       });
 
       viewport.addEventListener('blur', function () {
@@ -607,53 +880,91 @@
         document.getElementById('sim-win').style.boxShadow = '0 12px 32px rgba(15, 35, 65, 0.2)';
       });
 
+      // Physical Keyboard Handler
       viewport.addEventListener('keydown', function (e) {
+        // Tab key: Cycle between the 4 major regions
         if (e.key === 'Tab') {
           e.preventDefault();
-          updateFocus(e.shiftKey ? currentIdx - 1 : currentIdx + 1, e.shiftKey ? 'Shift+Tab' : 'Tab');
-        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          cycleRegion(!e.shiftKey);
+        }
+        // Arrow keys: Move between items within active region
+        else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
           e.preventDefault();
-          updateFocus(currentIdx + 1, e.key);
-        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          moveWithinRegion(1);
+        } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
           e.preventDefault();
-          updateFocus(currentIdx - 1, e.key);
-        } else if ((e.shiftKey && e.key === 'F10') || e.key === 'ContextMenu') {
+          moveWithinRegion(-1);
+        }
+        // Shift+F10 or dedicated Menu key: Context Menu
+        else if ((e.shiftKey && e.key === 'F10') || e.key === 'ContextMenu') {
           e.preventDefault();
           toggleContextMenu();
-        } else if (e.key === 'Escape') {
+        }
+        // Escape: Close all open dialogs, menus, or modals
+        else if (e.key === 'Escape') {
           e.preventDefault();
-          closeContextMenu();
-        } else if (e.key === 'Enter') {
+          closeAllModals();
+        }
+        // Enter: Open file or activate focused element
+        else if (e.key === 'Enter') {
           e.preventDefault();
-          openItem();
+          openActiveFile();
         }
       });
 
+      // Simulation buttons for touch / quick testing
       document.getElementById('btn-sim-tab').addEventListener('click', function () {
-        updateFocus(currentIdx + 1, 'Tab');
+        cycleRegion(true);
+      });
+      document.getElementById('btn-sim-arrow').addEventListener('click', function () {
+        moveWithinRegion(1);
       });
       document.getElementById('btn-sim-rclick').addEventListener('click', function () {
         toggleContextMenu();
       });
       document.getElementById('btn-sim-enter').addEventListener('click', function () {
-        openItem();
+        openActiveFile();
       });
       document.getElementById('btn-sim-esc').addEventListener('click', function () {
-        closeContextMenu();
+        closeAllModals();
       });
 
-      focusables.forEach(function (el, idx) {
-        el.addEventListener('click', function (e) {
+      // Click on files
+      regionItems.files.forEach(function (fileEl, idx) {
+        fileEl.addEventListener('click', function (e) {
           e.stopPropagation();
-          updateFocus(idx, 'Click');
+          activeRegionIdx = 3;
+          itemIndices.files = idx;
+          updateActiveItem('Click');
         });
-        el.addEventListener('contextmenu', function (e) {
+        fileEl.addEventListener('dblclick', function (e) {
+          e.stopPropagation();
+          activeRegionIdx = 3;
+          itemIndices.files = idx;
+          openActiveFile();
+        });
+        fileEl.addEventListener('contextmenu', function (e) {
           e.preventDefault();
           e.stopPropagation();
-          updateFocus(idx, 'Right-Click');
+          activeRegionIdx = 3;
+          itemIndices.files = idx;
+          updateActiveItem('Right-Click');
           toggleContextMenu();
         });
       });
+
+      // Click on sidebar items
+      regionItems.sidebar.forEach(function (sideEl, idx) {
+        sideEl.addEventListener('click', function (e) {
+          e.stopPropagation();
+          activeRegionIdx = 0;
+          itemIndices.sidebar = idx;
+          updateActiveItem('Click');
+        });
+      });
+
+      // Initialize
+      updateActiveItem();
     })();
     </script>
 
