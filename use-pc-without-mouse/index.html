@@ -242,6 +242,246 @@
       </table>
     </div>
 
+    
+    <!-- ==================== INTERACTIVE KEYBOARD LAB ==================== -->
+    <section class="interactive-lab-container" id="practice-lab" style="margin: 32px 0 40px;">
+      <div style="border: 2px solid var(--signal); border-radius: 12px; overflow: hidden; background: #0f141c; box-shadow: 0 12px 36px rgba(0,0,0,0.35);">
+        
+        <!-- Lab Header -->
+        <div style="background: #18202c; border-bottom: 1px solid #2b3648; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <span style="background: var(--signal); color: #fff; font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .06em;">Interactive Practice Lab</span>
+            <h3 style="color: #fff; margin: 6px 0 2px; font-size: 17px; font-family: var(--display);">Test Keyboard Navigation Live (No Mouse Needed)</h3>
+            <p style="margin: 0; color: #8fa0b5; font-size: 13px;">Click inside this simulated Windows window and press your physical keyboard keys to see how Windows responds.</p>
+          </div>
+          <div id="lab-hud" style="background: #090c10; border: 1px solid #323f52; border-radius: 6px; padding: 6px 12px; font-family: var(--mono); font-size: 11.5px; color: #38ef7d; display: flex; align-items: center; gap: 8px;">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#38ef7d;"></span>
+            <span id="hud-text">STATUS: CLICK HERE TO ACTIVATE LAB</span>
+          </div>
+        </div>
+
+        <!-- Simulated Windows Desktop / File Explorer -->
+        <div id="sim-viewport" tabindex="0" style="outline: none; padding: 16px; background: radial-gradient(circle at 50% 30%, #151b24 0%, #0c1017 100%); min-height: 280px; position: relative; user-select: none; cursor: default;">
+          
+          <!-- Windows Explorer Mock Window -->
+          <div id="sim-win" style="background: #1a2332; border: 1px solid #34445c; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 680px; margin: 0 auto; transition: border-color .2s ease;">
+            
+            <!-- Window Titlebar -->
+            <div style="background: #202b3c; border-bottom: 1px solid #2e3c50; padding: 7px 12px; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-family: var(--mono); font-size: 11px; color: #c4d1e0; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                File Explorer — Documents
+              </span>
+              <div style="display: flex; gap: 6px;">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3e4c60;"></span>
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3e4c60;"></span>
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;"></span>
+              </div>
+            </div>
+
+            <!-- Explorer Nav / Address Bar -->
+            <div style="background: #161e2a; border-bottom: 1px solid #263345; padding: 6px 10px; display: flex; gap: 8px; align-items: center; font-family: var(--mono); font-size: 11px;">
+              <button class="sim-btn" id="btn-back" tabindex="-1" style="background:#222e40;border:1px solid #33435b;color:#a0b1c5;border-radius:4px;padding:3px 8px;font-size:10.5px;cursor:pointer;">&larr; Back</button>
+              <div id="sim-address" class="sim-focusable" data-id="address" style="flex:1;background:#0d131c;border:1px solid #28374c;border-radius:4px;padding:4px 10px;color:#8ea6c3;font-size:11px;">C:\Users\Documents</div>
+              <div id="sim-search" class="sim-focusable" data-id="search" style="width:110px;background:#0d131c;border:1px solid #28374c;border-radius:4px;padding:4px 8px;color:#5a6d84;font-size:10.5px;">Search (Ctrl+E)</div>
+            </div>
+
+            <!-- File Explorer Item List -->
+            <div id="sim-files" style="padding: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; position: relative;">
+              
+              <div class="sim-file sim-focusable selected" data-id="file-0" data-name="Quarterly_Budget.xlsx" style="background: rgba(27,68,216,0.25); border: 1px solid var(--signal); border-radius: 6px; padding: 10px 8px; text-align: center; cursor: pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38ef7d" stroke-width="1.8" style="margin: 0 auto 4px; display: block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span style="font-family: var(--mono); font-size: 10px; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Budget.xlsx</span>
+              </div>
+
+              <div class="sim-file sim-focusable" data-id="file-1" data-name="Project_Notes.txt" style="background: #111722; border: 1px solid #263448; border-radius: 6px; padding: 10px 8px; text-align: center; cursor: pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" style="margin: 0 auto 4px; display: block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span style="font-family: var(--mono); font-size: 10px; color: #cbd5e1; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Notes.txt</span>
+              </div>
+
+              <div class="sim-file sim-focusable" data-id="file-2" data-name="Family_Trip.jpg" style="background: #111722; border: 1px solid #263448; border-radius: 6px; padding: 10px 8px; text-align: center; cursor: pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" style="margin: 0 auto 4px; display: block;"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                <span style="font-family: var(--mono); font-size: 10px; color: #cbd5e1; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Photo.jpg</span>
+              </div>
+
+              <div class="sim-file sim-focusable" data-id="file-3" data-name="Contract_Signed.pdf" style="background: #111722; border: 1px solid #263448; border-radius: 6px; padding: 10px 8px; text-align: center; cursor: pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.8" style="margin: 0 auto 4px; display: block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span style="font-family: var(--mono); font-size: 10px; color: #cbd5e1; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Contract.pdf</span>
+              </div>
+
+              <!-- Context Menu Popup -->
+              <div id="sim-context-menu" style="display: none; position: absolute; top: 35px; left: 140px; width: 155px; background: #1f2a3a; border: 1px solid #3b4d66; border-radius: 6px; box-shadow: 0 14px 32px rgba(0,0,0,0.65); padding: 4px; z-index: 20; font-family: var(--mono); font-size: 11px;">
+                <div class="sim-ctx-item active" style="padding: 5px 8px; border-radius: 4px; color: #fff; background: var(--signal); cursor: pointer;">Open (Enter)</div>
+                <div class="sim-ctx-item" style="padding: 5px 8px; border-radius: 4px; color: #cbd5e1; cursor: pointer;">Copy (Ctrl+C)</div>
+                <div class="sim-ctx-item" style="padding: 5px 8px; border-radius: 4px; color: #cbd5e1; cursor: pointer;">Rename (F2)</div>
+                <div style="height: 1px; background: #2f3e54; margin: 3px 0;"></div>
+                <div class="sim-ctx-item" style="padding: 5px 8px; border-radius: 4px; color: #cbd5e1; cursor: pointer;">Delete (Del)</div>
+                <div class="sim-ctx-item" style="padding: 5px 8px; border-radius: 4px; color: #cbd5e1; cursor: pointer;">Properties (Alt+Enter)</div>
+              </div>
+
+            </div>
+
+            <!-- Taskbar Inside Simulator -->
+            <div style="background: #111620; border-top: 1px solid #232d3d; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <button class="sim-focusable" data-id="tb-start" style="background: #1b44d8; border: 0; color: #fff; font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 3px; cursor: pointer;">Start</button>
+                <button class="sim-focusable" data-id="tb-search" style="background: #1a222e; border: 1px solid #293649; color: #a1b2c6; font-family: var(--mono); font-size: 10px; padding: 4px 8px; border-radius: 3px; cursor: pointer;">Search</button>
+              </div>
+              <span id="sim-action-hint" style="font-family: var(--mono); font-size: 10px; color: #7e8fa4;">Hint: Press Tab to walk focus, Shift+F10 to right-click</span>
+            </div>
+
+          </div>
+
+          <!-- Quick Interactive Simulation Buttons -->
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px;">
+            <button id="btn-sim-tab" style="background: #1e2838; border: 1px solid #33445e; color: #c0cfdf; font-family: var(--mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Simulate [Tab]</button>
+            <button id="btn-sim-rclick" style="background: #1b44d8; border: 1px solid #1b44d8; color: #fff; font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Simulate [Shift + F10] (Right-Click)</button>
+            <button id="btn-sim-enter" style="background: #1e2838; border: 1px solid #33445e; color: #c0cfdf; font-family: var(--mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Simulate [Enter] (Open)</button>
+            <button id="btn-sim-esc" style="background: #1e2838; border: 1px solid #33445e; color: #c0cfdf; font-family: var(--mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Simulate [Esc] (Close Menu)</button>
+          </div>
+
+        </div>
+
+        <!-- Real Screenshot Proof Banner -->
+        <div style="background: #141b25; border-top: 1px solid #243042; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="/screenshots/qr-pairing.png" alt="PCDeck QR Code pairing on Windows" style="width: 72px; height: auto; border-radius: 4px; border: 1px solid #324155;">
+            <div>
+              <strong style="color: #fff; font-size: 13.5px; display: block;">Don't want to memorize keyboard shortcuts?</strong>
+              <span style="color: #8da0b5; font-size: 12px;">Scan the QR code with your phone camera &mdash; your phone is your wireless mouse trackpad in 15 seconds.</span>
+            </div>
+          </div>
+          <a href="/#download" class="btn sm" style="background: var(--signal); color: #fff; border-color: var(--signal); font-weight: 700; font-size: 13px;">Download PCDeck (Free)</a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Lab Script -->
+    <script>
+    (function () {
+      var viewport = document.getElementById('sim-viewport');
+      var hudText = document.getElementById('hud-text');
+      var ctxMenu = document.getElementById('sim-context-menu');
+      var actionHint = document.getElementById('sim-action-hint');
+      if (!viewport || !hudText) return;
+
+      var focusables = Array.from(document.querySelectorAll('.sim-focusable'));
+      var currentIdx = 2; // Start on Budget.xlsx
+
+      function updateFocus(idx, keyName) {
+        if (idx < 0) idx = focusables.length - 1;
+        if (idx >= focusables.length) idx = 0;
+        currentIdx = idx;
+
+        focusables.forEach(function (el, i) {
+          if (i === currentIdx) {
+            el.classList.add('selected');
+            el.style.borderColor = '#1b44d8';
+            el.style.background = 'rgba(27,68,216,0.25)';
+            el.style.boxShadow = '0 0 0 2px rgba(27,68,216,0.4)';
+          } else {
+            el.classList.remove('selected');
+            el.style.borderColor = '#263448';
+            el.style.background = '#111722';
+            el.style.boxShadow = 'none';
+          }
+        });
+
+        var focusedEl = focusables[currentIdx];
+        var name = focusedEl.getAttribute('data-name') || focusedEl.getAttribute('data-id') || 'Item';
+        hudText.innerHTML = (keyName ? 'KEY: ' + keyName + ' &rarr; ' : '') + 'FOCUSED: <span style="color:#fff;">' + name + '</span>';
+        actionHint.innerText = 'Focused: ' + name + ' · Press Shift+F10 for context menu';
+      }
+
+      function toggleContextMenu() {
+        var focusedEl = focusables[currentIdx];
+        if (!focusedEl || !focusedEl.classList.contains('sim-file')) {
+          hudText.innerHTML = 'KEY: Shift+F10 &rarr; Select a file to right-click';
+          return;
+        }
+        var rect = focusedEl.getBoundingClientRect();
+        var parentRect = viewport.getBoundingClientRect();
+        ctxMenu.style.left = Math.max(10, Math.min(parentRect.width - 170, rect.left - parentRect.left + 20)) + 'px';
+        ctxMenu.style.top = Math.max(10, rect.top - parentRect.top + 20) + 'px';
+        ctxMenu.style.display = 'block';
+        hudText.innerHTML = 'KEY: [Shift + F10] &rarr; <span style="color:#38ef7d;">Context Menu Opened!</span>';
+        actionHint.innerText = 'Context menu active: Press Esc to close or Enter to open';
+      }
+
+      function closeContextMenu() {
+        ctxMenu.style.display = 'none';
+        hudText.innerHTML = 'KEY: [Esc] &rarr; Menu Closed';
+        actionHint.innerText = 'Menu closed · Press Tab to move focus';
+      }
+
+      function openItem() {
+        var focusedEl = focusables[currentIdx];
+        var name = focusedEl.getAttribute('data-name') || focusedEl.getAttribute('data-id');
+        ctxMenu.style.display = 'none';
+        hudText.innerHTML = 'KEY: [Enter] &rarr; <span style="color:#38ef7d;">Opened ' + name + '!</span>';
+        actionHint.innerText = 'Opened: ' + name;
+      }
+
+      viewport.addEventListener('focus', function () {
+        document.getElementById('sim-win').style.borderColor = '#1b44d8';
+        hudText.innerHTML = 'SIMULATOR ACTIVE: PRESS TAB, ARROWS, OR SHIFT+F10';
+      });
+
+      viewport.addEventListener('blur', function () {
+        document.getElementById('sim-win').style.borderColor = '#34445c';
+      });
+
+      viewport.addEventListener('keydown', function (e) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          updateFocus(e.shiftKey ? currentIdx - 1 : currentIdx + 1, e.shiftKey ? 'Shift+Tab' : 'Tab');
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          updateFocus(currentIdx + 1, e.key);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          updateFocus(currentIdx - 1, e.key);
+        } else if ((e.shiftKey && e.key === 'F10') || e.key === 'ContextMenu') {
+          e.preventDefault();
+          toggleContextMenu();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeContextMenu();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          openItem();
+        }
+      });
+
+      document.getElementById('btn-sim-tab').addEventListener('click', function () {
+        updateFocus(currentIdx + 1, 'Tab');
+      });
+      document.getElementById('btn-sim-rclick').addEventListener('click', function () {
+        toggleContextMenu();
+      });
+      document.getElementById('btn-sim-enter').addEventListener('click', function () {
+        openItem();
+      });
+      document.getElementById('btn-sim-esc').addEventListener('click', function () {
+        closeContextMenu();
+      });
+
+      focusables.forEach(function (el, idx) {
+        el.addEventListener('click', function (e) {
+          e.stopPropagation();
+          updateFocus(idx, 'Click');
+        });
+        el.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          updateFocus(idx, 'Right-Click');
+          toggleContextMenu();
+        });
+      });
+    })();
+    </script>
+
     <h2>Start with focus: Tab, arrows, Enter</h2>
     <p>Everything below rests on one idea. Windows always has an element <em>in focus</em> — the button or field that would react if you pressed a key right now. A mouse moves focus by pointing. Without one, you move it by stepping.</p>
     <table class="keys">
