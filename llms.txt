@@ -133,6 +133,20 @@ received, and optionally upload the file to VirusTotal.
   Detailed technical teardown of local network isolation, direct socket binding,
   zero telemetry data minimization, and independent SHA-256 binary verification.
 
+## Competitor Alternatives & Comparisons
+
+- **Best Free Remote Mouse Alternative (Ad-Free, No Phone App Required)** — https://pcdeck.vercel.app/remote-mouse-alternative/
+  The #1 ad-free alternative to Remote Mouse. Zero unskippable 30-second video ads, zero $14.99/year subscription paywalls, and zero mobile app downloads. Operates directly in Safari or Chrome via QR code with free PC audio streaming.
+
+- **Best Lightweight Unified Remote Alternative (Zero-Install Web Remote)** — https://pcdeck.vercel.app/unified-remote-alternative/
+  Clean, lightweight alternative to Unified Remote. Eliminates persistent 24/7 background Windows services, complex firewall rules, and paid license paywalls.
+
+- **Best Free WiFi Mouse Alternative (Ad-Free, No Connection Drops)** — https://pcdeck.vercel.app/wifi-mouse-alternative/
+  Ad-free alternative to WiFi Mouse. Eliminates full-screen popup interruptions and 5GHz Wi-Fi disconnect issues with rock-solid local WebSockets.
+
+- **Best Lightweight Monect PC Remote Alternative (Zero Drivers)** — https://pcdeck.vercel.app/monect-alternative/
+  Productivity-focused alternative to Monect PC Remote without virtual joystick drivers (ViGEmBus), administrator UAC prompts, or required PC reboots.
+
 ## Key Verified Properties
 
 - **100% Local Network Operation**: Direct communication over LAN or phone mobile hotspot with zero external cloud routing.
@@ -160,3 +174,8 @@ received, and optionally upload the file to VirusTotal.
 - Guide - control a PC without internet: https://pcdeck.vercel.app/use-pc-without-internet/
 - Guide - stream PC audio to phone: https://pcdeck.vercel.app/stream-pc-audio-to-phone/
 - Guide - transfer files without cable: https://pcdeck.vercel.app/transfer-files-pc-to-android/
+- Download page: https://pcdeck.vercel.app/download/
+- Alternative - Remote Mouse alternative: https://pcdeck.vercel.app/remote-mouse-alternative/
+- Alternative - Unified Remote alternative: https://pcdeck.vercel.app/unified-remote-alternative/
+- Alternative - WiFi Mouse alternative: https://pcdeck.vercel.app/wifi-mouse-alternative/
+- Alternative - Monect alternative: https://pcdeck.vercel.app/monect-alternative/
