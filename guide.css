@@ -337,3 +337,9 @@ footer{padding:44px 0 56px;margin-top:40px;border-top:1px solid var(--grid)}
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important}
 }
+
+
+/* Ensure anchor jumps clear sticky navbar */
+section[id], .sec, [id] {
+  scroll-margin-top: 84px;
+}

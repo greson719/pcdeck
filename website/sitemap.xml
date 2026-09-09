@@ -14,6 +14,13 @@
     </image:image>
   </url>
 
+    <url>
+    <loc>https://pcdeck.vercel.app/download/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
   <!-- Central Guides Hub -->
   <url>
     <loc>https://pcdeck.vercel.app/guides/</loc>
