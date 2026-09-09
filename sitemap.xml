@@ -131,4 +131,19 @@
     <priority>0.8</priority>
   </url>
 
+
+  <!-- Competitor Alternatives & Comparisons -->
+  <url>
+    <loc>https://pcdeck.vercel.app/remote-mouse-alternative/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/unified-remote-alternative/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
 </urlset>
