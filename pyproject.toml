@@ -20,6 +20,7 @@ dependencies = [
     "httpx>=0.28.1",
     "vgamepad",
     "pystray",
+    "numpy>=1.26.0",
 ]
 
 [project.scripts]

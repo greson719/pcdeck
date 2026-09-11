@@ -1,8 +1,13 @@
-﻿name: PCDeck Cross-Platform Linux & Windows CI/CD
+name: PCDeck Cross-Platform Linux & Windows CI/CD
 
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'website/**'
+      - 'msstore_assets/**'
+      - '*.md'
+      - 'vercel.json'
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
