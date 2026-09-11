@@ -7,6 +7,11 @@
       "permanent": true
     },
     {
+      "source": "/PCDeck-Setup.exe",
+      "destination": "https://github.com/greson719/pcdeck/releases/download/v2.7.0/PCDeck-Setup.exe",
+      "permanent": false
+    },
+    {
       "source": "/website/:path*",
       "destination": "/:path*",
       "permanent": true
