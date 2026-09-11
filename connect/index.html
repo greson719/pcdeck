@@ -573,7 +573,7 @@ h1 {
         </ul>
       </div>
 
-      <button type="button" class="btn btn-primary" id="btn-download-apk">Download APK</button>
+      <a href="/PCDeck.apk" download="PCDeck.apk" class="btn btn-primary" id="btn-download-apk">Download APK</a>
     </div>
   </div>
 
@@ -617,7 +617,8 @@ h1 {
 <script>
 (function() {
   const params = new URLSearchParams(window.location.search);
-  let token = params.get('token') || '';
+  const ipParam = params.get('ip') || '';
+  let token = params.get('token') || params.get('t') || '';
 
   if (token) {
     try { localStorage.setItem('pcdeck_token', token); } catch (e) {}
@@ -627,6 +628,16 @@ h1 {
 
   const tokenQuery = token ? ('?token=' + encodeURIComponent(token)) : '';
 
+  // Determine base host/port
+  let baseRemoteOrigin = '';
+  if (ipParam) {
+    const cleanIp = ipParam.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+    baseRemoteOrigin = 'http://' + cleanIp;
+  }
+
+  const webHref = (baseRemoteOrigin ? (baseRemoteOrigin + '/') : '/') + tokenQuery;
+  const apkHref = (baseRemoteOrigin ? baseRemoteOrigin : '') + '/PCDeck.apk';
+
   const btnLaunchWeb = document.getElementById('btn-launch-web');
   const btnDownloadApk = document.getElementById('btn-download-apk');
   const modal = document.getElementById('install-modal');
@@ -635,10 +646,10 @@ h1 {
   const modalBtnDownload = document.getElementById('modal-btn-download');
   const modalBtnWeb = document.getElementById('modal-btn-web');
 
-  const webHref = '/' + tokenQuery;
   btnLaunchWeb.href = webHref;
   modalBtnWeb.href = webHref;
-  modalBtnDownload.href = '/PCDeck.apk';
+  btnDownloadApk.href = apkHref;
+  modalBtnDownload.href = apkHref;
 
   function openModal() {
     modal.classList.add('active');
@@ -650,9 +661,9 @@ h1 {
     document.body.style.overflow = '';
   }
 
-  btnDownloadApk.addEventListener('click', function(e) {
-    e.preventDefault();
-    openModal();
+  btnDownloadApk.addEventListener('click', function() {
+    // Show instruction modal while download begins
+    setTimeout(openModal, 400);
   });
 
   modalCloseBtn.addEventListener('click', closeModal);

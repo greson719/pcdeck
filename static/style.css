@@ -1043,7 +1043,7 @@ header.top-nav.hidden-bar {
     flex-direction: column !important;
   }
 
-  /* 📺 PURE 100% EDGE-TO-EDGE FULLSCREEN STREAMING DISPLAY */
+  /*  PURE 100% EDGE-TO-EDGE FULLSCREEN STREAMING DISPLAY */
   #tab-screen {
     position: fixed !important;
     inset: 0 !important;
@@ -1471,7 +1471,7 @@ header.top-nav.hidden-bar {
   display: flex !important;
 }
 
-/* 📂 Sleek Segmented Mode Switcher (PC Files vs Phone Files) */
+/*  Sleek Segmented Mode Switcher (PC Files vs Phone Files) */
 .fs-mode-bar {
   display: flex;
   align-items: center;
@@ -1493,7 +1493,7 @@ header.top-nav.hidden-bar {
               transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 📦 Collapsible Top Cards Group (Quick places, search bar, tip strip) */
+/*  Collapsible Top Cards Group (Quick places, search bar, tip strip) */
 .fs-collapsible-group {
   display: flex;
   flex-direction: column;
@@ -1510,7 +1510,7 @@ header.top-nav.hidden-bar {
               transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 🚀 Auto-Collapsed / Compact Mode (Triggered when user scrolls down through files) */
+/*  Auto-Collapsed / Compact Mode (Triggered when user scrolls down through files) */
 .fs-manager-view.fs-compact-mode .fs-mode-bar {
   max-height: 0 !important;
   opacity: 0 !important;
@@ -2249,7 +2249,7 @@ header.top-nav.hidden-bar {
   box-shadow: 0px 0px 0px;
 }
 
-/* Hide FAB completely while typing bar is open so it NEVER overlaps the ✕ close button */
+/* Hide FAB completely while typing bar is open so it NEVER overlaps the  close button */
 .screen-kbd-fab.active,
 body.typing-active .screen-kbd-fab,
 .screen-type-bar:not([hidden]) ~ .screen-kbd-fab {
@@ -2727,7 +2727,7 @@ body.gamepad-hud-active #screen-canvas-wrapper {
   transform: scale(0.95);
 }
 
-/* 🕹️ Pro Esports Joystick Zone */
+/* ️ Pro Esports Joystick Zone */
 .hud-joystick-zone {
   width: 126px;
   height: 126px;
@@ -2795,7 +2795,7 @@ body.gamepad-hud-active #screen-canvas-wrapper {
   pointer-events: none;
 }
 
-/* 🎯 Shoulder Triggers & Bumpers (Ergonomic Tactical Glass) */
+/*  Shoulder Triggers & Bumpers (Ergonomic Tactical Glass) */
 .hud-trigger-btn {
   width: 74px;
   height: 44px;
@@ -2852,7 +2852,7 @@ body.gamepad-hud-active #screen-canvas-wrapper {
   text-transform: uppercase;
 }
 
-/* 🎮 Action Diamond Circular Buttons (Esports Glass Halo) */
+/*  Action Diamond Circular Buttons (Esports Glass Halo) */
 .hud-action-circle {
   width: 56px;
   height: 56px;
@@ -2904,7 +2904,7 @@ body.gamepad-hud-active #screen-canvas-wrapper {
   text-transform: uppercase;
 }
 
-/* ⚡ Tactical Pill Buttons */
+/*  Tactical Pill Buttons */
 .hud-tactical-pill {
   min-width: 60px;
   height: 34px;
@@ -7120,3 +7120,35 @@ body.is-native-app .web-only-feature {
 }
 
 
+
+/* Cyber-Neon Vector Toast Notification Capsule Styles */
+.neo-toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.toast-svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+.toast-icon-success .toast-svg { stroke: #00ff88; }
+.toast-icon-info .toast-svg { stroke: #00f2fe; }
+.toast-icon-warn .toast-svg { stroke: #ffb703; }
+.toast-icon-error .toast-svg { stroke: #ff3366; }
+.neo-toast.toast-info {
+  background: rgba(10, 18, 30, 0.94);
+  color: #e2e8f0;
+  border-color: rgba(0, 242, 254, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 12px rgba(0, 242, 254, 0.2);
+}
+
+/* File Manager Vector SVG Icons */
+.fm-svg-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}

@@ -291,10 +291,11 @@ Before committing or releasing updates:
 
 | Target Binary | File Size | Version / Build | Verification Status |
 | :--- | :--- | :--- | :--- |
-| `PCDeck.exe` | **46.8 MB** (down from 60.5 MB) | v2.7.0 (2.7.0.0 Win32 meta) | Passed · Standalone PyInstaller UPX |
-| `PCDeck.apk` | **739 KB** (down from 3.76 MB) | v2.7.0 (Code 270) | Passed · v1/v2/v3 aligned & signed |
-| `PCDeck.aab` | **730 KB** | v2.7.0 (Code 270) | Passed · Google Play Bundletool signed |
-| `PCDeck_Package.zip` | **47.1 MB** (down from 63.9 MB) | v2.7.0 | Passed · Offline bundle (EXE + APK) |
+| `PCDeck.exe` | **41.8 MB** (down from 56.5 MB) | v2.7.0 (2.7.0.0 Win32 meta) | Passed · Standalone PyInstaller Optimized |
+| `PCDeck-Setup.exe` | **44.4 MB** (down from 54.5 MB) | v2.7.0 | Passed · Inno Setup full installer with cyber poster |
+| `PCDeck.apk` | **671 KB** (down from 2.28 MB) | v2.7.0 (Code 270) | Passed · v1/v2/v3 aligned & signed |
+| `PCDeck.aab` | **666 KB** (down from 1.50 MB) | v2.7.0 (Code 270) | Passed · Google Play Bundletool signed |
+| `PCDeck_Package.zip` | **49.7 MB** (down from 61.2 MB) | v2.7.0 | Passed · Offline bundle (EXE + APK) |
 | `PCDeck.msix` | **45.7 MB** | v2.7.0.0 | Passed · Store manifest validated |
 
 - **Version Consistency Invariant**: All components (`pyproject.toml`, `MainActivity.java`, `app.js` `CURRENT_APP_VERSION_NAME`, `version_info.txt`, `version.json`, and website download cards) must strictly reflect the exact same version string and integer code.
@@ -312,12 +313,22 @@ Before committing or releasing updates:
   - **Primary**: Bold, glowing `Download PCDeck for Windows (.exe)`.
   - **Secondary / Optional**: Clean inline links for Android APK (`739 KB`), Linux 1-line script, and offline recovery ZIP. Never clutter the hero section with 4 competing primary download buttons.
 - **Language & Tone Standard**: Zero technical jargon, zero AI buzzwords ("paradigm shifting", "AI-powered", "revolutionary"), and zero complex networking terms. Write for everyday humans whose physical mouse just broke.
+- **QR Code Density & Scan Invariant**:
+  - **Version 3 Grid Standard (29×29 Matrix = 841 Dots)**: The pairing URL must never exceed 48–52 characters (`http://{LOCAL_IP}:{SERVER_PORT}/connect?t={12_HEX_TOKEN}`).
+  - **Zero Moiré Blur**: Under no circumstances allow the QR code to inflate into a dense Version 5+ matrix (37×37 = 1,369 micro-dots). Chunky Version 3 dots eliminate LCD/OLED monitor subpixel interference (Moiré) and scan in <20ms on budget phone cameras.
+  - **Pure Optical Contrast**: QR codes must strictly render with pure solid black (`#000000`) on pure white (`#ffffff`) with a minimum `border=3` quiet zone. Never use inverted or colored (e.g. cyan-on-navy) modules for pairing QRs.
 
 ---
 
 ## 15. Brand Identity & Anti-AI-Slop Standard
 
-- **Official Icon Design**: The community-voted Option A (authentic 3D mechanical mouse on solid pure black `#000000` background) is the sole official brand visual across all assets (`icon.png`, `icon-512.png`, `favicon.ico`, `favicon.png`, `og-image.png`, and app mipmaps).
+- **Official Icon Design**: The authentic 3D mechanical mouse (Option A from `playstore_assets/App_Icon_512x512.png` / `natural_master.png`) is the permanent brand visual across all assets (`icon.png`, `icon-512.png`, `PCDeck.ico`, `app_icon.ico`, `favicon.ico`, `favicon.png`, `og-image.png`, and app mipmaps).
+- **Icon Integrity & Multi-Resolution Invariant**:
+  - **No Dark Flattening**: The authentic reflective silver/charcoal body highlights (`rgb_mean ~44`, body `[62, 71, 80]`) and electric cyan neon strip (`[62, 255, 255]`) must be strictly preserved. Never apply destructive threshold darkening that collapses the mouse body into an opaque, murky black blob (`rgb_mean ~15`).
+  - **9-Frame Windows Multi-Res ICO**: All `.ico` files must bundle all 9 pre-rendered MIP frames: `[16x16, 20x20, 24x24, 32x32, 40x40, 48x48, 64x64, 128x128, 256x256]`. Micro frames ($\le 32\text{px}$) must include contrast enhancement so Windows File Explorer details view and taskbar shortcuts never render as dark boxes.
+- **Installer Poster Banner Invariant**:
+  - `WizardImageFile=WizardImage.bmp` (164×314) must always be a full-bleed, professional cyber-neon vertical banner poster featuring gradient background, soft radial neon back-glow, bold typography ("PCDECK"), tagline, and feature badges. Never leave it as an isolated small square floating in an empty black column.
+  - Setup shortcuts must point to `{app}\PCDeck.ico` and call shell refresh (`ie4uinit.exe -show`) to invalidate stale Windows icon caches immediately upon installation.
 - **Anti-AI-Slop Policy**:
   - Under no circumstances should AI-generated logos, abstract blobs, or non-mouse vector art replace the authentic mouse icon.
   - Option B was permanently disqualified following independent community feedback identifying loss of mouse silhouette and inappropriate shapes.

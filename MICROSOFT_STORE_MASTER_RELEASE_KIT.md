@@ -1,16 +1,17 @@
-﻿# 🪟 PCDeck — Microsoft Store Master Release Kit & Submission Guide
+# PCDeck — Microsoft Store Master Release Kit & Submission Guide
 
 This single master document contains **everything** required to publish **PCDeck** to the **Microsoft Store (Windows 10/11)** via Microsoft Partner Center, fill out every submission questionnaire, pass certification review on the first attempt, and package future updates.
 
 ---
 
-## 📁 1. Master Asset Directory (Quick File Index)
+## 1. Master Asset Directory (Quick File Index)
 
 All required release binaries, store artwork, and high-DPI manifest assets are located in:
-📂 c:\Users\GRESON\Documents\mobile_tracpad_for_pc\msstore_assets\
+ c:\Users\GRESON\Documents\mobile_tracpad_for_pc\msstore_assets\
 
 | Asset Type | Exact File Path | Specs |
 |---|---|:---:|
+| **Production Win32 Installer (.exe)** | [msstore_assets/PCDeck-Setup.exe](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/PCDeck-Setup.exe) | Windows Inno Setup Installer (x64, v2.7.0) |
 | **Production MSIX Package** | [msstore_assets/PCDeck.msix](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/PCDeck.msix) | Windows App Package (x64, v1.0.0.0) |
 | **Store 1:1 App Box Art / Logo** | [msstore_assets/StoreLogo_300x300.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/StoreLogo_300x300.png) | 300 × 300 (32-bit PNG) |
 | **Spotlight Hero Banner (Featured)** | [msstore_assets/StoreHero_2400x1200.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/StoreHero_2400x1200.png) | 2400 × 1200 (2:1 Hero Graphic) |
@@ -27,103 +28,130 @@ All required release binaries, store artwork, and high-DPI manifest assets are l
 
 ---
 
-## 🎯 2. High-Converting ASO Store Listing Copy
+## 2. High-Converting ASO Store Listing Copy
 
-Copy and paste these directly into the **Store listings** section in Microsoft Partner Center.
+Copy and paste these directly into the **Store listings** section in Microsoft Partner Center (`Apps and games > Store listings > English (United States)`).
 
-### 🏷️ Product Title
-`	ext
-PCDeck: Wireless Trackpad, Screen Mirror & Remote
-`
+### Product Title
+```text
+PCDeck: Wireless Mouse, Trackpad, Webcam & PC Remote
+```
 
-### 📝 Short Description (Under 100 characters)
-`	ext
-Turn your phone into a multi-touch trackpad, screen mirror & PC remote over local Wi-Fi.
-`
+### Short Description (Under 100 characters)
+```text
+No phone app needed: scan QR code to use your phone as a mouse, webcam & PC remote over local Wi-Fi.
+```
+*(99 characters — strictly under the 100-character Partner Center limit).*
 
-### 📄 Full Description (Formatted for Microsoft Store)
-`	ext
-Transform your smartphone into a wireless multi-touch trackpad, desktop screen mirror, mechanical keyboard, stereo audio streamer, and cable-free file manager for Windows 10 and Windows 11.
+### Full Description (Formatted for Microsoft Store)
+```text
+PCDeck turns any smartphone or tablet into a wireless trackpad, mouse, PC screen mirror, HD webcam, microphone, keyboard, and file transfer tool for Windows 10 & 11 — with ZERO mobile app installation required.
 
-PCDeck runs 100% offline over your local Wi-Fi network or mobile hotspot. It requires zero cloud accounts, zero sign-ups, zero internet connectivity, and contains zero telemetry.
+Whether your mouse battery died, you need an HD webcam for Zoom, or you want to control PC media from your couch, just scan the QR code on your PC screen with your phone camera. It connects instantly in your mobile browser (Safari, Chrome, Firefox, Edge). 
 
-Connect in 3 seconds by scanning the pairing QR code displayed on your PC screen, and take complete control of your computer from across the room.
+No app store downloads. No cables. No account creation. No cloud servers. No subscriptions. 
+Point, scan, and you have a precision wireless trackpad in under 3 seconds.
 
-========================================
-HIGHLIGHT FEATURES
-========================================
+============================================================
+WHAT YOU CAN DO WITH PCDECK
+============================================================
 
-🖱️ MULTI-TOUCH PRECISION TRACKPAD
-• Ultra-responsive mouse cursor movement with ballistic acceleration.
-• Physical tap gestures: 1-finger tap for Left Click, 2-finger tap for Right Click.
-• 350ms long-press for drag-and-drop file and window locking.
-• Dedicated edge scroll strip for vertical scrolling through documents and web pages.
+WIRELESS TRACKPAD & MOUSE
+• Turn your phone screen into a smooth, responsive laptop-style touchpad.
+• Intuitive multi-touch gestures: 1-finger tap to left-click, 2-finger tap to right-click.
+• Long-press to drag and drop files or reposition desktop windows.
+• Dedicated edge scrolling strip for reading documents, PDFs, and websites.
 
-🖥️ LOW-LATENCY DESKTOP SCREEN MIRRORING
-• Stream your Windows desktop directly to your mobile display in real time.
-• Fluid 30 FPS and 60 FPS streaming modes with adaptive JPEG compression.
-• 1:1 direct physical touch interaction: tap, double-click, drag, and pinch-to-zoom.
-• Mobile kinetic inertia fling physics for natural document scrolling.
+PHONE AS WIRELESS WEBCAM
+• Use your smartphone's camera as an HD virtual webcam on your PC.
+• Compatible with Zoom, Microsoft Teams, Discord, OBS Studio, and Google Meet.
+• Front and rear camera switching with smooth local video streaming.
 
-⌨️ LIVE VIRTUAL KEYBOARD & NUMPAD
-• Full virtual mechanical keyboard layout with dedicated Function keys (F1-F12) and Numpad cluster.
-• Slide-up mobile typing bar for instant Unicode text entry into active Windows apps.
-• Instant Windows shortcut hotkeys: Win+D, Alt+Tab, Task View, and Snipping Tool.
+DESKTOP SCREEN MIRRORING & TOUCH CONTROL
+• Stream your Windows desktop directly to your phone screen in real time.
+• Interact with your desktop using direct touch: tap, double-click, and pinch-to-zoom.
+• Smooth scrolling with natural kinetic inertia.
 
-📁 CABLE-FREE LOCAL FILE MANAGER
-• Transfer multi-gigabyte files, photos, videos, and documents between PC and phone over high-speed local Wi-Fi.
-• Unbuffered chunked streaming architecture with strict 1-by-1 FIFO batch queuing.
-• Direct access to PC Desktop and Downloads folders.
+WIRELESS MICROPHONE
+• Use your phone as an external microphone for your PC.
+• Useful for voice calls, gaming chat, meetings, and quick voice recordings.
 
-🎵 STEREO AUDIO STREAMING & MEDIA DECK
-• Stream PC audio directly to your phone earphones over local Wi-Fi with low latency.
-• Complete media playback deck: Play/Pause, Next/Previous Track, and Windows Volume controls.
-• Real-time audio visualizer wave display.
+KEYBOARD & SHORTCUT DECK
+• Type text into any Windows application directly from your phone.
+• Access Windows hotkeys with a single tap: Task View, Alt+Tab, Win+D, and Snipping Tool.
+• Includes dedicated Function keys (F1–F12) and Esc key.
 
-⚡ 3-SECOND INSTANT QR CODE PAIRING
-• Launch PCDeck and point your phone camera at the QR code to pair immediately.
-• Zero manual IP typing or port configuration required.
-• Operates seamlessly across local home Wi-Fi and direct Mobile Hotspots.
+HIGH-SPEED LOCAL FILE TRANSFER
+• Send photos, videos, archives, and documents between your phone and PC.
+• High-speed local Wi-Fi transfers with zero file size limits and no cloud uploads.
+• Direct folder shortcuts to your PC Desktop and Downloads folders.
 
-🔒 100% PRIVATE & OFFLINE
-PCDeck communicates strictly peer-to-peer over your local network. Your keystrokes, screen data, and files never leave your local devices.
-`
+STEREO AUDIO STREAMING & MEDIA CONTROLS
+• Stream audio from your PC directly to your phone earphones.
+• Dedicated media remote: Play/Pause, Next/Previous track, and master Windows volume slider.
 
-### ⚡ Key Features (Bullet Points for Store Listing)
-`	ext
-• Wireless multi-touch trackpad with ballistic cursor acceleration and gesture clicks
-• Low-latency desktop screen mirroring with 30 FPS and 60 FPS streaming modes
-• 1:1 direct physical touch tracking and kinetic momentum scrolling
-• Full virtual mechanical keyboard layout, Numpad cluster, and Windows hotkeys
-• Cable-free high-speed local Wi-Fi file sharing and batch transfer queues
-• Real-time WASAPI stereo PC audio loopback streaming to phone earphones
-• Media control deck with volume slider and live audio visualizer
-• Instant 3-second QR code network pairing with zero configuration
-• 100% offline local network communication with zero cloud accounts or telemetry
-`
+============================================================
+WHY USERS CHOOSE PCDECK
+============================================================
+• Zero Mobile App Installation: No App Store or Google Play downloads required. Connects instantly via your phone's built-in web browser (or optional companion app).
+• 100% Local & Private: Runs entirely on your local Wi-Fi or mobile hotspot. Keystrokes, camera feeds, and files never leave your home network.
+• Zero Account Hassle: No email sign-ups, no passwords, and no login screens.
+• Lightweight & Fast: Clean background execution without bloated background services or invasive drivers.
+• Universal Compatibility: Works with any iPhone, Android, iPad, or tablet and Windows 10/11 PCs.
 
-### 🔍 Search Terms / Keywords (7 Exact Phrases)
-`	ext
+============================================================
+PERFECT FOR
+============================================================
+• Emergency mouse/keyboard replacement when batteries die or devices disconnect.
+• Streaming movies, YouTube, or Netflix on your PC while controlling playback from bed.
+• Work and study: using your phone as a high-quality webcam for conferences.
+• Navigating presentations in conference rooms or classrooms without a clicker.
+• Sending large video files and photos between phone and PC without USB cables.
+
+============================================================
+SYSTEM REQUIREMENTS
+============================================================
+• PC running Windows 10 or Windows 11 (64-bit).
+• Phone and PC connected to the same Wi-Fi network (or phone Wi-Fi hotspot).
+• Any modern mobile web browser (Safari, Chrome, Edge, Firefox) — no app download required.
+```
+
+###  Key Features (Bullet Points for Store Listing)
+```text
+• Zero phone app install required: scan PC screen QR code to connect instantly in any browser
+• Ultra-responsive wireless trackpad with multi-touch gestures and edge scrolling
+• Turn your phone into an HD wireless PC webcam for Zoom, Teams, Discord, and OBS
+• Real-time desktop screen mirroring with direct touch control and pinch-to-zoom
+• Wireless PC microphone using your smartphone mic over local Wi-Fi
+• Virtual keyboard with instant Unicode typing and one-tap Windows shortcuts
+• High-speed local Wi-Fi file sharing without file size limits or cloud uploads
+• Stream PC audio directly to your phone earphones with media controls
+• 100% local peer-to-peer connection — no accounts, no cloud, no telemetry
+```
+
+###  Search Terms / Keywords (7 Exact Phrases)
+```text
 1. remote mouse
 2. wireless trackpad
-3. screen mirroring
-4. pc remote control
-5. wifi file transfer
+3. pc remote
+4. phone webcam
+5. screen mirror
 6. wireless keyboard
-7. audio streamer
-`
+7. wifi file transfer
+```
 
 ---
 
-## 📋 3. Step-by-Step Microsoft Partner Center Submission Guide
+##  3. Step-by-Step Microsoft Partner Center Submission Guide
 
 Follow these steps in the [Microsoft Partner Center](https://partner.microsoft.com/dashboard):
 
 ### Step 1: Reserve Product Name
 1. Log in to your Microsoft Partner Center account.
-2. Go to **Apps and games > Overview > New product > MSIX or PWA app**.
-3. Enter product name: PCDeck: Wireless Trackpad, Screen Mirror & Remote (or PCDeck).
-4. Click **Check availability** and **Reserve product name**.
+2. Go to **Apps and games > Overview > New product**.
+3. Choose **Win32 app** (or **Windows & Xbox** app).
+4. Enter product name: `PCDeck: Wireless Trackpad, Screen Mirror & Remote` (or `PCDeck`).
+5. Click **Check availability** and **Reserve product name**.
 
 ---
 
@@ -169,7 +197,8 @@ Follow these steps in the [Microsoft Partner Center](https://partner.microsoft.c
 
 #### Declarations:
 - Check **This product has been tested to meet the accessibility guidelines**.
-- Check **This product uses restricted capabilities** (unFullTrust).
+- Check **This product uses restricted capabilities** (
+unFullTrust).
 
 #### Notes for Certification (Copy & Paste for Reviewers):
 `	ext
@@ -207,12 +236,32 @@ Navigate to **Store listings > English (United States)**:
 
 ---
 
-### Step 7: Packages Upload
+### Step 7: Packages & Installer Configuration
+
+Microsoft Store supports both **Win32 (.exe installers)** and **MSIX packages**.
+
+#### Option A: Win32 Application (.exe Installer) — [RECOMMENDED]
+*Why: Allows automatic DirectShow virtual camera registration, firewall configuration, and future virtual mic audio drivers without sandbox restrictions.*
+
+1. Navigate to the **Package setup** or **Installer** page in Partner Center.
+2. Fill in the installer properties:
+   - **Installer download URL:** `https://pcdeck.vercel.app/PCDeck-Setup.exe` (or direct GitHub Release link `https://github.com/<username>/pcdeck/releases/download/v2.7.0/PCDeck-Setup.exe`)
+   - **Installer type:** `.exe`
+   - **Silent install parameters:** `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`
+   - **Silent uninstall command:** `"{autopf}\PCDeck\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`
+   - **Main executable name:** `PCDeck.exe`
+   - **Installer binary architecture:** `x64`
+   - **Does installer require administrator elevation?**: Check **Yes** (required to register DirectShow filters and firewall rules).
+3. Click **Save**.
+
+---
+
+#### Option B: MSIX Package Upload
+If you submit via MSIX container instead:
 1. Navigate to the **Packages** page.
 2. Drag and drop:
-   📂 c:\Users\GRESON\Documents\mobile_tracpad_for_pc\msstore_assets\PCDeck.msix
-3. Partner Center will validate the package identity, target architecture (x64), and capabilities (unFullTrust).
-4. Click **Save**.
+    `c:\Users\GRESON\Documents\mobile_tracpad_for_pc\msstore_assets\PCDeck.msix`
+3. Click **Save**.
 
 ---
 
@@ -223,26 +272,27 @@ Navigate to **Store listings > English (United States)**:
 
 ---
 
-## 🔄 4. How to Build & Publish Future MSIX Updates
+##  4. How to Build & Publish Future Updates
 
-Whenever you update PCDeck features or fix bugs:
+### For Win32 Installer (.exe):
+1. Increment the version in `version.json`, `version_info.txt`, and `PCDeck_Setup.iss` (e.g. `2.7.1`).
+2. Rebuild the standalone executable and installer:
+   ```cmd
+   python build_exe.py
+   python tools\build_installer.py
+   ```
+   *(Or simply run `build_installer.bat`)*
+3. Upload the new `PCDeck-Setup.exe` to your website or GitHub Release.
+4. In Microsoft Partner Center, click **Update**, update the release notes and installer URL, and submit.
 
-1. **Increment Version in 	ools/build_msix.py**:
-   Update Version="1.0.1.0" in APPX_MANIFEST.
-2. **Rebuild MSIX Package**:
-   Run the 1-click batch script in PowerShell:
-   `powershell
-   .\build_msix.bat
-   `
-3. **Upload New Package in Partner Center**:
-   - Go to Partner Center > PCDeck > **Update**.
-   - Upload the new msstore_assets/PCDeck.msix.
-   - Update the release notes.
-   - Click **Submit to the Store**.
+### For MSIX Package:
+1. Increment `Version="x.x.x.x"` in `tools\build_msix.py`.
+2. Run `build_msix.bat`.
+3. Upload `msstore_assets\PCDeck.msix` to Partner Center.
 
 ---
 
-## 📞 Developer Contact & Support Details
+##  Developer Contact & Support Details
 
 - **Developer Name:** Greshon Parichha
 - **Support Email:** gresonparichha719@gmail.com

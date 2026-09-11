@@ -17,12 +17,21 @@ def build():
     print("       [+] BUILDING PCDECK WINDOWS STANDALONE (.EXE)   ")
     print("=======================================================")
 
+    # Remove nested APK inside static/ to prevent double-bundling inside the single executable
+    static_apk = ROOT / "static" / "PCDeck.apk"
+    if static_apk.exists():
+        try:
+            static_apk.unlink()
+            print("    [+] Purged duplicate static/PCDeck.apk before packaging EXE")
+        except Exception:
+            pass
+
     cmd = [
         str(PYTHON_EXE), "-m", "PyInstaller",
         "--noconfirm",
+        "--clean",
         "--onefile",
         "--windowed",
-        "--uac-admin",
         "--name", "PCDeck",
         "--icon", "app_icon.ico",
         "--version-file", "version_info.txt",
@@ -31,12 +40,7 @@ def build():
         "--add-data", "PCDeck.apk;.",
         "--add-data", "app_icon.ico;.",
         "--add-data", "PCDeck.ico;.",
-        "--add-data", "icon.ico;.",
-        "--add-data", "PCDeck_Mouse_Logo.png;.",
-        "--add-data", "PCDeck_Master_Logo.png;.",
-        "--add-data", "PCDeck_Logo.png;.",
-        "--add-data", "icon.png;.",
-        "--add-data", "icon-512.png;.",
+        "--exclude-module", "PIL._avif",
         "--hidden-import", "server.gui",
         "--hidden-import", "server.main",
         "--hidden-import", "server.binary_protocol",
@@ -98,6 +102,26 @@ def build():
                         print(f"\n[OK] SUCCESS: Replaced running {target.relative_to(ROOT)} (old binary moved to {backup.name})")
                     except Exception as e:
                         print(f"[-] Could not overwrite {target.name}: {e}. Standalone is available at dist/PCDeck.exe")
+
+    # Restore static/PCDeck.apk for local server development
+    if (ROOT / "PCDeck.apk").exists():
+        try:
+            shutil.copy2(ROOT / "PCDeck.apk", ROOT / "static" / "PCDeck.apk")
+        except Exception:
+            pass
+
+    # Build Setup Installer (PCDeck-Setup.exe)
+    iss_file = ROOT / "PCDeck_Setup.iss"
+    if iss_file.exists():
+        print("\n=======================================================")
+        print("       [+] BUILDING PCDECK SETUP INSTALLER             ")
+        print("=======================================================")
+        try:
+            sys.path.insert(0, str(ROOT / "tools"))
+            import build_installer
+            build_installer.build_installer()
+        except Exception as e:
+            print(f"[-] Note: Setup installer build skipped: {e}")
 
 if __name__ == "__main__":
     build()

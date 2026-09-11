@@ -46,19 +46,20 @@ def main():
     # Sync web assets from static/ into android_app/assets/
     print("\n[+] Syncing static assets into android_app/assets/...")
     os.makedirs("android_app/assets", exist_ok=True)
-    ignore_exts = {".apk", ".exe", ".zip", ".aab", ".idsig", ".msix"}
+    ignore_exts = {".apk", ".exe", ".zip", ".aab", ".idsig", ".msix", ".ico"}
+    ignore_files = {"icon-512.png", "PCDeck_Logo.png", "PCDeck_Mouse_Logo.png"}
 
-    # Purge any nested binary packages from android_app/assets to prevent APK bloating
+    # Purge any nested binary packages or desktop-only assets from android_app/assets to prevent APK bloating
     for fname in os.listdir("android_app/assets"):
-        if any(fname.lower().endswith(ext) for ext in ignore_exts):
+        if any(fname.lower().endswith(ext) for ext in ignore_exts) or fname in ignore_files:
             try:
                 os.remove(os.path.join("android_app/assets", fname))
-                print(f"    Purged stale binary artifact from assets: {fname}")
+                print(f"    Purged stale/desktop artifact from assets: {fname}")
             except Exception:
                 pass
 
     for fname in os.listdir("static"):
-        if any(fname.lower().endswith(ext) for ext in ignore_exts):
+        if any(fname.lower().endswith(ext) for ext in ignore_exts) or fname in ignore_files:
             continue
         src = os.path.join("static", fname)
         dst = os.path.join("android_app/assets", fname)

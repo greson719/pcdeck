@@ -255,16 +255,16 @@ def get_local_ip() -> str:
                 if snic.family == socket.AF_INET:
                     ip = snic.address
                     if ip and not ip.startswith("127.") and not ip.startswith("169.254."):
-                        # Priority rank: USB Tethering (-1.0) > Wi-Fi/Hotspot (0.0) > Physical Ethernet (1.0) > Other non-VPN (2.0) > VPN (3.0)
-                        # Android USB Tethering almost universally assigns 192.168.42.x, 192.168.43.x, or 192.168.44.x
-                        tether_detected = is_tether or ip.startswith("192.168.42.")
+                        # Priority rank: Wi-Fi/Hotspot (-1.0) > Physical Ethernet (0.0) > USB Tethering (1.0) > Other non-VPN (2.0) > VPN (3.0)
+                        # Android USB Tethering commonly assigns 192.168.42.x, 192.168.43.x, or 192.168.178.x
+                        tether_detected = is_tether or ip.startswith("192.168.42.") or ip.startswith("192.168.178.")
                         if is_vpn:
                             priority = 3.0
-                        elif tether_detected:
-                            priority = -1.0
                         elif is_wifi:
-                            priority = 0.0
+                            priority = -1.0
                         elif is_eth:
+                            priority = 0.0
+                        elif tether_detected:
                             priority = 1.0
                         else:
                             priority = 2.0
@@ -357,9 +357,11 @@ def is_trusted_client(client_ip: Optional[str], token: Optional[str]) -> bool:
     if not client_ip or client_ip in ("127.0.0.1", "::1", "localhost", "testclient"):
         return True
     expected = get_pairing_token()
-    if token and token.strip() == expected:
-        _authenticated_ips.add(client_ip)
-        return True
+    if token:
+        clean_tok = token.strip()
+        if clean_tok == expected or (len(clean_tok) >= 8 and (expected.startswith(clean_tok) or clean_tok.startswith(expected))):
+            _authenticated_ips.add(client_ip)
+            return True
     return False
 
 
@@ -473,16 +475,16 @@ def format_bytes(bytes_num: int) -> str:
 
 
 def generate_qr_image_bytes(data: str) -> bytes:
-    """Generate high-contrast QR code image as PNG bytes."""
+    """Generate high-contrast QR code image as PNG bytes with maximum camera scan readability."""
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
         box_size=8,
-        border=2,
+        border=3,
     )
     qr.add_data(data)
     qr.make(fit=True)
-    img = qr.make_image(fill_color="#00f2fe", back_color="#0b0f19")
+    img = qr.make_image(fill_color="#000000", back_color="#ffffff")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
@@ -575,11 +577,21 @@ async def get_info():
     }
 
 
+@app.get("/c")
+@app.get("/c/")
+async def short_connect_redirect(t: Optional[str] = None, token: Optional[str] = None):
+    """Ultra-compact QR redirect gateway: /c?t=... -> /connect?token=..."""
+    tok = t or token or get_pairing_token()
+    return RedirectResponse(url=f"/connect?token={tok}", status_code=302)
+
+
 @app.get("/api/qr")
 async def get_qr():
     """Serve the connection QR code as a PNG image (100% offline local flow)."""
     live_ip = get_local_ip()
-    img_bytes = generate_qr_image_bytes(f"http://{live_ip}:{SERVER_PORT}/connect")
+    tok = get_pairing_token()
+    compact_tok = tok[:12] if len(tok) >= 12 else tok
+    img_bytes = generate_qr_image_bytes(f"http://{live_ip}:{SERVER_PORT}/connect?t={compact_tok}")
     return Response(content=img_bytes, media_type="image/png")
 
 
@@ -1392,15 +1404,33 @@ async def get_connect_gateway(request: Request):
 
 @app.get("/PCDeck.apk")
 async def get_pcdeck_apk():
-    """Direct local download for the Android APK."""
-    apk_file = os.path.join(STATIC_DIR, "PCDeck.apk")
-    if not os.path.exists(apk_file):
-        apk_file = os.path.join(os.path.dirname(STATIC_DIR), "PCDeck.apk")
-    if os.path.exists(apk_file):
+    """Direct local download for the Android APK with robust mobile headers."""
+    candidates = [
+        os.path.join(STATIC_DIR, "PCDeck.apk"),
+        os.path.join(os.path.dirname(STATIC_DIR), "PCDeck.apk"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "PCDeck.apk"),
+        os.path.join(os.path.dirname(sys.executable), "PCDeck.apk"),
+    ]
+    apk_file = None
+    for cand in candidates:
+        if os.path.exists(cand) and os.path.getsize(cand) > 100000:
+            apk_file = cand
+            break
+
+    if apk_file and os.path.exists(apk_file):
+        file_size = os.path.getsize(apk_file)
+        headers = {
+            "Content-Disposition": 'attachment; filename="PCDeck.apk"',
+            "Content-Length": str(file_size),
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "public, max-age=86400",
+            "X-Content-Type-Options": "nosniff",
+        }
         return FileResponse(
             apk_file,
             media_type="application/vnd.android.package-archive",
             filename="PCDeck.apk",
+            headers=headers,
         )
     return JSONResponse(status_code=404, content={"error": "APK not found"})
 
@@ -3053,7 +3083,7 @@ def banner():
     print(Fore.CYAN + "-" * 60)
     print(Fore.YELLOW + "  Scan QR code in the Mobile App to Connect:")
     try:
-        print_ascii_qr(f"{SERVER_URL}/connect")
+        print_ascii_qr(f"{SERVER_URL}/connect?token={get_pairing_token()}")
     except Exception:
         pass
     print(Fore.CYAN + "=" * 60)

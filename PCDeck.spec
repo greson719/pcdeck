@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('static', 'static'), ('drivers', 'drivers'), ('PCDeck.apk', '.'), ('app_icon.ico', '.'), ('PCDeck.ico', '.'), ('icon.ico', '.'), ('PCDeck_Mouse_Logo.png', '.'), ('PCDeck_Master_Logo.png', '.'), ('PCDeck_Logo.png', '.'), ('icon.png', '.'), ('icon-512.png', '.')]
+datas = [('static', 'static'), ('drivers', 'drivers'), ('PCDeck.apk', '.'), ('app_icon.ico', '.'), ('PCDeck.ico', '.')]
 binaries = []
 hiddenimports = ['server.gui', 'server.main', 'server.binary_protocol', 'server.license_manager', 'server.screen_streamer', 'server.wifi_manager', 'server.wifi_latency_manager', 'server.gamepad_manager', 'server.audio_streamer', 'server.camera_streamer', 'cv2', 'simplejpeg', 'numpy', 'vgamepad', 'pystray', 'sounddevice', 'pyaudiowpatch', 'pyvirtualcam', 'qrcode', 'tkinter', 'uvicorn.loops', 'uvicorn.loops.auto', 'uvicorn.protocols.http.auto', 'uvicorn.protocols.websockets.auto', 'uvicorn.lifespan.on', 'pynput', 'mss', 'PIL']
 tmp_ret = collect_all('vgamepad')
@@ -19,7 +19,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['PIL._avif'],
     noarchive=False,
     optimize=0,
 )
@@ -45,6 +45,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     version='version_info.txt',
-    uac_admin=True,
     icon=['app_icon.ico'],
 )

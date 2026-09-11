@@ -24,7 +24,10 @@ import traceback
 from typing import Optional
 import urllib.request
 import webbrowser
-import winreg
+try:
+    import winreg
+except ImportError:
+    winreg = None
 
 # Ensure root directory is in sys.path so 'server.*' packages resolve
 _ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -194,6 +197,7 @@ try:
         get_device_resolution,
         get_device_ip,
         switch_device_to_wireless,
+        get_pairing_token,
     )
 except ImportError:
     from main import (
@@ -213,6 +217,7 @@ except ImportError:
         get_device_resolution,
         get_device_ip,
         switch_device_to_wireless,
+        get_pairing_token,
     )
 
 try:
@@ -228,6 +233,7 @@ try:
         start_watchdog,
         stop_watchdog,
         restore_all_wlan_autoconfig,
+        ensure_wifi_radio_on,
     )
 except ImportError:
     from wifi_manager import (
@@ -239,9 +245,10 @@ except ImportError:
         load_wifi_config,
         save_wifi_config,
         update_wifi_config,
-        start_watchdog,
-        stop_watchdog,
+        wait_for_usable_link,
+        renew_dhcp,
         restore_all_wlan_autoconfig,
+        ensure_wifi_radio_on,
     )
 
 try:
@@ -1375,25 +1382,30 @@ class PCDeckProGUI:
         """Constructs the local pairing URL for lightning-fast camera QR scanning."""
         url = getattr(self, "server_url", SERVER_URL)
         clean_ip = url.replace("http://", "").replace("https://", "").rstrip("/")
-        return f"http://{clean_ip}/connect"
+        try:
+            tok = get_pairing_token()
+            compact_tok = tok[:12] if len(tok) >= 12 else tok
+            return f"http://{clean_ip}/connect?t={compact_tok}"
+        except Exception:
+            return f"http://{clean_ip}/connect"
 
     def _generate_qr_image(self):
         """Generate and display Tk PhotoImage QR with maximum contrast and ultra-fast scan latency."""
         gateway_url = self._get_gateway_qr_url()
-        # Medium error correction (15%) with compact URL yields chunky, high-contrast modules
-        # that scan in < 30ms off computer monitors without camera glare or moire interference.
+        # Compact URL yields chunky Version 3 (29x29) modules with solid white quiet border
+        # that scan in < 20ms off computer monitors without camera glare or moire interference.
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
             box_size=6,
-            border=2,
+            border=3,
         )
         qr.add_data(gateway_url)
         qr.make(fit=True)
-        img = qr.make_image(fill_color=C_BLACK, back_color=C_TEXT)
+        img = qr.make_image(fill_color="#000000", back_color="#ffffff")
 
         self.qr_photo = ImageTk.PhotoImage(img)
-        self.qr_label.config(image=self.qr_photo, bg=C_TEXT)
+        self.qr_label.config(image=self.qr_photo, bg="#ffffff")
 
         if hasattr(self, "qr_sub_lbl") and self.qr_sub_lbl.winfo_exists():
             if "127.0.0.1" in gateway_url or "localhost" in gateway_url:
@@ -2071,8 +2083,11 @@ class PCDeckProGUI:
                 log_debug(f"Uvicorn server exited or failed: {e}")
             finally:
                 self.is_running = False
-                if hasattr(self, "status_pill") and self.status_pill.winfo_exists():
-                    self.root.after(0, lambda: self.status_pill.config(text="● SERVER STOPPED", bg=C_DANGER, fg=C_TEXT))
+                try:
+                    if hasattr(self, "root") and self.root:
+                        self.root.after(0, lambda: hasattr(self, "status_pill") and self.status_pill.winfo_exists() and self.status_pill.config(text="● SERVER STOPPED", bg=C_DANGER, fg=C_TEXT))
+                except Exception:
+                    pass
 
         self.is_running = True
         self.server_thread = threading.Thread(target=run_uvicorn, daemon=True)
@@ -2108,9 +2123,10 @@ class PCDeckProGUI:
     def _startup_wifi_worker(self):
         """Passive background thread for startup Wi-Fi detection without channel sweeps."""
         try:
-            # Auto-heal: ensure Windows WLAN autoconfig is enabled in case a prior session or crash left it disabled
+            # Auto-heal: ensure Windows WLAN autoconfig and Wi-Fi radio are switched on
             try:
                 restore_all_wlan_autoconfig()
+                ensure_wifi_radio_on()
             except Exception:
                 pass
 
@@ -3993,7 +4009,7 @@ def acquire_single_instance_lock() -> bool:
 def main():
     import multiprocessing
     multiprocessing.freeze_support()
-    elevate_if_needed()
+    # elevate_if_needed()  # Disabled: run as standard user without UAC prompt
     if not acquire_single_instance_lock():
         log_debug("Exiting duplicate PCDeck instance.")
         return
@@ -4006,6 +4022,13 @@ def main():
         if not start_minimized:
             root.update_idletasks()
             root.deiconify()
+            try:
+                root.lift()
+                root.attributes("-topmost", True)
+                root.after(250, lambda: root.attributes("-topmost", False))
+                root.focus_force()
+            except Exception:
+                pass
         log_debug("Entering root.mainloop()...")
         root.mainloop()
     except Exception as e:

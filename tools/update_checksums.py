@@ -28,8 +28,7 @@ ROOT = os.path.normpath(os.path.join(HERE, ".."))
 SITE = os.path.join(ROOT, "website")
 PAGE = os.path.join(SITE, "index.html")
 
-# Order here is the order shown on the page: phone first, matching the cards.
-TARGETS = ["PCDeck.apk", "PCDeck.aab", "PCDeck.exe", "PCDeck.msix", "PCDeck_Package.zip"]
+TARGETS = ["PCDeck.apk", "PCDeck.aab", "PCDeck.exe", "PCDeck-Setup.exe", "PCDeck_Package.zip"]
 
 BEGIN = "<!-- CHECKSUMS:BEGIN"
 END = "<!-- CHECKSUMS:END -->"

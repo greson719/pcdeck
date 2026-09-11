@@ -31,9 +31,10 @@ def sync_assets():
     src = os.path.join(ROOT, "static")
     dst = os.path.join(ROOT, "android_app", "assets")
     os.makedirs(dst, exist_ok=True)
-    ignore_exts = {".apk", ".exe", ".zip", ".aab", ".idsig", ".msix"}
+    ignore_exts = {".apk", ".exe", ".zip", ".aab", ".idsig", ".msix", ".ico"}
+    ignore_files = {"icon-512.png", "PCDeck_Logo.png", "PCDeck_Mouse_Logo.png"}
     for fname in os.listdir(dst):
-        if any(fname.lower().endswith(ext) for ext in ignore_exts):
+        if any(fname.lower().endswith(ext) for ext in ignore_exts) or fname in ignore_files:
             try:
                 os.remove(os.path.join(dst, fname))
                 print(f"    Purged stale binary artifact from assets: {fname}")
@@ -44,7 +45,7 @@ def sync_assets():
         target_root = os.path.join(dst, rel) if rel != "." else dst
         os.makedirs(target_root, exist_ok=True)
         for f in files:
-            if any(f.lower().endswith(ext) for ext in ignore_exts):
+            if any(f.lower().endswith(ext) for ext in ignore_exts) or f in ignore_files:
                 continue
             s_file = os.path.join(root, f)
             d_file = os.path.join(target_root, f)

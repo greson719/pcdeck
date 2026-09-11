@@ -313,15 +313,15 @@
 
   <!-- Toast Notification -->
   <div id="toast-msg" class="neo-toast">
-    <span id="toast-icon">✅</span>
-    <span id="toast-text">Action Completed!</span>
+    <span id="toast-icon" class="neo-toast-icon"></span>
+    <span id="toast-text" class="neo-toast-text"></span>
   </div>
 
   <!-- ================= ONBOARDING & PC CLIENT SETUP MODAL ================= -->
   <div id="onboarding-modal" class="modal-backdrop">
     <div class="modal-card onboarding-card">
       <div class="onboarding-header">
-        <button id="btn-skip-onboarding" class="onboarding-skip-btn">✕ SKIP</button>
+        <button id="btn-skip-onboarding" class="onboarding-skip-btn">SKIP</button>
         <img src="PCDeck_Master_Logo.png" alt="PCDeck" class="onboarding-logo">
       </div>
 
@@ -333,7 +333,7 @@
           <p class="onboarding-tagline">If you haven't already installed the PC server on your computer, download and run the free PC server now.</p>
           <div class="onboarding-action-box">
             <button id="btn-onboarding-open-site" class="neo-btn btn-cyan" style="width: 100%;">
-              <span>🌐</span>
+              <svg class="deck-icon" width="14" height="14"><use href="#icon-pc"/></svg>
               <span>DOWNLOAD PC SERVER</span>
             </button>
             <span class="onboarding-subtext">Visit <b>pcdeck-pro.vercel.app</b> on your computer</span>
@@ -378,7 +378,7 @@
         </div>
         <div class="onboarding-nav-btns">
           <button id="btn-onboarding-prev" class="neo-btn btn-dark" style="display: none; height: 42px; padding: 0 14px;">BACK</button>
-          <button id="btn-onboarding-next" class="neo-btn btn-cyan" style="height: 42px; flex: 1;">NEXT: CONNECT ➔</button>
+          <button id="btn-onboarding-next" class="neo-btn btn-cyan" style="height: 42px; flex: 1;">NEXT: CONNECT</button>
         </div>
       </div>
     </div>
@@ -388,7 +388,7 @@
   <div id="update-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-card" style="max-width: 380px; border-color: var(--neo-cyan);">
       <div class="modal-header" style="position: relative;">
-        <span class="modal-badge" style="background: var(--neo-cyan); color: #000; font-weight: 900; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">🚀 UPDATE AVAILABLE</span>
+        <span class="modal-badge" style="background: var(--neo-cyan); color: #000; font-weight: 900; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">UPDATE AVAILABLE</span>
         <h2 id="update-modal-title" style="margin-top: 10px; font-size: 1.25rem;">PCDeck v2.6.5</h2>
         <p id="update-modal-subtitle" style="font-size: 0.78rem; color: var(--text-muted);">A new version is ready to download!</p>
       </div>
@@ -401,7 +401,7 @@
 
         <div id="update-actions-row" style="display: flex; gap: 8px;">
           <button id="btn-update-now" class="neo-btn btn-cyan" style="flex: 1; height: 44px; font-size: 0.85rem; font-weight: 900;">
-            <span id="btn-update-now-label">🌐 GET UPDATE ON WEBSITE ➔</span>
+            <span id="btn-update-now-label">GET UPDATE ON WEBSITE</span>
           </button>
           <button id="btn-update-later" class="neo-btn btn-dark" style="height: 44px; padding: 0 14px; font-size: 0.8rem; font-weight: 800;">
             LATER
@@ -631,7 +631,7 @@
 
         <!-- Gamepad HUD In-Display Overlay Toggle -->
         <button type="button" id="btn-screen-gamepad-hud" class="neo-header-btn btn-header-gamepad" style="display: none;" title="Toggle On-Screen Gaming Controller HUD (PUBG/Console Style)">
-          <span>🎮</span> <span class="gamepad-btn-label">HUD</span>
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg> <span class="gamepad-btn-label">HUD</span>
         </button>
 
         <!-- Hide Title Bar Button for Full View -->
@@ -646,7 +646,7 @@
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
 
-    <!-- ================= TAB 1: 📺 SCREEN (TOUCH DISPLAY) ================= -->
+    <!-- ================= TAB 1: SCREEN (TOUCH DISPLAY) ================= -->
     <section id="tab-screen" class="tab-view active">
       <div id="screen-viewport" class="screen-viewport">
         <div id="screen-canvas-wrapper" class="screen-canvas-wrapper">
@@ -663,14 +663,14 @@
           <!-- Top HUD Control Bar -->
           <div class="hud-top-bar" id="hud-top-bar">
             <div class="hud-badge-group">
-              <span class="hud-badge">🎮 GAME HUD</span>
+              <span class="hud-badge">GAME HUD</span>
               <button type="button" id="btn-hud-emulation-mode" class="hud-chip-btn" title="Toggle XInput / PC Keyboard Mode">Mode: XInput</button>
               <button type="button" id="btn-hud-install-driver" class="hud-chip-btn btn-hud-driver" style="display: none; background: rgba(0, 240, 255, 0.15); border-color: var(--neo-cyan); color: var(--neo-cyan);" title="Install Virtual Controller Driver on PC">Install Driver</button>
             </div>
 
             <div class="hud-actions-group">
-              <button type="button" id="btn-hud-edit-layout" class="hud-chip-btn btn-hud-edit" title="Customize & Drag Layout (PUBG Style)">✏️ Edit Layout</button>
-              <button type="button" id="btn-hud-close" class="hud-chip-btn btn-hud-exit" title="Exit Gaming HUD">✕</button>
+              <button type="button" id="btn-hud-edit-layout" class="hud-chip-btn btn-hud-edit" title="Customize & Drag Layout (PUBG Style)">Edit Layout</button>
+              <button type="button" id="btn-hud-close" class="hud-chip-btn btn-hud-exit" title="Exit Gaming HUD"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             </div>
           </div>
 
@@ -727,17 +727,17 @@
             </div>
 
             <div class="hud-editor-actions">
-              <button type="button" id="btn-hud-delete-selected" class="hud-editor-btn btn-danger" title="Remove Selected Button" style="display: none;">🗑️ Delete</button>
-              <button type="button" id="btn-hud-add-btn" class="hud-editor-btn btn-cyan" title="Add New Draggable Button">➕ Add Key</button>
-              <button type="button" id="btn-hud-reset" class="hud-editor-btn btn-warn" title="Reset to Default Layout">↺ Reset</button>
-              <button type="button" id="btn-hud-save" class="hud-editor-btn btn-primary" title="Save & Lock Layout">💾 Save</button>
-              <button type="button" id="btn-hud-exit-editor" class="hud-editor-btn btn-exit" title="Exit Editor">✓ Done</button>
+              <button type="button" id="btn-hud-delete-selected" class="hud-editor-btn btn-danger" title="Remove Selected Button" style="display: none;">Delete</button>
+              <button type="button" id="btn-hud-add-btn" class="hud-editor-btn btn-cyan" title="Add New Draggable Button">Add Key</button>
+              <button type="button" id="btn-hud-reset" class="hud-editor-btn btn-warn" title="Reset to Default Layout">Reset</button>
+              <button type="button" id="btn-hud-save" class="hud-editor-btn btn-primary" title="Save & Lock Layout">Save</button>
+              <button type="button" id="btn-hud-exit-editor" class="hud-editor-btn btn-exit" title="Exit Editor">Done</button>
             </div>
           </div>
 
           <!-- Dynamic HUD Interactive Container (Contains all draggable gaming buttons) -->
           <div id="hud-elements-container" class="hud-elements-container">
-            <!-- 🕹️ Left Virtual Analog Joystick -->
+            <!-- Left Virtual Analog Joystick -->
             <div id="hud-elem-joystick" class="hud-elem hud-joystick-zone" data-elem-id="joystick" style="left: 6%; bottom: 18%;">
               <div class="hud-joystick-base">
                 <div class="hud-joystick-stick" id="hud-joystick-thumb"></div>
@@ -745,7 +745,7 @@
               </div>
             </div>
 
-            <!-- 🎯 Shoulder Triggers & Bumpers -->
+            <!-- Shoulder Triggers & Bumpers -->
             <div id="hud-elem-lt" class="hud-elem hud-trigger-btn hud-trigger-lt" data-elem-id="lt" data-gp="lt" style="left: 6%; top: 14%;">
               <span class="hud-btn-text">LT</span>
               <span class="hud-btn-sub">AIM</span>
@@ -766,7 +766,7 @@
               <span class="hud-btn-sub">PRONE</span>
             </div>
 
-            <!-- 🎮 Action Diamond Buttons (Right Thumb) -->
+            <!-- Action Diamond Buttons (Right Thumb) -->
             <div id="hud-elem-btn-a" class="hud-elem hud-action-circle btn-hud-a" data-elem-id="btn-a" data-gp="a" style="right: 14%; bottom: 12%;">
               <span class="hud-circle-glyph">A</span>
               <span class="hud-circle-sub">JUMP</span>
@@ -787,7 +787,7 @@
               <span class="hud-circle-sub">USE</span>
             </div>
 
-            <!-- ⚡ Auxiliary Tactical Keys -->
+            <!-- Auxiliary Tactical Keys -->
             <div id="hud-elem-btn-1" class="hud-elem hud-tactical-pill" data-elem-id="btn-1" data-gp="1" style="right: 33%; bottom: 12%;">
               <span>1 • PRI</span>
             </div>
@@ -818,13 +818,13 @@
           <input type="text" id="screen-typing-input" class="screen-type-input"
                  placeholder="Type here — keys go straight to your PC"
                  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-          <button type="button" id="btn-screen-type-enter" class="screen-type-btn" title="Enter">⏎</button>
-          <button type="button" id="btn-screen-type-close" class="screen-type-btn screen-type-close" aria-label="Close keyboard" title="Close">✕</button>
+          <button type="button" id="btn-screen-type-enter" class="screen-type-btn" title="Enter">ENTER</button>
+          <button type="button" id="btn-screen-type-close" class="screen-type-btn screen-type-close" aria-label="Close keyboard" title="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
       </div>
     </section>
 
-    <!-- ================= TAB 2: 🖱️ TRACKPAD ================= -->
+    <!-- ================= TAB 2: TRACKPAD ================= -->
     <section id="tab-trackpad" class="tab-view">
       <div class="trackpad-options-strip">
         <button id="btn-speed-quick" class="neo-chip-toggle" style="background: var(--neo-yellow); color: #000; font-weight: 900;">1.0x</button>
@@ -900,18 +900,17 @@
           <div class="gp-top-nav-group">
             <button type="button" id="btn-gp-top-back-trackpad" class="gp-top-action-btn gp-top-back-btn" title="Exit Gamepad & Return to Trackpad">
               <span class="gp-top-back-icon">←</span>
-              <span>🖱️ Trackpad</span>
+              <span>Trackpad</span>
             </button>
             <button type="button" id="btn-gp-gyro-toggle" class="gp-top-action-btn gp-gyro-badge-btn" title="Toggle Gyro Super Motion Sensor">
               <span class="pulse-gyro-dot" id="gp-gyro-pulse-dot"></span>
-              <span class="gyro-label" id="gp-gyro-status-label">⚡ GYRO SUPER</span>
+              <span class="gyro-label" id="gp-gyro-status-label">GYRO SUPER</span>
             </button>
             <button type="button" id="btn-gp-gyro-calib" class="gp-top-action-btn gp-gyro-calib-btn" title="1-Tap Calibrate / Center Neutral Angle">
-              <span>🎯</span>
               <span>CENTER</span>
             </button>
             <button type="button" id="btn-gp-gyro-settings" class="gp-top-action-btn gp-gyro-settings-btn" title="Gyro Super Mode & Settings">
-              <span>⚙️</span>
+              <svg class="deck-icon" width="13" height="13"><use href="#icon-settings"/></svg>
             </button>
           </div>
 
@@ -938,9 +937,9 @@
             <div class="gp-menu-buttons">
               <button type="button" class="gp-sys-pill" id="btn-gp-view-mode" data-gp="back" title="View / Select / Back">VIEW ⧉</button>
               <button type="button" class="gp-guide-orb monect-guide-orb" id="btn-gp-guide-orb" data-gp="guide" title="Console Options & Presets (Xbox / PlayStation / Racing / WASD)">
-                <div class="guide-orb-inner">🎮</div>
+                <div class="guide-orb-inner"><svg class="deck-icon" width="18" height="18"><use href="#icon-gamepad"/></svg></div>
               </button>
-              <button type="button" class="gp-sys-pill gp-sys-menu-highlight" id="btn-gp-top-menu" data-gp="start" title="Console Layout Options (Xbox, PlayStation, Racing, WASD)">MENU ☰</button>
+              <button type="button" class="gp-sys-pill gp-sys-menu-highlight" id="btn-gp-top-menu" data-gp="start" title="Console Layout Options (Xbox, PlayStation, Racing, WASD)">MENU</button>
             </div>
             <button type="button" class="gp-driver-status-chip" id="gp-driver-badge" title="Tap to Switch Console Layouts (Xbox / PlayStation / Racing / WASD)">
               <span class="pulse-dot"></span>
@@ -996,7 +995,7 @@
           <!-- Left Column: Primary Movement Stick (Top) + D-Pad (Bottom) -->
           <div class="gp-col gp-col-left">
             <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-left-stick">
-              <span class="gp-pod-label" id="gp-left-stick-label">🕹️ MOVE (LEFT STICK)</span>
+              <span class="gp-pod-label" id="gp-left-stick-label">MOVE (LEFT STICK)</span>
               <div class="gp-stick-zone" id="gp-left-stick-zone">
                 <div class="gp-stick-base monect-stick-base">
                   <div class="gp-stick-ticks">
@@ -1011,12 +1010,12 @@
                     <div class="thumb-center-dot"></div>
                   </div>
                 </div>
-                <button type="button" class="gp-stick-click-btn" data-gp="ls_click" title="Left Stick Click (L3 / Sprint)">LS (L3 🔘)</button>
+                <button type="button" class="gp-stick-click-btn" data-gp="ls_click" title="Left Stick Click (L3 / Sprint)">LS (L3)</button>
               </div>
             </div>
 
             <div class="gp-control-pod gp-dpad-pod" data-elem-id="elem-dpad">
-              <span class="gp-pod-label">➕ D-PAD</span>
+              <span class="gp-pod-label">D-PAD</span>
               <div class="gp-dpad-cross-deck monect-dpad-disc" id="gp-dpad-disc">
                 <button type="button" class="gp-dpad-btn gp-dpad-up" data-gp="dpad_up" title="D-Pad Up">
                   <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="12,4 5,18 19,18" fill="currentColor"/></svg>
@@ -1041,7 +1040,7 @@
           <div class="gp-col gp-col-center" data-elem-id="elem-center-spine">
             <div class="gp-monect-spine-cluster">
               <div class="gp-center-emblem">
-                <span class="gp-emblem-icon">🎮</span>
+                <span class="gp-emblem-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
                 <span class="gp-emblem-text">PCDECK PRO</span>
               </div>
               <!-- Live Artificial Horizon & Gyro Gimbal HUD -->
@@ -1074,7 +1073,7 @@
           <!-- Right Column: Action Buttons Diamond (Top) + Look/Aim Stick (Bottom) -->
           <div class="gp-col gp-col-right">
             <div class="gp-control-pod gp-action-pod" data-elem-id="elem-actions">
-              <span class="gp-pod-label" id="gp-action-diamond-label">🎯 ACTION BUTTONS</span>
+              <span class="gp-pod-label" id="gp-action-diamond-label">ACTION BUTTONS</span>
               <div class="gp-abxy-diamond monect-abxy-diamond" id="gp-action-diamond">
                 <button type="button" class="gp-action-btn btn-y monect-jewel-btn" data-gp="y" title="Y / Use / Switch Weapon">
                   <span class="gp-jewel-bezel">
@@ -1110,7 +1109,7 @@
             </div>
 
             <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-right-stick">
-              <span class="gp-pod-label" id="gp-right-stick-label">🕹️ AIM / CAMERA (RIGHT STICK)</span>
+              <span class="gp-pod-label" id="gp-right-stick-label">AIM / CAMERA (RIGHT STICK)</span>
               <div class="gp-stick-zone" id="gp-right-stick-zone">
                 <div class="gp-stick-base gp-look-base monect-stick-base">
                   <div class="gp-stick-ticks">
@@ -1125,7 +1124,7 @@
                     <div class="thumb-center-dot"></div>
                   </div>
                 </div>
-                <button type="button" class="gp-stick-click-btn" data-gp="rs_click" title="Right Stick Click (R3 / Melee)">RS (R3 🔘)</button>
+                <button type="button" class="gp-stick-click-btn" data-gp="rs_click" title="Right Stick Click (R3 / Melee)">RS (R3)</button>
               </div>
             </div>
           </div>
@@ -1147,9 +1146,9 @@
               <button type="button" class="gp-pill-btn" data-gp-size="125">L</button>
               <button type="button" class="gp-pill-btn" data-gp-size="150">XL</button>
             </div>
-            <button type="button" class="gp-tool-btn" id="btn-gp-size-dec" title="Decrease Size">➖</button>
+            <button type="button" class="gp-tool-btn" id="btn-gp-size-dec" title="Decrease Size">-</button>
             <input type="range" id="gp-size-slider" min="60" max="220" value="100" class="gp-tool-slider">
-            <button type="button" class="gp-tool-btn" id="btn-gp-size-inc" title="Increase Size">➕</button>
+            <button type="button" class="gp-tool-btn" id="btn-gp-size-inc" title="Increase Size">+</button>
             <span class="gp-tool-val" id="gp-size-val">100%</span>
           </div>
           <div class="gp-toolbar-sec gp-toolbar-actions-sec">
@@ -1246,42 +1245,42 @@
           <div class="gp-add-tab-content active" id="gp-add-tab-presets">
             <div class="gp-add-grid">
               <button type="button" class="gp-add-item-card" data-add-type="left-stick">
-                <span class="item-icon">🕹️</span>
+                <span class="item-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
                 <span class="item-name">Left Stick</span>
                 <span class="item-sub">Movement (WASD)</span>
               </button>
               <button type="button" class="gp-add-item-card" data-add-type="right-stick">
-                <span class="item-icon">🕹️</span>
+                <span class="item-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
                 <span class="item-name">Right Stick</span>
                 <span class="item-sub">Aim / Camera</span>
               </button>
               <button type="button" class="gp-add-item-card" data-add-type="dpad">
-                <span class="item-icon">➕</span>
+                <span class="item-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-insert"/></svg></span>
                 <span class="item-name">3D D-Pad</span>
                 <span class="item-sub">Directional Cross</span>
               </button>
               <button type="button" class="gp-add-item-card" data-add-type="actions">
-                <span class="item-icon">🎯</span>
+                <span class="item-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
                 <span class="item-name">ABXY Diamond</span>
                 <span class="item-sub">4 Action Buttons</span>
               </button>
               <button type="button" class="gp-add-item-card" data-add-type="lt">
-                <span class="item-icon">🎯</span>
+                <span class="item-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
                 <span class="item-name">Left Trigger</span>
                 <span class="item-sub">LT (Aim / Brake)</span>
               </button>
               <button type="button" class="gp-add-item-card" data-add-type="rt">
-                <span class="item-icon">🔥</span>
+                <span class="item-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
                 <span class="item-name">Right Trigger</span>
                 <span class="item-sub">RT (Fire / Gas)</span>
               </button>
               <button type="button" class="gp-add-item-card" data-add-type="lb">
-                <span class="item-icon">⚡</span>
+                <span class="item-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
                 <span class="item-name">Left Bumper</span>
                 <span class="item-sub">LB (Sprint / Alt)</span>
               </button>
               <button type="button" class="gp-add-item-card" data-add-type="rb">
-                <span class="item-icon">💥</span>
+                <span class="item-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
                 <span class="item-name">Right Bumper</span>
                 <span class="item-sub">RB (Melee / Skill)</span>
               </button>
@@ -1308,8 +1307,8 @@
               <button type="button" class="gp-key-item" data-key="2" data-label="2 (SECONDARY)">2</button>
               <button type="button" class="gp-key-item" data-key="3" data-label="3 (SIDEARM)">3</button>
               <button type="button" class="gp-key-item" data-key="4" data-label="4 (GRENADE)">4</button>
-              <button type="button" class="gp-key-item" data-key="mouse_left" data-label="L-CLICK (FIRE)">L-Click 🖱️</button>
-              <button type="button" class="gp-key-item" data-key="mouse_right" data-label="R-CLICK (AIM)">R-Click 🖱️</button>
+              <button type="button" class="gp-key-item" data-key="mouse_left" data-label="L-CLICK (FIRE)">L-Click</button>
+              <button type="button" class="gp-key-item" data-key="mouse_right" data-label="R-CLICK (AIM)">R-Click</button>
             </div>
           </div>
 
@@ -1321,7 +1320,7 @@
               <label style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-top: 4px;">Button Display Label (e.g. G (GRENADE)):</label>
               <input type="text" id="gp-custom-key-label" class="cyber-input" placeholder="e.g. G (GRENADE)" maxlength="18">
               <button type="button" class="neo-btn btn-accent" id="btn-gp-add-custom-confirm" style="margin-top: 10px; width: 100%;">
-                <span>➕ Add Custom Button to Screen</span>
+                <span>Add Custom Button to Screen</span>
               </button>
             </div>
           </div>
@@ -1332,8 +1331,8 @@
       <div id="gp-gyro-super-modal" class="cyber-modal-backdrop" style="display: none;">
         <div class="cyber-modal-card gp-gyro-modal-card">
           <div class="modal-header">
-            <h3>⚡ Gyro Super Motion Engine</h3>
-            <button type="button" class="modal-close-btn" id="btn-gp-gyro-modal-close">✕</button>
+            <h3>Gyro Super Motion Engine</h3>
+            <button type="button" class="modal-close-btn" id="btn-gp-gyro-modal-close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
           </div>
           <div class="gyro-modal-body">
             <!-- Master Switch & Quick Calibrate -->
@@ -1350,7 +1349,7 @@
 
             <div class="gyro-quick-actions">
               <button type="button" class="gyro-action-btn gyro-btn-calib" id="btn-modal-gyro-calib">
-                <span>🎯</span> Calibrate Neutral Center
+                <span>Calibrate Neutral Center</span>
               </button>
               <span class="gyro-calib-hint">Hold phone at comfortable angle and tap Center</span>
             </div>
@@ -1360,17 +1359,17 @@
               <label class="gyro-sec-label">Motion Target Mode:</label>
               <div class="gyro-mode-grid">
                 <button type="button" class="gyro-mode-card active" data-gyro-mode="steer">
-                  <span class="mode-icon">🏎️</span>
+                  <span class="mode-icon"><svg class="deck-icon" width="18" height="18"><use href="#icon-gamepad"/></svg></span>
                   <span class="mode-name">Gyro Steering</span>
                   <span class="mode-sub">Left Stick / Wheel</span>
                 </button>
                 <button type="button" class="gyro-mode-card" data-gyro-mode="aim">
-                  <span class="mode-icon">🎯</span>
+                  <span class="mode-icon"><svg class="deck-icon" width="18" height="18"><use href="#icon-gamepad"/></svg></span>
                   <span class="mode-name">Gyro Aim</span>
                   <span class="mode-sub">Right Stick (Console FPS)</span>
                 </button>
                 <button type="button" class="gyro-mode-card" data-gyro-mode="mouse">
-                  <span class="mode-icon">🖱️</span>
+                  <span class="mode-icon"><svg class="deck-icon" width="18" height="18"><use href="#icon-pc"/></svg></span>
                   <span class="mode-name">Air Mouse</span>
                   <span class="mode-sub">Raw Mouse Delta (PC FPS)</span>
                 </button>
@@ -1383,11 +1382,11 @@
               <div class="gyro-trigger-options">
                 <label class="gyro-radio-label">
                   <input type="radio" name="gyro-trigger-type" value="always" checked>
-                  <span>⚡ Always Active (Continuous)</span>
+                  <span>Always Active (Continuous)</span>
                 </label>
                 <label class="gyro-radio-label">
                   <input type="radio" name="gyro-trigger-type" value="ads">
-                  <span>🎯 Hold LT / L2 to Aim (ADS Mode)</span>
+                  <span>Hold LT / L2 to Aim (ADS Mode)</span>
                 </label>
               </div>
             </div>
@@ -1457,7 +1456,7 @@
       </div>
     </section>
 
-    <!-- ================= TAB 3: ⌨️ KEYS, NUMPAD & NAVIGATION ================= -->
+    <!-- ================= TAB 3: KEYS, NUMPAD & NAVIGATION ================= -->
     <section id="tab-keyboard" class="tab-view">
       <div class="scroll-container">
         <!-- Live PC Typing Mode -->
@@ -1705,9 +1704,9 @@
       </div>
     </section>
 
-    <!-- ================= TAB 4: 📁 IN-BUILT PC & PHONE FILE MANAGER ================= -->
+    <!-- ================= TAB 4: IN-BUILT PC & PHONE FILE MANAGER ================= -->
     <section id="tab-files" class="tab-view fs-manager-view">
-      <!-- 📂 Mode Switcher: PC Files vs Phone Files -->
+      <!-- Mode Switcher: PC Files vs Phone Files -->
       <div class="fs-mode-bar">
         <button id="btn-fs-mode-pc" class="fs-mode-tab active" title="Browse PC Folders and Drives" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
           <svg class="deck-icon" width="16" height="16"><use href="#icon-pc"/></svg>
@@ -1719,7 +1718,7 @@
         </button>
       </div>
 
-      <!-- 💻 PC Files Panel (Full PC Folder & File Browser) -->
+      <!-- PC Files Panel (Full PC Folder & File Browser) -->
       <div id="fs-pc-panel" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
         <!-- Sleek Top Header & Navigation Bar -->
         <div class="fs-nav-header">
@@ -1802,7 +1801,7 @@
           </div>
         </div>
 
-        <!-- 📦 Multi-Select / Marked Batch Actions Bar (One-by-One Queue Download) -->
+        <!-- Multi-Select / Marked Batch Actions Bar -->
         <div id="fs-batch-bar" class="fs-batch-bar" style="display: none;">
           <div class="fs-batch-left">
             <input type="checkbox" id="fs-batch-select-all" class="fs-batch-checkbox" title="Select / Deselect All">
@@ -1868,7 +1867,7 @@
         </div>
       </div>
 
-      <!-- 📱 Phone Files Panel (Full In-App Phone File Explorer) -->
+      <!-- Phone Files Panel (Full In-App Phone File Explorer) -->
       <div id="fs-phone-panel" style="display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
         <!-- Top Header & Navigation Bar for Phone Files -->
         <div class="fs-nav-header">
@@ -2031,7 +2030,7 @@
       </div>
     </section>
 
-    <!-- ================= TAB 5: 🎛️ MEDIA, MIC & WEBCAM ================= -->
+    <!-- ================= TAB 5: MEDIA, MIC & WEBCAM ================= -->
     <section id="tab-media" class="tab-view">
       <div class="scroll-container">
         <!-- Web Browser Exclusive Recommendation (Visible ONLY on web browser) -->
@@ -2379,7 +2378,7 @@
       </div>
     </section>
 
-    <!-- ================= TAB 6: ⚙️ SETTINGS ================= -->
+    <!-- ================= TAB 6: SETTINGS ================= -->
     <section id="tab-settings" class="tab-view">
       <div class="scroll-container">
 
@@ -2772,7 +2771,7 @@
   <div id="pro-corner-card" class="pro-corner-card">
     <div class="pro-corner-header">
       <span class="pro-corner-badge">PRO</span>
-      <button id="btn-close-pro-corner" class="pro-corner-close" title="Dismiss">✕</button>
+      <button id="btn-close-pro-corner" class="pro-corner-close" title="Dismiss"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
     </div>
     <div class="pro-corner-title">Feature requires PCDeck Pro</div>
     <div class="pro-corner-desc">
@@ -2803,7 +2802,7 @@
     <div class="modal-card pro-modal-card" style="padding: 22px; max-width: 440px;">
       <div class="pro-modal-header" style="text-align: left; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.5rem;">🎮</span>
+          <span style="font-size: 1.5rem;"><svg class="deck-icon" width="28" height="28"><use href="#icon-gamepad"/></svg></span>
           <div class="pro-modal-title" style="font-size: 1.2rem; font-weight: 800; color: #fff;">Virtual Xbox Controller Setup</div>
         </div>
         <div class="pro-modal-sub" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
@@ -2813,7 +2812,7 @@
 
       <div class="trust-credential-card" style="background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-          <span style="color: var(--neo-lime); font-weight: 900; font-size: 1rem;">✓</span>
+          <span style="color: var(--neo-lime); font-weight: 900; font-size: 1rem;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--neo-lime)" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>
           <strong style="color: #fff; font-size: 0.88rem;">Microsoft WHQL Certified Driver</strong>
         </div>
         <ul style="font-size: 0.76rem; color: #cbd5e1; line-height: 1.5; margin: 0; padding-left: 18px;">
@@ -2827,7 +2826,6 @@
 
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <button id="btn-modal-install-driver" class="neo-btn btn-cyan" style="width: 100%; font-weight: 900; padding: 12px;">
-          <span>⚡</span>
           <span>INSTALL ON PC (1-CLICK SETUP)</span>
         </button>
         <button id="btn-modal-skip-driver" class="neo-btn btn-dark" style="width: 100%; font-size: 0.78rem;">
@@ -2837,7 +2835,7 @@
 
       <div style="text-align: center; margin-top: 14px;">
         <a href="https://github.com/nefarius/ViGEmBus" target="_blank" rel="noopener" style="font-size: 0.72rem; color: var(--neo-cyan); text-decoration: underline;">
-          View ViGEmBus open-source code on GitHub ↗
+          View ViGEmBus open-source code on GitHub
         </a>
       </div>
     </div>
@@ -2846,7 +2844,7 @@
   <!-- ================= MODAL FOR ADDING CUSTOM BUTTON IN HUD ================= -->
   <div id="hud-add-btn-modal" class="modal-backdrop" style="display: none; z-index: 10000;">
     <div class="modal-card pro-modal-card" style="padding: 16px; max-width: 440px; width: 92%; max-height: 85vh; display: flex; flex-direction: column; text-align: center;">
-      <div style="font-size: 1.1rem; font-weight: 900; color: var(--neo-cyan); margin-bottom: 4px;">➕ ADD GAMING BUTTON</div>
+      <div style="font-size: 1.1rem; font-weight: 900; color: var(--neo-cyan); margin-bottom: 4px;">ADD GAMING BUTTON</div>
       <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Select a button or enter a key to add to your on-screen HUD:</p>
 
       <!-- Category Filter Tabs -->
@@ -2861,16 +2859,16 @@
       <!-- Scrollable Presets Grid -->
       <div id="hud-add-presets-list" class="hud-key-preset-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; overflow-y: auto; max-height: 220px; padding: 4px;">
         <!-- Actions & Mouse -->
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_left" data-label="FIRE" data-gp="rt">FIRE 💥</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_right" data-label="AIM" data-gp="lt">AIM 🎯</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_left" data-label="FIRE" data-gp="rt">FIRE</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_right" data-label="AIM" data-gp="lt">AIM</button>
         <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_middle" data-label="M-CLICK" data-gp="rs">M-CLICK</button>
         <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="space" data-label="SPACE" data-gp="a">SPACE</button>
         <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="shift" data-label="SHIFT" data-gp="lb">SHIFT</button>
         <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="ctrl" data-label="CTRL" data-gp="rb">CTRL</button>
         <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="alt" data-label="ALT" data-gp="x">ALT</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="enter" data-label="ENTER" data-gp="start">ENTER ⏎</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="tab" data-label="TAB" data-gp="back">TAB 🎒</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="escape" data-label="ESC" data-gp="start">ESC ⚙️</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="enter" data-label="ENTER" data-gp="start">ENTER</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="tab" data-label="TAB" data-gp="back">TAB</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="escape" data-label="ESC" data-gp="start">ESC</button>
 
         <!-- Combat / Movement -->
         <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="e" data-label="E (USE)" data-gp="y">E (USE)</button>
@@ -2882,7 +2880,7 @@
         <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="q" data-label="Q (PEEK L)" data-gp="q">Q (PEEK L)</button>
         <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="g" data-label="G (NADE)" data-gp="g">G (NADE)</button>
         <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="v" data-label="V (MELEE)" data-gp="v">V (MELEE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="m" data-label="MAP" data-gp="m">MAP 🗺️</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="m" data-label="MAP" data-gp="m">MAP</button>
 
         <!-- Weapons / Numbers -->
         <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="1" data-label="1" data-gp="1">1 (PRIMARY)</button>
@@ -2893,18 +2891,18 @@
         <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="6" data-label="6" data-gp="6">6</button>
 
         <!-- Gamepad Triggers & D-Pad -->
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="space" data-label="A (JUMP)" data-gp="a">A 🟢</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="c" data-label="B (CROUCH)" data-gp="b">B 🔴</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="r" data-label="X (RELOAD)" data-gp="x">X 🔵</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="e" data-label="Y (USE)" data-gp="y">Y 🟡</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="space" data-label="A (JUMP)" data-gp="a">A</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="c" data-label="B (CROUCH)" data-gp="b">B</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="r" data-label="X (RELOAD)" data-gp="x">X</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="e" data-label="Y (USE)" data-gp="y">Y</button>
         <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="mouse_right" data-label="LT" data-gp="lt">LT (AIM)</button>
         <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="shift" data-label="LB" data-gp="lb">LB (SPRINT)</button>
         <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="mouse_left" data-label="RT" data-gp="rt">RT (FIRE)</button>
         <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="ctrl" data-label="RB" data-gp="rb">RB (PRONE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="up" data-label="D-UP" data-gp="dpad_up">DPAD ⬆️</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="down" data-label="D-DOWN" data-gp="dpad_down">DPAD ⬇️</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="left" data-label="D-LEFT" data-gp="dpad_left">DPAD ⬅️</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="right" data-label="D-RIGHT" data-gp="dpad_right">DPAD ➡️</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="up" data-label="D-UP" data-gp="dpad_up">DPAD UP</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="down" data-label="D-DOWN" data-gp="dpad_down">DPAD DOWN</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="left" data-label="D-LEFT" data-gp="dpad_left">DPAD LEFT</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="right" data-label="D-RIGHT" data-gp="dpad_right">DPAD RIGHT</button>
       </div>
 
       <!-- Custom Key Input Row -->
@@ -2914,7 +2912,7 @@
       </div>
 
       <div style="display: flex; gap: 8px;">
-        <button type="button" id="btn-hud-modal-add-selected" class="neo-btn btn-cyan" style="flex: 1; font-weight: 900;">➕ ADD TO SCREEN</button>
+        <button type="button" id="btn-hud-modal-add-selected" class="neo-btn btn-cyan" style="flex: 1; font-weight: 900;">ADD TO SCREEN</button>
         <button type="button" id="btn-hud-modal-cancel" class="neo-btn btn-dark" style="width: 80px;">Cancel</button>
       </div>
     </div>

@@ -333,14 +333,18 @@ class WindowsInputController:
         self.mouse_up(button)
 
     def scroll_at(self, norm_x: float, norm_y: float, dx: float, dy: float):
-        """Move cursor to coordinate if needed, and scroll vertical & horizontal wheel with sub-pixel accumulator."""
+        """Move cursor to coordinate if needed, and scroll vertical & horizontal wheel with standard Win32 WHEEL_DELTA."""
         w = max(1, user32.GetSystemMetrics(0))
         h = max(1, user32.GetSystemMetrics(1))
         target_x = int(round(max(0.0, min(1.0, float(norm_x))) * (w - 1)))
         target_y = int(round(max(0.0, min(1.0, float(norm_y))) * (h - 1)))
         cur_x, cur_y = self.get_cursor_pos()
-        if abs(cur_x - target_x) > 6 or abs(cur_y - target_y) > 6:
+        if abs(cur_x - target_x) > 4 or abs(cur_y - target_y) > 4:
             user32.SetCursorPos(target_x, target_y)
+            try:
+                user32.mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0)
+            except Exception:
+                pass
         self.scroll(dx, dy)
 
     def move_relative(self, dx: float, dy: float):
@@ -410,20 +414,41 @@ class WindowsInputController:
         self.click(button)
 
     def scroll(self, dx: float, dy: float):
-        """Scroll vertical or horizontal mouse wheel with high-precision sub-unit accumulator."""
+        """Scroll vertical or horizontal mouse wheel with high-precision sub-unit accumulator.
+        Dispatches standard Win32 WHEEL_DELTA (120) increments so native Win32 controls
+        (Windows File Explorer SysListView32/DirectUIHWND, Notepad, Task Manager) receive
+        valid scroll clicks, while smoothly retaining fractional movement."""
+        now = time.time()
+        # Reset small residual accumulation if user was idle for > 0.35s
+        if now - getattr(self, '_last_scroll_time', 0.0) > 0.35:
+            self._accum_scroll_y = 0.0
+            self._accum_scroll_x = 0.0
+        self._last_scroll_time = now
+
         self._accum_scroll_y += dy
         self._accum_scroll_x += dx
 
-        step_y = int(self._accum_scroll_y)
-        step_x = int(self._accum_scroll_x)
+        # Windows Win32 common controls (Windows File Explorer, Notepad, CMD, etc.)
+        # compute lines = zDelta / WHEEL_DELTA (120). Sub-120 deltas result in 0 lines
+        # scrolled and are discarded. We accumulate incoming touch deltas until full
+        # WHEEL_DELTA ticks (or multiples) are reached.
+        step_y = 0
+        if abs(self._accum_scroll_y) >= WHEEL_DELTA:
+            notches_y = int(self._accum_scroll_y / WHEEL_DELTA)
+            step_y = notches_y * WHEEL_DELTA
+            self._accum_scroll_y -= step_y
+
+        step_x = 0
+        if abs(self._accum_scroll_x) >= WHEEL_DELTA:
+            notches_x = int(self._accum_scroll_x / WHEEL_DELTA)
+            step_x = notches_x * WHEEL_DELTA
+            self._accum_scroll_x -= step_x
 
         if step_y != 0:
             self._send_mouse(MOUSEEVENTF_WHEEL, 0, 0, step_y)
-            self._accum_scroll_y -= step_y
 
         if step_x != 0:
             self._send_mouse(MOUSEEVENTF_HWHEEL, 0, 0, step_x)
-            self._accum_scroll_x -= step_x
 
     def key_down(self, key_name: str):
         """Press down a key."""
@@ -688,11 +713,21 @@ class LinuxInputController:
             return
         self._accum_scroll_y += float(dy)
         self._accum_scroll_x += float(dx)
-        steps_y = int(self._accum_scroll_y)
-        steps_x = int(self._accum_scroll_x)
-        if steps_y != 0 or steps_x != 0:
+        if abs(self._accum_scroll_y) >= 120.0:
+            steps_y = int(self._accum_scroll_y / 120.0)
+            self._accum_scroll_y -= steps_y * 120.0
+        else:
+            steps_y = int(self._accum_scroll_y)
             self._accum_scroll_y -= steps_y
+
+        if abs(self._accum_scroll_x) >= 120.0:
+            steps_x = int(self._accum_scroll_x / 120.0)
+            self._accum_scroll_x -= steps_x * 120.0
+        else:
+            steps_x = int(self._accum_scroll_x)
             self._accum_scroll_x -= steps_x
+
+        if steps_y != 0 or steps_x != 0:
             try:
                 self._mouse.scroll(steps_x, steps_y)
             except Exception:

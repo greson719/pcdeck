@@ -197,7 +197,7 @@ class GamepadManager:
         self.init_backend()
 
     def init_backend(self) -> str:
-        """Initializes ViGEmBus virtual Xbox controller or falls back to SendInput."""
+        """Checks ViGEmBus availability and prepares driver mode without prematurely attaching controller."""
         global vg, _HAS_VGAMEPAD
         with self.lock:
             # Re-attempt import if previously failed (e.g. driver was installed after boot)
@@ -212,19 +212,27 @@ class GamepadManager:
 
             # Check ViGEmBus availability
             if _HAS_VGAMEPAD and is_vigem_installed():
-                try:
-                    self.x360 = vg.VX360Gamepad()
-                    self.mode = "xinput"
-                    self._setup_vgamepad_map()
-                    print("[GamepadManager] ViGEmBus Virtual Xbox 360 Controller connected.")
-                    return self.mode
-                except Exception as e:
-                    print(f"[GamepadManager] ViGEmBus initialization failed ({e}), falling back to SendInput.")
+                self.mode = "xinput"
+                self._setup_vgamepad_map()
+                print("[GamepadManager] ViGEmBus Virtual Xbox 360 driver ready (Controller attaches on-demand).")
+                return self.mode
 
             self.mode = "sendinput"
             self.x360 = None
             print("[GamepadManager] Running in SendInput Keyboard/Mouse fallback mode.")
             return self.mode
+
+    def ensure_x360_connected(self):
+        """Attaches the virtual Xbox 360 controller device only when gamepad input is actually used."""
+        if self.mode == "xinput" and self.x360 is None and _HAS_VGAMEPAD and vg:
+            try:
+                self.x360 = vg.VX360Gamepad()
+                self._setup_vgamepad_map()
+                print("[GamepadManager] ViGEmBus Virtual Xbox 360 Controller connected on demand.")
+            except Exception as e:
+                print(f"[GamepadManager] ViGEmBus device creation failed ({e}), falling back to SendInput.")
+                self.mode = "sendinput"
+                self.x360 = None
 
     def _setup_vgamepad_map(self):
         """Maps string identifiers to vgamepad XUSB_BUTTON enums."""
@@ -250,6 +258,7 @@ class GamepadManager:
 
     def set_button(self, btn: str, is_down: bool):
         """Sets digital button state with alias resolution and trigger support."""
+        self.ensure_x360_connected()
         with self.lock:
             btn_upper = btn.upper().strip()
 
@@ -295,6 +304,7 @@ class GamepadManager:
 
     def set_trigger(self, trigger: str, value: float):
         """Sets analog trigger pressure (0.0 to 1.0)."""
+        self.ensure_x360_connected()
         with self.lock:
             val = max(0.0, min(1.0, float(value)))
             trigger_lower = trigger.lower()
@@ -319,6 +329,7 @@ class GamepadManager:
         x: -1.0 (left) to 1.0 (right)
         y: -1.0 (down) to 1.0 (up)
         """
+        self.ensure_x360_connected()
         with self.lock:
             clamped_x = max(-1.0, min(1.0, float(x)))
             clamped_y = max(-1.0, min(1.0, float(y)))
@@ -343,6 +354,7 @@ class GamepadManager:
         Applies motion gyroscope steering (-1.0 left to 1.0 right).
         Blends with current left stick deflection.
         """
+        self.ensure_x360_connected()
         with self.lock:
             cur_y = self._axis_states.get("left", (0.0, 0.0))[1]
             clamped_steer = max(-1.0, min(1.0, float(steer_val)))
@@ -358,6 +370,7 @@ class GamepadManager:
         """
         Applies motion gyroscope aiming (-1.0 to 1.0).
         """
+        self.ensure_x360_connected()
         with self.lock:
             clamped_x = max(-1.0, min(1.0, float(aim_x)))
             clamped_y = max(-1.0, min(1.0, float(aim_y)))

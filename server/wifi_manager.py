@@ -1391,3 +1391,37 @@ def auto_reconnect_known_networks() -> Tuple[bool, str]:
         return True, f"Connected to {ssid} ({health.get('ip', '')})"
     detail = report["steps"][-1] if report.get("steps") else "no saved network in range"
     return False, f"Auto-reconnect failed: {detail}"
+
+
+def ensure_wifi_radio_on() -> bool:
+    """
+    Checks if Windows Wi-Fi radio is in 'Software Off' state and switches it On
+    via Windows.Devices.Radios.Radio WinRT API (works without Admin privileges).
+    """
+    if sys.platform != "win32":
+        return True
+    ps_cmd = (
+        "Add-Type -AssemblyName System.Runtime.WindowsRuntime; "
+        "[Windows.Devices.Radios.Radio, Windows.Devices, ContentType = WindowsRuntime] | Out-Null; "
+        "$asTaskGeneric = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.IsGenericMethod } | Select-Object -First 1; "
+        "$op = [Windows.Devices.Radios.Radio]::GetRadiosAsync(); "
+        "$task = $asTaskGeneric.MakeGenericMethod([System.Collections.Generic.IReadOnlyList[Windows.Devices.Radios.Radio]]).Invoke($null, @($op)); "
+        "$task.Wait(); "
+        "foreach ($r in $task.Result) { "
+        "  if ($r.Kind -eq [Windows.Devices.Radios.RadioKind]::WiFi -and $r.State -ne [Windows.Devices.Radios.RadioState]::On) { "
+        "    $setOp = $r.SetStateAsync([Windows.Devices.Radios.RadioState]::On); "
+        "    $setTask = $asTaskGeneric.MakeGenericMethod([Windows.Devices.Radios.RadioAccessStatus]).Invoke($null, @($setOp)); "
+        "    $setTask.Wait(); "
+        "  } "
+        "}"
+    )
+    try:
+        res = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", ps_cmd],
+            capture_output=True,
+            timeout=8,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        return res.returncode == 0
+    except Exception:
+        return False

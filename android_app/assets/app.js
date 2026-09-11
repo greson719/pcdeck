@@ -372,21 +372,49 @@
   let qrScanAnimationId = null;
   let toastTimer = null;
 
-  // --- Toast Notification System ---
-  function showToast(text, type = 'success', icon = '✅') {
+  // --- Cyber-Neon Vector Toast Notification Capsule (Zero Emojis, Pure SVG Vector) ---
+  const TOAST_ICONS = {
+    success: '<svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+    info: '<svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+    warn: '<svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+    error: '<svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>'
+  };
+
+  const TOAST_EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}\u{2B50}-\u{2B55}\u{203C}\u{2049}\u{2122}\u{2139}\u{2194}-\u{2199}\u{21A9}-\u{21AA}\u{FE00}-\u{FE0F}]/gu;
+
+  function showToast(text, type = 'success', _legacyIcon = null) {
     if (!el.toastMsg) return;
     clearTimeout(toastTimer);
-    el.toastText.textContent = text;
-    el.toastIcon.textContent = icon;
-    el.toastMsg.className = 'neo-toast show';
-    if (type === 'warn') {
+
+    let toastType = (type || 'info').toLowerCase();
+    if (toastType === 'warning') toastType = 'warn';
+    if (!TOAST_ICONS[toastType]) toastType = 'info';
+
+    // Strictly sanitize and purge any emojis or AI buzzwords
+    let cleanText = String(text || '')
+      .replace(TOAST_EMOJI_REGEX, '')
+      .replace(/\(Real-Time AI-Tuned\)/gi, '(Adaptive Dynamic Tuning)')
+      .replace(/\bAI-Tuned\b/gi, 'Adaptive')
+      .replace(/\bAI-Powered\b/gi, 'Automated')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (el.toastText) el.toastText.textContent = cleanText;
+    if (el.toastIcon) {
+      el.toastIcon.innerHTML = TOAST_ICONS[toastType] || TOAST_ICONS.info;
+      el.toastIcon.className = `neo-toast-icon toast-icon-${toastType}`;
+    }
+
+    el.toastMsg.className = `neo-toast show toast-${toastType}`;
+    if (toastType === 'warn') {
       el.toastMsg.classList.add('toast-warn');
-    } else if (type === 'error') {
+    } else if (toastType === 'error') {
       el.toastMsg.classList.add('toast-error');
     }
+
     toastTimer = setTimeout(() => {
-      el.toastMsg.classList.remove('show');
-    }, 1700);
+      if (el.toastMsg) el.toastMsg.classList.remove('show');
+    }, 1900);
   }
 
   // --- Haptic Feedback ---
@@ -426,7 +454,7 @@
     if (clean.includes('?')) {
       try {
         const u = new URL(clean.startsWith('http') ? clean : `http://${clean}`);
-        const tok = u.searchParams.get('token');
+        const tok = u.searchParams.get('token') || u.searchParams.get('t');
         if (tok) {
           try { localStorage.setItem('pcdeck_token', tok.trim()); } catch (e) {}
         }
@@ -456,7 +484,7 @@
       // 0. Auto-derive or load Server IP & Pairing Token
       const urlParams = new URLSearchParams(window.location.search);
       const queryIp = urlParams.get('ip') || urlParams.get('connect');
-      const queryToken = urlParams.get('token');
+      const queryToken = urlParams.get('token') || urlParams.get('t');
       if (queryToken) {
         try { localStorage.setItem('pcdeck_token', queryToken); } catch (e) {}
       }
@@ -631,7 +659,7 @@
       localStorage.setItem('pcdeck_titlebar_hidden', state.titleBarHidden.toString());
 
       if (showToastNotify) {
-        showToast('All Preferences Saved!', 'success', '💾');
+        showToast('All Preferences Saved!', 'success');
         vibrate(30);
       }
     } catch (e) {
@@ -672,7 +700,7 @@
     if (window.updateTitlebarActions) window.updateTitlebarActions();
 
     resetPinchZoom();
-    showToast('Settings Reset to Defaults', 'warn', '🔄');
+    showToast('Settings Reset to Defaults', 'warn');
     vibrate(30);
   }
 
@@ -842,7 +870,7 @@
             isLongPressDrag = true;
             spawnTouchRipple(lastX, lastY, 'double');
             vibrate(45);
-            showToast('Drag & Move Locked ✊ (Move to drag, release to drop)', 'info', '✊');
+            showToast('Drag & Move Locked  (Move to drag, release to drop)', 'info');
             const curNorm = getNormalizedCoords(lastX, lastY);
             // Move cursor to position and press down left mouse button on PC
             sendBinaryTouchDown(curNorm.x, curNorm.y, 'left');
@@ -995,12 +1023,12 @@
           // Held in place without dragging -> Trigger Right-Click Context Menu!
           sendBinaryClick('right');
           spawnTouchRipple(lastX, lastY, 'right');
-          showToast('Right Click 🖱️', 'success', '🖱️');
+          showToast('Right Click', 'success', '️');
           vibrate(30);
         } else {
           // Dragged and released -> Dropped file/item/selection!
           spawnTouchRipple(lastX, lastY, 'tap');
-          showToast('Item Dropped / Moved 🎯', 'success', '🎯');
+          showToast('Item Dropped / Moved', 'success');
           vibrate(35);
         }
         return;
@@ -1089,7 +1117,7 @@
           sendBinaryMoveAbs(norm.x, norm.y);
           sendBinaryClick('double');
           vibrate(30);
-          showToast('Double Click (Open/Run)', 'success', '🖱️');
+          showToast('Double Click (Open/Run)', 'success', '️');
         } else {
           // 1-Finger Single Tap -> Left Click at exact touch position!
           lastTapTime = touchEndTime;
@@ -1106,7 +1134,7 @@
             sendBinaryClick('right');
             state.screenMode = 'touch';
             if (el.toolRclickStatus) el.toolRclickStatus.textContent = 'Next Tap: Normal';
-            showToast('Right Click 🖱️', 'success', '🖱️');
+            showToast('Right Click', 'success', '️');
           } else {
             sendBinaryClick('left');
           }
@@ -1127,7 +1155,7 @@
     state.panY = 0;
     state.isPinching = false;
     updateCanvasTransform();
-    showToast('Zoom reset to 100% Fit', 'success', '🔍');
+    showToast('Zoom reset to 100% Fit', 'success');
   }
 
   function initPinchZoomGestures() {
@@ -1478,12 +1506,20 @@
   let screenFirstFrameSeen = false;
   let screenWatchdogTimer = null;
 
+  let screenLoaderTimeout = null;
   function showScreenLoader(message) {
     if (!el.screenLoader) return;
     if (screenFirstFrameSeen) return; // Never flicker the loader if a frame is already displayed
     el.screenLoader.style.display = '';
     const label = el.screenLoader.querySelector('span');
     if (label && message) label.textContent = message;
+
+    if (screenLoaderTimeout) clearTimeout(screenLoaderTimeout);
+    screenLoaderTimeout = setTimeout(() => {
+      if (!screenFirstFrameSeen && el.screenLoader) {
+        if (label) label.textContent = 'Tap to refresh screen or switch to Trackpad tab';
+      }
+    }, 4000);
   }
 
   // Self-heals a stalled stream gently without repeatedly destroying active sockets.
@@ -1830,6 +1866,10 @@
       const serverToken = data.substring(6).trim();
       if (serverToken) {
         try { localStorage.setItem('pcdeck_token', serverToken); } catch (e) {}
+        // Immediately complete two-way handshake on mainWs
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          try { mainWs.send(`pair,${serverToken}`); } catch (e) {}
+        }
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         state.screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen?token=${encodeURIComponent(serverToken)}`;
         if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
@@ -1839,6 +1879,12 @@
       return;
     }
     if (data === 'auth_required' || data.startsWith('pair_error,')) {
+      const savedTok = localStorage.getItem('pcdeck_token');
+      if (savedTok && mainWs && mainWs.readyState === WebSocket.OPEN) {
+        try { mainWs.send(`pair,${savedTok}`); return; } catch (e) {}
+      } else if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        try { mainWs.send('get_token'); return; } catch (e) {}
+      }
       showToast('Pairing required: please scan the QR code on your PC screen.', 'error');
       if (el.connectModal) el.connectModal.classList.add('show');
       return;
@@ -1939,7 +1985,7 @@
       if (pPct) pPct.textContent = pct + '%';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<span>⏳ ${pct}%</span>`;
+        btn.innerHTML = `<span>${pct}%</span>`;
       }
 
       if (hudBanner && state.gamepadHudActive) hudBanner.style.display = 'block';
@@ -1949,7 +1995,7 @@
       if (hudPct) hudPct.textContent = pct + '%';
       if (hudActionBtn) {
         hudActionBtn.disabled = true;
-        hudActionBtn.innerHTML = `<span>⏳ ${pct}%</span>`;
+        hudActionBtn.innerHTML = `<span>${pct}%</span>`;
       }
       return;
     }
@@ -1968,7 +2014,7 @@
       if (pPct) pPct.textContent = '15%';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳ 15%</span>';
+        btn.innerHTML = '<span>15%</span>';
       }
 
       const hudBanner = document.getElementById('hud-driver-banner');
@@ -1984,10 +2030,10 @@
       if (hudPct) hudPct.textContent = '15%';
       if (hudActionBtn) {
         hudActionBtn.disabled = true;
-        hudActionBtn.innerHTML = '<span>⏳ 15%</span>';
+        hudActionBtn.innerHTML = '<span>15%</span>';
       }
 
-      showToast('Installing Virtual Gamepad Driver on PC...', 'info', '🎮');
+      showToast('Installing Virtual Gamepad Driver on PC...', 'info');
       return;
     }
 
@@ -2015,13 +2061,13 @@
       if (res === 'success') {
         state.gamepadDriverInstalled = true;
         if (pFill) pFill.style.width = '100%';
-        if (pStage) pStage.textContent = '✔ Virtual Xbox 360 Controller Active!';
+        if (pStage) pStage.textContent = 'Virtual Xbox 360 Controller Active!';
         if (pPct) pPct.textContent = '100%';
         if (hudFill) hudFill.style.width = '100%';
-        if (hudStage) hudStage.textContent = '✔ Virtual Xbox 360 Controller Active!';
+        if (hudStage) hudStage.textContent = 'Virtual Xbox 360 Controller Active!';
         if (hudPct) hudPct.textContent = '100%';
         if (driverBadge) driverBadge.textContent = 'Virtual Xbox 360: Active';
-        showToast('🎮 Virtual Xbox 360 Controller active & verified!', 'success', '🎮');
+        showToast(' Virtual Xbox 360 Controller active & verified!', 'success');
         setTimeout(() => {
           if (banner) banner.style.display = 'none';
           if (pBox) pBox.style.display = 'none';
@@ -2030,7 +2076,7 @@
         }, 1800);
       } else {
         state.gamepadDriverInstalled = false;
-        showToast(`Gamepad driver: ${msg}`, 'error', '⚠️');
+        showToast(`Gamepad driver: ${msg}`, 'error', '️');
         if (banner) {
           banner.style.display = 'block';
           banner.style.background = 'rgba(255, 68, 68, 0.12)';
@@ -2111,7 +2157,7 @@
       if (pPct) pPct.textContent = pct + '%';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<span>⏳ ${pct}%</span>`;
+        btn.innerHTML = `<span>${pct}%</span>`;
       }
       return;
     }
@@ -2129,9 +2175,9 @@
       if (pPct) pPct.textContent = '15%';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳ 15%</span>';
+        btn.innerHTML = '<span>15%</span>';
       }
-      showToast('Installing Virtual Camera driver on PC...', 'info', '📹');
+      showToast('Installing Virtual Camera driver on PC...', 'info');
       return;
     }
     if (data.startsWith('cam_driver_install_result,')) {
@@ -2147,15 +2193,15 @@
       const pPct = document.getElementById('cam-driver-pct-text');
       if (res === 'success') {
         if (pFill) pFill.style.width = '100%';
-        if (pStage) pStage.textContent = '✔ Driver installed & active in Windows!';
+        if (pStage) pStage.textContent = 'Driver installed & active in Windows!';
         if (pPct) pPct.textContent = '100%';
-        showToast('Virtual Camera driver active & verified!', 'success', '📹');
+        showToast('Virtual Camera driver active & verified!', 'success');
         setTimeout(() => {
           if (banner) banner.style.display = 'none';
           if (pBox) pBox.style.display = 'none';
         }, 1500);
       } else {
-        showToast(`Camera driver: ${msg}`, 'error', '⚠️');
+        showToast(`Camera driver: ${msg}`, 'error', '️');
         if (banner) {
           banner.style.display = 'block';
           banner.style.background = 'rgba(255, 68, 68, 0.12)';
@@ -2163,9 +2209,9 @@
         }
         if (text) {
           text.style.color = '#ff6b6b';
-          text.textContent = `❌ ${msg}`;
+          text.textContent = msg;
         }
-        if (pStage) pStage.textContent = `❌ ${msg}`;
+        if (pStage) pStage.textContent = msg;
         if (btn) {
           btn.disabled = false;
           btn.style.display = 'inline-flex';
@@ -2221,7 +2267,7 @@
       if (pPct) pPct.textContent = pct + '%';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<span>⏳ ${pct}%</span>`;
+        btn.innerHTML = `<span>${pct}%</span>`;
       }
       return;
     }
@@ -2239,9 +2285,9 @@
       if (pPct) pPct.textContent = '15%';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳ 15%</span>';
+        btn.innerHTML = '<span>15%</span>';
       }
-      showToast('Installing Virtual Audio Cable on PC...', 'info', '🎙️');
+      showToast('Installing Virtual Audio Cable on PC...', 'info', '️');
       return;
     }
     if (data.startsWith('mic_driver_install_result,')) {
@@ -2257,15 +2303,15 @@
       const pPct = document.getElementById('mic-driver-pct-text');
       if (res === 'success') {
         if (pFill) pFill.style.width = '100%';
-        if (pStage) pStage.textContent = '✔ Driver installed & active in Windows!';
+        if (pStage) pStage.textContent = 'Driver installed & active in Windows!';
         if (pPct) pPct.textContent = '100%';
-        showToast('Virtual Audio Cable active & verified!', 'success', '🎙️');
+        showToast('Virtual Audio Cable active & verified!', 'success', '️');
         setTimeout(() => {
           if (banner) banner.style.display = 'none';
           if (pBox) pBox.style.display = 'none';
         }, 1500);
       } else {
-        showToast(`Mic driver: ${msg}`, 'error', '⚠️');
+        showToast(`Mic driver: ${msg}`, 'error', '️');
         if (banner) {
           banner.style.display = 'block';
           banner.style.background = 'rgba(255, 68, 68, 0.12)';
@@ -2273,9 +2319,9 @@
         }
         if (text) {
           text.style.color = '#ff6b6b';
-          text.textContent = `❌ ${msg}`;
+          text.textContent = msg;
         }
-        if (pStage) pStage.textContent = `❌ ${msg}`;
+        if (pStage) pStage.textContent = msg;
         if (btn) {
           btn.disabled = false;
           btn.style.display = 'inline-flex';
@@ -2348,7 +2394,7 @@
     if (reconnectAttempts >= 3) {
       updateStatus('disconnected', 'Reconnecting... (Check Wi-Fi/Hotspot)');
       if (reconnectAttempts === 3) {
-        showToast(`Searching for PC on network...`, 'info', '🔍');
+        showToast(`Searching for PC on network...`, 'info');
       }
     } else {
       updateStatus('disconnected', 'Reconnecting...');
@@ -2696,7 +2742,7 @@
         if (el.settingCursorSpeed) el.settingCursorSpeed.value = state.cursorSpeed.toString();
         if (el.valCursorSpeed) el.valCursorSpeed.textContent = `${state.cursorSpeed.toFixed(1)}x`;
         vibrate(25);
-        showToast(`Mouse Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success', '🖱️');
+        showToast(`Mouse Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success', '️');
         saveAllSettings(false);
       };
     }
@@ -3078,7 +3124,7 @@
         const len = input.value.length;
         try { input.setSelectionRange(len, len); } catch(e) {}
       }
-      showToast('Typing to PC — tap ✕ to close', 'success', '⌨️');
+      showToast('Typing to PC — tap  to close', 'success', '️');
     }
 
     function closeTypeBar() {
@@ -3143,7 +3189,7 @@
         setTimeout(() => {
           if (liveInput) liveInput.focus();
         }, 200);
-        showToast('Keyboard & PC Typing Active', 'success', '⌨️');
+        showToast('Keyboard & PC Typing Active', 'success', '️');
       };
     }
 
@@ -3195,7 +3241,7 @@
 
         if (hotkey) {
           sendCommand(`h,${hotkey}`);
-          showToast(`Hotkey: ${hotkey.toUpperCase()}`, 'success', '⌨️');
+          showToast(`Hotkey: ${hotkey.toUpperCase()}`, 'success', '️');
           return;
         }
 
@@ -3363,7 +3409,7 @@
         if (window.AndroidApp && typeof window.AndroidApp.requestStoragePermission === 'function') {
           window.AndroidApp.requestStoragePermission();
         } else {
-          showToast('Storage permission granted', 'info', '📁');
+          showToast('Storage permission granted', 'info');
         }
       };
     }
@@ -3392,10 +3438,10 @@
           if (window.AndroidApp && typeof window.AndroidApp.createPhoneFolder === 'function') {
             const success = window.AndroidApp.createPhoneFolder(state.phoneFs.currentPath, folderName.trim());
             if (success) {
-              showToast(`Folder "${folderName}" created on phone!`, 'success', '📁');
+              showToast(`Folder "${folderName}" created on phone!`, 'success');
               browsePhoneDirectory(state.phoneFs.currentPath);
             } else {
-              showToast('Failed to create folder on phone', 'error', '❌');
+              showToast('Failed to create folder on phone', 'error');
             }
           }
         }
@@ -3448,7 +3494,7 @@
           vibrate(25);
           if (window.AndroidApp && typeof window.AndroidApp.deletePhoneFile === 'function') {
             state.phoneFs.markedPaths.forEach(path => window.AndroidApp.deletePhoneFile(path));
-            showToast(`${count} item(s) deleted on phone`, 'warn', '🗑️');
+            showToast(`${count} item(s) deleted on phone`, 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
             state.phoneFs.markedPaths.clear();
             updatePhoneBatchBar();
             browsePhoneDirectory(state.phoneFs.currentPath);
@@ -3461,7 +3507,7 @@
       el.btnPhoneFsBatchSendPc.onclick = () => {
         const paths = Array.from(state.phoneFs.markedPaths);
         if (paths.length === 0) {
-          showToast('No phone files marked', 'warn', '⚠️');
+          showToast('No phone files marked', 'warn', '️');
           return;
         }
         vibrate(20);
@@ -3508,13 +3554,13 @@
             .then(r => r.json())
             .then(data => {
               if (data.status === 'created') {
-                showToast(`Folder "${folderName}" created!`, 'success', '📁');
+                showToast(`Folder "${folderName}" created!`, 'success');
                 browseFsDirectory(state.currentFsPath);
               } else {
-                showToast('Failed to create folder', 'error', '❌');
+                showToast('Failed to create folder', 'error');
               }
             })
-            .catch(() => showToast('Error creating folder', 'error', '❌'));
+            .catch(() => showToast('Error creating folder', 'error'));
         }
       };
     }
@@ -3572,7 +3618,7 @@
     if (el.btnFsBatchDownload) {
       el.btnFsBatchDownload.onclick = () => {
         if (state.markedFsPaths.size === 0) {
-          showToast('No files marked for download', 'warn', '⚠️');
+          showToast('No files marked for download', 'warn', '️');
           return;
         }
         vibrate(20);
@@ -3593,12 +3639,12 @@
           })
             .then(r => r.json())
             .then(data => {
-              showToast(`Deleted ${data.deleted || count} items from PC`, 'warn', '🗑️');
+              showToast(`Deleted ${data.deleted || count} items from PC`, 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
               state.markedFsPaths.clear();
               updateBatchBar();
               browseFsDirectory(state.currentFsPath);
             })
-            .catch(() => showToast('Batch delete failed', 'error', '❌'));
+            .catch(() => showToast('Batch delete failed', 'error'));
         }
       };
     }
@@ -3642,7 +3688,7 @@
             const btn = document.createElement('button');
             btn.className = 'fs-place-chip';
             btn.style.borderColor = 'var(--neo-yellow)';
-            btn.textContent = `💾 ${d.name}`;
+            btn.textContent = d.name;
             btn.onclick = () => {
               vibrate(15);
               document.querySelectorAll('.fs-place-chip').forEach(c => c.classList.remove('active'));
@@ -3659,7 +3705,7 @@
           phoneBtn.style.borderColor = 'var(--neo-lime)';
           phoneBtn.style.color = 'var(--neo-lime)';
           phoneBtn.style.fontWeight = '800';
-          phoneBtn.textContent = '📱 Received from PC';
+          phoneBtn.textContent = 'Received from PC';
           phoneBtn.onclick = () => {
             vibrate(15);
             revealInPhoneFiles('default');
@@ -3698,7 +3744,7 @@
 
           if (el.fsCurrentPath) {
             const isTransfers = data.current_path.replace(/\\/g, '/').toLowerCase().endsWith('downloads/pcdeck_transfers') || data.current_path.replace(/\\/g, '/').toLowerCase().endsWith('pcdeck_transfers');
-            el.fsCurrentPath.textContent = isTransfers ? '💻 Received from Phone' : '💻 ' + data.current_path;
+            el.fsCurrentPath.textContent = isTransfers ? 'Received from Phone' : data.current_path;
             el.fsCurrentPath.title = data.current_path;
           }
           if (el.fsItemCount) el.fsItemCount.textContent = `${data.total_items} items`;
@@ -3709,7 +3755,7 @@
         } else {
           el.fsBrowserItems.innerHTML = `
             <div class="empty-files-placeholder">
-              <span>⚠️</span>
+              
               <p>${data.error || 'Could not open folder'}</p>
             </div>
           `;
@@ -3718,70 +3764,65 @@
       .catch(() => {
         el.fsBrowserItems.innerHTML = `
           <div class="empty-files-placeholder">
-            <span>⚠️</span>
+            
             <p>Connect to PC to explore directories & files.</p>
           </div>
         `;
       });
   }
 
-  function getFolderIcon(name) {
+    function getFolderIcon(name) {
     const n = (name || '').toLowerCase().trim();
-    if (n.includes('download')) return '⬇️';
-    if (n.includes('desktop')) return '🖥️';
-    if (n.includes('picture') || n.includes('photo') || n.includes('dcim') || n.includes('camera')) return '📸';
-    if (n.includes('music') || n.includes('audio') || n.includes('sound')) return '🎵';
-    if (n.includes('video') || n.includes('movie')) return '🎬';
-    if (n.includes('doc') || n.includes('document')) return '📁';
-    if (n.includes('pcdeck') || n.includes('transfer')) return '📥';
-    return '📁';
+    if (n.includes('download')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    }
+    if (n.includes('desktop')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+    }
+    if (n.includes('picture') || n.includes('photo') || n.includes('dcim') || n.includes('camera')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#ff0844" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+    }
+    if (n.includes('music') || n.includes('audio') || n.includes('sound')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#b000ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+    }
+    if (n.includes('video') || n.includes('movie')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>';
+    }
+    return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
   }
 
   function getFileIcon(ext) {
     ext = (ext || '').toLowerCase().trim();
     // Images & Graphics
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'tiff'].includes(ext)) return '🖼️';
-    if (['svg', 'ai', 'psd', 'eps', 'drawio'].includes(ext)) return '🎨';
-    if (['ico', 'cur'].includes(ext)) return '💠';
-
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'tiff', 'svg', 'ai', 'psd', 'eps', 'drawio', 'ico', 'cur'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+    }
     // Videos
-    if (['mp4', 'mkv', 'webm', 'mov', 'avi', 'wmv', 'flv', 'm4v', '3gp', 'ts'].includes(ext)) return '🎬';
-
+    if (['mp4', 'mkv', 'webm', 'mov', 'avi', 'wmv', 'flv', 'm4v', '3gp', 'ts'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#ff3366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+    }
     // Audio & Music
-    if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'opus', 'mid', 'midi', 'aiff'].includes(ext)) return '🎵';
-
+    if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'opus', 'mid', 'midi', 'aiff'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#b000ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+    }
     // Documents & Office
-    if (['pdf'].includes(ext)) return '📕';
-    if (['doc', 'docx', 'odt', 'rtf', 'pages'].includes(ext)) return '📘';
-    if (['xls', 'xlsx', 'csv', 'tsv', 'ods', 'numbers'].includes(ext)) return '📊';
-    if (['ppt', 'pptx', 'odp', 'key'].includes(ext)) return '📽️';
-    if (['txt', 'log', 'md', 'markdown', 'rst', 'nfo'].includes(ext)) return '📝';
-
+    if (['pdf', 'doc', 'docx', 'odt', 'rtf', 'pages', 'txt', 'log', 'md', 'markdown', 'rst', 'nfo'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+    }
+    // Spreadsheets & Data
+    if (['xls', 'xlsx', 'csv', 'tsv', 'ods', 'numbers'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="8" y="12" width="8" height="6"/></svg>';
+    }
     // Code & Developer
-    if (['py', 'pyw', 'ipynb'].includes(ext)) return '🐍';
-    if (['js', 'mjs', 'cjs'].includes(ext)) return '🟨';
-    if (['ts', 'tsx'].includes(ext)) return '🔷';
-    if (['html', 'htm'].includes(ext)) return '🌐';
-    if (['css', 'scss', 'sass', 'less'].includes(ext)) return '🎨';
-    if (['json', 'yaml', 'yml', 'xml', 'toml', 'ini', 'cfg', 'conf', 'env'].includes(ext)) return '⚙️';
-    if (['java', 'kt', 'kts', 'class', 'jar'].includes(ext)) return '☕';
-    if (['c', 'cpp', 'cc', 'cxx', 'h', 'hpp', 'cs', 'go', 'rs', 'swift'].includes(ext)) return '💻';
-    if (['sh', 'bat', 'cmd', 'ps1', 'bash', 'zsh'].includes(ext)) return '📜';
-    if (['sql', 'db', 'sqlite', 'sqlite3', 'mdb'].includes(ext)) return '🗄️';
-
-    // Apps & Executables
-    if (['apk', 'xapk', 'apks'].includes(ext)) return '📱';
-    if (['exe', 'msi'].includes(ext)) return '💻';
-    if (['iso', 'img', 'vmdk', 'dmg'].includes(ext)) return '💿';
-
-    // Archives & Compressed
-    if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'].includes(ext)) return '📦';
-
-    // Fonts
-    if (['ttf', 'otf', 'woff', 'woff2', 'eot'].includes(ext)) return '🔤';
-
-    // Generic Default
-    return '📄';
+    if (['py', 'pyw', 'ipynb', 'js', 'mjs', 'cjs', 'ts', 'tsx', 'html', 'htm', 'css', 'scss', 'sass', 'less', 'json', 'yaml', 'yml', 'xml', 'toml', 'ini', 'cfg', 'conf', 'env', 'java', 'kt', 'kts', 'class', 'jar', 'c', 'cpp', 'cc', 'cxx', 'h', 'hpp', 'cs', 'go', 'rs', 'swift', 'sh', 'bat', 'cmd', 'ps1', 'bash', 'zsh', 'sql', 'db', 'sqlite', 'sqlite3', 'mdb'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
+    }
+    // Apps & Executables & Archives
+    if (['apk', 'xapk', 'apks', 'exe', 'msi', 'iso', 'img', 'vmdk', 'dmg', 'zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
+    }
+    // Generic Default File
+    return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>';
   }
 
   function renderFilteredFsItems() {
@@ -3795,7 +3836,7 @@
     if (filteredFolders.length === 0 && filteredFiles.length === 0) {
       el.fsBrowserItems.innerHTML = `
         <div class="empty-files-placeholder">
-          <span>📂</span>
+          <svg class="deck-icon" width="38" height="38" style="opacity: 0.6;"><use href="#icon-folder"/></svg>
           <p>Folder is empty.<br>Tap Send Files above to transfer to PC!</p>
         </div>
       `;
@@ -3818,9 +3859,9 @@
           </div>
         </div>
         <div class="fs-actions-row">
-          <button class="fs-btn fs-btn-open" data-action="open-folder" title="Open Folder">📂 Open</button>
-          <button class="fs-btn fs-btn-locate fs-btn-icon-only" data-action="locate-folder-pc" title="Open this folder on PC in Windows File Explorer">🖥️</button>
-          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del-folder" title="Delete Folder">🗑️</button>
+          <button class="fs-btn fs-btn-open" data-action="open-folder" title="Open Folder">Open</button>
+          <button class="fs-btn fs-btn-locate fs-btn-icon-only" data-action="locate-folder-pc" title="Open this folder on PC in Windows File Explorer"><svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg></button>
+          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del-folder" title="Delete Folder"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
         </div>
       `;
 
@@ -3871,7 +3912,7 @@
           fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/delete?path=${encodeURIComponent(folder.path)}`, { method: 'POST' })
             .then(r => r.json())
             .then(() => {
-              showToast('Folder deleted', 'warn', '🗑️');
+              showToast('Folder deleted', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
               state.markedFsPaths.delete(folder.path);
               updateBatchBar();
               browseFsDirectory(state.currentFsPath);
@@ -3899,10 +3940,10 @@
           </div>
         </div>
         <div class="fs-actions-row">
-          <button class="fs-btn fs-btn-save" data-action="save" title="Download to phone">📥 Save</button>
-          <button class="fs-btn fs-btn-open fs-btn-icon-only" data-action="open-pc" title="Open / Launch file on PC">🖥️</button>
-          <button class="fs-btn fs-btn-locate fs-btn-icon-only" data-action="locate-pc" title="Show file in Windows File Explorer on PC">📂</button>
-          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del" title="Delete on PC">🗑️</button>
+          <button class="fs-btn fs-btn-save" data-action="save" title="Download to phone">Save</button>
+          <button class="fs-btn fs-btn-open fs-btn-icon-only" data-action="open-pc" title="Open / Launch file on PC"><svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg></button>
+          <button class="fs-btn fs-btn-locate fs-btn-icon-only" data-action="locate-pc" title="Show file in Windows File Explorer on PC"><svg class="deck-icon" width="13" height="13"><use href="#icon-folder"/></svg></button>
+          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del" title="Delete on PC"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
         </div>
       `;
 
@@ -3946,8 +3987,8 @@
         vibrate(15);
         fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/open?path=${encodeURIComponent(file.path)}`, { method: 'POST' })
           .then(r => r.json())
-          .then(() => showToast(`Opened "${file.name}" on PC!`, 'success', '🖥️'))
-          .catch(() => showToast('Could not open on PC', 'error', '❌'));
+          .then(() => showToast(`Opened "${file.name}" on PC!`, 'success', '<svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg>'))
+          .catch(() => showToast('Could not open on PC', 'error'));
       };
 
       // Locate on PC Action (Reveal & Select in Explorer)
@@ -3965,7 +4006,7 @@
           fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/delete?path=${encodeURIComponent(file.path)}`, { method: 'POST' })
             .then(r => r.json())
             .then(() => {
-              showToast('File deleted', 'warn', '🗑️');
+              showToast('File deleted', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
               state.markedFsPaths.delete(file.path);
               updateBatchBar();
               browseFsDirectory(state.currentFsPath);
@@ -3980,14 +4021,14 @@
   // --- Phone In-App File Explorer Logic ---
   function loadPhonePlaces() {
     const defaultPlaces = [
-      { name: 'Received from PC', path: 'default', icon: '📥' },
-      { name: 'Internal Storage', path: 'root', icon: '📱' },
-      { name: 'Camera / DCIM', path: 'dcim', icon: '📸' },
-      { name: 'Pictures', path: 'pictures', icon: '🖼️' },
-      { name: 'Videos & Movies', path: 'movies', icon: '🎬' },
+      { name: 'Received from PC', path: 'default', icon: '' },
+      { name: 'Internal Storage', path: 'root', icon: '' },
+      { name: 'Camera / DCIM', path: 'dcim', icon: '' },
+      { name: 'Pictures', path: 'pictures', icon: '' },
+      { name: 'Videos & Movies', path: 'movies', icon: '' },
       { name: 'Downloads', path: 'downloads', icon: '⬇️' },
-      { name: 'Documents', path: 'documents', icon: '📄' },
-      { name: 'Music', path: 'music', icon: '🎵' },
+      { name: 'Documents', path: 'documents', icon: '' },
+      { name: 'Music', path: 'music', icon: '' },
     ];
 
     let places = defaultPlaces;
@@ -4030,7 +4071,7 @@
         if (window.AndroidApp && typeof window.AndroidApp.requestStoragePermission === 'function') {
           window.AndroidApp.requestStoragePermission();
         } else {
-          showToast('Grant Full Storage access in Android App Settings', 'info', '📱');
+          showToast('Grant Full Storage access in Android App Settings', 'info');
         }
       };
     }
@@ -4088,7 +4129,7 @@
           } catch (e) {}
 
           if (el.phoneFsCurrentPath) {
-            el.phoneFsCurrentPath.textContent = '📱 ' + (data.name || data.current_path);
+            el.phoneFsCurrentPath.textContent = data.name || data.current_path;
             el.phoneFsCurrentPath.title = data.current_path;
           }
           if (el.btnPhoneFsUp) {
@@ -4118,7 +4159,7 @@
     state.phoneFs.parentPath = '';
     state.phoneFs.folders = [];
     state.phoneFs.files = [];
-    if (el.phoneFsCurrentPath) el.phoneFsCurrentPath.textContent = '📱 Phone Storage / Downloads';
+    if (el.phoneFsCurrentPath) el.phoneFsCurrentPath.textContent = 'Phone Storage / Downloads';
     if (el.btnPhoneFsUp) el.btnPhoneFsUp.disabled = true;
     updatePhoneBatchBar();
     renderFilteredPhoneFsItems(highlightTarget);
@@ -4140,10 +4181,10 @@
     if (filteredFolders.length === 0 && filteredFiles.length === 0) {
       el.phoneFsBrowserItems.innerHTML = `
         <div class="empty-files-placeholder">
-          <span>📱</span>
+          <svg class="deck-icon" width="38" height="38" style="opacity: 0.6;"><use href="#icon-phone"/></svg>
           <p>${filter ? 'No matching phone files found' : 'This phone folder is empty'}</p>
           <button class="neo-btn btn-cyan" style="margin-top: 10px; height: 36px; font-size: 0.75rem;" onclick="if(document.getElementById('file-picker')) document.getElementById('file-picker').click()">
-            📤 SELECT & SEND FILES TO PC
+            SELECT & SEND FILES TO PC
           </button>
         </div>
       `;
@@ -4164,8 +4205,8 @@
           </div>
         </div>
         <div class="fs-actions-row">
-          <button class="fs-btn fs-btn-open" data-action="open" title="Open Folder">📂 Open</button>
-          <button class="fs-btn fs-btn-del" data-action="del" title="Delete Folder">🗑️</button>
+          <button class="fs-btn fs-btn-open" data-action="open" title="Open Folder">Open</button>
+          <button class="fs-btn fs-btn-del" data-action="del" title="Delete Folder"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
         </div>
       `;
 
@@ -4186,7 +4227,7 @@
           vibrate(20);
           if (window.AndroidApp && typeof window.AndroidApp.deletePhoneFile === 'function') {
             window.AndroidApp.deletePhoneFile(folder.path);
-            showToast('Folder deleted on phone', 'warn', '🗑️');
+            showToast('Folder deleted on phone', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
             browsePhoneDirectory(state.phoneFs.currentPath);
           }
         }
@@ -4214,9 +4255,9 @@
           </div>
         </div>
         <div class="fs-actions-row">
-          <button class="fs-btn fs-btn-save" data-action="send-pc" title="Upload directly to PC">📤 PC</button>
-          <button class="fs-btn fs-btn-open" data-action="open-phone" title="View / Play on Phone">📱 Open</button>
-          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del" title="Delete on Phone">🗑️</button>
+          <button class="fs-btn fs-btn-save" data-action="send-pc" title="Upload directly to PC">Upload to PC</button>
+          <button class="fs-btn fs-btn-open" data-action="open-phone" title="View / Play on Phone">Open</button>
+          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del" title="Delete on Phone"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
         </div>
       `;
 
@@ -4252,7 +4293,7 @@
         if (window.AndroidApp && typeof window.AndroidApp.uploadPhoneFileToPc === 'function') {
           phoneUploadStartTime = Date.now();
           showTransferProgress({
-            badge: '📤 UPLOADING TO PC',
+            badge: 'UPLOADING TO PC',
             badgeClass: 'badge-upload',
             filename: file.name,
             percent: 0,
@@ -4261,7 +4302,7 @@
             isDownload: false
           });
 
-          showToast(`Sending "${file.name}" to PC...`, 'info', '📤');
+          showToast(`Sending "${file.name}" to PC...`, 'info');
           window.AndroidApp.uploadPhoneFileToPc(file.path, state.currentFsPath || '', `http://${state.serverHost}:${state.serverPort}`);
         } else if (el.filePicker) {
           el.filePicker.accept = '*/*';
@@ -4276,7 +4317,7 @@
         if (window.AndroidApp && typeof window.AndroidApp.openPhoneFile === 'function') {
           window.AndroidApp.openPhoneFile(file.path);
         } else {
-          showToast(`Opening ${file.name}`, 'info', '📱');
+          showToast(`Opening ${file.name}`, 'info');
         }
       };
 
@@ -4287,7 +4328,7 @@
           vibrate(20);
           if (window.AndroidApp && typeof window.AndroidApp.deletePhoneFile === 'function') {
             window.AndroidApp.deletePhoneFile(file.path);
-            showToast('File deleted on phone', 'warn', '🗑️');
+            showToast('File deleted on phone', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
             state.phoneFs.markedPaths.delete(file.path);
             updatePhoneBatchBar();
             browsePhoneDirectory(state.phoneFs.currentPath);
@@ -4324,7 +4365,7 @@
   let hideTransferTimeout = null;
 
   function showTransferProgress({
-    badge = '📤 UPLOAD',
+    badge = 'UPLOAD',
     badgeClass = 'badge-upload',
     filename = '',
     percent = 0,
@@ -4465,7 +4506,7 @@
     const remainingInQueue = isBatch ? (activeBatchTransfer.total - activeBatchTransfer.current) : 0;
     const queueNotice = remainingInQueue > 0 ? ` • ${remainingInQueue} in queue` : '';
 
-    const badgeText = isBatch ? `📤 [${activeBatchTransfer.current}/${activeBatchTransfer.total}] ${tierLabel}` : `📤 ${tierLabel}`;
+    const badgeText = isBatch ? `[${activeBatchTransfer.current}/${activeBatchTransfer.total}] ${tierLabel}` : tierLabel;
     const statusText = isBatch
       ? `[${activeBatchTransfer.current}/${activeBatchTransfer.total}] ${filename}: ${loadedMB}/${totalMB} MB (${safePercent}%)${etaText}${queueNotice}`
       : `Uploading ${loadedMB} MB of ${totalMB} MB (${safePercent}%)${etaText}`;
@@ -4491,7 +4532,7 @@
     if (isBatch && activeBatchTransfer.current < activeBatchTransfer.total) {
       activeBatchTransfer.successCount++;
       showTransferProgress({
-        badge: `✅ [${activeBatchTransfer.current}/${activeBatchTransfer.total}]`,
+        badge: `[${activeBatchTransfer.current}/${activeBatchTransfer.total}]`,
         badgeClass: 'badge-download',
         filename: filename,
         percent: 100,
@@ -4501,13 +4542,13 @@
       });
     } else {
       const totalUploaded = isBatch ? activeBatchTransfer.total : 1;
-      showToast(`"${filename}" uploaded to PC! ${verified ? '✅ Verified' : ''}`, 'success', '📤');
+      showToast(`"${filename}" uploaded to PC! ${verified ? ' Verified' : ''}`, 'success');
       showTransferProgress({
-        badge: verified ? '✅ ALL SAVED' : '✅ UPLOADED',
+        badge: verified ? 'ALL SAVED' : 'UPLOADED',
         badgeClass: 'badge-download',
         filename: isBatch ? `${totalUploaded} file(s)` : filename,
         percent: 100,
-        status: verified ? `✅ 100% Verified! Saved ${totalUploaded} file(s) intact on PC` : `Saved ${totalUploaded} file(s) on PC`,
+        status: verified ? `100% Verified! Saved ${totalUploaded} file(s) intact on PC` : `Saved ${totalUploaded} file(s) on PC`,
         speed: 'Saved to PC',
         showOpenPc: true,
         onOpenPc: () => openLocationOnPc(state.currentFsPath),
@@ -4530,12 +4571,12 @@
 
   window.onPhoneUploadError = function(filename, error) {
     phoneUploadStartTime = 0;
-    showToast(`Upload error: ${error}`, 'error', '❌');
+    showToast(`Upload error: ${error}`, 'error');
     const isBatch = activeBatchTransfer.active && activeBatchTransfer.total > 1;
     if (isBatch) activeBatchTransfer.failCount++;
 
     showTransferProgress({
-      badge: '❌ ERROR',
+      badge: 'ERROR',
       badgeClass: 'badge-upload',
       filename: filename,
       percent: 0,
@@ -4579,9 +4620,9 @@
           activeBatchTransfer.active = false;
           const anySuccess = activeBatchTransfer.successCount > 0;
           if (!anySuccess) {
-            showToast(`Upload failed. Check storage access.`, 'error', '❌');
+            showToast(`Upload failed. Check storage access.`, 'error');
             showTransferProgress({
-              badge: '❌ UPLOAD FAILED',
+              badge: 'UPLOAD FAILED',
               badgeClass: 'badge-upload',
               filename: `${totalCount} file(s)`,
               percent: 0,
@@ -4591,9 +4632,9 @@
             });
             hideTransferProgress(8000);
           } else if (errorOccurred) {
-            showToast(`Uploaded with some errors (${activeBatchTransfer.successCount}/${totalCount})`, 'warn', '⚠️');
+            showToast(`Uploaded with some errors (${activeBatchTransfer.successCount}/${totalCount})`, 'warn', '️');
             showTransferProgress({
-              badge: '⚠️ PARTIAL SUCCESS',
+              badge: 'PARTIAL SUCCESS',
               badgeClass: 'badge-download',
               filename: `${activeBatchTransfer.successCount}/${totalCount} file(s)`,
               percent: 100,
@@ -4605,13 +4646,13 @@
             });
             hideTransferProgress(15000);
           } else {
-            showToast(`✅ Uploaded ${totalCount} file(s) to PC!`, 'success', '🎉');
+            showToast(` Uploaded ${totalCount} file(s) to PC!`, 'success');
             showTransferProgress({
-              badge: '✅ ALL UPLOADED',
+              badge: 'ALL UPLOADED',
               badgeClass: 'badge-download',
               filename: `${totalCount} file(s)`,
               percent: 100,
-              status: '✅ All Transfers Complete & Verified in PCDeck_Transfers',
+              status: 'All Transfers Complete & Verified in PCDeck_Transfers',
               speed: 'Saved to PC',
               showOpenPc: true,
               onOpenPc: () => openLocationOnPc(''),
@@ -4635,7 +4676,7 @@
         let lastActivityTime = Date.now();
 
         showTransferProgress({
-          badge: `📤 [${currentIndex}/${totalCount}]`,
+          badge: `[${currentIndex}/${totalCount}]`,
           badgeClass: 'badge-upload',
           filename: filename,
           percent: 0,
@@ -4649,7 +4690,7 @@
         const watchdog = setInterval(() => {
           if (Date.now() - lastActivityTime > 180000) {
             console.warn(`Upload stalled on ${filename}, advancing queue`);
-            showToast(`Stalled transfer on ${filename}`, 'warn', '⚠️');
+            showToast(`Stalled transfer on ${filename}`, 'warn', '️');
             onDoneOnce(false);
           }
         }, 15000);
@@ -4719,7 +4760,7 @@
     const remainingInQueue = isBatch ? (activeDownloadBatch.total - activeDownloadBatch.current) : 0;
     const queueNotice = remainingInQueue > 0 ? ` • ${remainingInQueue} in queue` : '';
 
-    const badgeText = isBatch ? `📥 [${activeDownloadBatch.current}/${activeDownloadBatch.total}] ${tierLabel}` : `📥 ${tierLabel}`;
+    const badgeText = isBatch ? `[${activeDownloadBatch.current}/${activeDownloadBatch.total}] ${tierLabel}` : tierLabel;
     const statusText = isBatch
       ? `[${activeDownloadBatch.current}/${activeDownloadBatch.total}] Downloading ${loadedMB} MB of ${totalMB} MB (${safePercent}%)${etaText}${queueNotice}`
       : `Downloading ${loadedMB} MB of ${totalMB} MB (${safePercent}%)${etaText}`;
@@ -4742,7 +4783,7 @@
     if (isBatch && activeDownloadBatch.current < activeDownloadBatch.total) {
       activeDownloadBatch.successCount++;
       showTransferProgress({
-        badge: `✅ [${activeDownloadBatch.current}/${activeDownloadBatch.total}]`,
+        badge: `[${activeDownloadBatch.current}/${activeDownloadBatch.total}]`,
         badgeClass: 'badge-download',
         filename: fileName,
         percent: 100,
@@ -4753,16 +4794,16 @@
     } else {
       const totalCount = isBatch ? activeDownloadBatch.total : 1;
       showTransferProgress({
-        badge: verified ? '✅ ALL SAVED' : '✅ DOWNLOADED',
+        badge: verified ? 'ALL SAVED' : 'DOWNLOADED',
         badgeClass: 'badge-download',
         filename: isBatch ? `${totalCount} file(s)` : fileName,
         percent: 100,
-        status: verified ? `✅ 100% Verified! Saved ${totalCount} file(s) in Downloads/PCDeck` : `Saved ${totalCount} file(s) in Downloads/PCDeck`,
+        status: verified ? `100% Verified! Saved ${totalCount} file(s) in Downloads/PCDeck` : `Saved ${totalCount} file(s) in Downloads/PCDeck`,
         speed: 'Saved to Phone',
         showOpenPhone: true,
         onOpenPhone: () => {
           revealInPhoneFiles('default', fileName);
-          showToast(`Locating "${fileName}" in Phone Files`, 'success', '📱');
+          showToast(`Locating "${fileName}" in Phone Files`, 'success');
         },
         isDownload: true
       });
@@ -4780,15 +4821,15 @@
 
   window.onNativeDownloadError = function(errMsg) {
     nativeDownloadStartTime = 0;
-    showToast('Download error: ' + errMsg, 'error', '❌');
+    showToast('Download error: ' + errMsg, 'error');
     const isBatch = activeDownloadBatch.active && activeDownloadBatch.total > 1;
 
     showTransferProgress({
-      badge: '❌ ERROR',
+      badge: 'ERROR',
       badgeClass: 'badge-upload',
       filename: 'Download Failed',
       percent: 0,
-      status: '❌ ' + (errMsg || 'Network / Storage Error'),
+      status: errMsg || 'Network / Storage Error',
       speed: 'Failed',
       isDownload: true
     });
@@ -4808,7 +4849,7 @@
   function downloadSingleFileWithProgress(filePath, fileName, fileSizeFormatted, fileIndex, totalFiles, onDone) {
     const isBatch = totalFiles > 1;
     showTransferProgress({
-      badge: isBatch ? `📥 [${fileIndex}/${totalFiles}]` : '📥 DOWNLOADING',
+      badge: isBatch ? `[${fileIndex}/${totalFiles}]` : 'DOWNLOADING',
       badgeClass: 'badge-download',
       filename: fileName,
       percent: 0,
@@ -4846,7 +4887,7 @@
       }, 2000);
 
       showTransferProgress({
-        badge: '✅ DOWNLOADING',
+        badge: 'DOWNLOADING',
         badgeClass: 'badge-download',
         filename: fileName,
         percent: 100,
@@ -4874,7 +4915,7 @@
     const markedSet = new Set(paths.map(norm));
     const fileItems = state.fsFiles.filter(f => markedSet.has(norm(f.path)));
     if (fileItems.length === 0) {
-      showToast('No downloadable files marked (select individual files to save)', 'warn', '⚠️');
+      showToast('No downloadable files marked (select individual files to save)', 'warn', '️');
       return;
     }
 
@@ -4887,7 +4928,7 @@
       successCount: 0
     };
 
-    showToast(`Queued ${total} files for sequential download...`, 'success', '📥');
+    showToast(`Queued ${total} files for sequential download...`, 'success');
 
     function downloadNext() {
       if (currentIndex >= total) {
@@ -4918,7 +4959,7 @@
       const watchdog = setInterval(() => {
         if (Date.now() - lastActivityTime > 180000) {
           console.warn(`Download stalled on ${file.name}, advancing queue`);
-          showToast(`Stalled download on ${file.name}`, 'warn', '⚠️');
+          showToast(`Stalled download on ${file.name}`, 'warn', '️');
           onDoneOnce();
         }
       }, 15000);
@@ -4947,9 +4988,9 @@
     if (!filePath) return;
     vibrate(15);
     downloadSingleFileWithProgress(filePath, fileName, fileSizeFormatted, 1, 1, () => {
-      showToast(`Saved "${fileName}" to Downloads!`, 'success', '🎉');
+      showToast(`Saved "${fileName}" to Downloads!`, 'success');
       if (el.btnTransferOpenPhone) {
-        el.btnTransferOpenPhone.textContent = '📂 SHOW IN PHONE FILES';
+        el.btnTransferOpenPhone.textContent = 'SHOW IN PHONE FILES';
         el.btnTransferOpenPhone.style.display = 'inline-flex';
         el.btnTransferOpenPhone.onclick = () => {
           revealInPhoneFiles('default', fileName);
@@ -4969,13 +5010,13 @@
     .then(r => r.json())
     .then(data => {
       if (data.status === 'ok') {
-        showToast('Opened in Windows Explorer on PC 📂', 'success', '💻');
+        showToast('Opened in Windows Explorer on PC ', 'success');
       } else {
-        showToast(`PC Error: ${data.error || 'Failed to open'}`, 'error', '⚠️');
+        showToast(`PC Error: ${data.error || 'Failed to open'}`, 'error', '️');
       }
     })
     .catch(() => {
-      showToast('Could not reach PC to open folder', 'error', '🔌');
+      showToast('Could not reach PC to open folder', 'error');
     });
   }
 
@@ -4995,16 +5036,16 @@
       if (currentIndex >= files.length) {
         vibrate(30);
         if (errorOccurred) {
-          showToast(`Completed upload with some errors`, 'warn', '⚠️');
+          showToast(`Completed upload with some errors`, 'warn', '️');
         } else {
-          showToast(`Uploaded ${files.length} file(s) to PC!`, 'success', '🎉');
+          showToast(`Uploaded ${files.length} file(s) to PC!`, 'success');
         }
         showTransferProgress({
-          badge: errorOccurred ? '⚠️ COMPLETED' : '✅ ALL UPLOADED',
+          badge: errorOccurred ? 'COMPLETED' : 'ALL UPLOADED',
           badgeClass: 'badge-download',
           filename: `${files.length} file(s)`,
           percent: 100,
-          status: errorOccurred ? 'Completed with warnings/errors' : '✅ All Transfers Complete! Saved on PC',
+          status: errorOccurred ? 'Completed with warnings/errors' : 'All Transfers Complete! Saved on PC',
           speed: 'Saved to PC',
           showOpenPc: true,
           onOpenPc: () => openLocationOnPc(state.currentFsPath),
@@ -5022,7 +5063,7 @@
       let lastProgressTime = Date.now();
 
       showTransferProgress({
-        badge: `📤 ${currentIndex}/${files.length}`,
+        badge: `${currentIndex}/${files.length}`,
         badgeClass: 'badge-upload',
         filename: file.name,
         percent: 0,
@@ -5046,7 +5087,7 @@
           if (!done) {
             done = true;
             errorOccurred = true;
-            showToast(`Upload stalled on "${file.name}"`, 'warn', '⚠️');
+            showToast(`Upload stalled on "${file.name}"`, 'warn', '️');
             xhr.abort();
             uploadNext();
           }
@@ -5070,7 +5111,7 @@
           const duration = (Date.now() - startTime) / 1000;
           const speedMB = duration > 0.1 ? (e.loaded / (1024 * 1024) / duration).toFixed(1) : '--';
           showTransferProgress({
-            badge: `📤 ${currentIndex}/${files.length}`,
+            badge: `${currentIndex}/${files.length}`,
             badgeClass: 'badge-upload',
             filename: file.name,
             percent: percent,
@@ -5085,13 +5126,13 @@
         if (xhr.status >= 200 && xhr.status < 300) {
           finishUpload(true);
         } else {
-          showToast(`Error uploading "${file.name}" (HTTP ${xhr.status})`, 'error', '❌');
+          showToast(`Error uploading "${file.name}" (HTTP ${xhr.status})`, 'error');
           finishUpload(false);
         }
       };
 
       xhr.onerror = () => {
-        showToast(`Network error uploading "${file.name}"`, 'error', '❌');
+        showToast(`Network error uploading "${file.name}"`, 'error');
         finishUpload(false);
       };
 
@@ -5223,7 +5264,7 @@
             ? 'Direct Touch: Tap screen to click directly'
             : 'Virtual Cursor: Glide finger to glide mouse',
           'success',
-          state.screenMode === 'touch' ? '👆' : '🖱️'
+          state.screenMode === 'touch' ? 'Touch' : 'Mouse'
         );
         toggleQuickTools(false);
       };
@@ -5238,7 +5279,7 @@
         // 2. Also arm screen canvas for next tap
         state.screenMode = 'rclick';
         updateQuickToolsUi();
-        showToast('Right-Click Sent & Armed for next tap 🖱️', 'success', '🖱️');
+        showToast('Right-Click Sent & Armed for next tap', 'success', '️');
         toggleQuickTools(false);
       };
     }
@@ -5259,10 +5300,10 @@
         state.wakelockEnabled = !state.wakelockEnabled;
         if (state.wakelockEnabled) {
           requestWakeLock();
-          showToast('Keep Awake Enabled', 'success', '💡');
+          showToast('Keep Awake Enabled', 'success');
         } else {
           releaseWakeLock();
-          showToast('Keep Awake Disabled', 'warn', '💤');
+          showToast('Keep Awake Disabled', 'warn');
         }
         updateQuickToolsUi();
         saveAllSettings(false);
@@ -5278,7 +5319,7 @@
 
         if (window.AndroidApp && typeof window.AndroidApp.requestFullscreen === 'function') {
           window.AndroidApp.requestFullscreen();
-          showToast('Fullscreen Mode (App)', 'success', '📺');
+          showToast('Fullscreen Mode (App)', 'success');
           setTimeout(updateQuickToolsUi, 100);
           return;
         }
@@ -5289,19 +5330,19 @@
           const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
           if (req) {
             req.call(docEl).then(() => {
-              showToast('Fullscreen Mode Enabled', 'success', '📺');
+              showToast('Fullscreen Mode Enabled', 'success');
               updateQuickToolsUi();
             }).catch(() => {
-              showToast('Fullscreen mode active', 'info', '📺');
+              showToast('Fullscreen mode active', 'info');
             });
           } else {
-            showToast('Fullscreen not supported in this browser', 'warn', '📺');
+            showToast('Fullscreen not supported in this browser', 'warn');
           }
         } else {
           const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
           if (exit) {
             exit.call(document).then(() => {
-              showToast('Fullscreen Exited', 'info', '📺');
+              showToast('Fullscreen Exited', 'info');
               updateQuickToolsUi();
             }).catch(() => {});
           }
@@ -5330,7 +5371,7 @@
 
     updateQuickToolsUi();
 
-    showToast(shouldHide ? 'Full View (Title Bar Hidden)' : 'Title Bar Restored', 'info', shouldHide ? '📐' : '👁️');
+    showToast(shouldHide ? 'Full View (Title Bar Hidden)' : 'Title Bar Restored', 'info', shouldHide ? '' : '️');
     try {
       localStorage.setItem('pcdeck_titlebar_hidden', shouldHide.toString());
     } catch (e) {}
@@ -5340,7 +5381,7 @@
     vibrate(20);
     if (window.AndroidApp && typeof window.AndroidApp.toggleOrientation === 'function') {
       window.AndroidApp.toggleOrientation();
-      showToast('Screen Orientation Toggled', 'success', '🔄');
+      showToast('Screen Orientation Toggled', 'success');
       return;
     }
     try {
@@ -5348,15 +5389,15 @@
         const isPortrait = window.innerHeight > window.innerWidth;
         const target = isPortrait ? 'landscape' : 'portrait';
         screen.orientation.lock(target).then(() => {
-          showToast(`Screen locked to ${target}`, 'success', '🔄');
+          showToast(`Screen locked to ${target}`, 'success');
         }).catch(() => {
-          showToast(`Rotate device ${target} physically`, 'warn', '🔄');
+          showToast(`Rotate device ${target} physically`, 'warn');
         });
       } else {
-        showToast('Rotate your device physically', 'warn', '🔄');
+        showToast('Rotate your device physically', 'warn');
       }
     } catch (e) {
-      showToast('Rotate your device physically', 'warn', '🔄');
+      showToast('Rotate your device physically', 'warn');
     }
   }
 
@@ -5425,7 +5466,7 @@
         });
       }).catch((e2) => {
         console.error('Camera access error:', e2);
-        showToast('Camera permission required to scan QR', 'error', '📷');
+        showToast('Camera permission required to scan QR', 'error');
         stopQrScanner();
       });
     });
@@ -5443,7 +5484,7 @@
     const qrLoader = document.getElementById('qr-camera-loading');
     if (qrLoader) qrLoader.classList.remove('hidden');
     state.torchActive = false;
-    if (el.btnToggleTorch) el.btnToggleTorch.textContent = '💡 Flashlight';
+    if (el.btnToggleTorch) el.btnToggleTorch.textContent = 'Flashlight';
     if (el.qrScannerModal) el.qrScannerModal.classList.remove('show');
   }
 
@@ -5568,10 +5609,10 @@
           try {
             state.torchActive = !state.torchActive;
             await track.applyConstraints({ advanced: [{ torch: state.torchActive }] });
-            el.btnToggleTorch.textContent = state.torchActive ? '💡 Flash: ON' : '💡 Flashlight';
+            el.btnToggleTorch.textContent = state.torchActive ? 'Flash: ON' : 'Flashlight';
             vibrate(15);
           } catch (e) {
-            showToast('Flashlight not available on this lens', 'warn', '💡');
+            showToast('Flashlight not available on this lens', 'warn');
           }
         }
       };
@@ -5627,7 +5668,7 @@
       el.btnDesktopQuick.onclick = () => {
         vibrate(15);
         sendCommand('h,win+d');
-        showToast('Desktop Toggled', 'info', '🖥️');
+        showToast('Desktop Toggled', 'info', '<svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg>');
       };
     }
 
@@ -5642,7 +5683,7 @@
         if (liveInput) {
           setTimeout(() => liveInput.focus(), 150);
         }
-        showToast('Switched to Keyboard', 'success', '⌨️');
+        showToast('Switched to Keyboard', 'success', '️');
       };
     }
 
@@ -5658,7 +5699,7 @@
         if (el.valCursorSpeed) el.valCursorSpeed.textContent = `${state.cursorSpeed.toFixed(1)}x`;
         el.btnSpeedQuick.textContent = `${state.cursorSpeed.toFixed(1)}x`;
         saveAllSettings(false);
-        showToast(`Cursor Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success', '🖱️');
+        showToast(`Cursor Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success', '️');
       };
     }
 
@@ -5666,7 +5707,7 @@
       el.toolDragLock.onclick = () => {
         state.dragLocked = !state.dragLocked;
         el.toolDragLock.classList.toggle('active', state.dragLocked);
-        el.toolDragLock.textContent = state.dragLocked ? '🔓 Drag: ON' : '🔒 Drag: Off';
+        el.toolDragLock.textContent = state.dragLocked ? 'Drag: ON' : 'Drag: Off';
         vibrate(25);
         sendCommand(state.dragLocked ? 'd,left' : 'u,left');
       };
@@ -5684,7 +5725,7 @@
       tile.onclick = () => {
         vibrate(20);
         sendCommand(`h,${tile.dataset.hotkey}`);
-        showToast(`Shortcut: ${tile.dataset.hotkey.toUpperCase()}`, 'success', '⌨️');
+        showToast(`Shortcut: ${tile.dataset.hotkey.toUpperCase()}`, 'success', '️');
       };
     });
 
@@ -5736,7 +5777,7 @@
           }
         }
         saveAllSettings(false);
-        showToast(state.gamepadHudEnabled ? 'Gaming Controller HUD Enabled' : 'Gaming Controller HUD Disabled', 'info', '🎮');
+        showToast(state.gamepadHudEnabled ? 'Gaming Controller HUD Enabled' : 'Gaming Controller HUD Disabled', 'info');
       };
     }
 
@@ -5785,7 +5826,7 @@
           stopAudioStream();
         }
         saveAllSettings(false);
-        showToast(state.autoAudioStream ? 'Auto PC Audio: ON' : 'Auto PC Audio: OFF', 'success', '🔊');
+        showToast(state.autoAudioStream ? 'Auto PC Audio: ON' : 'Auto PC Audio: OFF', 'success');
       };
     }
 
@@ -6004,7 +6045,7 @@
     } else {
       userManuallyStoppedAudio = true;
       stopAudioStream(true);
-      showToast('Stopped PC Audio', 'info', '⏹️');
+      showToast('Stopped PC Audio', 'info', '️');
     }
   }
 
@@ -6500,7 +6541,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       if (element === html5AudioFallback) html5AudioFallback = null;
       if (session !== audioSessionId || userManuallyStoppedAudio) return;
       stopAudioStream(true);
-      showToast('Could not start audio stream', 'error', '❌');
+      showToast('Could not start audio stream', 'error');
     });
   }
 
@@ -6796,7 +6837,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           if (btn30) btn30.classList.add('active');
           if (selFps) selFps.value = '30';
           window.openProUpgradeModal();
-          showToast('60 FPS Ultra Streaming requires PCDeck Pro', 'warn', '⭐');
+          showToast('60 FPS Ultra Streaming requires PCDeck Pro', 'warn');
           return;
         }
         if (btn30) btn30.classList.remove('active');
@@ -6805,7 +6846,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         state.streamFps = 60;
         sendStreamConfig();
         saveAllSettings(false);
-        showToast('Screen streaming set to 60 FPS Ultra', 'success', '🖥️');
+        showToast('Screen streaming set to 60 FPS Ultra', 'success', '<svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg>');
       } else {
         if (btn60) btn60.classList.remove('active');
         if (btn30) btn30.classList.add('active');
@@ -6813,7 +6854,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         state.streamFps = 30;
         sendStreamConfig();
         saveAllSettings(false);
-        showToast('Screen streaming set to 30 FPS Standard', 'success', '🎬');
+        showToast('Screen streaming set to 30 FPS Standard', 'success');
       }
     };
 
@@ -6829,7 +6870,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if ((selFps.value === '60' || selFps.value === '120') && !window.isProUnlocked()) {
           selFps.value = '30';
           window.openProUpgradeModal();
-          showToast('60 FPS High-Refresh Streaming requires PCDeck Pro', 'info', '⭐');
+          showToast('60 FPS High-Refresh Streaming requires PCDeck Pro', 'info');
           return;
         }
         window.setStreamFps(selFps.value === '30' ? 30 : 60);
@@ -6843,27 +6884,27 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         const val = selClarity.value;
         state.autoQualityMode = val;
         if (val === 'auto') {
-          showToast('✨ Auto Dynamic Quality Enabled (Real-Time AI-Tuned)', 'success', '✨');
+          showToast('Auto Dynamic Quality Enabled (Adaptive Streaming)', 'success');
           updateAdaptiveQuality(state.latency || 25);
         } else if (val === 'ultrahd') {
           state.streamQuality = 90;
           state.streamScale = 1.0;
-          showToast('Ultra HD Crystal Enabled (100% Native · 90Q)', 'success', '✨');
+          showToast('Ultra HD Crystal Enabled (100% Native · 90Q)', 'success');
           sendStreamConfig();
         } else if (val === 'sharp') {
           state.streamQuality = 80;
           state.streamScale = 0.90;
-          showToast('High Clarity Fixed (90% Scale · 80Q)', 'success', '🔍');
+          showToast('High Clarity Fixed (90% Scale · 80Q)', 'success');
           sendStreamConfig();
         } else if (val === 'speed') {
           state.streamQuality = 55;
           state.streamScale = 0.65;
-          showToast('Low Latency Speed (65% Scale · 55Q)', 'info', '⚡');
+          showToast('Low Latency Speed (65% Scale · 55Q)', 'info');
           sendStreamConfig();
         } else {
           state.streamQuality = 70;
           state.streamScale = 0.80;
-          showToast('Balanced Fast (80% Scale · 70Q)', 'success', '🔍');
+          showToast('Balanced Fast (80% Scale · 70Q)', 'success');
           sendStreamConfig();
         }
         saveAllSettings(false);
@@ -6926,7 +6967,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         vibrate(20);
         if (!window.isProUnlocked()) {
           window.openProUpgradeModal();
-          showToast('Uncapped Gigabit LAN File Bandwidth requires PCDeck Pro', 'warn', '⭐');
+          showToast('Uncapped Gigabit LAN File Bandwidth requires PCDeck Pro', 'warn');
           return;
         }
         const nextSpeed = state.transferSpeed === 'turbo' ? 'standard' : 'turbo';
@@ -6941,7 +6982,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (!window.isProUnlocked()) {
           if (selSpeed) selSpeed.value = 'standard';
           window.openProUpgradeModal();
-          showToast('Uncapped Gigabit LAN File Bandwidth requires PCDeck Pro', 'warn', '⭐');
+          showToast('Uncapped Gigabit LAN File Bandwidth requires PCDeck Pro', 'warn');
           syncTransferSpeedButtons();
           return;
         }
@@ -6949,13 +6990,13 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         state.transferSpeed = 'turbo';
         saveAllSettings(false);
         syncTransferSpeedButtons();
-        showToast('Fast Transfer: Turbo Gigabit Mode Active (Uncapped)', 'success', '⚡');
+        showToast('Fast Transfer: Turbo Gigabit Mode Active (Uncapped)', 'success');
       } else {
         if (selSpeed) selSpeed.value = 'standard';
         state.transferSpeed = 'standard';
         saveAllSettings(false);
         syncTransferSpeedButtons();
-        showToast('Fast Transfer: Standard Mode Active (10 MB/s)', 'info', '📁');
+        showToast('Fast Transfer: Standard Mode Active (10 MB/s)', 'info');
       }
     };
 
@@ -6980,7 +7021,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (selSpeed.value === 'turbo' && !window.isProUnlocked()) {
           selSpeed.value = 'standard';
           window.openProUpgradeModal();
-          showToast('Uncapped LAN File Bandwidth requires PCDeck Pro', 'info', '⭐');
+          showToast('Uncapped LAN File Bandwidth requires PCDeck Pro', 'info');
           syncTransferSpeedButtons();
           return;
         }
@@ -6996,7 +7037,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           selTheme.value = 'default';
           applyChromaTheme('default');
           window.showProCornerCard();
-          showToast('Custom Accent Themes require PCDeck Pro', 'info', '⭐');
+          showToast('Custom Accent Themes require PCDeck Pro', 'info');
         } else {
           applyChromaTheme(selTheme.value);
         }
@@ -7030,7 +7071,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       const btnNext = document.getElementById('btn-onboarding-next');
       if (btnPrev) btnPrev.style.display = currentSlide > 1 ? 'inline-flex' : 'none';
       if (btnNext) {
-        btnNext.textContent = currentSlide === 1 ? 'NEXT: CONNECT ➔' : '📷 SCAN PC QR CODE ➔';
+        btnNext.textContent = currentSlide === 1 ? 'NEXT: CONNECT' : 'SCAN PC QR CODE';
       }
     }
 
@@ -7089,7 +7130,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         } else {
           window.open(pcWebsiteUrl, '_blank');
         }
-        showToast('Opening PCDeck Website...', 'success', '🌐');
+        showToast('Opening PCDeck Website...', 'success');
       };
     }
 
@@ -7101,7 +7142,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         } else {
           window.open(pcTutorialsUrl, '_blank');
         }
-        showToast('Opening Setup Guides & Tutorials...', 'success', '📖');
+        showToast('Opening Setup Guides & Tutorials...', 'success');
       };
     }
 
@@ -7116,10 +7157,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           }).catch(() => {});
         } else if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(pcWebsiteUrl).then(() => {
-            showToast('Copied link: pcdeck-pro.vercel.app', 'success', '📋');
+            showToast('Copied link: pcdeck-pro.vercel.app', 'success');
           });
         } else {
-          showToast('Visit pcdeck-pro.vercel.app on your PC', 'info', '🌐');
+          showToast('Visit pcdeck-pro.vercel.app on your PC', 'info');
         }
       };
     }
@@ -7178,7 +7219,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       },
       ps: {
         name: 'PlayStation',
-        buttons: { y: '△', x: '□', b: '○', a: '✕' },
+        buttons: { y: '△', x: '□', b: '○', a: 'X' },
         sublabels: { y: 'TRIANGLE', x: 'SQUARE', b: 'CIRCLE', a: 'CROSS' },
         triggers: { ltTitle: 'L2', ltSub: 'AIM', rtTitle: 'R2', rtSub: 'FIRE', lbTitle: 'L1', rbTitle: 'R1' },
         colors: {
@@ -7282,7 +7323,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (rbTitle) rbTitle.textContent = conf.triggers.rbTitle;
       }
 
-      showToast(`Gamepad Preset: ${conf.name}`, 'success', '🎮');
+      showToast(`Gamepad Preset: ${conf.name}`, 'success');
     }
 
     // Preset chips click
@@ -7307,7 +7348,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         bottomPresetBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         setTimeout(() => bottomPresetBar.classList.remove('pulse-highlight'), 1200);
       }
-      showToast('🎮 Console Layouts: Xbox 360, PlayStation, Racing, WASD/FPS', 'info', '🎮');
+      showToast(' Console Layouts: Xbox 360, PlayStation, Racing, WASD/FPS', 'info');
     }
 
     if (btnTopMenu) {
@@ -7339,7 +7380,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         e.preventDefault();
         e.stopPropagation();
         setGamepadMode(false);
-        showToast('Switched to Trackpad', 'info', '🖱️');
+        showToast('Switched to Trackpad', 'info', '️');
       };
     }
 
@@ -7352,7 +7393,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         let idx = (SENS_OPTIONS.indexOf(gpSensitivity) + 1) % SENS_OPTIONS.length;
         gpSensitivity = SENS_OPTIONS[idx];
         btnSens.textContent = `Sens: ${gpSensitivity.toFixed(1)}x`;
-        showToast(`Stick Sensitivity: ${gpSensitivity.toFixed(1)}x`, 'info', '🕹️');
+        showToast(`Stick Sensitivity: ${gpSensitivity.toFixed(1)}x`, 'info', '️');
       };
     }
 
@@ -7362,7 +7403,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       btnHaptics.onclick = () => {
         gpHaptics = !gpHaptics;
         btnHaptics.classList.toggle('active', gpHaptics);
-        btnHaptics.textContent = gpHaptics ? '📳 Haptics: ON' : '📴 Haptics: OFF';
+        btnHaptics.textContent = gpHaptics ? 'Haptics: ON' : 'Haptics: OFF';
         vibrate(gpHaptics ? 25 : 5);
       };
     }
@@ -7373,15 +7414,15 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     // Default Gamepad Layout
     const DEFAULT_GP_LAYOUT = {
       elements: {
-        'elem-left-stick': { scale: 1.0, hidden: false, name: '🕹️ Left Stick (Move)' },
-        'elem-dpad': { scale: 1.0, hidden: false, name: '➕ 3D D-Pad' },
-        'elem-actions': { scale: 1.0, hidden: false, name: '🎯 Action Diamond' },
-        'elem-right-stick': { scale: 1.0, hidden: false, name: '🕹️ Right Stick (Aim)' },
-        'elem-lt': { scale: 1.0, hidden: false, name: '🎯 Left Trigger (LT)' },
-        'elem-lb': { scale: 1.0, hidden: false, name: '⚡ Left Bumper (LB)' },
-        'elem-rt': { scale: 1.0, hidden: false, name: '🔥 Right Trigger (RT)' },
-        'elem-rb': { scale: 1.0, hidden: false, name: '💥 Right Bumper (RB)' },
-        'elem-sys': { scale: 1.0, hidden: false, name: '🎮 System Hub' },
+        'elem-left-stick': { scale: 1.0, hidden: false, name: 'Left Stick (Move)' },
+        'elem-dpad': { scale: 1.0, hidden: false, name: '3D D-Pad' },
+        'elem-actions': { scale: 1.0, hidden: false, name: 'Action Diamond' },
+        'elem-right-stick': { scale: 1.0, hidden: false, name: 'Right Stick (Aim)' },
+        'elem-lt': { scale: 1.0, hidden: false, name: 'Left Trigger (LT)' },
+        'elem-lb': { scale: 1.0, hidden: false, name: 'Left Bumper (LB)' },
+        'elem-rt': { scale: 1.0, hidden: false, name: 'Right Trigger (RT)' },
+        'elem-rb': { scale: 1.0, hidden: false, name: 'Right Bumper (RB)' },
+        'elem-sys': { scale: 1.0, hidden: false, name: 'System Hub' },
         'elem-center-spine': { scale: 1.0, hidden: false, name: 'PCDeck Emblem' }
       },
       customButtons: []
@@ -7545,7 +7586,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       if (toolbar) toolbar.style.display = editing ? 'flex' : 'none';
 
       if (editing) {
-        showToast('✏️ Tap any control to drag or resize', 'info', '🎮');
+        showToast('️ Tap any control to drag or resize', 'info');
         selectGpElement(selectedGpElemId || 'elem-left-stick');
       } else {
         selectGpElement(null);
@@ -7569,7 +7610,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         vibrate(25);
         try {
           localStorage.setItem('pcdeck_gamepad_custom_layout', JSON.stringify(gpCustomLayout));
-          showToast('💾 Custom Layout Saved!', 'success', '✓');
+          showToast(' Custom Layout Saved!', 'success');
         } catch (e) {
           console.error('[GamepadLayout] Save error:', e);
         }
@@ -7585,7 +7626,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         gpCustomLayout = JSON.parse(JSON.stringify(DEFAULT_GP_LAYOUT));
         applyGpLayout();
         selectGpElement(null);
-        showToast('🔄 Restored Factory Layout', 'info', '🎮');
+        showToast(' Restored Factory Layout', 'info');
       };
     }
 
@@ -7662,7 +7703,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           const elElem = document.querySelector(`[data-elem-id="${selectedGpElemId}"]`);
           if (elElem) elElem.remove();
         }
-        showToast('🗑️ Control Removed', 'info', '✕');
+        showToast('<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg> Control Removed', 'info');
         selectGpElement(null);
       };
     }
@@ -7715,7 +7756,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         }
         if (addModal) addModal.style.display = 'none';
         selectGpElement(elemKey);
-        showToast(`➕ Added ${card.querySelector('.item-name').textContent}`, 'success', '🎮');
+        showToast(` Added ${card.querySelector('.item-name').textContent}`, 'success');
       };
     });
 
@@ -7739,7 +7780,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         renderCustomGpButton(newBtnConf);
         if (addModal) addModal.style.display = 'none';
         selectGpElement(customId);
-        showToast(`➕ Added Button: ${label}`, 'success', '⌨️');
+        showToast(` Added Button: ${label}`, 'success', '️');
       };
     });
 
@@ -7752,7 +7793,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       btnCustomAddConfirm.onclick = () => {
         const keyName = (customKeyNameInput.value || '').trim().toLowerCase();
         if (!keyName) {
-          showToast('Please enter a key name', 'warning', '⚠️');
+          showToast('Please enter a key name', 'warning', '️');
           return;
         }
         const label = (customKeyLabelInput.value || '').trim() || keyName.toUpperCase();
@@ -7772,7 +7813,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (customKeyLabelInput) customKeyLabelInput.value = '';
         if (addModal) addModal.style.display = 'none';
         selectGpElement(customId);
-        showToast(`➕ Added Custom Key: ${label}`, 'success', '⚙️');
+        showToast(` Added Custom Key: ${label}`, 'success', '️');
       };
     }
 
@@ -7881,7 +7922,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       if (tabTrackpad) tabTrackpad.classList.toggle('gamepad-mode-active', active);
       if (btnToggle) {
         btnToggle.style.background = active ? 'var(--neo-lime)' : 'var(--neo-cyan)';
-        btnToggle.textContent = active ? '🖱️ Trackpad' : '🎮 Gamepad';
+        btnToggle.textContent = active ? 'Trackpad' : 'Gamepad';
       }
       if (active) {
         applyGamepadPreset(activeGpPreset);
@@ -7911,10 +7952,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       btnInstallGpDriver.onclick = () => {
         if (mainWs && mainWs.readyState === WebSocket.OPEN) {
           vibrate(20);
-          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info', '🎮');
+          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info');
           mainWs.send('install_gamepad_driver_request');
         } else {
-          showToast('PC not connected', 'error', '⚠️');
+          showToast('PC not connected', 'error', '️');
         }
       };
     }
@@ -7925,10 +7966,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (state.gamepadDriverInstalled === false) {
           if (mainWs && mainWs.readyState === WebSocket.OPEN) {
             vibrate(20);
-            showToast('Requesting PC Virtual Gamepad Driver installation...', 'info', '🎮');
+            showToast('Requesting PC Virtual Gamepad Driver installation...', 'info');
             mainWs.send('install_gamepad_driver_request');
           } else {
-            showToast('PC not connected', 'error', '⚠️');
+            showToast('PC not connected', 'error', '️');
           }
         }
       };
@@ -7957,7 +7998,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
 
     // =========================================================================
-    // ➕ D-PAD TOUCH & FLUID 8-WAY DRAG ENGINE
+    //  D-PAD TOUCH & FLUID 8-WAY DRAG ENGINE
     // =========================================================================
     const dpadDisc = document.getElementById('gp-dpad-disc');
     const dpadButtons = {
@@ -8046,7 +8087,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
 
     // =========================================================================
-    // 🎯 ABXY ACTION DIAMOND FLUID SLIDE & TOUCH ENGINE
+    //  ABXY ACTION DIAMOND FLUID SLIDE & TOUCH ENGINE
     // =========================================================================
     const actionDiamond = document.getElementById('gp-action-diamond');
     let actionActiveBtn = null;
@@ -8114,7 +8155,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
 
     // =========================================================================
-    // 🔘 BIND ALL INDIVIDUAL BUTTONS (Triggers, Bumpers, System, Stick Clicks)
+    //  BIND ALL INDIVIDUAL BUTTONS (Triggers, Bumpers, System, Stick Clicks)
     // =========================================================================
     const gpButtons = document.querySelectorAll('#gamepad-container [data-gp]');
     gpButtons.forEach((btn) => {
@@ -8286,7 +8327,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
   }
 
   /* ==========================================================================
-     ⚡ GYRO SUPER MOTION ENGINE (TILT STEERING & MOTION AIMING)
+     GYRO SUPER MOTION ENGINE (TILT STEERING & MOTION AIMING)
      ========================================================================== */
   let gyroEngine = null;
 
@@ -8366,7 +8407,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       }
       if (btnBottomChip) {
         btnBottomChip.classList.toggle('active', active);
-        btnBottomChip.textContent = active ? '⚡ Gyro: ON' : '⚡ Gyro: OFF';
+        btnBottomChip.textContent = active ? 'Gyro: ON' : 'Gyro: OFF';
         btnBottomChip.style.background = active ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 255, 255, 0.05)';
         btnBottomChip.style.borderColor = active ? 'var(--neo-lime)' : 'rgba(255, 255, 255, 0.2)';
         btnBottomChip.style.color = active ? 'var(--neo-lime)' : 'var(--text-muted)';
@@ -8406,7 +8447,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       filteredPitch = 0;
       if (showFeedback) {
         vibrate([15, 40, 20]);
-        showToast('🎯 Gyro Neutral Calibrated', 'success', '⚡');
+        showToast(' Gyro Neutral Calibrated', 'success');
       }
     }
 
@@ -8607,7 +8648,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       saveConfig();
       updateUIState();
       vibrate(config.enabled ? 25 : 15);
-      showToast(config.enabled ? '⚡ Gyro Super: ON' : 'Gyro Super: OFF', config.enabled ? 'success' : 'info', '⚡');
+      showToast(config.enabled ? ' Gyro Super: ON' : 'Gyro Super: OFF', config.enabled ? 'success' : 'info');
       if (config.enabled && gamepadActive) {
         start();
       } else {
@@ -8652,7 +8693,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         saveConfig();
         updateUIState();
         vibrate(15);
-        showToast(`Gyro Mode: ${card.querySelector('.mode-name').textContent}`, 'info', '🎮');
+        showToast(`Gyro Mode: ${card.querySelector('.mode-name').textContent}`, 'info');
       };
     });
 
@@ -8728,7 +8769,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
   }
 
   /* ==========================================================================
-     🎮 IN-DISPLAY MOBILE GAMING CONTROLLER HUD (PUBG / COD STYLE)
+     IN-DISPLAY MOBILE GAMING CONTROLLER HUD (PUBG / COD STYLE)
      ========================================================================== */
   function initScreenGamepadHUD() {
     const btnToggleHud = document.getElementById('btn-screen-gamepad-hud');
@@ -8858,7 +8899,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           selectHudElement(null);
         }
         vibrate(20);
-        showToast(`🗑️ Button Removed`, 'info', '✕');
+        showToast(`<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg> Button Removed`, 'info');
       }
     }
 
@@ -8929,13 +8970,13 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           mainWs.send('driver_check');
         }
         vibrate(30);
-        showToast('🎮 In-Display Gaming HUD Active (Full Screen View)', 'info', '🎮');
+        showToast(' In-Display Gaming HUD Active (Full Screen View)', 'info');
       } else {
         exitEditMode();
         hudOverlay.style.display = 'none';
         sendCommand('gr');
         vibrate(15);
-        showToast('Gaming HUD Closed', 'info', '🎮');
+        showToast('Gaming HUD Closed', 'info');
       }
     }
 
@@ -8950,10 +8991,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (hudDriverBanner) hudDriverBanner.style.display = 'block';
         if (mainWs && mainWs.readyState === WebSocket.OPEN) {
           vibrate(20);
-          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info', '🎮');
+          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info');
           mainWs.send('install_gamepad_driver_request');
         } else {
-          showToast('PC not connected', 'error', '⚠️');
+          showToast('PC not connected', 'error', '️');
         }
       };
     }
@@ -8963,10 +9004,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       btnHudDriverAction.onclick = () => {
         if (mainWs && mainWs.readyState === WebSocket.OPEN) {
           vibrate(20);
-          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info', '🎮');
+          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info');
           mainWs.send('install_gamepad_driver_request');
         } else {
-          showToast('PC not connected', 'error', '⚠️');
+          showToast('PC not connected', 'error', '️');
         }
       };
     }
@@ -8977,7 +9018,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         emulationMode = emulationMode === 'xinput' ? 'wasd' : 'xinput';
         currentLayout.mode = emulationMode;
         btnModeSwitch.textContent = emulationMode === 'xinput' ? 'Mode: XInput' : 'Mode: PC Keys';
-        showToast(`Emulation Mode: ${emulationMode === 'xinput' ? 'Virtual Xbox 360' : 'PC Keyboard/Mouse'}`, 'info', '🕹️');
+        showToast(`Emulation Mode: ${emulationMode === 'xinput' ? 'Virtual Xbox 360' : 'PC Keyboard/Mouse'}`, 'info', '️');
       };
     }
 
@@ -8987,7 +9028,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       state.gamepadHudEditing = true;
       hudContainer.classList.add('hud-editing');
       editorToolbar.style.display = 'flex';
-      btnEditLayout.textContent = '🔒 Exit Edit';
+      btnEditLayout.textContent = 'Exit Edit';
       btnEditLayout.classList.add('active');
 
       // Auto-select first available element
@@ -8995,7 +9036,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       if (firstElem) {
         selectHudElement(firstElem.dataset.elemId);
       }
-      showToast('✏️ Tap any key to resize, or drag to position', 'info', '✏️');
+      showToast('️ Tap any key to resize, or drag to position', 'info', '️');
     }
 
     function exitEditMode() {
@@ -9003,7 +9044,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       state.gamepadHudEditing = false;
       hudContainer.classList.remove('hud-editing');
       editorToolbar.style.display = 'none';
-      btnEditLayout.textContent = '✏️ Edit Layout';
+      btnEditLayout.textContent = 'Edit Layout';
       btnEditLayout.classList.remove('active');
       selectHudElement(null);
     }
@@ -9019,7 +9060,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     // Per-Key Size Control (Slider + Buttons)
     function setElementScale(scaleRatio) {
       if (!selectedElemId) {
-        showToast('Tap a button on screen to select it first', 'warn', '👆');
+        showToast('Tap a button on screen to select it first', 'warn');
         return;
       }
       const elElem = hudContainer.querySelector(`[data-elem-id="${selectedElemId}"]`);
@@ -9129,7 +9170,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
         localStorage.setItem('pcdeck_gamepad_hud_layout', JSON.stringify(currentLayout));
         exitEditMode();
-        showToast('💾 Gaming HUD Layout Saved Permanently!', 'success', '💾');
+        showToast(' Gaming HUD Layout Saved Permanently!', 'success');
       };
     }
 
@@ -9156,7 +9197,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           </div>
           <div id="hud-elem-rt" class="hud-elem hud-trigger-btn hud-trigger-rt" data-elem-id="rt" data-gp="rt" style="right: 6%; top: 14%;">
             <span class="hud-btn-text">RT</span>
-            <span class="hud-btn-sub">FIRE 💥</span>
+            <span class="hud-btn-sub">FIRE</span>
           </div>
           <div id="hud-elem-rb" class="hud-elem hud-trigger-btn hud-trigger-rb" data-elem-id="rb" data-gp="rb" style="right: 20%; top: 14%;">
             <span class="hud-btn-text">RB</span>
@@ -9185,10 +9226,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
             <span>2️⃣ SEC</span>
           </div>
           <div id="hud-elem-btn-tab" class="hud-elem hud-tactical-pill" data-elem-id="btn-tab" data-gp="back" style="left: 33%; bottom: 12%;">
-            <span>🎒 TAB</span>
+            <span>TAB</span>
           </div>
           <div id="hud-elem-btn-esc" class="hud-elem hud-tactical-pill" data-elem-id="btn-esc" data-gp="start" style="left: 33%; bottom: 24%;">
-            <span>⚙️ ESC</span>
+            <span>ESC</span>
           </div>
         `;
         const newElems = hudContainer.querySelectorAll('.hud-elem');
@@ -9259,7 +9300,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           label = chosenPresetBtn.dataset.label || key.toUpperCase();
           gp = chosenPresetBtn.dataset.gp || 'a';
         } else {
-          showToast('Please select a button or type a custom key', 'warn', '⚠️');
+          showToast('Please select a button or type a custom key', 'warn', '️');
           return;
         }
 
@@ -9283,7 +9324,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         elNew.style.transform = 'scale(1.0)';
         addBtnModal.style.display = 'none';
         selectHudElement(customId);
-        showToast(`➕ Added "${label}" (Drag to reposition)`, 'success', '➕');
+        showToast(` Added "${label}" (Drag to reposition)`, 'success');
         vibrate(25);
       };
     }
@@ -9415,7 +9456,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const initialElems = hudContainer.querySelectorAll('.hud-elem');
     initialElems.forEach(bindHudElementEvents);
 
-    // 🕹️ Virtual Joystick Engine
+    // ️ Virtual Joystick Engine
     let joystickActive = false;
     let joystickPointerId = null;
     let lastStickX = 0, lastStickY = 0;
@@ -9549,7 +9590,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (mainWs && mainWs.readyState === WebSocket.OPEN) {
           mainWs.send('install_mic_driver_request');
         } else {
-          showToast('PC not connected', 'error', '⚠️');
+          showToast('PC not connected', 'error', '️');
         }
       };
     }
@@ -9590,7 +9631,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
               if (granted) {
                 startMic();
               } else {
-                showToast('Microphone permission required for voice input', 'warning', '🎙️');
+                showToast('Microphone permission required for voice input', 'warning', '️');
               }
             };
             window.AndroidApp.startNativeMic(host, 8002);
@@ -9621,7 +9662,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
             }
             const toolMicSub = document.getElementById('tool-mic-status');
             if (toolMicSub) toolMicSub.textContent = 'Active (Native Direct)';
-            showToast('Microphone Active (Hardware Low-Latency)', 'success', '🎙️');
+            showToast('Microphone Active (Hardware Low-Latency)', 'success', '️');
             return;
           }
         } catch (nativeErr) {
@@ -9723,20 +9764,20 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         const toolMicSub = document.getElementById('tool-mic-status');
         if (toolMicSub) toolMicSub.textContent = 'Active';
 
-        showToast('Microphone Active (Streaming to PC)', 'success', '🎙️');
+        showToast('Microphone Active (Streaming to PC)', 'success', '️');
         updateVu();
       } catch (err) {
         console.error('[Mic] Start error:', err);
         const msg = (err && err.message) ? err.message : String(err);
         if (err.name === 'NotAllowedError' || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('permission')) {
-          showToast('Mic Permission Needed: Allow in Phone Settings > Apps > PCDeck', 'error', '🎙️');
+          showToast('Mic Permission Needed: Allow in Phone Settings > Apps > PCDeck', 'error', '️');
           if (window.AndroidApp && typeof window.AndroidApp.openAppPermissionsSettings === 'function') {
             setTimeout(() => {
               window.AndroidApp.openAppPermissionsSettings();
             }, 800);
           }
         } else {
-          showToast('Mic Access Denied: ' + msg, 'error', '⚠️');
+          showToast('Mic Access Denied: ' + msg, 'error', '️');
         }
       }
     }
@@ -9798,7 +9839,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       btnMute.onclick = () => {
         vibrate(15);
         micMuted = !micMuted;
-        btnMute.textContent = micMuted ? '🔊 UNMUTE' : '🔇 MUTE';
+        btnMute.textContent = micMuted ? 'UNMUTE' : 'MUTE';
         btnMute.style.background = micMuted ? 'var(--neo-yellow)' : '';
       };
     }
@@ -9842,11 +9883,11 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
             opt.value = dev.deviceId;
             let label = dev.label || `Camera ${idx + 1}`;
             if (label.toLowerCase().includes('back') || label.toLowerCase().includes('rear') || label.toLowerCase().includes('environment')) {
-              opt.textContent = `📷 Rear: ${label}`;
+              opt.textContent = `Rear: ${label}`;
             } else if (label.toLowerCase().includes('front') || label.toLowerCase().includes('user')) {
-              opt.textContent = `🤳 Front: ${label}`;
+              opt.textContent = `Front: ${label}`;
             } else {
-              opt.textContent = `📷 ${label}`;
+              opt.textContent = label;
             }
             deviceSelect.appendChild(opt);
           });
@@ -9862,7 +9903,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (mainWs && mainWs.readyState === WebSocket.OPEN) {
           mainWs.send('install_cam_driver_request');
         } else {
-          showToast('PC not connected', 'error', '⚠️');
+          showToast('PC not connected', 'error', '️');
         }
       };
     }
@@ -9908,7 +9949,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
             window.openProUpgradeModal();
           }
           if (typeof showToast === 'function') {
-            showToast('1080p 60 FPS HD Webcam requires PCDeck Pro', 'warn', '⭐');
+            showToast('1080p 60 FPS HD Webcam requires PCDeck Pro', 'warn');
           }
           return;
         }
@@ -10073,10 +10114,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         const toolCamSub = document.getElementById('tool-cam-status');
         if (toolCamSub) toolCamSub.textContent = 'Active';
 
-        showToast('Camera Broadcasting to PC', 'success', '📷');
+        showToast('Camera Broadcasting to PC', 'success');
         requestAnimationFrame(captureFrame);
       } catch (err) {
-        showToast('Camera Access Denied: ' + err.message, 'error', '⚠️');
+        showToast('Camera Access Denied: ' + err.message, 'error', '️');
       }
     }
 
@@ -10131,7 +10172,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
             await track.applyConstraints({ advanced: [{ torch: camTorchActive }] });
             btnTorch.style.background = camTorchActive ? 'var(--neo-lime)' : 'var(--neo-yellow)';
             btnTorch.style.color = '#000';
-            showToast(`Torch: ${camTorchActive ? 'ON' : 'OFF'}`, 'info', '💡');
+            showToast(`Torch: ${camTorchActive ? 'ON' : 'OFF'}`, 'info');
           } catch (e) {
             console.warn('Torch toggle error:', e);
           }
@@ -10195,7 +10236,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           statusBox.style.display = 'block';
           statusBox.style.background = 'rgba(0, 240, 255, 0.15)';
           statusBox.style.color = 'var(--neo-cyan)';
-          statusBox.textContent = '⚡ Running 1-Click Silent Setup on PC...';
+          statusBox.textContent = 'Running 1-Click Silent Setup on PC...';
         }
         sendCommand('install_driver_request');
       };
@@ -10247,10 +10288,11 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
 
     if (isHttp && !isNativeApp) {
-      // In web browser mode: seamlessly auto-connect with ZERO modal popups!
+      // In web browser mode: seamlessly auto-connect with ZERO modal popups and open ready-to-use trackpad!
       if (el.connectModal) el.connectModal.classList.remove('show');
       const obModal = document.getElementById('onboarding-modal');
       if (obModal) obModal.classList.remove('show');
+      switchTab('tab-trackpad');
       connect();
     } else if (savedIp) {
       connect();
@@ -10367,7 +10409,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           }
           if (modalNotes && data.releaseNotes) modalNotes.innerText = data.releaseNotes;
           if (btnNowLabel) {
-            btnNowLabel.innerText = hasPlayStore ? '🛍️ OPEN PLAY STORE ➔' : '🌐 GET UPDATE ON WEBSITE ➔';
+            btnNowLabel.innerText = hasPlayStore ? 'OPEN PLAY STORE' : 'GET UPDATE ON WEBSITE';
           }
 
           if (updateModal) {
@@ -10378,12 +10420,12 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         } else {
           if (updateStatusText) updateStatusText.innerText = 'PCDeck is up to date (v' + (data.versionName || CURRENT_APP_VERSION_NAME) + ')';
           if (isManual) {
-            showToast('You are on the latest version of PCDeck!', 'success', '✨');
+            showToast('You are on the latest version of PCDeck!', 'success');
           }
         }
       } catch (err) {
         if (isManual) {
-          showToast('Could not check for updates. Check internet.', 'warn', '⚠️');
+          showToast('Could not check for updates. Check internet.', 'warn', '️');
         }
         if (updateStatusText) updateStatusText.innerText = 'Latest version verified';
       }
@@ -10395,7 +10437,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         updateStatusText.innerText = `Update error: ${err}`;
         updateStatusText.style.color = '#ff2a85';
       }
-      showToast(`Update failed: ${err}`, 'warn', '⚠️');
+      showToast(`Update failed: ${err}`, 'warn', '️');
     };
 
     if (btnCheckUpdates) {
@@ -10410,7 +10452,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           const pcPing = await fetch(`http://${host}:${port}/api/ping`, { mode: 'cors', cache: 'no-store' });
           if (pcPing.ok) {
             const pcApkUrl = `http://${host}:${port}/PCDeck.apk`;
-            showToast('Downloading latest update from PC...', 'success', '⚡');
+            showToast('Downloading latest update from PC...', 'success');
             if (updateStatusText) updateStatusText.innerText = 'Downloading update from PC...';
             if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
               window.AndroidApp.downloadAndInstallApk(pcApkUrl);
@@ -10450,10 +10492,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         const pcApkUrl = `http://${host}:${port}/PCDeck.apk`;
 
         if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
-          showToast('Downloading update from PC...', 'success', '⚡');
+          showToast('Downloading update from PC...', 'success');
           window.AndroidApp.downloadAndInstallApk(pcApkUrl);
         } else if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
-          showToast(isPlayStoreTarget ? 'Opening Google Play Store...' : 'Opening PCDeck Website...', 'success', '🌐');
+          showToast(isPlayStoreTarget ? 'Opening Google Play Store...' : 'Opening PCDeck Website...', 'success');
           window.AndroidApp.openUrl(targetUpdateUrl);
         } else {
           window.open(targetUpdateUrl, '_blank');
