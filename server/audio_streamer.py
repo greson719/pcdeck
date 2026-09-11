@@ -19,7 +19,10 @@ import numpy as np
 try:
     import pyaudiowpatch as pyaudio
 except ImportError:
-    import pyaudio
+    try:
+        import pyaudio
+    except ImportError:
+        pyaudio = None
 
 
 class AudioStreamer:
