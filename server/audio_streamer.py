@@ -45,7 +45,7 @@ class AudioStreamer:
         # Listeners count
         self.active_listeners = 0
 
-    def _find_loopback_device(self, p: pyaudio.PyAudio):
+    def _find_loopback_device(self, p):
         """Locates the default output speaker's WASAPI loopback device."""
         # 0. Direct pyaudiowpatch default loopback API (fastest & most accurate on Windows)
         if hasattr(p, "get_default_wasapi_loopback"):
