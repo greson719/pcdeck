@@ -12,7 +12,6 @@ All required release binaries, store artwork, and high-DPI manifest assets are l
 | Asset Type | Exact File Path | Specs |
 |---|---|:---:|
 | **Production Win32 Installer (.exe)** | [msstore_assets/PCDeck-Setup.exe](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/PCDeck-Setup.exe) | Windows Inno Setup Installer (x64, v2.7.0) |
-| **Production MSIX Package** | [msstore_assets/PCDeck.msix](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/PCDeck.msix) | Windows App Package (x64, v1.0.0.0) |
 | **Store 1:1 App Box Art / Logo** | [msstore_assets/StoreLogo_300x300.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/StoreLogo_300x300.png) | 300 × 300 (32-bit PNG) |
 | **Spotlight Hero Banner (Featured)** | [msstore_assets/StoreHero_2400x1200.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/StoreHero_2400x1200.png) | 2400 × 1200 (2:1 Hero Graphic) |
 | **Store Hero Banner (16:9)** | [msstore_assets/StoreHero_1920x1080.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/StoreHero_1920x1080.png) | 1920 × 1080 (16:9 Hero Graphic) |
@@ -238,29 +237,17 @@ Navigate to **Store listings > English (United States)**:
 
 ### Step 7: Packages & Installer Configuration
 
-Microsoft Store supports both **Win32 (.exe installers)** and **MSIX packages**.
-
-#### Option A: Win32 Application (.exe Installer) — [RECOMMENDED]
-*Why: Allows automatic DirectShow virtual camera registration, firewall configuration, and future virtual mic audio drivers without sandbox restrictions.*
+PCDeck distributes as a native 64-bit Windows Application Installer (.exe) with administrative capabilities to configure firewall rules and DirectShow virtual camera filters.
 
 1. Navigate to the **Package setup** or **Installer** page in Partner Center.
 2. Fill in the installer properties:
-   - **Installer download URL:** `https://pcdeck.vercel.app/PCDeck-Setup.exe` (or direct GitHub Release link `https://github.com/<username>/pcdeck/releases/download/v2.7.0/PCDeck-Setup.exe`)
+   - **Installer download URL:** `https://pcdeck.vercel.app/PCDeck-Setup.exe` (or direct GitHub Release link `https://github.com/greson719/pcdeck/releases/download/v2.7.0/PCDeck-Setup.exe`)
    - **Installer type:** `.exe`
    - **Silent install parameters:** `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`
    - **Silent uninstall command:** `"{autopf}\PCDeck\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`
    - **Main executable name:** `PCDeck.exe`
    - **Installer binary architecture:** `x64`
    - **Does installer require administrator elevation?**: Check **Yes** (required to register DirectShow filters and firewall rules).
-3. Click **Save**.
-
----
-
-#### Option B: MSIX Package Upload
-If you submit via MSIX container instead:
-1. Navigate to the **Packages** page.
-2. Drag and drop:
-    `c:\Users\GRESON\Documents\mobile_tracpad_for_pc\msstore_assets\PCDeck.msix`
 3. Click **Save**.
 
 ---
@@ -272,7 +259,7 @@ If you submit via MSIX container instead:
 
 ---
 
-##  4. How to Build & Publish Future Updates
+## 4. How to Build & Publish Future Updates
 
 ### For Win32 Installer (.exe):
 1. Increment the version in `version.json`, `version_info.txt`, and `PCDeck_Setup.iss` (e.g. `2.7.1`).
@@ -282,13 +269,8 @@ If you submit via MSIX container instead:
    python tools\build_installer.py
    ```
    *(Or simply run `build_installer.bat`)*
-3. Upload the new `PCDeck-Setup.exe` to your website or GitHub Release.
+3. Upload the new `PCDeck-Setup.exe` to GitHub Release / website.
 4. In Microsoft Partner Center, click **Update**, update the release notes and installer URL, and submit.
-
-### For MSIX Package:
-1. Increment `Version="x.x.x.x"` in `tools\build_msix.py`.
-2. Run `build_msix.bat`.
-3. Upload `msstore_assets\PCDeck.msix` to Partner Center.
 
 ---
 
