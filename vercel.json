@@ -11,11 +11,5 @@
       "destination": "/:path*",
       "permanent": true
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/PCDeck-Setup.exe",
-      "destination": "/api/download"
-    }
   ]
 }
