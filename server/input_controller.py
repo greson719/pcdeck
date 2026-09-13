@@ -385,6 +385,9 @@ class WindowsInputController:
     def click(self, button: str = 'left'):
         """Perform an ultra-low latency single click with atomic SendInput pair."""
         button = button.lower()
+        if button == 'double':
+            self.double_click('left')
+            return
         down_flag = MOUSEEVENTF_LEFTDOWN
         up_flag = MOUSEEVENTF_LEFTUP
         if button == 'right':
@@ -428,20 +431,20 @@ class WindowsInputController:
         self._accum_scroll_y += dy
         self._accum_scroll_x += dx
 
-        # Windows Win32 common controls (Windows File Explorer, Notepad, CMD, etc.)
-        # compute lines = zDelta / WHEEL_DELTA (120). Sub-120 deltas result in 0 lines
-        # scrolled and are discarded. We accumulate incoming touch deltas until full
-        # WHEEL_DELTA ticks (or multiples) are reached.
+        # Smooth high-precision sub-tick wheel dispatch (24 units = 1/5th of standard 120 tick).
+        # Allows modern Windows apps (browsers, documents, Windows 11 Explorer) to scroll
+        # with fluid, pixel-by-pixel responsiveness without 120-unit notch stutter.
+        SMOOTH_WHEEL_STEP = 24
         step_y = 0
-        if abs(self._accum_scroll_y) >= WHEEL_DELTA:
-            notches_y = int(self._accum_scroll_y / WHEEL_DELTA)
-            step_y = notches_y * WHEEL_DELTA
+        if abs(self._accum_scroll_y) >= SMOOTH_WHEEL_STEP:
+            notches_y = int(self._accum_scroll_y / SMOOTH_WHEEL_STEP)
+            step_y = notches_y * SMOOTH_WHEEL_STEP
             self._accum_scroll_y -= step_y
 
         step_x = 0
-        if abs(self._accum_scroll_x) >= WHEEL_DELTA:
-            notches_x = int(self._accum_scroll_x / WHEEL_DELTA)
-            step_x = notches_x * WHEEL_DELTA
+        if abs(self._accum_scroll_x) >= SMOOTH_WHEEL_STEP:
+            notches_x = int(self._accum_scroll_x / SMOOTH_WHEEL_STEP)
+            step_x = notches_x * SMOOTH_WHEEL_STEP
             self._accum_scroll_x -= step_x
 
         if step_y != 0:
@@ -691,6 +694,9 @@ class LinuxInputController:
                     pass
 
     def click(self, button: str = 'left'):
+        if button.lower() == 'double':
+            self.double_click('left')
+            return
         if self._mouse and self._Button:
             btn = self._get_button(button)
             if btn:

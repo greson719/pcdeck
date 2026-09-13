@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,15 +47,44 @@
       "inLanguage": "en",
       "datePublished": "2026-08-27",
       "dateModified": "2026-09-09",
-      "author": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
-      "publisher": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "author": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
       "proficiencyLevel": "Beginner",
       "about": [
-        { "@type": "Thing", "name": "Windows remote control" },
-        { "@type": "Thing", "name": "Local area network" },
-        { "@type": "Thing", "name": "Phone input" }
+        {
+          "@type": "Thing",
+          "name": "Windows remote control"
+        },
+        {
+          "@type": "Thing",
+          "name": "Local area network"
+        },
+        {
+          "@type": "Thing",
+          "name": "Phone input"
+        }
       ],
-      "mainEntityOfPage": { "@id": "https://pcdeck.vercel.app/control-windows-from-android/#webpage" }
+      "mainEntityOfPage": {
+        "@id": "https://pcdeck.vercel.app/control-windows-from-android/",
+        "@type": "WebPage"
+      },
+      "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
       "@type": "HowTo",
@@ -67,26 +96,61 @@
         {
           "@type": "HowToStep",
           "name": "Start the PCDeck server on Windows",
-          "text": "Run PCDeck.exe on Windows 10 or 11. It displays a pairing QR code on your monitor."
+          "text": "Run PCDeck.exe on Windows 10 or 11. It displays a pairing QR code on your monitor.",
+          "position": 1,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/control-windows-from-android/#step-1"
         },
         {
           "@type": "HowToStep",
           "name": "Scan QR code with phone",
-          "text": "Point your phone camera at the QR code and open the web remote in your browser (or use the Android APK)."
+          "text": "Point your phone camera at the QR code and open the web remote in your browser (or use the Android APK).",
+          "position": 2,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/control-windows-from-android/#step-2"
         },
         {
           "@type": "HowToStep",
           "name": "Select your desired control mode",
-          "text": "Switch between Trackpad, Keyboard, Screen Viewer, PC Audio Streaming, and File Manager from the navigation bar."
+          "text": "Switch between Trackpad, Keyboard, Screen Viewer, PC Audio Streaming, and File Manager from the navigation bar.",
+          "position": 3,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/control-windows-from-android/#step-3"
+        }
+      ],
+      "image": "https://pcdeck.vercel.app/og-image.png",
+      "tool": [
+        {
+          "@type": "HowToTool",
+          "name": "PC (Windows 10/11 or Linux)"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Smartphone or tablet (iOS / Android)"
         }
       ]
     },
     {
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
-        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://pcdeck.vercel.app/guides/" },
-        { "@type": "ListItem", "position": 3, "name": "Control Windows from Phone", "item": "https://pcdeck.vercel.app/control-windows-from-android/" }
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://pcdeck.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://pcdeck.vercel.app/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Control Windows from Phone",
+          "item": "https://pcdeck.vercel.app/control-windows-from-android/"
+        }
       ]
     },
     {
@@ -94,7 +158,11 @@
       "@id": "https://pcdeck.vercel.app/control-windows-from-android/#webpage",
       "url": "https://pcdeck.vercel.app/control-windows-from-android/",
       "name": "How to Control a Windows PC from Your Phone Over Local Wi-Fi",
-      "isPartOf": { "@type": "WebSite", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" }
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/"
+      }
     }
   ]
 }

@@ -36,7 +36,6 @@ def build():
         "--icon", "app_icon.ico",
         "--version-file", "version_info.txt",
         "--add-data", "static;static",
-        "--add-data", "drivers;drivers",
         "--add-data", "PCDeck.apk;.",
         "--add-data", "app_icon.ico;.",
         "--add-data", "PCDeck.ico;.",
@@ -83,12 +82,12 @@ def build():
     dist_exe = ROOT / "dist" / "PCDeck.exe"
     target_exe = ROOT / "PCDeck.exe"
     if dist_exe.exists():
-        for target in [target_exe, ROOT / "website" / "PCDeck.exe"]:
+        for target in [target_exe, ROOT / "website" / "PCDeck.exe", ROOT / "dist" / "msix_layout" / "PCDeck.exe"]:
             if target == target_exe or target.parent.exists():
                 try:
                     shutil.copy2(dist_exe, target)
                     print(f"\n[OK] SUCCESS: Copied PCDeck.exe to {target.relative_to(ROOT)} ({target.stat().st_size / (1024*1024):.1f} MB)")
-                except PermissionError:
+                except (PermissionError, OSError):
                     # Windows allows renaming a locked/running executable so the new binary can take its place
                     backup = target.with_name(f"{target.name}.old")
                     try:

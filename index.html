@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -63,7 +63,11 @@
       "@type": "SoftwareApplication",
       "@id": "https://pcdeck.vercel.app/#app",
       "name": "PCDeck",
-      "alternateName": ["PC Deck", "PC-Deck", "PCDeck Remote"],
+      "alternateName": [
+        "PC Deck",
+        "PC-Deck",
+        "PCDeck Remote"
+      ],
       "keywords": "PCDeck, PC Deck, wireless trackpad, phone as mouse, phone as keyboard, emergency monitor, stream pc audio to phone, offline file transfer",
       "url": "https://pcdeck.vercel.app/",
       "operatingSystem": "Windows 10, Windows 11 (64-bit), Linux (Ubuntu, Debian, Fedora, Arch, SteamOS), Android 5.0+, iOS, iPadOS, macOS",
@@ -72,11 +76,24 @@
       "downloadUrl": "https://pcdeck.vercel.app/",
       "softwareVersion": "2.7.0",
       "image": "https://pcdeck.vercel.app/og-image.png",
-      "softwareHelp": { "@type": "CreativeWork", "url": "https://pcdeck.vercel.app/#install-help" },
+      "softwareHelp": {
+        "@type": "CreativeWork",
+        "url": "https://pcdeck.vercel.app/#install-help"
+      },
       "description": "PCDeck turns your phone, tablet or browser into a wireless trackpad, keyboard, real-time desktop display viewer, audio receiver and high-speed file transfer hub for Windows and Linux over local Wi-Fi with zero cloud relay and no telemetry.",
       "offers": [
-        { "@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "PCDeck Free" },
-        { "@type": "Offer", "price": "3.99", "priceCurrency": "USD", "name": "PCDeck Pro — optional one-time lifetime license" }
+        {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "name": "PCDeck Free"
+        },
+        {
+          "@type": "Offer",
+          "price": "3.99",
+          "priceCurrency": "USD",
+          "name": "PCDeck Pro \u2014 optional one-time lifetime license"
+        }
       ],
       "featureList": [
         "Wireless multi-touch trackpad with gestures and clicking",
@@ -101,7 +118,7 @@
           "name": "Can I use a Windows PC if the monitor is broken or dead?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes — that is a primary reason people install PCDeck. It streams the desktop to your phone and accepts touch as mouse input, so a machine with a cracked, dark or disconnected monitor stays usable when Windows has an active display session. Set it to start with Windows and the phone can connect to a PC that never shows a picture locally. No second monitor or HDMI adapter is needed."
+            "text": "Yes \u2014 that is a primary reason people install PCDeck. It streams the desktop to your phone and accepts touch as mouse input, so a machine with a cracked, dark or disconnected monitor stays usable when Windows has an active display session. Set it to start with Windows and the phone can connect to a PC that never shows a picture locally. No second monitor or HDMI adapter is needed."
           }
         },
         {
@@ -114,7 +131,7 @@
         },
         {
           "@type": "Question",
-          "name": "Why does Windows say “Windows protected your PC”?",
+          "name": "Why does Windows say \u201cWindows protected your PC\u201d?",
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "SmartScreen can warn when a downloadable executable lacks established publisher reputation. A warning alone does not determine whether a program is malicious. Click More info, then Run anyway. You can verify the published SHA-256 checksum to confirm the binary matches the official release."
@@ -133,7 +150,7 @@
           "name": "How do I install the APK when Android says install blocked?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "PCDeck is distributed directly, so Android needs one-time permission to install it. Open the downloaded APK and allow “Install unknown apps” for whichever browser or file manager you used. If Play Protect says the app was not scanned, choose Install anyway. You only grant this once."
+            "text": "PCDeck is distributed directly, so Android needs one-time permission to install it. Open the downloaded APK and allow \u201cInstall unknown apps\u201d for whichever browser or file manager you used. If Play Protect says the app was not scanned, choose Install anyway. You only grant this once."
           }
         },
         {
@@ -149,7 +166,7 @@
           "name": "Is PCDeck free, and what does the paid version add?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "The free version covers trackpad gestures, the on-screen keyboard, 30 FPS screen streaming, PC audio streaming and the two-way file manager. A one-time 3.99 USD lifetime licence raises streaming to 60/120 FPS and unlocks faster transfers. There is no subscription, and the licence activates offline. Pro unlocks inside the app you already downloaded — there is no separate Pro build to download."
+            "text": "The free version covers trackpad gestures, the on-screen keyboard, 30 FPS screen streaming, PC audio streaming and the two-way file manager. A one-time 3.99 USD lifetime licence raises streaming to 60/120 FPS and unlocks faster transfers. There is no subscription, and the licence activates offline. Pro unlocks inside the app you already downloaded \u2014 there is no separate Pro build to download."
           }
         },
         {
@@ -184,29 +201,39 @@
       "name": "How to set up PCDeck in 30 seconds",
       "totalTime": "PT1M",
       "tool": [
-        { "@type": "HowToTool", "name": "Windows 10 or 11 PC" },
-        { "@type": "HowToTool", "name": "Any Smartphone (iPhone or Android)" }
+        {
+          "@type": "HowToTool",
+          "name": "Windows 10 or 11 PC"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Any Smartphone (iPhone or Android)"
+        }
       ],
       "step": [
         {
           "@type": "HowToStep",
           "position": 1,
           "name": "Open on PC",
-          "text": "Start PCDeck.exe on Windows. It displays a pairing QR code on your screen."
+          "text": "Start PCDeck.exe on Windows. It displays a pairing QR code on your screen.",
+          "image": "https://pcdeck.vercel.app/og-image.png"
         },
         {
           "@type": "HowToStep",
           "position": 2,
           "name": "Scan QR code",
-          "text": "Scan the code with your phone camera or swipe-down QR tile."
+          "text": "Scan the code with your phone camera or swipe-down QR tile.",
+          "image": "https://pcdeck.vercel.app/og-image.png"
         },
         {
           "@type": "HowToStep",
           "position": 3,
           "name": "Control from browser",
-          "text": "Tap the link. Your phone becomes a wireless mouse instantly in your browser."
+          "text": "Tap the link. Your phone becomes a wireless mouse instantly in your browser.",
+          "image": "https://pcdeck.vercel.app/og-image.png"
         }
-      ]
+      ],
+      "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
       "@type": "Organization",
@@ -220,7 +247,9 @@
       "@id": "https://pcdeck.vercel.app/#website",
       "name": "PCDeck",
       "url": "https://pcdeck.vercel.app/",
-      "publisher": { "@id": "https://pcdeck.vercel.app/#organization" }
+      "publisher": {
+        "@id": "https://pcdeck.vercel.app/#organization"
+      }
     }
   ]
 }
@@ -1882,24 +1911,24 @@ footer{padding:44px 0 56px}
              run the tool after every rebuild. A checksum that silently goes stale is worse
              than none, because it tells honest users their good download is corrupt. -->
         <dl class="sumrow">
-          <dt>PCDeck.apk<span>756,770 BYTES</span></dt>
-          <dd>5619e25e3661efb1c961e841536ce7676e15ad8d5fc36db18f763232922a3ee0</dd>
+          <dt>PCDeck.apk<span>690,963 BYTES</span></dt>
+          <dd>2b729b56dfe47aefa2ec974942457f85360efe4336e56cacd2d53132270a2d88</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck.aab<span>747,780 BYTES</span></dt>
-          <dd>824293c8c461ba10e389622826e6a3a1c2b407b87d67462eac3d61ea44af0e26</dd>
+          <dt>PCDeck.aab<span>682,195 BYTES</span></dt>
+          <dd>7a4d52f2981f4b753506b7b9483eb46a8307fbbf8f51d50c405d1901b9805cc9</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck.exe<span>49,022,646 BYTES</span></dt>
-          <dd>130ceb8cb926094049f686500cdcc5a04c1ab61ca70b467606a86b83b0a2aa05</dd>
+          <dt>PCDeck.exe<span>37,805,618 BYTES</span></dt>
+          <dd>6d4bf1e06c3451e498a75a57db9df9204b0750485952fd0cd3c0fc68c8838dea</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck.msix<span>47,929,838 BYTES</span></dt>
-          <dd>1518c2008c65491b3c40f413fa09fc46c6bdcd8ec72e033856026a8000f29d07</dd>
+          <dt>PCDeck-Setup.exe<span>39,223,541 BYTES</span></dt>
+          <dd>8372d3107e8873b7a1da4b94c91345adc0594266621bff1ece47a2d94c2f2832</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck_Package.zip<span>49,406,852 BYTES</span></dt>
-          <dd>6255823f67e21f01d97d5b23590bb373d7ab9da3e3ec1e28bb8fb9cc615f6b9b</dd>
+          <dt>PCDeck_Package.zip<span>52,157,822 BYTES</span></dt>
+          <dd>12070c35f477824fd1494b0161ca1855dc55dc9506fa5b597cebbf76a6ea5b9d</dd>
         </dl>
         <!-- CHECKSUMS:END -->
 
@@ -2428,3 +2457,4 @@ footer{padding:44px 0 56px}
 <script defer src=/_vercel/insights/script.js></script>
 </body>
 </html>
+<!-- build: 2026-09-11T18:28:44Z -->

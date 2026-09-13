@@ -79,16 +79,8 @@ def is_webcam_driver_installed() -> bool:
 
 
 def get_drivers_dir() -> str:
-    """Returns absolute path to the drivers directory (handles dev & PyInstaller frozen modes)."""
-    if getattr(sys, "frozen", False):
-        meipass_drivers = os.path.join(getattr(sys, "_MEIPASS", ""), "drivers")
-        if os.path.exists(meipass_drivers):
-            return meipass_drivers
-        exe_drivers = os.path.join(os.path.dirname(sys.executable), "drivers")
-        if os.path.exists(exe_drivers):
-            return exe_drivers
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_dir, "drivers")
+    """Returns safe fallback directory."""
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def has_internet_connection() -> bool:
@@ -105,43 +97,25 @@ def has_internet_connection() -> bool:
 
 def install_webcam_driver_silently(installer_path: Optional[str] = None) -> Tuple[bool, str]:
     """
-    Installs or registers the virtual webcam driver on Windows.
-    Offline-first: uses locally bundled driver package if present.
+    Installs OBS Virtual Camera via winget if requested.
     Returns (success: bool, message: str).
     """
     if sys.platform != "win32":
         return False, "Virtual webcam driver installation is only supported on Windows."
 
-    drivers_dir = get_drivers_dir()
-    dll64 = installer_path or os.path.join(drivers_dir, "UnityCaptureFilter64.dll")
-    dll32 = os.path.join(drivers_dir, "UnityCaptureFilter32.dll")
-
-    # 1. Offline Install: Check for bundled UnityCapture DirectShow Filter DLL
-    if os.path.exists(dll64):
-        try:
-            import ctypes
-            # Register 64-bit and 32-bit filters
-            args = f'/s "{dll64}"'
-            if os.path.exists(dll32):
-                args += f' /s "{dll32}"'
-
-            ret = ctypes.windll.shell32.ShellExecuteW(None, "runas", "regsvr32.exe", args, None, 1)
-            if ret > 32:
-                return True, "Offline virtual camera driver installed! Click 'Yes' on the PC permission prompt."
-            elif ret == 1223:
-                return False, "Installation cancelled: Administrator permission declined on PC."
-            else:
-                # Fallback to direct subprocess
-                proc = subprocess.run(["regsvr32.exe", "/s", dll64], capture_output=True, text=True)
-                if proc.returncode == 0:
-                    return True, "UnityCapture Virtual Webcam driver registered successfully (Offline)."
-                return False, f"regsvr32 returned error code {proc.returncode}"
-        except Exception as e:
-            return False, f"Driver execution error: {str(e)}"
-
-    # 2. If offline and driver missing, notify user to connect to internet or place driver in drivers/
-    if not has_internet_connection():
-        return False, "Offline: No internet on PC to download camera driver. Connect to Wi-Fi/Internet, or place UnityCaptureFilter64.dll in PCDeck/drivers/."
+    # Online Install: Check for winget install of OBS Virtual Camera
+    try:
+        proc = subprocess.run(
+            ["winget", "install", "--id", "OBSProject.OBSStudio", "-e", "--silent", "--accept-package-agreements", "--accept-source-agreements"],
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        )
+        if proc.returncode in (0, 3010):
+            return True, "Virtual camera installed successfully via package manager."
+        return False, f"winget returned code {proc.returncode}"
+    except Exception as e:
+        return False, f"Driver execution error: {str(e)}"
 
     # 3. Online Fallback: Check for winget install of OBS Virtual Camera
     try:

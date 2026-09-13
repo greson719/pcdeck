@@ -25,8 +25,11 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
@@ -2166,10 +2169,11 @@ public class MainActivity extends Activity {
             final int bufSize = Math.max(minBuf, 4096);
 
             try {
-                mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, channelConfig, audioFormat, bufSize);
+                // Prioritize VOICE_RECOGNITION for crystal-clear natural voice without aggressive DSP noise-gating
+                mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION, sampleRate, channelConfig, audioFormat, bufSize);
                 if (mAudioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
-                    mAudioRecord.release();
-                    mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, sampleRate, channelConfig, audioFormat, bufSize);
+                    try { mAudioRecord.release(); } catch (Exception ignored) {}
+                    mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, channelConfig, audioFormat, bufSize);
                 }
                 if (mAudioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
                     return false;
@@ -2188,28 +2192,37 @@ public class MainActivity extends Activity {
                     java.io.OutputStream tcpOut = null;
                     DatagramSocket udpSocket = null;
                     try {
+                        final int targetPort = (port > 0) ? port : 8002;
                         String cleanHost = (host != null) ? host.trim() : "";
                         if (cleanHost.contains(":")) {
                             cleanHost = cleanHost.split(":")[0];
                         }
                         if (cleanHost.isEmpty() || "localhost".equalsIgnoreCase(cleanHost) || "127.0.0.1".equals(cleanHost)) {
-                            cleanHost = "10.96.83.215";
+                            try {
+                                if (webView != null && webView.getUrl() != null) {
+                                    java.net.URI uri = new java.net.URI(webView.getUrl());
+                                    String h = uri.getHost();
+                                    if (h != null && !h.isEmpty() && !"localhost".equalsIgnoreCase(h) && !"127.0.0.1".equals(h)) {
+                                        cleanHost = h;
+                                    }
+                                }
+                            } catch (Exception ignored) {}
                         }
 
                         // 1. Primary: Direct TCP Stream on Port 8002 (ultra-low latency, 100% reliable)
                         try {
                             tcpSocket = new java.net.Socket();
-                            tcpSocket.connect(new java.net.InetSocketAddress(cleanHost, 8002), 2000);
+                            tcpSocket.connect(new java.net.InetSocketAddress(cleanHost, targetPort), 2000);
                             tcpSocket.setTcpNoDelay(true);
+                            tcpSocket.setSendBufferSize(32768);
                             tcpOut = tcpSocket.getOutputStream();
-                            android.util.Log.d("PCDeck-Mic", "Connected to direct TCP audio stream on " + cleanHost + ":8002");
+                            android.util.Log.d("PCDeck-Mic", "Connected to direct TCP audio stream on " + cleanHost + ":" + targetPort);
                         } catch (Exception tcpEx) {
-                            android.util.Log.w("PCDeck-Mic", "Direct TCP stream connect failed", tcpEx);
+                            android.util.Log.w("PCDeck-Mic", "Direct TCP stream connect failed, falling back to UDP", tcpEx);
                         }
 
                         // 2. Secondary: UDP datagram fallback
                         try {
-                            InetAddress dest = InetAddress.getByName(cleanHost);
                             udpSocket = new DatagramSocket();
                         } catch (Exception udpEx) {
                             android.util.Log.w("PCDeck-Mic", "UDP socket init failed", udpEx);
@@ -2217,9 +2230,12 @@ public class MainActivity extends Activity {
 
                         byte[] buffer = new byte[1024];
                         InetAddress dest = (udpSocket != null) ? InetAddress.getByName(cleanHost) : null;
+                        int vuSkip = 0;
+
                         while (mNativeMicActive && mAudioRecord != null) {
                             int read = mAudioRecord.read(buffer, 0, buffer.length);
                             if (read > 0) {
+                                // Strict failover: Send over TCP if available, otherwise UDP (never both to prevent duplicate gating!)
                                 if (tcpOut != null) {
                                     try {
                                         tcpOut.write(buffer, 0, read);
@@ -2227,29 +2243,32 @@ public class MainActivity extends Activity {
                                     } catch (Exception writeErr) {
                                         tcpOut = null;
                                     }
-                                }
-                                if (udpSocket != null && dest != null) {
+                                } else if (udpSocket != null && dest != null) {
                                     try {
-                                        DatagramPacket packet = new DatagramPacket(buffer, read, dest, 8002);
+                                        DatagramPacket packet = new DatagramPacket(buffer, read, dest, targetPort);
                                         udpSocket.send(packet);
                                     } catch (Exception ignored) {}
                                 }
 
-                                long sum = 0;
-                                for (int i = 0; i < read - 1; i += 2) {
-                                    short val = (short) ((buffer[i] & 0xFF) | (buffer[i + 1] << 8));
-                                    sum += Math.abs(val);
-                                }
-                                final int avg = (int) (sum / (read / 2));
-                                final int pct = Math.min(100, (avg * 100) / 10000);
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (webView != null) {
-                                            webView.evaluateJavascript("if(window.onNativeMicVu)window.onNativeMicVu(" + pct + ");", null);
-                                        }
+                                // Throttle VU meter updates to ~19 FPS (~53ms) to prevent UI thread lag
+                                if (++vuSkip >= 5) {
+                                    vuSkip = 0;
+                                    long sum = 0;
+                                    for (int i = 0; i < read - 1; i += 2) {
+                                        short val = (short) ((buffer[i] & 0xFF) | (buffer[i + 1] << 8));
+                                        sum += Math.abs(val);
                                     }
-                                });
+                                    final int avg = (int) (sum / (read / 2));
+                                    final int pct = Math.min(100, (avg * 100) / 10000);
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (webView != null) {
+                                                webView.evaluateJavascript("if(window.onNativeMicVu)window.onNativeMicVu(" + pct + ");", null);
+                                            }
+                                        }
+                                    });
+                                }
                             }
                         }
                     } catch (Exception e) {
@@ -2284,6 +2303,125 @@ public class MainActivity extends Activity {
             if (mNativeMicThread != null) {
                 try { mNativeMicThread.interrupt(); } catch (Exception ignored) {}
                 mNativeMicThread = null;
+            }
+        }
+
+        private boolean mNativeAudioActive = false;
+        private Thread mNativeAudioThread = null;
+        private AudioTrack mNativeAudioTrack = null;
+
+        @JavascriptInterface
+        public boolean startNativeAudioStream(final String host, final int port) {
+            if (mNativeAudioActive) return true;
+            mNativeAudioActive = true;
+
+            mNativeAudioThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+                    java.net.Socket sock = null;
+                    try {
+                        final int targetPort = (port > 0) ? port : 8003;
+                        String cleanHost = (host != null) ? host.trim() : "";
+                        if (cleanHost.contains(":")) {
+                            cleanHost = cleanHost.split(":")[0];
+                        }
+                        if (cleanHost.isEmpty() || "localhost".equalsIgnoreCase(cleanHost) || "127.0.0.1".equals(cleanHost)) {
+                            try {
+                                if (webView != null && webView.getUrl() != null) {
+                                    java.net.URI uri = new java.net.URI(webView.getUrl());
+                                    String h = uri.getHost();
+                                    if (h != null && !h.isEmpty() && !"localhost".equalsIgnoreCase(h) && !"127.0.0.1".equals(h)) {
+                                        cleanHost = h;
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                        }
+
+                        sock = new java.net.Socket();
+                        sock.connect(new java.net.InetSocketAddress(cleanHost, targetPort), 3000);
+                        sock.setTcpNoDelay(true);
+                        sock.setReceiveBufferSize(65536);
+
+                        final int sampleRate = 48000;
+                        final int channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
+                        final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+                        final int minBufSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                        final int bufSize = Math.max(minBufSize * 2, 8192);
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            mNativeAudioTrack = new AudioTrack.Builder()
+                                .setAudioAttributes(new AudioAttributes.Builder()
+                                    .setUsage(AudioAttributes.USAGE_GAME)
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                    .build())
+                                .setAudioFormat(new AudioFormat.Builder()
+                                    .setEncoding(audioFormat)
+                                    .setSampleRate(sampleRate)
+                                    .setChannelMask(channelConfig)
+                                    .build())
+                                .setBufferSizeInBytes(bufSize)
+                                .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
+                                .build();
+                        } else {
+                            mNativeAudioTrack = new AudioTrack(
+                                AudioManager.STREAM_MUSIC,
+                                sampleRate,
+                                channelConfig,
+                                audioFormat,
+                                bufSize,
+                                AudioTrack.MODE_STREAM
+                            );
+                        }
+
+                        mNativeAudioTrack.play();
+                        android.util.Log.d("PCDeck-Audio", "Native AudioTrack active on " + cleanHost + ":" + targetPort);
+
+                        java.io.InputStream in = sock.getInputStream();
+                        byte[] chunk = new byte[2048]; // 512 stereo 16-bit frames (~10.6ms)
+
+                        while (mNativeAudioActive && !Thread.currentThread().isInterrupted()) {
+                            int read = in.read(chunk, 0, chunk.length);
+                            if (read < 0) break;
+                            if (read > 0 && mNativeAudioTrack != null) {
+                                mNativeAudioTrack.write(chunk, 0, read);
+                            }
+                        }
+                    } catch (Exception e) {
+                        android.util.Log.w("PCDeck-Audio", "Native audio stream ended: " + e.getMessage());
+                    } finally {
+                        if (mNativeAudioTrack != null) {
+                            try {
+                                mNativeAudioTrack.stop();
+                                mNativeAudioTrack.release();
+                            } catch (Exception ignored) {}
+                            mNativeAudioTrack = null;
+                        }
+                        if (sock != null) {
+                            try { sock.close(); } catch (Exception ignored) {}
+                        }
+                        mNativeAudioActive = false;
+                    }
+                }
+            }, "PCDeck-NativeAudioPlayer");
+
+            mNativeAudioThread.start();
+            return true;
+        }
+
+        @JavascriptInterface
+        public void stopNativeAudioStream() {
+            mNativeAudioActive = false;
+            if (mNativeAudioTrack != null) {
+                try {
+                    mNativeAudioTrack.stop();
+                    mNativeAudioTrack.release();
+                } catch (Exception ignored) {}
+                mNativeAudioTrack = null;
+            }
+            if (mNativeAudioThread != null) {
+                try { mNativeAudioThread.interrupt(); } catch (Exception ignored) {}
+                mNativeAudioThread = null;
             }
         }
     }

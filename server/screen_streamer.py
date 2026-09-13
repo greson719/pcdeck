@@ -9,7 +9,7 @@ import sys
 import time
 import asyncio
 import threading
-from typing import Optional, Tuple, Set
+from typing import Optional, Tuple, Set, Any
 from PIL import Image
 
 try:
@@ -234,21 +234,30 @@ class ScreenStreamer:
         self._frame_id: int = 0
         self._consumers: int = 0
         self._active_viewers: int = 0
+        self._connected_client_ids: Set[Any] = set()
+        self._paused_client_ids: Set[Any] = set()
         self._stop_timer: Optional[threading.Timer] = None
         self._wake_event = threading.Event()
         self._wake_event.set()
 
-    def pause_consumer(self):
+    def pause_consumer(self, client_id: Optional[Any] = None):
         """Puts capture loop into zero-overhead sleep when client switches away from screen tab."""
         with self._lock:
-            self._active_viewers = max(0, self._active_viewers - 1)
-            if self._active_viewers <= 0:
+            if client_id is not None:
+                self._paused_client_ids.add(client_id)
+            else:
+                self._active_viewers = max(0, self._active_viewers - 1)
+            active = len(self._connected_client_ids - self._paused_client_ids) if self._connected_client_ids else self._active_viewers
+            if active <= 0:
                 self._wake_event.clear()
 
-    def resume_consumer(self):
+    def resume_consumer(self, client_id: Optional[Any] = None):
         """Instantly wakes up capture loop when client focuses screen tab."""
         with self._lock:
-            self._active_viewers += 1
+            if client_id is not None:
+                self._paused_client_ids.discard(client_id)
+            else:
+                self._active_viewers += 1
             self._wake_event.set()
 
     @property
@@ -286,8 +295,8 @@ class ScreenStreamer:
             _attach_desktop()
             w = user32.GetSystemMetrics(0)
             h = user32.GetSystemMetrics(1)
-            target_w = int(w * scale) if 0.1 < scale < 0.99 else w
-            target_h = int(h * scale) if 0.1 < scale < 0.99 else h
+            target_w = (int(w * scale) // 2) * 2 if 0.1 < scale < 0.99 else (w // 2) * 2
+            target_h = (int(h * scale) // 2) * 2 if 0.1 < scale < 0.99 else (h // 2) * 2
 
             hdc_screen = user32.GetDC(None)
             hdc_mem = gdi32.CreateCompatibleDC(hdc_screen)
@@ -386,7 +395,8 @@ class ScreenStreamer:
 
         try:
             while self.running and self._generation == generation:
-                if self._active_viewers <= 0 and self._consumers > 0:
+                has_active = (len(self._connected_client_ids - self._paused_client_ids) > 0) if self._connected_client_ids else (self._active_viewers > 0)
+                if not has_active and self._consumers > 0:
                     # Viewers connected but screen tab paused -> sleep completely until resumed
                     self._wake_event.wait(timeout=0.5)
                     continue
@@ -395,8 +405,8 @@ class ScreenStreamer:
                 try:
                     w = user32.GetSystemMetrics(0)
                     h = user32.GetSystemMetrics(1)
-                    target_w = int(w * self.scale) if 0.1 < self.scale < 0.99 else w
-                    target_h = int(h * self.scale) if 0.1 < self.scale < 0.99 else h
+                    target_w = (int(w * self.scale) // 2) * 2 if 0.1 < self.scale < 0.99 else (w // 2) * 2
+                    target_h = (int(h * self.scale) // 2) * 2 if 0.1 < self.scale < 0.99 else (h // 2) * 2
 
                     if w != cur_w or h != cur_h or target_w != cur_target_w or target_h != cur_target_h or hdc_mem is None:
                         # Re-allocate GDI surfaces on resolution change
@@ -541,7 +551,8 @@ class ScreenStreamer:
 
         try:
             while self.running and self._generation == generation:
-                if self._active_viewers <= 0 and self._consumers > 0:
+                has_active = (len(self._connected_client_ids - self._paused_client_ids) > 0) if self._connected_client_ids else (self._active_viewers > 0)
+                if not has_active and self._consumers > 0:
                     # Viewers connected but screen tab paused -> sleep completely until resumed
                     self._wake_event.wait(timeout=0.5)
                     continue
@@ -557,8 +568,8 @@ class ScreenStreamer:
                     self._height = orig_h
 
                     if 0.1 < self.scale < 0.99:
-                        target_w = int(orig_w * self.scale)
-                        target_h = int(orig_h * self.scale)
+                        target_w = (int(orig_w * self.scale) // 2) * 2
+                        target_h = (int(orig_h * self.scale) // 2) * 2
                         img = Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX")
                         img = img.resize((target_w, target_h), Image.Resampling.BILINEAR)
                         buf = io.BytesIO()
@@ -641,22 +652,38 @@ class ScreenStreamer:
             except Exception:
                 pass
 
-    def acquire(self):
+    def acquire(self, client_id: Optional[Any] = None):
         """Registers a viewer and guarantees capture is running immediately."""
         with self._lock:
             if hasattr(self, "_stop_timer") and self._stop_timer:
                 self._stop_timer.cancel()
                 self._stop_timer = None
-            self._consumers += 1
-            self._active_viewers += 1
+            if client_id is not None:
+                self._connected_client_ids.add(client_id)
+                self._paused_client_ids.discard(client_id)
+                self._consumers = len(self._connected_client_ids)
+                self._active_viewers = max(1, len(self._connected_client_ids - self._paused_client_ids))
+            else:
+                self._consumers += 1
+                self._active_viewers += 1
+            self._wake_event.set()
             self._start_locked()
 
-    def release(self):
+    def release(self, client_id: Optional[Any] = None):
         """Unregisters a viewer with a graceful 4s warm cooldown instead of immediate thread kill."""
         with self._lock:
-            self._consumers = max(0, self._consumers - 1)
-            self._active_viewers = max(0, self._active_viewers - 1)
+            if client_id is not None:
+                self._connected_client_ids.discard(client_id)
+                self._paused_client_ids.discard(client_id)
+                self._consumers = len(self._connected_client_ids)
+                self._active_viewers = max(0, len(self._connected_client_ids - self._paused_client_ids))
+            else:
+                self._consumers = max(0, self._consumers - 1)
+                self._active_viewers = max(0, self._active_viewers - 1)
+
             if self._consumers > 0:
+                if self._active_viewers > 0 or not self._paused_client_ids:
+                    self._wake_event.set()
                 return
             # Keep capture engine warm for 4 seconds in case client is switching tabs or reconnecting
             if hasattr(self, "_stop_timer") and self._stop_timer:

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,21 +47,60 @@
       "inLanguage": "en",
       "datePublished": "2026-08-27",
       "dateModified": "2026-08-27",
-      "author": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
-      "publisher": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "author": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
       "proficiencyLevel": "Intermediate",
       "about": [
-        { "@type": "Thing", "name": "Application security" },
-        { "@type": "Thing", "name": "Local network isolation" },
-        { "@type": "Thing", "name": "Binary verification" }
+        {
+          "@type": "Thing",
+          "name": "Application security"
+        },
+        {
+          "@type": "Thing",
+          "name": "Local network isolation"
+        },
+        {
+          "@type": "Thing",
+          "name": "Binary verification"
+        }
       ],
-      "mainEntityOfPage": { "@id": "https://pcdeck.vercel.app/security/#webpage" }
+      "mainEntityOfPage": {
+        "@id": "https://pcdeck.vercel.app/security/",
+        "@type": "WebPage"
+      },
+      "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
-        { "@type": "ListItem", "position": 2, "name": "Security & Architecture", "item": "https://pcdeck.vercel.app/security/" }
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://pcdeck.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Security & Architecture",
+          "item": "https://pcdeck.vercel.app/security/"
+        }
       ]
     },
     {
@@ -69,7 +108,11 @@
       "@id": "https://pcdeck.vercel.app/security/#webpage",
       "url": "https://pcdeck.vercel.app/security/",
       "name": "PCDeck Security & Privacy Architecture",
-      "isPartOf": { "@type": "WebSite", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" }
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/"
+      }
     }
   ]
 }
@@ -300,5 +343,6 @@
   });
 })();
 </script>
+<script defer src=/_vercel/insights/script.js></script>
 </body>
 </html>

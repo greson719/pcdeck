@@ -369,14 +369,21 @@
           </tr>
         </table>
 
-        <!-- Side-by-Side Action Buttons: Download APK & Upgrade Pro -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
-          <a href="/PCDeck.apk" download id="btn-desktop-apk" class="neo-btn" style="text-decoration: none; font-size: 0.8rem; padding: 0 8px;">
-            <span>DOWNLOAD APK</span>
+        <!-- Action Buttons: Launch Web Control, Download APK & Upgrade Pro -->
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+          <a href="/?tab=screen" target="_blank" id="btn-desktop-web" class="neo-btn btn-lime" style="text-decoration: none; font-size: 0.85rem; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 0 15px rgba(132, 204, 22, 0.3);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>LAUNCH WEB CONTROL</span>
           </a>
-          <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="text-decoration: none; font-size: 0.8rem; padding: 0 8px;">
-            <span>UPGRADE PRO</span>
-          </a>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <a href="/PCDeck.apk" download="PCDeck.apk" id="btn-desktop-apk" class="neo-btn" style="text-decoration: none; font-size: 0.8rem; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>DOWNLOAD APK</span>
+            </a>
+            <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="text-decoration: none; font-size: 0.8rem; padding: 0 8px; display: flex; align-items: center; justify-content: center;">
+              <span>UPGRADE PRO</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -475,6 +482,13 @@
         document.getElementById('diag-ip').textContent = data.ip;
         document.getElementById('diag-clients').textContent = `${data.clients_connected} Active`;
         document.getElementById('diag-screen').textContent = `${data.screen.width} x ${data.screen.height}`;
+        if (data.token) {
+          try { localStorage.setItem('pcdeck_token', data.token); } catch (e) {}
+          const webBtn = document.getElementById('btn-desktop-web');
+          if (webBtn) {
+            webBtn.href = `/?tab=screen&token=${encodeURIComponent(data.token)}`;
+          }
+        }
         if (data.network && document.getElementById('diag-latency')) {
           const n = data.network;
           const latEl = document.getElementById('diag-latency');
@@ -506,6 +520,16 @@
       btn.innerHTML = '<span>SAVED!</span>';
       setTimeout(() => btn.innerHTML = '<span>SAVE PC SETTINGS</span>', 2000);
     };
+
+    const webBtn = document.getElementById('btn-desktop-web');
+    if (webBtn) {
+      webBtn.addEventListener('click', function(e) {
+        const tok = localStorage.getItem('pcdeck_token');
+        if (tok && !this.href.includes('token=')) {
+          this.href = `/?tab=screen&token=${encodeURIComponent(tok)}`;
+        }
+      });
+    }
 
     fetchInfo();
     setInterval(fetchInfo, 3000);

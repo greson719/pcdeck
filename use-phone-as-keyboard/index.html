@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,15 +47,44 @@
       "inLanguage": "en",
       "datePublished": "2026-08-27",
       "dateModified": "2026-09-09",
-      "author": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
-      "publisher": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "author": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
       "proficiencyLevel": "Beginner",
       "about": [
-        { "@type": "Thing", "name": "Wireless keyboard" },
-        { "@type": "Thing", "name": "Numeric keypad" },
-        { "@type": "Thing", "name": "Windows input" }
+        {
+          "@type": "Thing",
+          "name": "Wireless keyboard"
+        },
+        {
+          "@type": "Thing",
+          "name": "Numeric keypad"
+        },
+        {
+          "@type": "Thing",
+          "name": "Windows input"
+        }
       ],
-      "mainEntityOfPage": { "@id": "https://pcdeck.vercel.app/use-phone-as-keyboard/#webpage" }
+      "mainEntityOfPage": {
+        "@id": "https://pcdeck.vercel.app/use-phone-as-keyboard/",
+        "@type": "WebPage"
+      },
+      "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
       "@type": "HowTo",
@@ -67,26 +96,61 @@
         {
           "@type": "HowToStep",
           "name": "Download and open PCDeck on Windows",
-          "text": "Open PCDeck.exe on your Windows PC. A pairing QR code appears on your screen."
+          "text": "Open PCDeck.exe on your Windows PC. A pairing QR code appears on your screen.",
+          "position": 1,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-phone-as-keyboard/#step-1"
         },
         {
           "@type": "HowToStep",
           "name": "Scan QR code with your phone camera",
-          "text": "Open your phone camera (iPhone or Android) and point it at the QR code. Tap the link to open the controller in your mobile browser."
+          "text": "Open your phone camera (iPhone or Android) and point it at the QR code. Tap the link to open the controller in your mobile browser.",
+          "position": 2,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-phone-as-keyboard/#step-2"
         },
         {
           "@type": "HowToStep",
           "name": "Tap the Keyboard tab and start typing",
-          "text": "Tap the Keyboard icon. Your phone becomes a wireless keyboard and numeric keypad immediately, sending keystrokes directly into your active PC window."
+          "text": "Tap the Keyboard icon. Your phone becomes a wireless keyboard and numeric keypad immediately, sending keystrokes directly into your active PC window.",
+          "position": 3,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-phone-as-keyboard/#step-3"
+        }
+      ],
+      "image": "https://pcdeck.vercel.app/og-image.png",
+      "tool": [
+        {
+          "@type": "HowToTool",
+          "name": "PC (Windows 10/11 or Linux)"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Smartphone or tablet (iOS / Android)"
         }
       ]
     },
     {
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
-        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://pcdeck.vercel.app/guides/" },
-        { "@type": "ListItem", "position": 3, "name": "Use Phone as Keyboard", "item": "https://pcdeck.vercel.app/use-phone-as-keyboard/" }
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://pcdeck.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://pcdeck.vercel.app/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Use Phone as Keyboard",
+          "item": "https://pcdeck.vercel.app/use-phone-as-keyboard/"
+        }
       ]
     },
     {
@@ -94,7 +158,11 @@
       "@id": "https://pcdeck.vercel.app/use-phone-as-keyboard/#webpage",
       "url": "https://pcdeck.vercel.app/use-phone-as-keyboard/",
       "name": "How to Use Your Phone as a Keyboard for Windows (No App Install Required)",
-      "isPartOf": { "@type": "WebSite", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" }
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/"
+      }
     }
   ]
 }

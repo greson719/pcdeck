@@ -60,16 +60,8 @@ def is_vigem_installed() -> bool:
 
 
 def get_drivers_dir() -> str:
-    """Returns absolute path to the drivers directory (handles dev & PyInstaller frozen modes)."""
-    if getattr(sys, "frozen", False):
-        meipass_drivers = os.path.join(getattr(sys, "_MEIPASS", ""), "drivers")
-        if os.path.exists(meipass_drivers):
-            return meipass_drivers
-        exe_drivers = os.path.join(os.path.dirname(sys.executable), "drivers")
-        if os.path.exists(exe_drivers):
-            return exe_drivers
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_dir, "drivers")
+    """Returns safe fallback path."""
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def has_internet_connection() -> bool:
@@ -89,59 +81,26 @@ def has_internet_connection() -> bool:
 
 
 def install_vigem_silently(msi_path: Optional[str] = None) -> Tuple[bool, str]:
-    """
-    Installs the bundled Microsoft WHQL-signed ViGEmBus installer completely silently.
-    Returns (success: bool, message: str).
-    """
+    """Installs ViGEmBus online via winget if requested."""
     if sys.platform != "win32":
         return False, "ViGEmBus is only supported on Windows 10/11."
 
-    drivers_dir = get_drivers_dir()
-    exe_path = os.path.join(drivers_dir, "ViGEmBus_Setup.exe")
-    msi_path = msi_path or os.path.join(drivers_dir, "ViGEmBus_x64.msi")
-
-    # 1. Prefer ViGEmBus_Setup.exe bundle if available locally
-    if os.path.exists(exe_path):
-        try:
-            cmd = [exe_path, "/quiet", "/norestart"]
-            proc = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-            )
-            if proc.returncode in (0, 3010):
-                return True, "ViGEmBus driver installed successfully from local package."
-            else:
-                return False, f"ViGEm installer returned code {proc.returncode}"
-        except Exception as e:
-            return False, f"Driver execution error: {str(e)}"
-
-    # 2. Check for MSI package
-    if os.path.exists(msi_path):
-        try:
-            cmd = [
-                "msiexec.exe",
-                "/i", msi_path,
-                "/qn",           # Quiet mode, zero user interface
-                "/norestart",    # Do not restart Windows
-                "ALLUSERS=1"
-            ]
-            proc = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-            )
-            if proc.returncode in (0, 3010):
-                return True, "ViGEmBus driver installed successfully."
-            else:
-                return False, f"msiexec returned code {proc.returncode}: {proc.stderr}"
-        except Exception as e:
-            return False, f"Driver execution error: {str(e)}"
-
-    # 3. Fallback check: prompt user for offline package or internet
-    return False, "Offline driver package not found in drivers/ folder. Connect to internet or place ViGEmBus installer in drivers/."
+    try:
+        cmd = [
+            "winget", "install", "--id", "Nefarius.ViGEmBus", "-e",
+            "--silent", "--accept-package-agreements", "--accept-source-agreements"
+        ]
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        )
+        if proc.returncode in (0, 3010):
+            return True, "ViGEmBus driver installed successfully via winget."
+        return False, f"winget returned code {proc.returncode}"
+    except Exception as e:
+        return False, f"Driver execution error: {str(e)}"
 
 
 

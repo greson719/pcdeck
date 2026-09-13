@@ -148,10 +148,10 @@
     screenMode: 'touch', // 'touch', 'mouse', or 'rclick'
     dragLocked: false,
     titleBarHidden: false,
-    gamepadHudEnabled: false,
+    gamepadHudEnabled: true,
     gamepadHudActive: false,
     gamepadHudEditing: false,
-    gamepadDriverInstalled: false,
+    gamepadDriverInstalled: true,
     wakeLockObj: null,
     // Mouse Smoothing & Anti-Jitter Filter
     smoothDx: 0,
@@ -371,6 +371,16 @@
   let pingInterval = null;
   let qrScanAnimationId = null;
   let toastTimer = null;
+  let globalLastTouchTime = 0;
+
+  window.__pcdeckState = state;
+  window.__pcdeckGetWs = () => ({
+    mainWs,
+    screenWs,
+    mainReady: mainWs ? mainWs.readyState : -1,
+    screenReady: screenWs ? screenWs.readyState : -1,
+    connected: state.connected
+  });
 
   // --- Cyber-Neon Vector Toast Notification Capsule (Zero Emojis, Pure SVG Vector) ---
   const TOAST_ICONS = {
@@ -418,7 +428,15 @@
   }
 
   // --- Haptic Feedback ---
+  let userGestureSeen = false;
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pointerdown', () => { userGestureSeen = true; }, { once: true, passive: true });
+    window.addEventListener('keydown', () => { userGestureSeen = true; }, { once: true, passive: true });
+    window.addEventListener('touchstart', () => { userGestureSeen = true; }, { once: true, passive: true });
+  }
+
   function vibrate(ms = 18) {
+    if (!userGestureSeen && !window.AndroidApp) return;
     if (state.hapticsEnabled && window.navigator && window.navigator.vibrate) {
       try {
         window.navigator.vibrate(ms);
@@ -487,6 +505,11 @@
       const queryToken = urlParams.get('token') || urlParams.get('t');
       if (queryToken) {
         try { localStorage.setItem('pcdeck_token', queryToken); } catch (e) {}
+      } else if (typeof document !== 'undefined' && document.cookie) {
+        const match = document.cookie.match(/(?:^|;\s*)pcdeck_token=([^;]+)/);
+        if (match && match[1]) {
+          try { localStorage.setItem('pcdeck_token', decodeURIComponent(match[1])); } catch (e) {}
+        }
       }
 
       if (queryIp) {
@@ -587,8 +610,8 @@
         state.gamepadHudEnabled = hudEnabled === 'true';
         if (el.settingGamepadHud) el.settingGamepadHud.checked = state.gamepadHudEnabled;
       } else {
-        state.gamepadHudEnabled = false;
-        if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
+        state.gamepadHudEnabled = true;
+        if (el.settingGamepadHud) el.settingGamepadHud.checked = true;
       }
 
       const autoAudio = getPref('auto_audio');
@@ -677,7 +700,8 @@
     state.invertScroll = false;
     state.hapticsEnabled = true;
     state.wakelockEnabled = true;
-    state.gamepadHudEnabled = false;
+    state.gamepadHudEnabled = true;
+    if (el.settingGamepadHud) el.settingGamepadHud.checked = true;
     state.autoAudioStream = false;
     state.titleBarHidden = false;
     if (el.topNav) el.topNav.classList.remove('hidden-bar');
@@ -769,12 +793,15 @@
     }
 
     function getNormalizedCoords(clientX, clientY) {
-      if (!el.screenCanvas) return { x: 0.5, y: 0.5 };
+      if (!el.screenCanvas) return { x: 0.5, y: 0.5, inBounds: true };
       const rect = el.screenCanvas.getBoundingClientRect();
-      if (!rect || rect.width <= 0 || rect.height <= 0) return { x: 0.5, y: 0.5 };
-      const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-      return { x: normX, y: normY };
+      if (!rect || rect.width <= 0 || rect.height <= 0) return { x: 0.5, y: 0.5, inBounds: true };
+      const rawX = (clientX - rect.left) / rect.width;
+      const rawY = (clientY - rect.top) / rect.height;
+      const inBounds = rawX >= -0.08 && rawX <= 1.08 && rawY >= -0.08 && rawY <= 1.08;
+      const normX = Math.max(0, Math.min(1, rawX));
+      const normY = Math.max(0, Math.min(1, rawY));
+      return { x: normX, y: normY, inBounds };
     }
 
     function flushScreenMove() {
@@ -797,8 +824,9 @@
     const touchArena = el.screenViewport || el.screenCanvas;
 
     touchArena.addEventListener('touchstart', (e) => {
+      globalLastTouchTime = Date.now();
       // Check if Gamepad HUD is active or touch is on UI overlays
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, #btn-screen-mode-pill'))) {
         return;
       }
 
@@ -811,7 +839,7 @@
         }
       }
 
-      // 2-Finger Touch handling (Pinch-to-Zoom & Pan)
+      // 2-Finger Touch handling (Pinch-to-Zoom & Two-Finger Scroll)
       if (e.touches.length === 2) {
         if (longPressTimer) {
           clearTimeout(longPressTimer);
@@ -826,9 +854,10 @@
         twoFingerStartDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
         twoFingerMidX = (t1.clientX + t2.clientX) / 2;
         twoFingerMidY = (t1.clientY + t2.clientY) / 2;
+        lastTwoFingerMidX = twoFingerMidX;
+        lastTwoFingerMidY = twoFingerMidY;
 
         if (state.pinchZoomEnabled) {
-          state.isPinching = true;
           state.initialPinchDist = twoFingerStartDist;
           state.initialZoom = state.zoomScale;
           state.initialPanX = state.panX;
@@ -862,29 +891,30 @@
       pendingRelDx = 0;
       pendingRelDy = 0;
 
-      // 1-Finger Long-Press Timer (350ms): Engages Drag & Move Mode for Files / Windows / Text!
+      // 1-Finger Long-Press Timer (320ms): Engages Drag & Move Mode for Files / Windows / Text!
       longPressTimer = setTimeout(() => {
         if (touchActive && !isScrolling && !state.isPinching) {
           const dist = Math.hypot(lastX - touchStartX, lastY - touchStartY);
-          if (dist < 14) {
+          if (dist < 16) {
             isLongPressDrag = true;
             spawnTouchRipple(lastX, lastY, 'double');
             vibrate(45);
-            showToast('Drag & Move Locked  (Move to drag, release to drop)', 'info');
+            showToast('Drag & Move Locked (Move to drag, release to drop)', 'info');
             const curNorm = getNormalizedCoords(lastX, lastY);
             // Move cursor to position and press down left mouse button on PC
             sendBinaryTouchDown(curNorm.x, curNorm.y, 'left');
           }
         }
-      }, 350);
+      }, 320);
     }, { passive: false });
 
     touchArena.addEventListener('touchmove', (e) => {
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      globalLastTouchTime = Date.now();
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, #btn-screen-mode-pill'))) {
         return;
       }
 
-      // 2-Finger Pinch-to-Zoom & Pan
+      // 2-Finger Pinch-to-Zoom & Two-Finger Scroll
       if (e.touches.length === 2 && twoFingerActive) {
         const t1 = e.touches[0];
         const t2 = e.touches[1];
@@ -892,16 +922,33 @@
         const midX = (t1.clientX + t2.clientX) / 2;
         const midY = (t1.clientY + t2.clientY) / 2;
 
-        if (Math.abs(curDist - twoFingerStartDist) > 10 || Math.hypot(midX - twoFingerMidX, midY - twoFingerMidY) > 8) {
+        const distDiff = Math.abs(curDist - twoFingerStartDist);
+        const moveDist = Math.hypot(midX - twoFingerMidX, midY - twoFingerMidY);
+
+        if (distDiff > 14 || moveDist > 6) {
           twoFingerMoved = true;
         }
 
-        if (state.pinchZoomEnabled && state.isPinching && state.initialPinchDist > 0) {
+        if (state.pinchZoomEnabled && (state.isPinching || distDiff > 28)) {
+          state.isPinching = true;
           const factor = (curDist / state.initialPinchDist - 1) * state.zoomSens + 1;
-          state.zoomScale = Math.max(0.7, Math.min(5.0, state.initialZoom * factor));
+          state.zoomScale = Math.max(1.0, Math.min(5.0, state.initialZoom * factor));
           state.panX = state.initialPanX + (midX - state.pinchMidX);
           state.panY = state.initialPanY + (midY - state.pinchMidY);
           updateCanvasTransform();
+        } else if (!state.isPinching && moveDist > 5) {
+          // 2-Finger Natural Physical Scroll (Vertical & Horizontal)
+          const stepDy = midY - (lastTwoFingerMidY || midY);
+          const stepDx = midX - (lastTwoFingerMidX || midX);
+          lastTwoFingerMidX = midX;
+          lastTwoFingerMidY = midY;
+
+          const scrollFactor = state.invertScroll ? -1 : 1;
+          const wheelDy = stepDy * 1.8 * state.scrollSpeed * scrollFactor;
+          const wheelDx = stepDx * 1.8 * state.scrollSpeed * scrollFactor;
+          if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+            sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
+          }
         }
         e.preventDefault();
         return;
@@ -934,8 +981,8 @@
         return;
       }
 
-      // If moved before long-press engaged (> 7px), cancel long-press timer and scroll
-      if (totalDist > 7 && longPressTimer) {
+      // If moved before long-press engaged (> 14px), cancel long-press timer
+      if (totalDist > 14 && longPressTimer) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
       }
@@ -949,45 +996,16 @@
           requestAnimationFrame(flushScreenMove);
         }
       } else {
-        // Direct Mobile Touch 1:1 Scroll Drag Physics
-        if (totalDist > 7) {
-          isScrolling = true;
-
-          // Anchor the PC mouse cursor once at the initial touch point:
-          // 1. Keeps scroll focus strictly on the target list in Windows File Explorer (no treeview/header drift).
-          // 2. Eliminates hover lag, link flickers, and selection interrupts in web browsers.
-          if (!scrollCursorAnchored) {
-            scrollCursorAnchored = true;
-            sendBinaryMoveAbs(touchAnchorNormX, touchAnchorNormY);
-          }
-
-          const rect = el.screenCanvas.getBoundingClientRect();
-          const canvasH = (el.screenCanvas.height && el.screenCanvas.height > 0) ? el.screenCanvas.height : 1080;
-          const canvasW = (el.screenCanvas.width && el.screenCanvas.width > 0) ? el.screenCanvas.width : 1920;
-          const rectH = (rect && rect.height > 0) ? rect.height : 360;
-          const rectW = (rect && rect.width > 0) ? rect.width : 640;
-          const effectiveZoom = (state.zoomScale && state.zoomScale > 0.1) ? state.zoomScale : 1.0;
-          const scrollFactor = state.invertScroll ? -1 : 1;
-
-          // 1:1 Physical Screen Tracking:
-          // In Windows & Chromium, 120 wheel delta = ~96-100 PC pixels.
-          // Translating mobile touch pixels to PC canvas pixels * 1.25 yields exact 1:1 physical finger tracking.
-          const scaleY = (canvasH / rectH) / effectiveZoom;
-          const scaleX = (canvasW / rectW) / effectiveZoom;
-
-          const wheelDy = dy * scaleY * 1.25 * state.scrollSpeed * scrollFactor;
-          const wheelDx = dx * scaleX * 1.25 * state.scrollSpeed * scrollFactor;
-
-          if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
-            sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
-          }
-        }
+        // Direct Touch Mode: PC cursor directly tracks finger in real time across the desktop!
+        const norm = getNormalizedCoords(touch.clientX, touch.clientY);
+        sendBinaryMoveAbs(norm.x, norm.y);
       }
       e.preventDefault();
     }, { passive: false });
 
     touchArena.addEventListener('touchend', (e) => {
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      globalLastTouchTime = Date.now();
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, #btn-screen-mode-pill'))) {
         return;
       }
 
@@ -998,11 +1016,22 @@
 
       // 2-Finger Release
       if (twoFingerActive && e.touches.length < 2) {
+        const dur = Date.now() - twoFingerStartTime;
+        if (!twoFingerMoved && !state.isPinching && dur < 320) {
+          // Two-finger tap -> Instant Right-Click!
+          const norm = getNormalizedCoords(twoFingerMidX, twoFingerMidY);
+          sendBinaryMoveAbs(norm.x, norm.y);
+          sendBinaryClick('right');
+          spawnTouchRipple(twoFingerMidX, twoFingerMidY, 'right');
+          vibrate(25);
+          showToast('Right Click', 'success', '🖱️');
+        }
         twoFingerActive = false;
         state.isPinching = false;
-        if (state.zoomScale < 0.9) {
+        if (state.zoomScale <= 1.05) {
           resetPinchZoom();
         }
+        e.preventDefault();
         return;
       }
 
@@ -1020,104 +1049,37 @@
         sendBinaryTouchUp(norm.x, norm.y, 'left');
 
         if (moveDist < 12) {
-          // Held in place without dragging -> Trigger Right-Click Context Menu!
           sendBinaryClick('right');
           spawnTouchRipple(lastX, lastY, 'right');
-          showToast('Right Click', 'success', '️');
+          showToast('Right Click', 'success', '🖱️');
           vibrate(30);
         } else {
-          // Dragged and released -> Dropped file/item/selection!
           spawnTouchRipple(lastX, lastY, 'tap');
           showToast('Item Dropped / Moved', 'success');
           vibrate(35);
         }
+        e.preventDefault();
         return;
       }
 
-      // Calculate release velocity for kinetic momentum (fling physics)
-      const now = Date.now();
-      const recentPoints = touchHistory.filter(p => now - p.time < 80);
-      let vy = 0, vx = 0;
-      if (recentPoints.length >= 2) {
-        const first = recentPoints[0];
-        const last = recentPoints[recentPoints.length - 1];
-        const dt = last.time - first.time;
-        if (dt > 10) {
-          vy = (last.y - first.y) / dt; // px per millisecond
-          vx = (last.x - first.x) / dt;
+      if (tapDuration < 320 && moveDist < 16) {
+        const norm = getNormalizedCoords(lastX, lastY);
+        if (!norm.inBounds) {
+          e.preventDefault();
+          return;
         }
-      }
 
-      // If user was scrolling / dragged finger, don't trigger click on release
-      if (isScrolling || moveDist > 14) {
-        const wasScrolling = isScrolling;
-        isScrolling = false;
-        scrollCursorAnchored = false;
-
-        // Engage Kinetic Momentum Glide if flicked with velocity (> 0.35 px/ms)
-        if (wasScrolling && (Math.abs(vy) > 0.35 || Math.abs(vx) > 0.35) && state.screenMode !== 'mouse') {
-          const rect = el.screenCanvas.getBoundingClientRect();
-          const canvasH = (el.screenCanvas.height && el.screenCanvas.height > 0) ? el.screenCanvas.height : 1080;
-          const canvasW = (el.screenCanvas.width && el.screenCanvas.width > 0) ? el.screenCanvas.width : 1920;
-          const rectH = (rect && rect.height > 0) ? rect.height : 360;
-          const rectW = (rect && rect.width > 0) ? rect.width : 640;
-          const effectiveZoom = (state.zoomScale && state.zoomScale > 0.1) ? state.zoomScale : 1.0;
-          const scrollFactor = state.invertScroll ? -1 : 1;
-          const scaleY = (canvasH / rectH) / effectiveZoom;
-          const scaleX = (canvasW / rectW) / effectiveZoom;
-
-          let momentumVy = vy;
-          let momentumVx = vx;
-          let lastMomentumTime = performance.now();
-
-          const stepMomentum = (curTime) => {
-            if (!isMomentumActive) return;
-            const dt = Math.min(32, curTime - lastMomentumTime);
-            lastMomentumTime = curTime;
-
-            // Smooth exponential deceleration curve
-            const friction = Math.pow(0.93, dt / 16.67);
-            momentumVy *= friction;
-            momentumVx *= friction;
-
-            const stepDy = momentumVy * dt;
-            const stepDx = momentumVx * dt;
-
-            // 1:1 Physical kinetic momentum
-            const wheelDy = stepDy * scaleY * 1.25 * state.scrollSpeed * scrollFactor;
-            const wheelDx = stepDx * scaleX * 1.25 * state.scrollSpeed * scrollFactor;
-
-            if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
-              sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
-            }
-
-            if (Math.abs(momentumVy) > 0.04 || Math.abs(momentumVx) > 0.04) {
-              momentumAnimId = requestAnimationFrame(stepMomentum);
-            } else {
-              isMomentumActive = false;
-              momentumAnimId = null;
-            }
-          };
-
-          isMomentumActive = true;
-          momentumAnimId = requestAnimationFrame(stepMomentum);
-        }
-        return;
-      }
-
-      if (tapDuration < 280 && moveDist < 14) {
         const timeSinceLastTap = touchEndTime - lastTapTime;
         const tapDistance = Math.hypot(lastX - lastTapX, lastY - lastTapY);
 
-        if (timeSinceLastTap < 350 && tapDistance < 24) {
+        if (timeSinceLastTap < 350 && tapDistance < 28) {
           // 1-Finger Double Tap -> Double Click (Opens file/app/folder)
           lastTapTime = 0;
           spawnTouchRipple(lastX, lastY, 'double');
-          const norm = getNormalizedCoords(lastX, lastY);
           sendBinaryMoveAbs(norm.x, norm.y);
           sendBinaryClick('double');
           vibrate(30);
-          showToast('Double Click (Open/Run)', 'success', '️');
+          showToast('Double Click (Open/Run)', 'success', '⚡');
         } else {
           // 1-Finger Single Tap -> Left Click at exact touch position!
           lastTapTime = touchEndTime;
@@ -1126,21 +1088,143 @@
           vibrate(18);
 
           spawnTouchRipple(lastX, lastY, state.screenMode === 'rclick' ? 'right' : 'tap');
-
-          const norm = getNormalizedCoords(lastX, lastY);
           sendBinaryMoveAbs(norm.x, norm.y);
 
           if (state.screenMode === 'rclick') {
             sendBinaryClick('right');
             state.screenMode = 'touch';
             if (el.toolRclickStatus) el.toolRclickStatus.textContent = 'Next Tap: Normal';
-            showToast('Right Click', 'success', '️');
+            updateScreenModePillUi();
+            showToast('Right Click', 'success', '🖱️');
           } else {
             sendBinaryClick('left');
           }
         }
       }
+      e.preventDefault();
     }, { passive: false });
+
+    // Desktop Web Control: Mouse & Pointer Interaction Handling
+    let isMouseDown = false;
+    let mouseDownBtn = 'left';
+    let mouseStartX = 0;
+    let mouseStartY = 0;
+    let mouseStartTime = 0;
+    let mouseMoved = false;
+
+    touchArena.addEventListener('mousedown', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab'))) {
+        return;
+      }
+      isMouseDown = true;
+      mouseMoved = false;
+      mouseStartX = e.clientX;
+      mouseStartY = e.clientY;
+      mouseStartTime = Date.now();
+      mouseDownBtn = (e.button === 2) ? 'right' : ((e.button === 1) ? 'middle' : 'left');
+
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      sendBinaryMoveAbs(norm.x, norm.y);
+      sendBinaryTouchDown(norm.x, norm.y, mouseDownBtn);
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (!isMouseDown) return;
+      const dist = Math.hypot(e.clientX - mouseStartX, e.clientY - mouseStartY);
+      if (dist > 3) mouseMoved = true;
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      sendBinaryTouchMove(norm.x, norm.y);
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (!isMouseDown) return;
+      isMouseDown = false;
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      sendBinaryTouchUp(norm.x, norm.y, mouseDownBtn);
+
+      const duration = Date.now() - mouseStartTime;
+      const dist = Math.hypot(e.clientX - mouseStartX, e.clientY - mouseStartY);
+      if (duration < 300 && dist < 5 && !mouseMoved) {
+        spawnTouchRipple(e.clientX, e.clientY, mouseDownBtn === 'right' ? 'right' : 'tap');
+      }
+    });
+
+    touchArena.addEventListener('wheel', (e) => {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab'))) {
+        return;
+      }
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      const scrollFactor = state.invertScroll ? -1 : 1;
+      const dy = -e.deltaY * 0.45 * state.scrollSpeed * scrollFactor;
+      const dx = -e.deltaX * 0.45 * state.scrollSpeed * scrollFactor;
+      sendBinaryScrollAbs(norm.x, norm.y, dx, dy);
+      e.preventDefault();
+    }, { passive: false });
+
+    touchArena.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+
+    touchArena.addEventListener('dblclick', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab'))) {
+        return;
+      }
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      sendBinaryMoveAbs(norm.x, norm.y);
+      sendBinaryClick('double');
+      spawnTouchRipple(e.clientX, e.clientY, 'double');
+      e.preventDefault();
+    });
+
+    // Floating Screen Mode Pill UI & Click Handler
+    function updateScreenModePillUi() {
+      const pill = document.getElementById('btn-screen-mode-pill');
+      const icon = document.getElementById('screen-mode-pill-icon');
+      const label = document.getElementById('screen-mode-pill-label');
+      if (!pill) return;
+      if (state.screenMode === 'mouse') {
+        pill.classList.add('mode-mouse');
+        pill.classList.remove('mode-touch', 'mode-rclick');
+        if (icon) icon.textContent = '🖱️';
+        if (label) label.textContent = 'Glide';
+      } else if (state.screenMode === 'rclick') {
+        pill.classList.add('mode-rclick');
+        pill.classList.remove('mode-touch', 'mode-mouse');
+        if (icon) icon.textContent = '⚡';
+        if (label) label.textContent = 'R-Click';
+      } else {
+        pill.classList.add('mode-touch');
+        pill.classList.remove('mode-mouse', 'mode-rclick');
+        if (icon) icon.textContent = '👆';
+        if (label) label.textContent = 'Direct';
+      }
+    }
+    window.updateScreenModePillUi = updateScreenModePillUi;
+
+    const btnScreenModePill = document.getElementById('btn-screen-mode-pill');
+    if (btnScreenModePill) {
+      btnScreenModePill.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        vibrate(20);
+        state.screenMode = state.screenMode === 'touch' ? 'mouse' : 'touch';
+        updateScreenModePillUi();
+        if (typeof updateQuickToolsUi === 'function') updateQuickToolsUi();
+        showToast(
+          state.screenMode === 'touch'
+            ? 'Direct Touch: Tap & drag directly on desktop items'
+            : 'Trackpad Glide: Slide finger to glide PC cursor',
+          'info',
+          state.screenMode === 'touch' ? '👆' : '🖱️'
+        );
+      };
+    }
+    updateScreenModePillUi();
   }
 
   // --- Pinch-to-Zoom & Pan Gesture Engine ---
@@ -1182,6 +1266,12 @@
 
     if (discoveredToken && typeof discoveredToken === 'string') {
       try { localStorage.setItem('pcdeck_token', discoveredToken.trim()); } catch (e) {}
+    }
+
+    // Never override localhost / loopback connection if browsing directly from the PC
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return;
     }
 
     // Guard: If already successfully connected to this exact server, do not reconnect or flicker status!
@@ -1408,8 +1498,24 @@
     state.serverPort = port;
 
     let storedToken = localStorage.getItem('pcdeck_token') || '';
-    if (!storedToken && host && host !== '127.0.0.1' && host !== 'localhost') {
-      fetch(`http://${host}:${port}/api/ping`, { cache: 'no-store' })
+    if (!storedToken) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token') || urlParams.get('t');
+      if (urlToken) {
+        storedToken = urlToken.trim();
+        try { localStorage.setItem('pcdeck_token', storedToken); } catch (e) {}
+      }
+    }
+    if (!storedToken && typeof document !== 'undefined' && document.cookie) {
+      const match = document.cookie.match(/(?:^|;\s*)pcdeck_token=([^;]+)/);
+      if (match && match[1]) {
+        storedToken = decodeURIComponent(match[1]);
+        try { localStorage.setItem('pcdeck_token', storedToken); } catch (e) {}
+      }
+    }
+    if (!storedToken && host) {
+      const pingProto = window.location.protocol.startsWith('http') ? window.location.protocol : 'http:';
+      fetch(`${pingProto}//${host}:${port}/api/ping`, { cache: 'no-store' })
         .then(res => res.json())
         .then(pingData => {
           if (pingData && pingData.token) {
@@ -1417,6 +1523,11 @@
             try { localStorage.setItem('pcdeck_token', tok); } catch (e) {}
             if (mainWs && mainWs.readyState === WebSocket.OPEN) {
               try { mainWs.send(`pair,${tok}`); } catch (e) {}
+            }
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            state.screenWsUrl = `${proto}//${host}:${port}/ws/screen?token=${encodeURIComponent(tok)}`;
+            if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
+              connectScreenWs();
             }
           }
         })
@@ -1514,19 +1625,30 @@
     const label = el.screenLoader.querySelector('span');
     if (label && message) label.textContent = message;
 
+    if (!el.screenLoader.dataset.hasTapHandler) {
+      el.screenLoader.dataset.hasTapHandler = 'true';
+      el.screenLoader.style.cursor = 'pointer';
+      el.screenLoader.addEventListener('click', () => {
+        connectScreenWs();
+      });
+    }
+
     if (screenLoaderTimeout) clearTimeout(screenLoaderTimeout);
     screenLoaderTimeout = setTimeout(() => {
       if (!screenFirstFrameSeen && el.screenLoader) {
         if (label) label.textContent = 'Tap to refresh screen or switch to Trackpad tab';
+        if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
+          connectScreenWs();
+        }
       }
-    }, 4000);
+    }, 3500);
   }
 
   // Self-heals a stalled stream gently without repeatedly destroying active sockets.
   function startScreenWatchdog() {
     if (screenWatchdogTimer) return;
     screenWatchdogTimer = setInterval(() => {
-      if (!state.connected || state.activeTab !== 'tab-screen') return;
+      if (state.activeTab !== 'tab-screen') return;
       if (!screenWs || screenWs.readyState === WebSocket.CLOSED) {
         connectScreenWs();
       } else if (screenWs.readyState === WebSocket.OPEN) {
@@ -1629,6 +1751,10 @@
       el.latencyVal.style.color = color;
       el.latencyVal.style.fontWeight = '800';
     }
+
+    if (typeof updateScreenPerfHud === 'function') {
+      updateScreenPerfHud();
+    }
   }
 
   let degradeTicks = 0;
@@ -1646,31 +1772,26 @@
     let targetScale = 0.85;
     let targetFps = maxAllowedFps;
 
-    if (smoothedRtt <= 50) {
-      // Clean Wi-Fi (5GHz/6GHz or strong 2.4GHz) -> Peak fidelity & full framerate
-      targetQuality = 85;
+    if (smoothedRtt <= 65) {
+      // Clean Wi-Fi (5GHz/6GHz or strong 2.4GHz) -> Peak fidelity & full 1080p
+      targetQuality = 80;
       targetScale = 1.0;
       targetFps = maxAllowedFps;
-    } else if (smoothedRtt <= 85) {
-      // Standard local Wi-Fi / Hotspot -> Maintain full framerate with optimized scale
+    } else if (smoothedRtt <= 110) {
+      // Standard local Wi-Fi / Hotspot -> Maintain crisp native scale with balanced quality
       targetQuality = 75;
-      targetScale = 0.85;
+      targetScale = 1.0;
       targetFps = maxAllowedFps;
-    } else if (smoothedRtt <= 130) {
-      // Moderate congestion -> Balanced 30 FPS
-      targetQuality = 65;
-      targetScale = 0.75;
+    } else if (smoothedRtt <= 160) {
+      // Moderate congestion -> Drop FPS to 30 to save 50% bandwidth while keeping text sharp
+      targetQuality = 70;
+      targetScale = 0.90;
       targetFps = Math.min(maxAllowedFps, 30);
-    } else if (smoothedRtt <= 180) {
-      // Elevated latency / queueing -> 24 FPS
-      targetQuality = 55;
-      targetScale = 0.65;
-      targetFps = 24;
     } else {
-      // Severe interference spike (>180ms) -> 18 FPS lag guard
-      targetQuality = 45;
-      targetScale = 0.50;
-      targetFps = 18;
+      // Elevated latency -> Preserve stability floor (never drop below 0.75x scale or 60 quality)
+      targetQuality = 60;
+      targetScale = 0.75;
+      targetFps = 24;
     }
 
     const isDegrading = (targetQuality < currentAppliedQuality || targetFps < currentAppliedFps);
@@ -1737,7 +1858,9 @@
       if (!screenFirstFrameSeen) {
         showScreenLoader('STREAMING PC SCREEN...');
       }
-      const currentToken = localStorage.getItem('pcdeck_token') || '';
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token') || urlParams.get('t') || '';
+      const currentToken = localStorage.getItem('pcdeck_token') || urlToken;
       const tokenQuery = currentToken ? `?token=${encodeURIComponent(currentToken)}` : '';
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen${tokenQuery}`;
@@ -1771,10 +1894,10 @@
       ws.onclose = () => {
         if (ws !== screenWs) return;
         state.screenConnected = false;
-        if (state.connected && !screenReconnectTimer) {
+        if ((state.connected || state.activeTab === 'tab-screen') && !screenReconnectTimer) {
           screenReconnectTimer = setTimeout(() => {
             screenReconnectTimer = null;
-            if (state.connected) connectScreenWs();
+            if (state.activeTab === 'tab-screen') connectScreenWs();
           }, 1000);
         }
       };
@@ -1804,6 +1927,21 @@
     if (window.AndroidApp && typeof window.AndroidApp.setLowLatencyWifiEnabled === 'function') {
       try { window.AndroidApp.setLowLatencyWifiEnabled(true); } catch (e) {}
     }
+    // Transmit pairing token if stored locally, or request it from PC server
+    let storedToken = localStorage.getItem('pcdeck_token');
+    if (!storedToken && typeof document !== 'undefined' && document.cookie) {
+      const match = document.cookie.match(/(?:^|;\s*)pcdeck_token=([^;]+)/);
+      if (match && match[1]) {
+        storedToken = decodeURIComponent(match[1]);
+        try { localStorage.setItem('pcdeck_token', storedToken); } catch (e) {}
+      }
+    }
+    if (storedToken && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try { mainWs.send(`pair,${storedToken}`); } catch (e) {}
+    } else if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try { mainWs.send('get_token'); } catch (e) {}
+    }
+
     // Start active 1000ms binary ping beacon to maintain Wi-Fi low latency and measure RTT calmly
     startUltraLowLatencyBeacon();
 
@@ -1820,21 +1958,10 @@
       connectScreenWs();
     }
 
-    // Transmit pairing token if stored locally, or request it from PC server
-    const storedToken = localStorage.getItem('pcdeck_token');
-    if (storedToken && mainWs && mainWs.readyState === WebSocket.OPEN) {
-      try { mainWs.send(`pair,${storedToken}`); } catch (e) {}
-    } else if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-      try { mainWs.send('get_token'); } catch (e) {}
-    }
-
     // Send Pro status to PC Server
     const isProActive = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
     if (mainWs && mainWs.readyState === WebSocket.OPEN) {
       mainWs.send(`pro_status,${isProActive ? '1' : '0'}`);
-      mainWs.send('cam_driver_check');
-      mainWs.send('mic_driver_check');
-      mainWs.send('driver_check');
     }
 
     // Auto-enable PC audio streaming if enabled in preferences.
@@ -1890,6 +2017,9 @@
       return;
     }
     if (data.startsWith('pair_ok,')) {
+      if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
+        connectScreenWs();
+      }
       return;
     }
     if (data.startsWith('pong,')) {
@@ -1904,431 +2034,9 @@
       return;
     }
 
-    // --- Virtual Driver Status & Installation Handlers ---
-    if (data.startsWith('gamepad_driver_status,') || data.startsWith('driver_status,')) {
-      const parts = data.split(',');
-      const status = parts[1];
-      const mode = parts[2] || 'xinput';
-      state.gamepadDriverInstalled = (status === 'installed');
-      const banner = document.getElementById('gamepad-driver-banner');
-      const text = document.getElementById('gamepad-driver-status-text');
-      const btn = document.getElementById('btn-install-gamepad-driver');
-      const pBox = document.getElementById('gamepad-driver-progress-box');
-      const driverBadge = document.getElementById('gp-driver-text');
-      const hudBtn = document.getElementById('btn-hud-install-driver');
-      const hudBanner = document.getElementById('hud-driver-banner');
-      const hudText = document.getElementById('hud-driver-status-text');
-      const hudActionBtn = document.getElementById('btn-hud-driver-action');
-
-      if (status === 'installed') {
-        if (banner) banner.style.display = 'none';
-        if (pBox) pBox.style.display = 'none';
-        if (hudBtn) hudBtn.style.display = 'none';
-        if (hudBanner) hudBanner.style.display = 'none';
-        if (driverBadge) driverBadge.textContent = 'Virtual Xbox 360: Active';
-      } else {
-        if (banner) {
-          banner.style.display = 'block';
-          banner.style.background = 'rgba(0, 240, 255, 0.08)';
-          banner.style.borderColor = 'rgba(0, 240, 255, 0.28)';
-        }
-        if (text) {
-          text.style.color = 'var(--neo-cyan)';
-          text.textContent = 'Driver Installation Required';
-        }
-        const sub = document.getElementById('gamepad-driver-subtext');
-        if (sub) {
-          sub.textContent = 'Virtual controller driver needed to control PC games';
-        }
-        if (btn) {
-          btn.disabled = false;
-          btn.style.display = 'inline-flex';
-          btn.className = 'neo-btn btn-cyan';
-          btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg><span>Install Driver</span>';
-        }
-        if (hudBtn) hudBtn.style.display = 'inline-flex';
-        if (hudActionBtn) {
-          hudActionBtn.disabled = false;
-          hudActionBtn.style.display = 'inline-flex';
-          hudActionBtn.className = 'neo-btn btn-cyan';
-          hudActionBtn.innerHTML = '<svg class="deck-icon" width="12" height="12"><use href="#icon-gamepad"/></svg><span>Install Driver</span>';
-        }
-        if (hudText) {
-          hudText.textContent = 'Driver Installation Required';
-        }
-        if (driverBadge) driverBadge.textContent = 'Driver Required (Tap to Install)';
-      }
-      return;
-    }
-
-    if (data.startsWith('gamepad_driver_progress,') || data.startsWith('driver_progress,')) {
-      const parts = data.split(',');
-      const pct = parseInt(parts[1] || '0', 10);
-      const stage = parts.slice(2).join(',');
-      const banner = document.getElementById('gamepad-driver-banner');
-      const pBox = document.getElementById('gamepad-driver-progress-box');
-      const pFill = document.getElementById('gamepad-driver-progress-fill');
-      const pStage = document.getElementById('gamepad-driver-stage-text');
-      const pPct = document.getElementById('gamepad-driver-pct-text');
-      const btn = document.getElementById('btn-install-gamepad-driver');
-      const hudBanner = document.getElementById('hud-driver-banner');
-      const hudBox = document.getElementById('hud-driver-progress-box');
-      const hudFill = document.getElementById('hud-driver-progress-fill');
-      const hudStage = document.getElementById('hud-driver-stage-text');
-      const hudPct = document.getElementById('hud-driver-pct-text');
-      const hudActionBtn = document.getElementById('btn-hud-driver-action');
-
-      if (banner) banner.style.display = 'block';
-      if (pBox) pBox.style.display = 'block';
-      if (pFill) pFill.style.width = pct + '%';
-      if (pStage) pStage.textContent = stage;
-      if (pPct) pPct.textContent = pct + '%';
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = `<span>${pct}%</span>`;
-      }
-
-      if (hudBanner && state.gamepadHudActive) hudBanner.style.display = 'block';
-      if (hudBox) hudBox.style.display = 'block';
-      if (hudFill) hudFill.style.width = pct + '%';
-      if (hudStage) hudStage.textContent = stage;
-      if (hudPct) hudPct.textContent = pct + '%';
-      if (hudActionBtn) {
-        hudActionBtn.disabled = true;
-        hudActionBtn.innerHTML = `<span>${pct}%</span>`;
-      }
-      return;
-    }
-
-    if (data.startsWith('gamepad_driver_installing,') || data.startsWith('driver_installing,')) {
-      const banner = document.getElementById('gamepad-driver-banner');
-      const btn = document.getElementById('btn-install-gamepad-driver');
-      const pBox = document.getElementById('gamepad-driver-progress-box');
-      const pFill = document.getElementById('gamepad-driver-progress-fill');
-      const pStage = document.getElementById('gamepad-driver-stage-text');
-      const pPct = document.getElementById('gamepad-driver-pct-text');
-      if (banner) banner.style.display = 'block';
-      if (pBox) pBox.style.display = 'block';
-      if (pFill) pFill.style.width = '15%';
-      if (pStage) pStage.textContent = 'Please click "Yes" on the PC prompt...';
-      if (pPct) pPct.textContent = '15%';
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span>15%</span>';
-      }
-
-      const hudBanner = document.getElementById('hud-driver-banner');
-      const hudBox = document.getElementById('hud-driver-progress-box');
-      const hudFill = document.getElementById('hud-driver-progress-fill');
-      const hudStage = document.getElementById('hud-driver-stage-text');
-      const hudPct = document.getElementById('hud-driver-pct-text');
-      const hudActionBtn = document.getElementById('btn-hud-driver-action');
-      if (hudBanner && state.gamepadHudActive) hudBanner.style.display = 'block';
-      if (hudBox) hudBox.style.display = 'block';
-      if (hudFill) hudFill.style.width = '15%';
-      if (hudStage) hudStage.textContent = 'Please click "Yes" on the PC prompt...';
-      if (hudPct) hudPct.textContent = '15%';
-      if (hudActionBtn) {
-        hudActionBtn.disabled = true;
-        hudActionBtn.innerHTML = '<span>15%</span>';
-      }
-
-      showToast('Installing Virtual Gamepad Driver on PC...', 'info');
-      return;
-    }
-
-    if (data.startsWith('gamepad_driver_install_result,') || data.startsWith('driver_install_result,')) {
-      const parts = data.split(',');
-      const res = parts[1];
-      const msg = parts.slice(2).join(',');
-      const banner = document.getElementById('gamepad-driver-banner');
-      const text = document.getElementById('gamepad-driver-status-text');
-      const btn = document.getElementById('btn-install-gamepad-driver');
-      const pBox = document.getElementById('gamepad-driver-progress-box');
-      const pFill = document.getElementById('gamepad-driver-progress-fill');
-      const pStage = document.getElementById('gamepad-driver-stage-text');
-      const pPct = document.getElementById('gamepad-driver-pct-text');
-      const driverBadge = document.getElementById('gp-driver-text');
-      const hudBtn = document.getElementById('btn-hud-install-driver');
-      const hudBanner = document.getElementById('hud-driver-banner');
-      const hudText = document.getElementById('hud-driver-status-text');
-      const hudActionBtn = document.getElementById('btn-hud-driver-action');
-      const hudBox = document.getElementById('hud-driver-progress-box');
-      const hudFill = document.getElementById('hud-driver-progress-fill');
-      const hudStage = document.getElementById('hud-driver-stage-text');
-      const hudPct = document.getElementById('hud-driver-pct-text');
-
-      if (res === 'success') {
-        state.gamepadDriverInstalled = true;
-        if (pFill) pFill.style.width = '100%';
-        if (pStage) pStage.textContent = 'Virtual Xbox 360 Controller Active!';
-        if (pPct) pPct.textContent = '100%';
-        if (hudFill) hudFill.style.width = '100%';
-        if (hudStage) hudStage.textContent = 'Virtual Xbox 360 Controller Active!';
-        if (hudPct) hudPct.textContent = '100%';
-        if (driverBadge) driverBadge.textContent = 'Virtual Xbox 360: Active';
-        showToast(' Virtual Xbox 360 Controller active & verified!', 'success');
-        setTimeout(() => {
-          if (banner) banner.style.display = 'none';
-          if (pBox) pBox.style.display = 'none';
-          if (hudBtn) hudBtn.style.display = 'none';
-          if (hudBanner) hudBanner.style.display = 'none';
-        }, 1800);
-      } else {
-        state.gamepadDriverInstalled = false;
-        showToast(`Gamepad driver: ${msg}`, 'error', '️');
-        if (banner) {
-          banner.style.display = 'block';
-          banner.style.background = 'rgba(255, 68, 68, 0.12)';
-          banner.style.borderColor = 'rgba(255, 68, 68, 0.35)';
-        }
-        if (text) {
-          text.style.color = '#ff6b6b';
-          text.textContent = 'Driver Installation Failed';
-        }
-        const sub = document.getElementById('gamepad-driver-subtext');
-        if (sub) {
-          sub.textContent = msg || 'Could not complete driver setup';
-        }
-        if (pStage) pStage.textContent = msg;
-        if (btn) {
-          btn.disabled = false;
-          btn.style.display = 'inline-flex';
-          btn.className = 'neo-btn btn-cyan';
-          btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg><span>Retry Install</span>';
-        }
-        if (hudBanner && state.gamepadHudActive) {
-          hudBanner.style.display = 'block';
-          if (hudText) hudText.textContent = 'Driver Installation Failed';
-          if (hudStage) hudStage.textContent = msg;
-        }
-        if (hudActionBtn) {
-          hudActionBtn.disabled = false;
-          hudActionBtn.style.display = 'inline-flex';
-          hudActionBtn.innerHTML = '<svg class="deck-icon" width="12" height="12"><use href="#icon-gamepad"/></svg><span>Retry Install</span>';
-        }
-      }
-      return;
-    }
-
-    if (data.startsWith('cam_driver_status,')) {
-      const status = data.split(',')[1];
-      const banner = document.getElementById('cam-driver-banner');
-      const text = document.getElementById('cam-driver-status-text');
-      const btn = document.getElementById('btn-install-cam-driver');
-      const pBox = document.getElementById('cam-driver-progress-box');
-      if (banner) {
-        if (status === 'installed') {
-          // If already installed, hide banner completely as user requested
-          banner.style.display = 'none';
-          if (pBox) pBox.style.display = 'none';
-        } else {
-          banner.style.display = 'block';
-          banner.style.background = 'rgba(0, 240, 255, 0.08)';
-          banner.style.borderColor = 'rgba(0, 240, 255, 0.28)';
-          if (text) {
-            text.style.color = 'var(--neo-cyan)';
-            text.textContent = 'Virtual Camera Driver Required';
-          }
-          if (btn) {
-            btn.disabled = false;
-            btn.style.display = 'inline-flex';
-            btn.className = 'neo-btn btn-cyan';
-            btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Install Driver</span>';
-          }
-        }
-      }
-      return;
-    }
-    if (data.startsWith('cam_driver_progress,')) {
-      const parts = data.split(',');
-      const pct = parseInt(parts[1] || '0', 10);
-      const stage = parts.slice(2).join(',');
-      const banner = document.getElementById('cam-driver-banner');
-      const pBox = document.getElementById('cam-driver-progress-box');
-      const pFill = document.getElementById('cam-driver-progress-fill');
-      const pStage = document.getElementById('cam-driver-stage-text');
-      const pPct = document.getElementById('cam-driver-pct-text');
-      const btn = document.getElementById('btn-install-cam-driver');
-      if (banner) banner.style.display = 'block';
-      if (pBox) pBox.style.display = 'block';
-      if (pFill) pFill.style.width = pct + '%';
-      if (pStage) pStage.textContent = stage;
-      if (pPct) pPct.textContent = pct + '%';
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = `<span>${pct}%</span>`;
-      }
-      return;
-    }
-    if (data.startsWith('cam_driver_installing,')) {
-      const banner = document.getElementById('cam-driver-banner');
-      const btn = document.getElementById('btn-install-cam-driver');
-      const pBox = document.getElementById('cam-driver-progress-box');
-      const pFill = document.getElementById('cam-driver-progress-fill');
-      const pStage = document.getElementById('cam-driver-stage-text');
-      const pPct = document.getElementById('cam-driver-pct-text');
-      if (banner) banner.style.display = 'block';
-      if (pBox) pBox.style.display = 'block';
-      if (pFill) pFill.style.width = '15%';
-      if (pStage) pStage.textContent = 'Registering camera filter...';
-      if (pPct) pPct.textContent = '15%';
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span>15%</span>';
-      }
-      showToast('Installing Virtual Camera driver on PC...', 'info');
-      return;
-    }
-    if (data.startsWith('cam_driver_install_result,')) {
-      const parts = data.split(',');
-      const res = parts[1];
-      const msg = parts.slice(2).join(',');
-      const banner = document.getElementById('cam-driver-banner');
-      const text = document.getElementById('cam-driver-status-text');
-      const btn = document.getElementById('btn-install-cam-driver');
-      const pBox = document.getElementById('cam-driver-progress-box');
-      const pFill = document.getElementById('cam-driver-progress-fill');
-      const pStage = document.getElementById('cam-driver-stage-text');
-      const pPct = document.getElementById('cam-driver-pct-text');
-      if (res === 'success') {
-        if (pFill) pFill.style.width = '100%';
-        if (pStage) pStage.textContent = 'Driver installed & active in Windows!';
-        if (pPct) pPct.textContent = '100%';
-        showToast('Virtual Camera driver active & verified!', 'success');
-        setTimeout(() => {
-          if (banner) banner.style.display = 'none';
-          if (pBox) pBox.style.display = 'none';
-        }, 1500);
-      } else {
-        showToast(`Camera driver: ${msg}`, 'error', '️');
-        if (banner) {
-          banner.style.display = 'block';
-          banner.style.background = 'rgba(255, 68, 68, 0.12)';
-          banner.style.borderColor = 'rgba(255, 68, 68, 0.35)';
-        }
-        if (text) {
-          text.style.color = '#ff6b6b';
-          text.textContent = msg;
-        }
-        if (pStage) pStage.textContent = msg;
-        if (btn) {
-          btn.disabled = false;
-          btn.style.display = 'inline-flex';
-          btn.className = 'neo-btn btn-cyan';
-          btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Retry Install</span>';
-        }
-      }
-      return;
-    }
-    if (data.startsWith('mic_driver_status,')) {
-      const status = data.split(',')[1];
-      const banner = document.getElementById('mic-driver-banner');
-      const text = document.getElementById('mic-driver-status-text');
-      const btn = document.getElementById('btn-install-mic-driver');
-      const pBox = document.getElementById('mic-driver-progress-box');
-      if (banner) {
-        if (status === 'installed') {
-          // If already installed, hide banner completely as user requested
-          banner.style.display = 'none';
-          if (pBox) pBox.style.display = 'none';
-        } else {
-          banner.style.display = 'block';
-          banner.style.background = 'rgba(255, 68, 68, 0.12)';
-          banner.style.borderColor = 'rgba(255, 68, 68, 0.35)';
-          if (text) {
-            text.style.color = '#ff6b6b';
-            text.textContent = 'Virtual Audio Driver Required';
-          }
-          if (btn) {
-            btn.disabled = false;
-            btn.style.display = 'inline-flex';
-            btn.className = 'neo-btn btn-lime';
-            btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Install Driver</span>';
-          }
-        }
-      }
-      return;
-    }
-    if (data.startsWith('mic_driver_progress,')) {
-      const parts = data.split(',');
-      const pct = parseInt(parts[1] || '0', 10);
-      const stage = parts.slice(2).join(',');
-      const banner = document.getElementById('mic-driver-banner');
-      const pBox = document.getElementById('mic-driver-progress-box');
-      const pFill = document.getElementById('mic-driver-progress-fill');
-      const pStage = document.getElementById('mic-driver-stage-text');
-      const pPct = document.getElementById('mic-driver-pct-text');
-      const btn = document.getElementById('btn-install-mic-driver');
-      if (banner) banner.style.display = 'block';
-      if (pBox) pBox.style.display = 'block';
-      if (pFill) pFill.style.width = pct + '%';
-      if (pStage) pStage.textContent = stage;
-      if (pPct) pPct.textContent = pct + '%';
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = `<span>${pct}%</span>`;
-      }
-      return;
-    }
-    if (data.startsWith('mic_driver_installing,')) {
-      const banner = document.getElementById('mic-driver-banner');
-      const btn = document.getElementById('btn-install-mic-driver');
-      const pBox = document.getElementById('mic-driver-progress-box');
-      const pFill = document.getElementById('mic-driver-progress-fill');
-      const pStage = document.getElementById('mic-driver-stage-text');
-      const pPct = document.getElementById('mic-driver-pct-text');
-      if (banner) banner.style.display = 'block';
-      if (pBox) pBox.style.display = 'block';
-      if (pFill) pFill.style.width = '15%';
-      if (pStage) pStage.textContent = 'Please click "Yes" on the PC prompt...';
-      if (pPct) pPct.textContent = '15%';
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span>15%</span>';
-      }
-      showToast('Installing Virtual Audio Cable on PC...', 'info', '️');
-      return;
-    }
-    if (data.startsWith('mic_driver_install_result,')) {
-      const parts = data.split(',');
-      const res = parts[1];
-      const msg = parts.slice(2).join(',');
-      const banner = document.getElementById('mic-driver-banner');
-      const text = document.getElementById('mic-driver-status-text');
-      const btn = document.getElementById('btn-install-mic-driver');
-      const pBox = document.getElementById('mic-driver-progress-box');
-      const pFill = document.getElementById('mic-driver-progress-fill');
-      const pStage = document.getElementById('mic-driver-stage-text');
-      const pPct = document.getElementById('mic-driver-pct-text');
-      if (res === 'success') {
-        if (pFill) pFill.style.width = '100%';
-        if (pStage) pStage.textContent = 'Driver installed & active in Windows!';
-        if (pPct) pPct.textContent = '100%';
-        showToast('Virtual Audio Cable active & verified!', 'success', '️');
-        setTimeout(() => {
-          if (banner) banner.style.display = 'none';
-          if (pBox) pBox.style.display = 'none';
-        }, 1500);
-      } else {
-        showToast(`Mic driver: ${msg}`, 'error', '️');
-        if (banner) {
-          banner.style.display = 'block';
-          banner.style.background = 'rgba(255, 68, 68, 0.12)';
-          banner.style.borderColor = 'rgba(255, 68, 68, 0.35)';
-        }
-        if (text) {
-          text.style.color = '#ff6b6b';
-          text.textContent = msg;
-        }
-        if (pStage) pStage.textContent = msg;
-        if (btn) {
-          btn.disabled = false;
-          btn.style.display = 'inline-flex';
-          btn.className = 'neo-btn btn-lime';
-          btn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Retry Install</span>';
-        }
-      }
+    // --- Legacy Driver Message Sink (Pure Driverless Architecture) ---
+    if (data.startsWith('gamepad_driver_') || data.startsWith('driver_') || data.startsWith('cam_driver_') || data.startsWith('mic_driver_')) {
+      state.gamepadDriverInstalled = true;
       return;
     }
 
@@ -2487,111 +2195,133 @@
 
   const BTN_MAP_JS = { left: 0, right: 1, middle: 2, double: 3 };
 
-  // Pre-allocated static buffers (Zero GC overhead on 60-120Hz touch pipelines)
-  const _binBuf8 = new ArrayBuffer(8);
-  const _binView8 = new DataView(_binBuf8);
-  const _binBuf12 = new ArrayBuffer(12);
-  const _binView12 = new DataView(_binBuf12);
+  // Pre-allocated static buffers (Zero GC overhead, dedicated per opcode to prevent race conditions)
+  const _bufMoveRel = new ArrayBuffer(8);
+  const _viewMoveRel = new DataView(_bufMoveRel);
+
+  const _bufMoveAbs = new ArrayBuffer(8);
+  const _viewMoveAbs = new DataView(_bufMoveAbs);
+
+  const _bufTouchDown = new ArrayBuffer(8);
+  const _viewTouchDown = new DataView(_bufTouchDown);
+
+  const _bufTouchMove = new ArrayBuffer(8);
+  const _viewTouchMove = new DataView(_bufTouchMove);
+
+  const _bufTouchUp = new ArrayBuffer(8);
+  const _viewTouchUp = new DataView(_bufTouchUp);
+
+  const _bufClick = new ArrayBuffer(8);
+  const _viewClick = new DataView(_bufClick);
+
+  const _bufScrollRel = new ArrayBuffer(8);
+  const _viewScrollRel = new DataView(_bufScrollRel);
+
+  const _bufScrollAbs = new ArrayBuffer(12);
+  const _viewScrollAbs = new DataView(_bufScrollAbs);
+
+  const _bufPing = new ArrayBuffer(8);
+  const _viewPing = new DataView(_bufPing);
 
   function sendBinaryMoveRel(dx, dy, flags = 0) {
-    _binView8.setUint8(0, BINARY_OP.MOVE_REL);
-    _binView8.setUint8(1, flags);
+    _viewMoveRel.setUint8(0, BINARY_OP.MOVE_REL);
+    _viewMoveRel.setUint8(1, flags);
     const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
     const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
-    _binView8.setInt16(2, idx, true);
-    _binView8.setInt16(4, idy, true);
-    _binView8.setUint16(6, 0, true);
-    sendCommand(_binBuf8);
+    _viewMoveRel.setInt16(2, idx, true);
+    _viewMoveRel.setInt16(4, idy, true);
+    _viewMoveRel.setUint16(6, 0, true);
+    sendCommand(_bufMoveRel);
   }
 
   function sendBinaryMoveAbs(normX, normY, pressure = 0, flags = 0) {
-    _binView8.setUint8(0, BINARY_OP.MOVE_ABS);
-    _binView8.setUint8(1, flags);
+    _viewMoveAbs.setUint8(0, BINARY_OP.MOVE_ABS);
+    _viewMoveAbs.setUint8(1, flags);
     const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
     const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
-    _binView8.setUint16(2, ix, true);
-    _binView8.setUint16(4, iy, true);
-    _binView8.setUint8(6, pressure & 0xFF);
-    _binView8.setUint8(7, 0);
-    sendScreenCommand(_binBuf8);
+    _viewMoveAbs.setUint16(2, ix, true);
+    _viewMoveAbs.setUint16(4, iy, true);
+    _viewMoveAbs.setUint8(6, pressure & 0xFF);
+    _viewMoveAbs.setUint8(7, 0);
+    sendScreenCommand(_bufMoveAbs);
   }
 
   function sendBinaryTouchDown(normX, normY, button = 'left', pressure = 0) {
-    _binView8.setUint8(0, BINARY_OP.TOUCH_DOWN);
-    _binView8.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    _viewTouchDown.setUint8(0, BINARY_OP.TOUCH_DOWN);
+    _viewTouchDown.setUint8(1, BTN_MAP_JS[button] ?? 0);
     const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
     const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
-    _binView8.setUint16(2, ix, true);
-    _binView8.setUint16(4, iy, true);
-    _binView8.setUint8(6, pressure & 0xFF);
-    _binView8.setUint8(7, 0);
-    sendScreenCommand(_binBuf8);
+    _viewTouchDown.setUint16(2, ix, true);
+    _viewTouchDown.setUint16(4, iy, true);
+    _viewTouchDown.setUint8(6, pressure & 0xFF);
+    _viewTouchDown.setUint8(7, 0);
+    sendScreenCommand(_bufTouchDown);
   }
 
   function sendBinaryTouchMove(normX, normY, pressure = 0, flags = 0) {
-    _binView8.setUint8(0, BINARY_OP.TOUCH_MOVE);
-    _binView8.setUint8(1, flags);
+    _viewTouchMove.setUint8(0, BINARY_OP.TOUCH_MOVE);
+    _viewTouchMove.setUint8(1, flags);
     const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
     const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
-    _binView8.setUint16(2, ix, true);
-    _binView8.setUint16(4, iy, true);
-    _binView8.setUint8(6, pressure & 0xFF);
-    _binView8.setUint8(7, 0);
-    sendScreenCommand(_binBuf8);
+    _viewTouchMove.setUint16(2, ix, true);
+    _viewTouchMove.setUint16(4, iy, true);
+    _viewTouchMove.setUint8(6, pressure & 0xFF);
+    _viewTouchMove.setUint8(7, 0);
+    sendScreenCommand(_bufTouchMove);
   }
 
   function sendBinaryTouchUp(normX, normY, button = 'left') {
-    _binView8.setUint8(0, BINARY_OP.TOUCH_UP);
-    _binView8.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    _viewTouchUp.setUint8(0, BINARY_OP.TOUCH_UP);
+    _viewTouchUp.setUint8(1, BTN_MAP_JS[button] ?? 0);
     const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
     const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
-    _binView8.setUint16(2, ix, true);
-    _binView8.setUint16(4, iy, true);
-    _binView8.setUint16(6, 0, true);
-    sendScreenCommand(_binBuf8);
+    _viewTouchUp.setUint16(2, ix, true);
+    _viewTouchUp.setUint16(4, iy, true);
+    _viewTouchUp.setUint16(6, 0, true);
+    sendScreenCommand(_bufTouchUp);
   }
 
   function sendBinaryClick(button = 'left') {
-    _binView8.setUint8(0, BINARY_OP.CLICK);
-    _binView8.setUint8(1, BTN_MAP_JS[button] ?? 0);
-    _binView8.setUint32(2, 0, true);
-    _binView8.setUint16(6, 0, true);
-    sendCommand(_binBuf8);
+    _viewClick.setUint8(0, BINARY_OP.CLICK);
+    _viewClick.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    _viewClick.setUint32(2, 0, true);
+    _viewClick.setUint16(6, 0, true);
+    sendCommand(_bufClick);
   }
 
   function sendBinaryScrollRel(dx, dy, flags = 0) {
-    _binView8.setUint8(0, BINARY_OP.SCROLL_REL);
-    _binView8.setUint8(1, flags);
+    _viewScrollRel.setUint8(0, BINARY_OP.SCROLL_REL);
+    _viewScrollRel.setUint8(1, flags);
     const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
     const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
-    _binView8.setInt16(2, idx, true);
-    _binView8.setInt16(4, idy, true);
-    _binView8.setUint16(6, 0, true);
-    sendCommand(_binBuf8);
+    _viewScrollRel.setInt16(2, idx, true);
+    _viewScrollRel.setInt16(4, idy, true);
+    _viewScrollRel.setUint16(6, 0, true);
+    sendCommand(_bufScrollRel);
   }
 
   function sendBinaryScrollAbs(normX, normY, dx, dy, flags = 0) {
-    _binView12.setUint8(0, BINARY_OP.SCROLL_ABS);
-    _binView12.setUint8(1, flags);
+    _viewScrollAbs.setUint8(0, BINARY_OP.SCROLL_ABS);
+    _viewScrollAbs.setUint8(1, flags);
     const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
     const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
     const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
     const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
-    _binView12.setUint16(2, ix, true);
-    _binView12.setUint16(4, iy, true);
-    _binView12.setInt16(6, idx, true);
-    _binView12.setInt16(8, idy, true);
-    _binView12.setUint16(10, 0, true);
-    sendScreenCommand(_binBuf12);
+    _viewScrollAbs.setUint16(2, ix, true);
+    _viewScrollAbs.setUint16(4, iy, true);
+    _viewScrollAbs.setInt16(6, idx, true);
+    _viewScrollAbs.setInt16(8, idy, true);
+    _viewScrollAbs.setUint16(10, 0, true);
+    sendScreenCommand(_bufScrollAbs);
   }
 
   function sendBinaryPing(flags = 0) {
     const ts = Date.now() & 0xFFFFFFFF;
-    _binView8.setUint8(0, BINARY_OP.PING);
-    _binView8.setUint8(1, flags);
-    _binView8.setUint32(2, ts, true);
-    _binView8.setUint16(6, 0, true);
-    sendCommand(_binBuf8);
+    _viewPing.setUint8(0, BINARY_OP.PING);
+    _viewPing.setUint8(1, flags);
+    _viewPing.setUint32(2, ts, true);
+    _viewPing.setUint16(6, 0, true);
+    sendCommand(_bufPing);
   }
 
   function sendCommand(cmdStr) {
@@ -2615,6 +2345,10 @@
   let nextFrameBuffer = null;
   let cachedScreenImg = new Image();
   let activeBlobUrl = null;
+
+  function recordStreamFrameRendered() {}
+  function updateScreenPerfHud() {}
+  window.updateScreenPerfHud = updateScreenPerfHud;
 
   function renderScreenFrame(data) {
     if (!data) return;
@@ -2659,6 +2393,7 @@
             el.screenCanvas.height = bmp.height;
             screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
             if (screenCtx) screenCtx.imageSmoothingEnabled = false;
+            updateScreenPerfHud();
           }
           if (screenCtx) {
             screenCtx.drawImage(bmp, 0, 0);
@@ -2678,6 +2413,7 @@
               el.screenCanvas.width = cachedScreenImg.naturalWidth;
               el.screenCanvas.height = cachedScreenImg.naturalHeight;
               screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
+              updateScreenPerfHud();
             }
             if (screenCtx) {
               screenCtx.drawImage(cachedScreenImg, 0, 0);
@@ -2690,6 +2426,10 @@
           };
           cachedScreenImg.src = activeBlobUrl;
         });
+      }
+
+      if (renderedOk) {
+        recordStreamFrameRendered();
       }
 
       if (renderedOk || screenFirstFrameSeen) {
@@ -2720,6 +2460,17 @@
     let tapStartTime = 0;
     let totalMoved = 0;
 
+    let twoFingerActive = false;
+    let twoFingerStartTime = 0;
+    let twoFingerStartMidX = 0, twoFingerStartMidY = 0;
+    let lastTwoFingerMidX = 0, lastTwoFingerMidY = 0;
+    let twoFingerMoved = false;
+
+    // Double-tap and tap-to-drag state
+    let lastTapTime = 0;
+    let lastTapX = 0, lastTapY = 0;
+    let isTapDragging = false;
+
     // Frame-coalesced kinematic filtering & motion prediction variables
     let filteredDx = 0;
     let filteredDy = 0;
@@ -2742,7 +2493,7 @@
         if (el.settingCursorSpeed) el.settingCursorSpeed.value = state.cursorSpeed.toString();
         if (el.valCursorSpeed) el.valCursorSpeed.textContent = `${state.cursorSpeed.toFixed(1)}x`;
         vibrate(25);
-        showToast(`Mouse Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success', '️');
+        showToast(`Mouse Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success', '⚡');
         saveAllSettings(false);
       };
     }
@@ -2800,8 +2551,10 @@
     }
 
     surface.addEventListener('touchstart', (e) => {
+      globalLastTouchTime = Date.now();
       if (e.touches.length === 1) {
         touchActive = true;
+        twoFingerActive = false;
         const t = e.touches[0];
         startX = lastX = t.clientX;
         startY = lastY = t.clientY;
@@ -2814,14 +2567,68 @@
         pendingDy = 0;
         velPredictX = 0;
         velPredictY = 0;
+
+        // Double-tap detection: second touch within 300ms and 24px engages drag
+        const now = Date.now();
+        if (now - lastTapTime < 300 && Math.hypot(t.clientX - lastTapX, t.clientY - lastTapY) < 24) {
+          isTapDragging = true;
+          sendCommand('d,left');
+          vibrate(25);
+        } else {
+          isTapDragging = false;
+        }
       } else if (e.touches.length === 2) {
-        vibrate(20);
-        sendBinaryClick('right');
         touchActive = false;
+        twoFingerActive = true;
+        twoFingerMoved = false;
+        twoFingerStartTime = Date.now();
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        twoFingerStartMidX = (t1.clientX + t2.clientX) / 2;
+        twoFingerStartMidY = (t1.clientY + t2.clientY) / 2;
+        lastTwoFingerMidX = twoFingerStartMidX;
+        lastTwoFingerMidY = twoFingerStartMidY;
+        if (isTapDragging) {
+          isTapDragging = false;
+          sendCommand('u,left');
+        }
+      } else {
+        touchActive = false;
+        twoFingerActive = false;
+        if (isTapDragging) {
+          isTapDragging = false;
+          sendCommand('u,left');
+        }
       }
     }, { passive: false });
 
     surface.addEventListener('touchmove', (e) => {
+      globalLastTouchTime = Date.now();
+      if (e.touches.length === 2 && twoFingerActive) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const midX = (t1.clientX + t2.clientX) / 2;
+        const midY = (t1.clientY + t2.clientY) / 2;
+        const dX = midX - lastTwoFingerMidX;
+        const dY = midY - lastTwoFingerMidY;
+        lastTwoFingerMidX = midX;
+        lastTwoFingerMidY = midY;
+
+        const moveDist = Math.hypot(midX - twoFingerStartMidX, midY - twoFingerStartMidY);
+        if (moveDist > 6) {
+          twoFingerMoved = true;
+        }
+
+        const scrollFactor = state.invertScroll ? -1 : 1;
+        const wheelDy = dY * 2.2 * state.scrollSpeed * scrollFactor;
+        const wheelDx = dX * 2.2 * state.scrollSpeed * scrollFactor;
+        if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+          sendBinaryScrollRel(wheelDx, wheelDy);
+        }
+        e.preventDefault();
+        return;
+      }
+
       if (!touchActive || e.touches.length !== 1) return;
       const t = e.touches[0];
       const dx = t.clientX - lastX;
@@ -2841,16 +2648,114 @@
     }, { passive: false });
 
     surface.addEventListener('touchend', (e) => {
-      if (touchActive) {
+      globalLastTouchTime = Date.now();
+      if (twoFingerActive && e.touches.length < 2) {
+        const dur = Date.now() - twoFingerStartTime;
+        if (!twoFingerMoved && dur < 320) {
+          vibrate(25);
+          sendBinaryClick('right');
+          showToast('Right Click', 'success', '🖱️');
+        }
+        twoFingerActive = false;
+        e.preventDefault();
+        return;
+      }
+
+      if (isTapDragging) {
+        isTapDragging = false;
+        sendCommand('u,left');
+        vibrate(20);
+        touchActive = false;
+        lastTapTime = 0;
+        e.preventDefault();
+        return;
+      }
+
+      if (touchActive && e.touches.length === 0) {
         touchActive = false;
         flushMovement();
         const tapDuration = Date.now() - tapStartTime;
-        if (tapDuration < 220 && totalMoved < 8) {
-          vibrate(18);
-          sendBinaryClick('left');
+        if (tapDuration < 320 && totalMoved < 16) {
+          const now = Date.now();
+          if (now - lastTapTime < 350 && Math.hypot(lastX - lastTapX, lastY - lastTapY) < 28) {
+            // Quick double tap -> Double Click
+            lastTapTime = 0;
+            vibrate(25);
+            sendBinaryClick('double');
+            showToast('Double Click', 'success', '⚡');
+          } else {
+            // Single tap -> Left Click
+            lastTapTime = now;
+            lastTapX = lastX;
+            lastTapY = lastY;
+            vibrate(18);
+            sendBinaryClick('left');
+          }
+        } else {
+          lastTapTime = 0;
         }
       }
+      e.preventDefault();
     }, { passive: false });
+
+    // Desktop Web Control: Mouse handling on Trackpad surface
+    surface.addEventListener('mousedown', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      touchActive = true;
+      startX = lastX = e.clientX;
+      startY = lastY = e.clientY;
+      tapStartTime = Date.now();
+      lastFlushTime = performance.now();
+      totalMoved = 0;
+      filteredDx = 0;
+      filteredDy = 0;
+      pendingDx = 0;
+      pendingDy = 0;
+      velPredictX = 0;
+      velPredictY = 0;
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (!touchActive || state.activeTab !== 'tab-trackpad') return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      totalMoved += Math.hypot(dx, dy);
+      pendingDx += dx;
+      pendingDy += dy;
+
+      if (!rAfScheduled) {
+        rAfScheduled = true;
+        requestAnimationFrame(flushMovement);
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (!touchActive || state.activeTab !== 'tab-trackpad') return;
+      touchActive = false;
+      flushMovement();
+      const tapDuration = Date.now() - tapStartTime;
+      if (tapDuration < 350 && totalMoved < 12) {
+        const btn = (e.button === 2) ? 'right' : 'left';
+        vibrate(18);
+        sendBinaryClick(btn);
+      }
+    });
+
+    surface.addEventListener('wheel', (e) => {
+      const scrollDelta = -e.deltaY * 2.0 * state.scrollSpeed * (state.invertScroll ? -1 : 1);
+      sendBinaryScrollRel(0, scrollDelta);
+      e.preventDefault();
+    }, { passive: false });
+
+    surface.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
 
     // Scroll Strip Handler
     if (el.scrollStrip) {
@@ -2883,17 +2788,32 @@
   // --- Global Navigation Tab Switching Function ---
   function switchTab(targetId) {
     if (!targetId) return;
+    const requestedTab = targetId;
+    let isGpActivation = false;
+    if (targetId === 'tab-gamepad') {
+      targetId = 'tab-trackpad';
+      isGpActivation = true;
+    } else if (targetId === 'tab-trackpad' && gamepadActive) {
+      if (typeof window.setGamepadMode === 'function') {
+        window.setGamepadMode(false);
+      }
+    }
+
     vibrate(15);
     state.activeTab = targetId;
     document.body.classList.toggle('on-screen-tab', targetId === 'tab-screen');
-    document.body.classList.toggle('gamepad-mode-active', targetId === 'tab-trackpad' && gamepadActive);
+    document.body.classList.toggle('gamepad-mode-active', targetId === 'tab-trackpad' && (gamepadActive || isGpActivation));
 
+    const isGamepadActive = isGpActivation || (targetId === 'tab-trackpad' && gamepadActive);
     const allTabs = (el && el.dockTabs && el.dockTabs.length) ? el.dockTabs : document.querySelectorAll('.dock-tab');
     allTabs.forEach((t) => {
-      if (t.dataset.target === targetId) {
-        t.classList.add('active');
+      const dt = t.dataset.target;
+      if (dt === 'tab-gamepad') {
+        t.classList.toggle('active', isGamepadActive);
+      } else if (dt === 'tab-trackpad') {
+        t.classList.toggle('active', targetId === 'tab-trackpad' && !isGamepadActive);
       } else {
-        t.classList.remove('active');
+        t.classList.toggle('active', dt === targetId);
       }
     });
 
@@ -2905,6 +2825,10 @@
         v.classList.remove('active');
       }
     });
+
+    if (isGpActivation && typeof window.setGamepadMode === 'function') {
+      window.setGamepadMode(true);
+    }
 
     // Update Titlebar Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
     if (typeof window.updateTitlebarActions === 'function') {
@@ -2927,17 +2851,15 @@
         window.setGamepadMode(false);
       }
 
-      if (state.connected) {
-        if (!screenWs || screenWs.readyState === WebSocket.CLOSED || screenWs.readyState === WebSocket.CLOSING) {
-          connectScreenWs();
-        } else if (screenWs.readyState === WebSocket.OPEN) {
-          try { screenWs.send('resume'); } catch (e) {}
-          sendStreamConfig();
-        }
-        // Preserve and allow PC Audio Streaming (essential for movies, videos, and games)
-        if (state.autoAudioStream && !audioStreamActive && !userManuallyStoppedAudio && typeof startAudioStream === 'function') {
-          startAudioStream();
-        }
+      if (!screenWs || screenWs.readyState === WebSocket.CLOSED || screenWs.readyState === WebSocket.CLOSING) {
+        connectScreenWs();
+      } else if (screenWs.readyState === WebSocket.OPEN) {
+        try { screenWs.send('resume'); } catch (e) {}
+        sendStreamConfig();
+      }
+      // Preserve and allow PC Audio Streaming (essential for movies, videos, and games)
+      if (state.connected && state.autoAudioStream && !audioStreamActive && !userManuallyStoppedAudio && typeof startAudioStream === 'function') {
+        startAudioStream();
       }
     } else {
       // Navigated away from screen tab: immediately pause & disconnect PC screen capture thread
@@ -2960,6 +2882,14 @@
       if (mainWs && mainWs.readyState === WebSocket.OPEN) {
         mainWs.send('cam_driver_check');
         mainWs.send('mic_driver_check');
+      }
+    } else if (targetId === 'tab-gamepad') {
+      // Switched to dedicated gamepad tab: activate gamepad mode and verify driver
+      if (typeof window.setGamepadMode === 'function') {
+        window.setGamepadMode(true);
+      }
+      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        mainWs.send('driver_check');
       }
     } else if (targetId === 'tab-trackpad') {
       // Switched to trackpad/gamepad tab: verify virtual controller driver status on PC
@@ -5208,6 +5138,11 @@
         sub.textContent = isPortrait ? 'Portrait (Tap for Landscape)' : 'Landscape (Tap for Portrait)';
       }
     }
+
+    // Keep screen mode pill in sync
+    if (typeof window.updateScreenModePillUi === 'function') {
+      window.updateScreenModePillUi();
+    }
   }
 
   function initQuickTools() {
@@ -5874,7 +5809,6 @@
           switchTab(targetId);
         };
         tab.addEventListener('click', onTabClick);
-        tab.addEventListener('pointerdown', onTabClick);
       });
     }
   }
@@ -5909,6 +5843,9 @@
   let audioFracPos = 0.0;
   let audioLastSampleL = 0.0;
   let audioLastSampleR = 0.0;
+  let audioFadeGain = 0.0;
+  let audioCurrentRateMult = 1.0;
+  let audioTargetRateMult = 1.0;
 
   function ensureAudioContext() {
     if (!audioCtx || audioCtx.state === 'closed') {
@@ -5999,6 +5936,7 @@
 
   function updateAudioUi(active) {
     audioStreamActive = active;
+
     if (el.btnToggleAudioStream) {
       if (active) {
         el.btnToggleAudioStream.classList.remove('btn-yellow', 'btn-lime');
@@ -6061,6 +5999,23 @@
     audioConnecting = true;
     updateAudioUi(true);
 
+    // 1. Native Android Low-Latency Hardware Audio Engine (AudioRelay grade)
+    if (window.AndroidApp && typeof window.AndroidApp.startNativeAudioStream === 'function') {
+      try {
+        const targetHost = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+        const ok = window.AndroidApp.startNativeAudioStream(targetHost, 8003);
+        if (ok) {
+          audioStreamActive = true;
+          audioConnecting = false;
+          updateAudioUi(true);
+          showToast('PC Audio Active (Hardware Direct)', 'success', '️');
+          return;
+        }
+      } catch (eNative) {
+        console.warn('[Audio] Native audio start failed, falling back to WebAudio:', eNative);
+      }
+    }
+
     ensureAudioContext();
     if (audioCtx && audioCtx.state === 'suspended') {
       try { await audioCtx.resume(); } catch (e) {}
@@ -6077,7 +6032,8 @@
     const port = state.serverPort || (window.location.port && window.location.port !== '' ? window.location.port : '8000');
     const storedToken = localStorage.getItem('pcdeck_token') || '';
     const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
-    const audioWsUrl = `ws://${host}:${port}/ws/audio${tokenParam}`;
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const audioWsUrl = `${wsProto}//${host}:${port}/ws/audio${tokenParam}`;
 
     try {
       // Ensure dedicated AudioWorklet thread is initialized BEFORE opening socket
@@ -6203,9 +6159,21 @@ class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
     this.fracPos = 0.0;
     this.srcRate = 48000;
     this.channels = 2;
+
     this.isPrebuffering = true;
+    this.fadeGain = 0.0;
     this.lastSampleL = 0.0;
     this.lastSampleR = 0.0;
+
+    this.currentRateMult = 1.0;
+    this.targetRateMult = 1.0;
+
+    this.TARGET_BUFFER_MS = 100;
+    this.DEADBAND_LOW_MS = 75;
+    this.DEADBAND_HIGH_MS = 135;
+    this.PREBUFFER_THRESHOLD_MS = 90;
+    this.REBUFFER_THRESHOLD_MS = 60;
+    this.MAX_CEILING_MS = 240;
 
     this.port.onmessage = (event) => {
       const msg = event.data;
@@ -6221,8 +6189,11 @@ class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
         this.available = 0;
         this.fracPos = 0.0;
         this.isPrebuffering = true;
+        this.fadeGain = 0.0;
         this.lastSampleL = 0.0;
         this.lastSampleR = 0.0;
+        this.currentRateMult = 1.0;
+        this.targetRateMult = 1.0;
         return;
       }
       if (msg instanceof ArrayBuffer) {
@@ -6236,8 +6207,8 @@ class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
           this.bufferL[this.writePos] = sL;
           this.bufferR[this.writePos] = sR;
           this.writePos = (this.writePos + 1) % this.RING_SIZE;
-          this.available = Math.min(this.RING_SIZE, this.available + 1);
         }
+        this.available = Math.min(this.RING_SIZE, this.available + frames);
       }
     };
   }
@@ -6251,10 +6222,14 @@ class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
 
     const hwRate = typeof sampleRate !== 'undefined' ? sampleRate : 48000;
     const baseRatio = this.srcRate / hwRate;
+    const bufferedMs = (this.available / this.srcRate) * 1000;
 
-    const prebufferThreshold = Math.round(this.srcRate * 0.065);
+    const neededThreshold = this.isPrebuffering ? 
+      Math.round(this.srcRate * (this.PREBUFFER_THRESHOLD_MS / 1000)) : 
+      Math.round(this.srcRate * (this.REBUFFER_THRESHOLD_MS / 1000));
+
     if (this.isPrebuffering) {
-      if (this.available < prebufferThreshold) {
+      if (this.available < neededThreshold) {
         outL.fill(0);
         if (outR !== outL) outR.fill(0);
         return true;
@@ -6263,12 +6238,11 @@ class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
     }
 
     if (this.available <= 2) {
-      this.isPrebuffering = true;
       for (let i = 0; i < bufLen; i++) {
-        if (i < 32) {
-          const fade = (32 - i) / 32;
-          outL[i] = this.lastSampleL * fade;
-          if (outR !== outL) outR[i] = this.lastSampleR * fade;
+        if (this.fadeGain > 0.0) {
+          this.fadeGain = Math.max(0.0, this.fadeGain - (1.0 / 32));
+          outL[i] = this.lastSampleL * this.fadeGain;
+          if (outR !== outL) outR[i] = this.lastSampleR * this.fadeGain;
         } else {
           outL[i] = 0;
           if (outR !== outL) outR[i] = 0;
@@ -6276,23 +6250,40 @@ class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
       }
       this.lastSampleL = 0.0;
       this.lastSampleR = 0.0;
+      this.isPrebuffering = true;
       return true;
     }
 
-    const bufferedMs = (this.available / this.srcRate) * 1000;
-    let rateMult = 1.0;
-    if (bufferedMs > 80) {
-      rateMult = 1.018;
-    } else if (bufferedMs < 35) {
-      rateMult = 0.982;
+    if (bufferedMs > this.MAX_CEILING_MS) {
+      const targetFrames = Math.round(this.srcRate * (this.TARGET_BUFFER_MS / 1000));
+      const excess = this.available - targetFrames;
+      if (excess > 0) {
+        this.readPos = (this.readPos + excess) % this.RING_SIZE;
+        this.available -= excess;
+      }
     }
-    const effectiveRatio = baseRatio * rateMult;
+
+    if (bufferedMs > this.DEADBAND_HIGH_MS) {
+      this.targetRateMult = 1.0 + Math.min(0.012, (bufferedMs - this.DEADBAND_HIGH_MS) * 0.00015);
+    } else if (bufferedMs < this.DEADBAND_LOW_MS) {
+      this.targetRateMult = 1.0 - Math.min(0.012, (this.DEADBAND_LOW_MS - bufferedMs) * 0.00015);
+    } else {
+      this.targetRateMult = 1.0;
+    }
+
+    this.currentRateMult = this.currentRateMult * 0.996 + this.targetRateMult * 0.004;
+    const effectiveRatio = baseRatio * this.currentRateMult;
 
     for (let i = 0; i < bufLen; i++) {
       if (this.available <= 1) {
-        outL[i] = 0;
-        if (outR !== outL) outR[i] = 0;
+        this.fadeGain = Math.max(0.0, this.fadeGain - (1.0 / 16));
+        outL[i] = this.lastSampleL * this.fadeGain;
+        if (outR !== outL) outR[i] = this.lastSampleR * this.fadeGain;
         continue;
+      }
+
+      if (this.fadeGain < 1.0) {
+        this.fadeGain = Math.min(1.0, this.fadeGain + (1.0 / 48));
       }
 
       const idx0 = this.readPos;
@@ -6302,8 +6293,9 @@ class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
       const sL = this.bufferL[idx0] * (1.0 - alpha) + this.bufferL[idx1] * alpha;
       const sR = this.bufferR[idx0] * (1.0 - alpha) + this.bufferR[idx1] * alpha;
 
-      outL[i] = sL;
-      if (outR !== outL) outR[i] = sR;
+      outL[i] = sL * this.fadeGain;
+      if (outR !== outL) outR[i] = sR * this.fadeGain;
+
       this.lastSampleL = sL;
       this.lastSampleR = sR;
 
@@ -6368,10 +6360,14 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     audioFracPos = 0.0;
     audioLastSampleL = 0.0;
     audioLastSampleR = 0.0;
+    audioFadeGain = 0.0;
+    audioCurrentRateMult = 1.0;
+    audioTargetRateMult = 1.0;
     isAudioPrebuffering = true;
 
     try {
-      const node = audioCtx.createScriptProcessor(1024, 0, 2);
+      // 2048 buffer gives main UI thread plenty of breathing room (~42ms)
+      const node = audioCtx.createScriptProcessor(2048, 0, 2);
       audioContinuousNode = node;
 
       node.onaudioprocess = (e) => {
@@ -6383,11 +6379,15 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         const hwRate = (audioCtx && audioCtx.sampleRate) ? audioCtx.sampleRate : 48000;
         const srcRate = audioSampleRate || 48000;
         const baseRatio = srcRate / hwRate;
+        const bufferedMs = (audioRingAvailable / srcRate) * 1000;
 
-        // Prebuffer gate: wait for ~65ms buffer to absorb initial Wi-Fi jitter
-        const prebufferThreshold = Math.round(srcRate * 0.065);
+        // 1. Initial Startup (90ms) / Re-buffer (60ms)
+        const neededThreshold = isAudioPrebuffering ? 
+          Math.round(srcRate * 0.090) : 
+          Math.round(srcRate * 0.060);
+
         if (isAudioPrebuffering) {
-          if (audioRingAvailable < prebufferThreshold) {
+          if (audioRingAvailable < neededThreshold) {
             outL.fill(0);
             outR.fill(0);
             return;
@@ -6395,14 +6395,13 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           isAudioPrebuffering = false;
         }
 
-        // Buffer starvation / underrun handling with smooth ramp-down to prevent clicks
+        // 2. Buffer Underrun / Starvation Handling
         if (audioRingAvailable <= 2) {
-          isAudioPrebuffering = true;
           for (let i = 0; i < bufLen; i++) {
-            if (i < 32) {
-              const fade = (32 - i) / 32;
-              outL[i] = audioLastSampleL * fade;
-              outR[i] = audioLastSampleR * fade;
+            if (audioFadeGain > 0.0) {
+              audioFadeGain = Math.max(0.0, audioFadeGain - (1.0 / 32));
+              outL[i] = audioLastSampleL * audioFadeGain;
+              outR[i] = audioLastSampleR * audioFadeGain;
             } else {
               outL[i] = 0;
               outR[i] = 0;
@@ -6410,27 +6409,42 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           }
           audioLastSampleL = 0.0;
           audioLastSampleR = 0.0;
+          isAudioPrebuffering = true;
           return;
         }
 
-        // Adaptive clock drift compensation (PLL):
-        // Gently adjust resampling ratio by ±1.5% without pitch clicks or sample drops
-        const bufferedMs = (audioRingAvailable / srcRate) * 1000;
-        let rateMultiplier = 1.0;
-        if (bufferedMs > 80) {
-          rateMultiplier = 1.018; // Gently drain buffer
-        } else if (bufferedMs < 35) {
-          rateMultiplier = 0.982; // Gently accumulate buffer
+        // 3. Ceiling Safety: Drain stale backlog (>240ms)
+        if (bufferedMs > 240) {
+          const excess = audioRingAvailable - Math.round(srcRate * 0.100);
+          if (excess > 0) {
+            audioRingReadPos = (audioRingReadPos + excess) % AUDIO_RING_BUFFER_SIZE;
+            audioRingAvailable -= excess;
+          }
         }
-        const effectiveRatio = baseRatio * rateMultiplier;
 
-        // High-Fidelity Fractional Linear-Interpolated Resampling:
-        // Preserves full treble and exact natural pitch at all times (never dull or slow!)
+        // 4. Smooth Phase-Locked Loop (PLL) Drift Tracking with Deadband [75ms, 135ms]
+        if (bufferedMs > 135) {
+          audioTargetRateMult = 1.0 + Math.min(0.012, (bufferedMs - 135) * 0.00015);
+        } else if (bufferedMs < 75) {
+          audioTargetRateMult = 1.0 - Math.min(0.012, (75 - bufferedMs) * 0.00015);
+        } else {
+          audioTargetRateMult = 1.0;
+        }
+
+        audioCurrentRateMult = audioCurrentRateMult * 0.996 + audioTargetRateMult * 0.004;
+        const effectiveRatio = baseRatio * audioCurrentRateMult;
+
+        // 5. High-Fidelity Resampling with Linear Interpolation & Volume Ramp
         for (let i = 0; i < bufLen; i++) {
           if (audioRingAvailable <= 1) {
-            outL[i] = 0;
-            outR[i] = 0;
+            audioFadeGain = Math.max(0.0, audioFadeGain - (1.0 / 16));
+            outL[i] = audioLastSampleL * audioFadeGain;
+            outR[i] = audioLastSampleR * audioFadeGain;
             continue;
+          }
+
+          if (audioFadeGain < 1.0) {
+            audioFadeGain = Math.min(1.0, audioFadeGain + (1.0 / 48));
           }
 
           const idx0 = audioRingReadPos;
@@ -6440,8 +6454,9 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           const sL = audioRingBufferL[idx0] * (1.0 - alpha) + audioRingBufferL[idx1] * alpha;
           const sR = audioRingBufferR[idx0] * (1.0 - alpha) + audioRingBufferR[idx1] * alpha;
 
-          outL[i] = sL;
-          outR[i] = sR;
+          outL[i] = sL * audioFadeGain;
+          outR[i] = sR * audioFadeGain;
+
           audioLastSampleL = sL;
           audioLastSampleR = sR;
 
@@ -6482,8 +6497,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       audioRingBufferL[audioRingWritePos] = sL;
       audioRingBufferR[audioRingWritePos] = sR;
       audioRingWritePos = (audioRingWritePos + 1) % AUDIO_RING_BUFFER_SIZE;
-      audioRingAvailable = Math.min(AUDIO_RING_BUFFER_SIZE, audioRingAvailable + 1);
     }
+    audioRingAvailable = Math.min(AUDIO_RING_BUFFER_SIZE, audioRingAvailable + numFrames);
   }
 
   function killScheduledAudioSources() {
@@ -6503,6 +6518,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     audioFracPos = 0.0;
     audioLastSampleL = 0.0;
     audioLastSampleR = 0.0;
+    audioFadeGain = 0.0;
+    audioCurrentRateMult = 1.0;
+    audioTargetRateMult = 1.0;
+    isAudioPrebuffering = true;
   }
 
   function teardownHtml5Fallback(element) {
@@ -6523,7 +6542,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
     const port = state.serverPort || (window.location.port && window.location.port !== '' ? window.location.port : '8000');
-    const streamUrl = `http://${host}:${port}/api/audio/stream.wav?t=${Date.now()}`;
+    const httpProto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const streamUrl = `${httpProto}//${host}:${port}/api/audio/stream.wav?t=${Date.now()}`;
     const element = new Audio(streamUrl);
     html5AudioFallback = element;
     element.volume = state.audioVolume || 1.0;
@@ -6550,6 +6570,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     audioStreamActive = false;
     audioConnecting = false;
     nextAudioPlayTime = 0;
+
+    if (window.AndroidApp && typeof window.AndroidApp.stopNativeAudioStream === 'function') {
+      try { window.AndroidApp.stopNativeAudioStream(); } catch (e) {}
+    }
 
     if (notifyUi) {
       updateAudioUi(false);
@@ -6918,9 +6942,16 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       const fpsGroup = document.getElementById('titlebar-fps-group');
       const transferPill = document.getElementById('titlebar-transfer-group');
       const btnGameHud = document.getElementById('btn-screen-gamepad-hud');
+      const btnHeaderGp = document.getElementById('btn-header-gamepad');
+
+      const isNativeApp = !!(window.AndroidApp || window.isNativeApp || (window.navigator && window.navigator.userAgent && window.navigator.userAgent.includes('PCDeckNativeApp')));
+      const isWebBrowser = !isNativeApp && (document.documentElement.classList.contains('is-web-browser') || document.body.classList.contains('is-web-browser'));
 
       if (btnGameHud) {
-        btnGameHud.style.display = (activeTab === 'tab-screen' && state.gamepadHudEnabled) ? 'inline-flex' : 'none';
+        btnGameHud.style.display = 'none';
+      }
+      if (btnHeaderGp) {
+        btnHeaderGp.style.display = 'none';
       }
 
       if (activeTab === 'tab-files') {
@@ -7266,9 +7297,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       const conf = GP_PRESETS[presetKey] || GP_PRESETS.xbox;
       const driverBadge = document.getElementById('gp-driver-text');
       if (driverBadge) {
-        driverBadge.textContent = (state.gamepadDriverInstalled === false)
-          ? 'Driver Required (Tap to Install)'
-          : conf.driverLabel;
+        driverBadge.textContent = conf.driverLabel;
       }
 
       const emblemText = document.getElementById('gp-center-emblem-text');
@@ -7920,9 +7949,18 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       document.body.classList.toggle('gamepad-mode-active', active);
       const tabTrackpad = document.getElementById('tab-trackpad');
       if (tabTrackpad) tabTrackpad.classList.toggle('gamepad-mode-active', active);
+      const tabGamepad = document.getElementById('tab-gamepad');
+      if (tabGamepad) tabGamepad.classList.toggle('gamepad-mode-active', active);
       if (btnToggle) {
         btnToggle.style.background = active ? 'var(--neo-lime)' : 'var(--neo-cyan)';
-        btnToggle.textContent = active ? 'Trackpad' : 'Gamepad';
+        const label = btnToggle.querySelector('span') || btnToggle;
+        label.textContent = active ? 'Trackpad' : 'Gamepad';
+      }
+      const dockGp = document.querySelector('.dock-tab[data-target="tab-gamepad"]');
+      const dockTp = document.querySelector('.dock-tab[data-target="tab-trackpad"]');
+      if (dockGp && dockTp && state.activeTab === 'tab-trackpad') {
+        dockGp.classList.toggle('active', active);
+        dockTp.classList.toggle('active', !active);
       }
       if (active) {
         applyGamepadPreset(activeGpPreset);
@@ -7935,43 +7973,49 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         setGamepadEditMode(false);
         if (gyroEngine) gyroEngine.stop();
       }
+      const btnHeaderGp = document.getElementById('btn-header-gamepad');
+      if (btnHeaderGp) {
+        btnHeaderGp.classList.toggle('active', active);
+      }
       vibrate(20);
     }
     window.setGamepadMode = setGamepadMode;
+
+    const btnHeaderGp = document.getElementById('btn-header-gamepad');
+    if (btnHeaderGp) {
+      btnHeaderGp.onclick = () => {
+        vibrate(20);
+        if (state.activeTab === 'tab-gamepad' || (state.activeTab === 'tab-trackpad' && gamepadActive)) {
+          switchTab('tab-trackpad');
+          setGamepadMode(false);
+          showToast('Switched to Trackpad', 'info');
+        } else {
+          switchTab('tab-gamepad');
+          setGamepadMode(true);
+          showToast('🎮 Standalone Game Controller Active', 'info');
+        }
+      };
+    }
 
     if (btnToggle) {
       btnToggle.onclick = () => setGamepadMode(!gamepadActive);
     }
     const returnButtons = document.querySelectorAll('#btn-return-trackpad, #btn-gp-top-back-trackpad, .gp-exit-chip');
     returnButtons.forEach((btn) => {
-      btn.onclick = () => setGamepadMode(false);
-    });
-
-    const btnInstallGpDriver = document.getElementById('btn-install-gamepad-driver');
-    if (btnInstallGpDriver) {
-      btnInstallGpDriver.onclick = () => {
-        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-          vibrate(20);
-          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info');
-          mainWs.send('install_gamepad_driver_request');
-        } else {
-          showToast('PC not connected', 'error', '️');
-        }
+      btn.onclick = () => {
+        switchTab('tab-trackpad');
+        setGamepadMode(false);
       };
-    }
+    });
 
     const gpDriverBadge = document.getElementById('gp-driver-badge');
     if (gpDriverBadge) {
       gpDriverBadge.onclick = () => {
-        if (state.gamepadDriverInstalled === false) {
-          if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-            vibrate(20);
-            showToast('Requesting PC Virtual Gamepad Driver installation...', 'info');
-            mainWs.send('install_gamepad_driver_request');
-          } else {
-            showToast('PC not connected', 'error', '️');
-          }
-        }
+        vibrate(15);
+        const presetOrder = ['xbox', 'ps', 'racing', 'wasd'];
+        const nextIdx = (presetOrder.indexOf(activeGpPreset) + 1) % presetOrder.length;
+        applyGamepadPreset(presetOrder[nextIdx]);
+        showToast(`Layout: ${GP_PRESETS[presetOrder[nextIdx]].name}`, 'info');
       };
     }
 
@@ -8237,7 +8281,6 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     // Initialize Gyro Super Motion Engine
     gyroEngine = initGyroSuperEngine();
-  }
 
   function setupAnalogStick(zoneId, thumbId, stickKey) {
     const zone = document.getElementById(zoneId);
@@ -8245,23 +8288,19 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     if (!zone || !thumb) return;
 
     const base = zone.querySelector('.gp-stick-base') || zone;
+    let activePointerId = null;
+    let isInteracting = false;
+    let activeWasd = { up: false, down: false, left: false, right: false };
 
-    const handlePointerMove = (e) => {
-      const s = gpStickState[stickKey];
-      if (!s.active || (s.pointerId !== null && s.pointerId !== e.pointerId)) return;
-      e.preventDefault();
-      e.stopPropagation();
-
+    function calculateCoords(clientX, clientY) {
       const rect = base.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-
-      let dx = e.clientX - centerX;
-      let dy = e.clientY - centerY;
+      let dx = clientX - centerX;
+      let dy = clientY - centerY;
       const dist = Math.hypot(dx, dy);
 
-      const maxTravel = Math.max(24, (rect.width / 2) - (thumb.offsetWidth / 2 || 22));
-
+      const maxTravel = Math.max(22, (rect.width / 2) - (thumb.offsetWidth / 2 || 20));
       if (dist > maxTravel) {
         dx = (dx / dist) * maxTravel;
         dy = (dy / dist) * maxTravel;
@@ -8269,9 +8308,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
       thumb.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
 
-      // Normalize to -1.0 .. +1.0
       let normX = dx / maxTravel;
-      let normY = -(dy / maxTravel);
+      let normY = -(dy / maxTravel); // Positive UP, Negative DOWN
 
       const deadzone = 0.08;
       if (Math.abs(normX) < deadzone) normX = 0;
@@ -8280,51 +8318,195 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       normX = Math.max(-1, Math.min(1, normX * gpSensitivity));
       normY = Math.max(-1, Math.min(1, normY * gpSensitivity));
 
-      s.x = Math.round(normX * 100) / 100;
-      s.y = Math.round(normY * 100) / 100;
+      return {
+        x: Math.round(normX * 100) / 100,
+        y: Math.round(normY * 100) / 100
+      };
+    }
 
-      sendCommand(`gp,axis,${stickKey},${s.x},${s.y}`);
-    };
+    function onStickMove(clientX, clientY) {
+      if (!isInteracting) return;
+      const coords = calculateCoords(clientX, clientY);
+      const s = gpStickState[stickKey];
+      s.x = coords.x;
+      s.y = coords.y;
+
+      if (activeGpPreset === 'wasd') {
+        if (stickKey === 'left') {
+          const pressW = coords.y > 0.35;
+          const pressS = coords.y < -0.35;
+          const pressD = coords.x > 0.35;
+          const pressA = coords.x < -0.35;
+          if (pressW !== activeWasd.up) { sendCommand(`key,${pressW ? 'down' : 'up'},w`); activeWasd.up = pressW; }
+          if (pressS !== activeWasd.down) { sendCommand(`key,${pressS ? 'down' : 'up'},s`); activeWasd.down = pressS; }
+          if (pressA !== activeWasd.left) { sendCommand(`key,${pressA ? 'down' : 'up'},a`); activeWasd.left = pressA; }
+          if (pressD !== activeWasd.right) { sendCommand(`key,${pressD ? 'down' : 'up'},d`); activeWasd.right = pressD; }
+        } else {
+          const sens = 14.0 * gpSensitivity;
+          const mdx = Math.round(coords.x * Math.abs(coords.x) * sens);
+          const mdy = Math.round(-coords.y * Math.abs(coords.y) * sens);
+          if (mdx !== 0 || mdy !== 0) {
+            sendCommand(`mouse,move,${mdx},${mdy}`);
+          }
+        }
+      } else {
+        sendCommand(`gp,axis,${stickKey},${s.x},${s.y}`);
+      }
+    }
+
+    function onStickRelease() {
+      if (!isInteracting) return;
+      isInteracting = false;
+      activePointerId = null;
+      const s = gpStickState[stickKey];
+      s.active = false;
+      s.pointerId = null;
+      s.x = 0;
+      s.y = 0;
+      thumb.style.transform = 'translate(0px, 0px)';
+
+      if (activeGpPreset === 'wasd' && stickKey === 'left') {
+        if (activeWasd.up) { sendCommand('key,up,w'); activeWasd.up = false; }
+        if (activeWasd.down) { sendCommand('key,up,s'); activeWasd.down = false; }
+        if (activeWasd.left) { sendCommand('key,up,a'); activeWasd.left = false; }
+        if (activeWasd.right) { sendCommand('key,up,d'); activeWasd.right = false; }
+      } else {
+        sendCommand(`gp,axis,${stickKey},0,0`);
+      }
+    }
 
     const handlePointerDown = (e) => {
       if (isGpLayoutEditing) return;
       if (e.target.closest('.gp-stick-click-btn')) return;
-
       e.preventDefault();
       e.stopPropagation();
+
+      isInteracting = true;
+      activePointerId = e.pointerId;
       const s = gpStickState[stickKey];
       s.active = true;
       s.pointerId = e.pointerId;
-      try { base.setPointerCapture(e.pointerId); } catch (_) {}
 
-      window.addEventListener('pointermove', handlePointerMove, { passive: false });
-      window.addEventListener('pointerup', handlePointerUp);
-      window.addEventListener('pointercancel', handlePointerUp);
+      try {
+        if (base && typeof base.setPointerCapture === 'function') {
+          base.setPointerCapture(e.pointerId);
+        }
+      } catch (_) {}
 
-      handlePointerMove(e);
+      if (gpHaptics) vibrate(10);
+      onStickMove(e.clientX, e.clientY);
+
+      const onWindowPointerMove = (me) => {
+        if (!isInteracting || (activePointerId !== null && me.pointerId !== undefined && me.pointerId !== activePointerId)) return;
+        me.preventDefault();
+        onStickMove(me.clientX, me.clientY);
+      };
+
+      const onWindowPointerUp = (ue) => {
+        if (activePointerId !== null && ue.pointerId !== undefined && ue.pointerId !== activePointerId) return;
+        try {
+          if (base && typeof base.releasePointerCapture === 'function') {
+            base.releasePointerCapture(activePointerId);
+          }
+        } catch (_) {}
+        window.removeEventListener('pointermove', onWindowPointerMove);
+        window.removeEventListener('pointerup', onWindowPointerUp);
+        window.removeEventListener('pointercancel', onWindowPointerUp);
+        onStickRelease();
+      };
+
+      window.addEventListener('pointermove', onWindowPointerMove, { passive: false });
+      window.addEventListener('pointerup', onWindowPointerUp);
+      window.addEventListener('pointercancel', onWindowPointerUp);
     };
 
-    const handlePointerUp = (e) => {
-      const s = gpStickState[stickKey];
-      if (s.active && (s.pointerId === e.pointerId || e.pointerId === undefined)) {
-        if (e && e.stopPropagation) e.stopPropagation();
-        try { base.releasePointerCapture(s.pointerId); } catch (_) {}
-        s.active = false;
-        s.pointerId = null;
-        s.x = 0;
-        s.y = 0;
-        window.removeEventListener('pointermove', handlePointerMove);
-        window.removeEventListener('pointerup', handlePointerUp);
-        window.removeEventListener('pointercancel', handlePointerUp);
+    const handleTouchStart = (e) => {
+      if (isGpLayoutEditing) return;
+      if (e.target.closest('.gp-stick-click-btn')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const touch = e.targetTouches[0];
+      if (!touch) return;
 
-        thumb.style.transform = 'translate(0px, 0px)';
-        sendCommand(`gp,axis,${stickKey},0,0`);
-      }
+      isInteracting = true;
+      const touchId = touch.identifier;
+      if (gpHaptics) vibrate(10);
+      onStickMove(touch.clientX, touch.clientY);
+
+      const onTouchMove = (te) => {
+        if (!isInteracting) return;
+        for (let i = 0; i < te.touches.length; i++) {
+          if (te.touches[i].identifier === touchId) {
+            te.preventDefault();
+            onStickMove(te.touches[i].clientX, te.touches[i].clientY);
+            break;
+          }
+        }
+      };
+
+      const onTouchEnd = (te) => {
+        let stillActive = false;
+        for (let i = 0; i < te.touches.length; i++) {
+          if (te.touches[i].identifier === touchId) {
+            stillActive = true;
+            break;
+          }
+        }
+        if (!stillActive) {
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onTouchEnd);
+          window.removeEventListener('touchcancel', onTouchEnd);
+          onStickRelease();
+        }
+      };
+
+      window.addEventListener('touchmove', onTouchMove, { passive: false });
+      window.addEventListener('touchend', onTouchEnd);
+      window.addEventListener('touchcancel', onTouchEnd);
+    };
+
+    const handleMouseDown = (e) => {
+      if (isInteracting || isGpLayoutEditing) return;
+      if (e.target.closest('.gp-stick-click-btn')) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      isInteracting = true;
+      activePointerId = 'mouse';
+      const s = gpStickState[stickKey];
+      s.active = true;
+      s.pointerId = 'mouse';
+
+      if (gpHaptics) vibrate(10);
+      onStickMove(e.clientX, e.clientY);
+
+      const onWindowMouseMove = (me) => {
+        if (!isInteracting) return;
+        me.preventDefault();
+        onStickMove(me.clientX, me.clientY);
+      };
+
+      const onWindowMouseUp = () => {
+        window.removeEventListener('mousemove', onWindowMouseMove);
+        window.removeEventListener('mouseup', onWindowMouseUp);
+        onStickRelease();
+      };
+
+      window.addEventListener('mousemove', onWindowMouseMove);
+      window.addEventListener('mouseup', onWindowMouseUp);
     };
 
     base.addEventListener('pointerdown', handlePointerDown);
     zone.addEventListener('pointerdown', handlePointerDown);
+    thumb.addEventListener('pointerdown', handlePointerDown);
+    base.addEventListener('touchstart', handleTouchStart, { passive: false });
+    zone.addEventListener('touchstart', handleTouchStart, { passive: false });
+    thumb.addEventListener('touchstart', handleTouchStart, { passive: false });
+    base.addEventListener('mousedown', handleMouseDown);
+    zone.addEventListener('mousedown', handleMouseDown);
+    thumb.addEventListener('mousedown', handleMouseDown);
   }
+}
 
   /* ==========================================================================
      GYRO SUPER MOTION ENGINE (TILT STEERING & MOTION AIMING)
@@ -8961,6 +9143,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       const nextState = forceState !== undefined ? forceState : !state.gamepadHudActive;
       state.gamepadHudActive = nextState;
       btnToggleHud.classList.toggle('active', nextState);
+      const btnScreenHudFab = document.getElementById('btn-screen-hud-fab');
+      if (btnScreenHudFab) btnScreenHudFab.classList.toggle('active', nextState);
       document.body.classList.toggle('gamepad-hud-active', nextState);
 
       if (nextState) {
@@ -8970,7 +9154,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           mainWs.send('driver_check');
         }
         vibrate(30);
-        showToast(' In-Display Gaming HUD Active (Full Screen View)', 'info');
+        showToast('🎮 In-Display Gaming HUD Active (Full Screen View)', 'info');
       } else {
         exitEditMode();
         hudOverlay.style.display = 'none';
@@ -8981,7 +9165,15 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
 
     window.toggleGamepadHUD = toggleGamepadHUD;
-    btnToggleHud.onclick = () => toggleGamepadHUD();
+    if (btnToggleHud) btnToggleHud.onclick = () => toggleGamepadHUD();
+    const btnScreenHudFab = document.getElementById('btn-screen-hud-fab');
+    if (btnScreenHudFab) {
+      btnScreenHudFab.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleGamepadHUD();
+      };
+    }
     if (btnCloseHud) btnCloseHud.onclick = () => toggleGamepadHUD(false);
 
     const btnHudInstallDriver = document.getElementById('btn-hud-install-driver');
@@ -9584,16 +9776,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const gainSlider = document.getElementById('mic-gain-slider');
     const gainVal = document.getElementById('mic-gain-val');
 
-    const btnInstallMic = document.getElementById('btn-install-mic-driver');
-    if (btnInstallMic) {
-      btnInstallMic.onclick = () => {
-        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-          mainWs.send('install_mic_driver_request');
-        } else {
-          showToast('PC not connected', 'error', '️');
-        }
-      };
-    }
+
 
     const btnUpdateApk = document.getElementById('btn-update-apk');
     if (btnUpdateApk) {
@@ -9674,10 +9857,16 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       try {
         let stream = null;
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: false, // Prevents aggressive gating/clipping of soft speech
+              autoGainControl: true
+            }
+          });
         } catch (e1) {
-          console.warn('[Mic] Basic audio:true failed, trying with audio constraints...', e1);
-          stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+          console.warn('[Mic] Custom audio constraints failed, trying basic audio:true...', e1);
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         }
         micMediaStream = stream;
 
@@ -9897,16 +10086,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         console.warn('Camera enumeration error:', e);
       }
     }
-    const btnInstallCam = document.getElementById('btn-install-cam-driver');
-    if (btnInstallCam) {
-      btnInstallCam.onclick = () => {
-        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-          mainWs.send('install_cam_driver_request');
-        } else {
-          showToast('PC not connected', 'error', '️');
-        }
-      };
-    }
+
 
     const btnCamRear = document.getElementById('btn-cam-rear');
     const btnCamFront = document.getElementById('btn-cam-front');
@@ -10220,36 +10400,6 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     enumerateCameras();
   }
 
-  // =========================================================================
-  // HIGH-TRUST DRIVER MODAL MANAGER
-  // =========================================================================
-  function initDriverTrustManager() {
-    const modal = document.getElementById('driver-trust-modal');
-    const btnInstall = document.getElementById('btn-modal-install-driver');
-    const btnSkip = document.getElementById('btn-modal-skip-driver');
-    const statusBox = document.getElementById('driver-install-status-box');
-
-    if (btnInstall) {
-      btnInstall.onclick = () => {
-        vibrate(20);
-        if (statusBox) {
-          statusBox.style.display = 'block';
-          statusBox.style.background = 'rgba(0, 240, 255, 0.15)';
-          statusBox.style.color = 'var(--neo-cyan)';
-          statusBox.textContent = 'Running 1-Click Silent Setup on PC...';
-        }
-        sendCommand('install_driver_request');
-      };
-    }
-
-    if (btnSkip && modal) {
-      btnSkip.onclick = () => {
-        vibrate(10);
-        modal.style.display = 'none';
-      };
-    }
-  }
-
   function bootstrap() {
     initDomElements();
     loadSettings();
@@ -10268,7 +10418,6 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     initScreenGamepadHUD();
     initWirelessMicrophone();
     initWirelessWebcam();
-    initDriverTrustManager();
 
     // Trigger zero-config background UDP discovery and fast subnet probe immediately (< 5ms)
     triggerDiscoveryAndSweep();
@@ -10287,14 +10436,19 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       document.body.classList.remove('is-native-app');
     }
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTab = urlParams.get('tab');
+    const targetTab = urlTab ? (urlTab.startsWith('tab-') ? urlTab : `tab-${urlTab}`) : 'tab-screen';
+
     if (isHttp && !isNativeApp) {
-      // In web browser mode: seamlessly auto-connect with ZERO modal popups and open ready-to-use trackpad!
+      // In web browser mode: seamlessly auto-connect with ZERO modal popups and open ready-to-use tab (defaults to live Screen)
       if (el.connectModal) el.connectModal.classList.remove('show');
       const obModal = document.getElementById('onboarding-modal');
       if (obModal) obModal.classList.remove('show');
-      switchTab('tab-trackpad');
+      switchTab(targetTab);
       connect();
     } else if (savedIp) {
+      if (urlTab) switchTab(targetTab);
       connect();
     } else if (isNativeApp && !onboardingDone) {
       if (typeof window.openOnboardingModal === 'function') {

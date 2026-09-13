@@ -28,10 +28,10 @@ except ImportError:
 class AudioStreamer:
     """Captures system output audio on Windows via WASAPI Loopback and broadcasts to phone clients."""
 
-    def __init__(self, sample_rate: int = 48000, channels: int = 2, chunk_size: int = 1024):
+    def __init__(self, sample_rate: int = 48000, channels: int = 2, chunk_size: int = 512):
         self.sample_rate = sample_rate
         self.channels = channels
-        self.chunk_size = chunk_size
+        self.chunk_size = chunk_size  # 512 frames = 10.66ms for competitive game streaming
         self.is_running = False
         self.pyaudio_instance = None
         self.stream = None
@@ -39,8 +39,14 @@ class AudioStreamer:
         self.loopback_device = None
 
         # Active WebSocket subscriber queues
-        self._subscribers: Set[asyncio.Queue] = set()
+        self._subscribers: Set[Tuple[Optional[asyncio.AbstractEventLoop], asyncio.Queue]] = set()
         self._subscribers_lock = threading.Lock()
+
+        # Native Direct TCP audio stream clients (port 8003)
+        self._tcp_clients = set()
+        self._tcp_lock = threading.Lock()
+        self._tcp_server_thread = None
+        self._tcp_stop = None
 
         # Listeners count
         self.active_listeners = 0
@@ -158,12 +164,12 @@ class AudioStreamer:
 
             while self.is_running:
                 now = time.time()
-                # When Windows audio is silent or between speech, WASAPI emits no callbacks.
-                # Generate accurately-timed silence chunks so the client's jitter buffer never starves!
-                if now - self._last_audio_time >= (chunk_duration * 1.25):
+                # Only inject a gentle silence keepalive when Windows audio has been genuinely
+                # idle for >250ms. Never inject false silence blocks into active gameplay/music!
+                if now - self._last_audio_time >= 0.250:
                     self._broadcast_chunk(silence_chunk)
                     self._last_audio_time = now
-                time.sleep(max(0.005, chunk_duration * 0.4))
+                time.sleep(0.050)
 
         except Exception:
             pass
@@ -185,14 +191,15 @@ class AudioStreamer:
 
     def _broadcast_chunk(self, chunk: bytes):
         """Dispatches audio chunk to all active subscribers across threads safely without backlog bloat."""
+        # 1. WebSocket subscriber queues
         with self._subscribers_lock:
             for loop, q in list(self._subscribers):
                 try:
                     if loop and loop.is_running():
                         def safe_put(queue=q, data=chunk):
                             try:
-                                # Cap queue to max 4 chunks (~85ms) so audio latency stays real-time
-                                while queue.qsize() > 4:
+                                # Cap queue to max 32 chunks (~340ms) to absorb event-loop bursts without dropping frames
+                                while queue.qsize() > 32:
                                     try:
                                         queue.get_nowait()
                                     except Exception:
@@ -202,7 +209,7 @@ class AudioStreamer:
                                 pass
                         loop.call_soon_threadsafe(safe_put)
                     else:
-                        while q.qsize() > 4:
+                        while q.qsize() > 32:
                             try:
                                 q.get_nowait()
                             except Exception:
@@ -210,6 +217,60 @@ class AudioStreamer:
                         q.put_nowait(chunk)
                 except Exception:
                     pass
+
+        # 2. Native Direct TCP Sockets (Phone Native AudioTrack / AudioRelay grade)
+        if hasattr(self, "_tcp_clients") and self._tcp_clients:
+            with self._tcp_lock:
+                dead = []
+                for client in list(self._tcp_clients):
+                    try:
+                        client.sendall(chunk)
+                    except Exception:
+                        dead.append(client)
+                for d in dead:
+                    self._tcp_clients.discard(d)
+                    try: d.close()
+                    except Exception: pass
+
+    def start_tcp_server(self, port: int = 8003):
+        """Starts high-speed native TCP audio server on port 8003 for native mobile clients."""
+        if hasattr(self, "_tcp_server_thread") and self._tcp_server_thread and self._tcp_server_thread.is_alive():
+            return
+
+        self._tcp_stop = threading.Event()
+
+        def _tcp_listener():
+            server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                server_sock.bind(("0.0.0.0", port))
+                server_sock.listen(5)
+                server_sock.settimeout(1.0)
+                print(f"[AudioStreamer] Native TCP Audio Engine active on 0.0.0.0:{port}", flush=True)
+                while not self._tcp_stop.is_set():
+                    try:
+                        client, addr = server_sock.accept()
+                        try:
+                            client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                            client.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
+                        except Exception:
+                            pass
+                        with self._tcp_lock:
+                            self._tcp_clients.add(client)
+                        self.start()
+                        print(f"[AudioStreamer] Native audio client connected from {addr[0]}:{addr[1]}", flush=True)
+                    except socket.timeout:
+                        continue
+                    except Exception:
+                        pass
+            except Exception as e:
+                print(f"[AudioStreamer] TCP server error on {port}: {e}", flush=True)
+            finally:
+                try: server_sock.close()
+                except Exception: pass
+
+        self._tcp_server_thread = threading.Thread(target=_tcp_listener, name="AudioStreamer-TCPListener", daemon=True)
+        self._tcp_server_thread.start()
 
     def register_subscriber(self, loop: Optional[asyncio.AbstractEventLoop] = None) -> asyncio.Queue:
         """Registers a new WebSocket subscriber queue with its event loop."""
@@ -219,7 +280,7 @@ class AudioStreamer:
             except Exception:
                 loop = None
 
-        q = asyncio.Queue(maxsize=50)
+        q = asyncio.Queue(maxsize=64)
         with self._subscribers_lock:
             self._subscribers.add((loop, q))
             self.active_listeners = len(self._subscribers)
@@ -342,16 +403,8 @@ def restore_playback_id(dev_id: str = "") -> bool:
 
 
 def get_drivers_dir() -> str:
-    """Returns absolute path to the drivers directory (handles dev & PyInstaller frozen modes)."""
-    if getattr(sys, "frozen", False):
-        meipass_drivers = os.path.join(getattr(sys, "_MEIPASS", ""), "drivers")
-        if os.path.exists(meipass_drivers):
-            return meipass_drivers
-        exe_drivers = os.path.join(os.path.dirname(sys.executable), "drivers")
-        if os.path.exists(exe_drivers):
-            return exe_drivers
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_dir, "drivers")
+    """Returns safe fallback directory."""
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def has_internet_connection() -> bool:
@@ -368,40 +421,13 @@ def has_internet_connection() -> bool:
 
 def install_mic_driver_silently(installer_path: Optional[str] = None) -> Tuple[bool, str]:
     """
-    Installs the VB-Audio Virtual Cable driver silently on Windows.
-    Offline-first: uses locally bundled driver package if present.
+    Installs the VB-Audio Virtual Cable driver online via winget on Windows.
     Returns (success: bool, message: str).
     """
     if sys.platform != "win32":
         return False, "Virtual Audio Cable is only supported on Windows."
 
-    drivers_dir = get_drivers_dir()
-    exe_path = installer_path or os.path.join(drivers_dir, "VBCABLE_Setup_x64.exe")
-
-    # 1. Offline Install: Check for bundled VB-Cable installer
-    if os.path.exists(exe_path):
-        try:
-            import ctypes
-            # VB-Cable silent installer flags: -i (install), -h (hide dialog)
-            ret = ctypes.windll.shell32.ShellExecuteW(None, "runas", exe_path, "-i -h", drivers_dir, 1)
-            if ret > 32:
-                return True, "Offline VB-CABLE driver installed! Click 'Yes' on the PC permission prompt."
-            elif ret == 1223:
-                return False, "Installation cancelled: Administrator permission declined on PC."
-            else:
-                cmd = [exe_path, "-i", "-h"]
-                proc = subprocess.run(cmd, capture_output=True, text=True, cwd=drivers_dir)
-                if proc.returncode in (0, 3010):
-                    return True, "VB-CABLE virtual microphone driver installed successfully (Offline)."
-                return False, f"Installer returned code {proc.returncode}"
-        except Exception as e:
-            return False, f"Driver execution error: {str(e)}"
-
-    # 2. If offline and driver missing, notify user to connect to internet or place driver in drivers/
-    if not has_internet_connection():
-        return False, "Offline: No internet on PC to download microphone driver. Connect to Wi-Fi/Internet, or place VBCABLE_Setup_x64.exe in PCDeck/drivers/."
-
-    # 3. Online Fallback: Check winget
+    # Install via winget
     try:
         proc = subprocess.run(
             ["winget", "install", "--id", "VB-Audio.VirtualCable", "-e", "--silent", "--accept-package-agreements", "--accept-source-agreements"],
@@ -409,10 +435,10 @@ def install_mic_driver_silently(installer_path: Optional[str] = None) -> Tuple[b
             text=True,
             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
         )
-        if proc.returncode == 0:
+        if proc.returncode in (0, 3010):
             return True, "VB-CABLE driver installed successfully via package manager."
         else:
-            return False, f"Driver installer not found and winget returned code {proc.returncode}"
+            return False, f"winget returned code {proc.returncode}"
     except Exception as e:
         return False, f"Installation error: {str(e)}"
 
@@ -431,22 +457,28 @@ class MicrophoneSink:
         self.out_stream = None
         self.lock = threading.Lock()
         self.active_device_name = "Virtual Audio Cable"
-        self.audio_queue = queue.Queue(maxsize=100)
+        self.audio_queue = queue.Queue(maxsize=40)
         self.worker_thread = None
         self._stop_event = threading.Event()
+        # Jitter buffer & transport arbitration
+        self._prebuffer_threshold = 4  # 4 blocks of 512 frames = ~42.6ms buffer cushion
+        self._accum_mono = bytearray()
+        self._accum_lock = threading.Lock()
+        self._tcp_client_active = False
+        self._last_tcp_time = 0.0
 
     def _find_virtual_audio_device(self) -> Optional[int]:
-        """Finds virtual audio cable device index on Windows if present, prioritizing WASAPI."""
+        """Finds virtual audio cable device index on Windows if present, prioritizing low-latency WASAPI."""
         if not _HAS_SOUNDDEVICE:
             return None
         try:
             devices = sd.query_devices()
-            # 1. Prefer MME standard CABLE Input (universally reliable on Windows)
+            # 1. Prefer WASAPI standard 2ch CABLE Input (sub-10ms latency, highest precision on Windows)
             for idx, dev in enumerate(devices):
                 if dev.get('max_output_channels', 0) > 0:
                     name = dev.get('name', '').lower()
                     api = sd.query_hostapis(dev.get('hostapi', 0)).get('name', '').lower()
-                    if 'cable input' in name and '16ch' not in name and 'mme' in api:
+                    if 'cable input' in name and '16ch' not in name and 'wasapi' in api:
                         return idx
             # 2. Prefer DirectSound standard CABLE Input
             for idx, dev in enumerate(devices):
@@ -455,12 +487,12 @@ class MicrophoneSink:
                     api = sd.query_hostapis(dev.get('hostapi', 0)).get('name', '').lower()
                     if 'cable input' in name and '16ch' not in name and 'directsound' in api:
                         return idx
-            # 3. Prefer WASAPI standard 2ch CABLE Input
+            # 3. Prefer MME standard CABLE Input
             for idx, dev in enumerate(devices):
                 if dev.get('max_output_channels', 0) > 0:
                     name = dev.get('name', '').lower()
                     api = sd.query_hostapis(dev.get('hostapi', 0)).get('name', '').lower()
-                    if 'cable input' in name and '16ch' not in name and 'wasapi' in api:
+                    if 'cable input' in name and '16ch' not in name and 'mme' in api:
                         return idx
             # 4. Fallback to any vb-audio or virtual audio (non-16ch)
             for idx, dev in enumerate(devices):
@@ -473,19 +505,41 @@ class MicrophoneSink:
         return None
 
     def _audio_worker(self):
-        """Dedicated background audio player loop. Pulls audio from queue and streams to virtual device."""
-        while not self._stop_event.is_set():
+        """Dedicated background audio player loop with adaptive jitter buffer & anti-gating."""
+        if sys.platform == "win32":
             try:
-                chunk = self.audio_queue.get(timeout=0.05)
+                import ctypes
+                thread_handle = ctypes.windll.kernel32.GetCurrentThread()
+                # THREAD_PRIORITY_HIGHEST = 2
+                ctypes.windll.kernel32.SetThreadPriority(thread_handle, 2)
+            except Exception:
+                pass
+
+        is_buffering = True
+
+        while not self._stop_event.is_set():
+            if is_buffering:
+                # Smooth pre-buffering: accumulate 4 chunks (~42ms cushion) before starting playback to absorb Wi-Fi jitter
+                if self.audio_queue.qsize() < self._prebuffer_threshold:
+                    time.sleep(0.004)
+                    continue
+                is_buffering = False
+
+            try:
+                chunk = self.audio_queue.get(timeout=0.035)
             except queue.Empty:
+                # Wi-Fi packet gap / underrun: re-arm buffering state smoothly without click
+                is_buffering = True
                 continue
+
             if chunk is None:
                 break
+
             try:
                 if self.out_stream and self.is_active:
                     self.out_stream.write(chunk)
             except Exception as e:
-                print(f"[MicrophoneSink] Stream write error: {e}")
+                pass
 
     def start(self):
         """Starts the virtual microphone output stream with dedicated audio thread."""
@@ -511,13 +565,16 @@ class MicrophoneSink:
                     channels=self.channels,
                     dtype='int16',
                     device=dev_idx,
-                    blocksize=512
+                    blocksize=512,
+                    latency='low'
                 )
                 self.out_stream.start()
                 self.is_active = True
                 self._stop_event.clear()
 
-                # Clear queue
+                # Clear queue & accumulator
+                with self._accum_lock:
+                    self._accum_mono.clear()
                 while not self.audio_queue.empty():
                     try: self.audio_queue.get_nowait()
                     except queue.Empty: break
@@ -545,36 +602,78 @@ class MicrophoneSink:
                 except Exception:
                     pass
                 self.out_stream = None
+            with self._accum_lock:
+                self._accum_mono.clear()
+            self._tcp_client_active = False
             print("[MicrophoneSink] Stopped.")
 
-    def push_pcm_bytes(self, pcm_bytes: bytes):
-        """Writes incoming raw 16-bit PCM bytes to the queue (completely non-blocking <0.05ms)."""
+    def push_pcm_bytes(self, pcm_bytes: bytes, transport: str = "tcp"):
+        """Writes incoming raw 16-bit PCM bytes to queue with sample alignment, jitter buffering and deduplication."""
         if not pcm_bytes:
             return
+
+        now = time.time()
+        if transport == "tcp":
+            self._tcp_client_active = True
+            self._last_tcp_time = now
+        elif transport == "udp":
+            # If TCP stream is active, discard duplicate UDP packets to prevent comb-filtering & stutter
+            if self._tcp_client_active and (now - self._last_tcp_time < 1.5):
+                return
+
         if not self.is_active or not self.out_stream:
             self.start()
 
         try:
-            # If incoming PCM is mono 16-bit, duplicate each sample to L and R for standard stereo device
-            if self.channels == 2:
-                mono_arr = np.frombuffer(pcm_bytes, dtype=np.int16)
-                stereo_arr = np.repeat(mono_arr, 2)
-                raw_bytes = stereo_arr.tobytes()
-            else:
-                raw_bytes = pcm_bytes
+            with self._accum_lock:
+                self._accum_mono.extend(pcm_bytes)
+                # Each mono sample is 2 bytes (16-bit). We output chunks of 512 frames (1024 bytes mono -> 2048 bytes stereo)
+                CHUNK_MONO_BYTES = 1024
+                while len(self._accum_mono) >= CHUNK_MONO_BYTES:
+                    raw_chunk = bytes(self._accum_mono[:CHUNK_MONO_BYTES])
+                    del self._accum_mono[:CHUNK_MONO_BYTES]
 
-            try:
-                self.audio_queue.put_nowait(raw_bytes)
-            except queue.Full:
-                # Discard oldest buffer to keep ultra-low latency (<20ms)
-                try: self.audio_queue.get_nowait()
-                except queue.Empty: pass
-                self.audio_queue.put_nowait(raw_bytes)
+                    if self.channels == 2:
+                        mono_arr = np.frombuffer(raw_chunk, dtype=np.int16)
+                        stereo_arr = np.repeat(mono_arr, 2)
+                        out_bytes = stereo_arr.tobytes()
+                    else:
+                        out_bytes = raw_chunk
+
+                    # Keep queue tightly bounded (<80ms) to eliminate latency drift
+                    while self.audio_queue.qsize() > 8:
+                        try:
+                            self.audio_queue.get_nowait()
+                        except queue.Empty:
+                            break
+
+                    try:
+                        self.audio_queue.put_nowait(out_bytes)
+                    except queue.Full:
+                        pass
+
+                # If queue is starved and we have at least 480 bytes (240 samples) remaining of even length:
+                if self.audio_queue.empty() and len(self._accum_mono) >= 480:
+                    flush_len = len(self._accum_mono) - (len(self._accum_mono) % 2)
+                    raw_chunk = bytes(self._accum_mono[:flush_len])
+                    del self._accum_mono[:flush_len]
+
+                    if self.channels == 2:
+                        mono_arr = np.frombuffer(raw_chunk, dtype=np.int16)
+                        stereo_arr = np.repeat(mono_arr, 2)
+                        out_bytes = stereo_arr.tobytes()
+                    else:
+                        out_bytes = raw_chunk
+
+                    try:
+                        self.audio_queue.put_nowait(out_bytes)
+                    except queue.Full:
+                        pass
         except Exception:
             pass
 
     def start_dual_receiver(self, port: int = 8002):
-        """Starts both high-speed TCP stream listener and UDP datagram listener on port 8002."""
+        """Starts both high-speed TCP stream listener and UDP datagram listener on port 8002 with deduplication."""
         if hasattr(self, "_net_stop") and self._net_stop and not self._net_stop.is_set():
             return
 
@@ -593,6 +692,11 @@ class MicrophoneSink:
                     try:
                         client_sock, addr = tcp_server.accept()
                         print(f"[MicrophoneSink] Phone connected via TCP from {addr[0]}:{addr[1]}", flush=True)
+                        try:
+                            client_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                            client_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
+                        except Exception:
+                            pass
                         if not self.is_active:
                             self.start()
 
@@ -604,15 +708,17 @@ class MicrophoneSink:
                                     if not data:
                                         break
                                     pkt_count += 1
-                                    if pkt_count % 50 == 1:
-                                        arr = np.frombuffer(data, dtype=np.int16)
+                                    if pkt_count % 100 == 1:
+                                        usable = len(data) - (len(data) % 2)
+                                        arr = np.frombuffer(data[:usable], dtype=np.int16) if usable > 0 else np.array([])
                                         p = int(np.max(np.abs(arr))) if len(arr) > 0 else 0
                                         print(f"[MicrophoneSink] TCP incoming from {client_addr[0]}: {pkt_count} chunks (Live Peak: {p})", flush=True)
-                                    self.push_pcm_bytes(data)
+                                    self.push_pcm_bytes(data, transport="tcp")
                             except Exception as e:
                                 print(f"[MicrophoneSink] TCP client read error: {e}", flush=True)
                             finally:
                                 print(f"[MicrophoneSink] TCP client {client_addr[0]} disconnected after {pkt_count} chunks", flush=True)
+                                self._tcp_client_active = False
                                 try: sock.close()
                                 except Exception: pass
 
@@ -636,6 +742,10 @@ class MicrophoneSink:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             try:
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                try:
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
+                except Exception:
+                    pass
                 sock.bind(("0.0.0.0", port))
                 sock.settimeout(1.0)
                 print(f"[MicrophoneSink] UDP Audio Engine active on 0.0.0.0:{port}", flush=True)
@@ -643,9 +753,13 @@ class MicrophoneSink:
                     try:
                         data, addr = sock.recvfrom(4096)
                         if data:
+                            now = time.time()
+                            # Suppress UDP datagrams if TCP client is actively streaming
+                            if self._tcp_client_active and (now - self._last_tcp_time < 1.5):
+                                continue
                             if not self.is_active:
                                 self.start()
-                            self.push_pcm_bytes(data)
+                            self.push_pcm_bytes(data, transport="udp")
                     except socket.timeout:
                         continue
                     except Exception:

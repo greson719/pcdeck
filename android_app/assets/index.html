@@ -629,9 +629,10 @@
           <span id="fast-transfer-label" class="fast-transfer-label">Fast File Transfer</span>
         </button>
 
-        <!-- Gamepad HUD In-Display Overlay Toggle -->
-        <button type="button" id="btn-screen-gamepad-hud" class="neo-header-btn btn-header-gamepad" style="display: none;" title="Toggle On-Screen Gaming Controller HUD (PUBG/Console Style)">
-          <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg> <span class="gamepad-btn-label">HUD</span>
+
+        <!-- Quick Tools Drawer Toggle Button -->
+        <button type="button" id="btn-quick-tools-toggle" class="neo-header-btn" title="Quick Tools (Touch Mode, Fullscreen, Rotate)">
+          <svg class="deck-icon" width="14" height="14"><use href="#icon-settings"/></svg>
         </button>
 
         <!-- Hide Title Bar Button for Full View -->
@@ -664,33 +665,12 @@
           <div class="hud-top-bar" id="hud-top-bar">
             <div class="hud-badge-group">
               <span class="hud-badge">GAME HUD</span>
-              <button type="button" id="btn-hud-emulation-mode" class="hud-chip-btn" title="Toggle XInput / PC Keyboard Mode">Mode: XInput</button>
-              <button type="button" id="btn-hud-install-driver" class="hud-chip-btn btn-hud-driver" style="display: none; background: rgba(0, 240, 255, 0.15); border-color: var(--neo-cyan); color: var(--neo-cyan);" title="Install Virtual Controller Driver on PC">Install Driver</button>
+              <button type="button" id="btn-hud-emulation-mode" class="hud-chip-btn" title="Toggle Game Deck / PC Keyboard Mode">Mode: WASD / Aim</button>
             </div>
 
             <div class="hud-actions-group">
               <button type="button" id="btn-hud-edit-layout" class="hud-chip-btn btn-hud-edit" title="Customize & Drag Layout (PUBG Style)">Edit Layout</button>
               <button type="button" id="btn-hud-close" class="hud-chip-btn btn-hud-exit" title="Exit Gaming HUD"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </div>
-          </div>
-
-          <!-- HUD In-Display Driver Alert & Live Progress Banner -->
-          <div id="hud-driver-banner" class="hud-driver-banner" style="display: none; position: absolute; top: 48px; left: 50%; transform: translateX(-50%); z-index: 1000; min-width: 280px; max-width: 90%; padding: 8px 14px; background: rgba(10, 15, 25, 0.95); border: 1px solid var(--neo-cyan); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-              <span id="hud-driver-status-text" style="font-size: 0.72rem; color: var(--neo-cyan); font-weight: 700;">Driver Installation Required</span>
-              <button type="button" id="btn-hud-driver-action" class="neo-btn btn-cyan" style="padding: 4px 10px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
-                <svg class="deck-icon" width="12" height="12"><use href="#icon-gamepad"/></svg>
-                <span>Install Driver</span>
-              </button>
-            </div>
-            <div id="hud-driver-progress-box" style="display: none; margin-top: 6px;">
-              <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden;">
-                <div id="hud-driver-progress-fill" style="width: 0%; height: 100%; background: #00f0ff; transition: width 0.3s ease;"></div>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #a0aec0; margin-top: 4px; font-weight: 600;">
-                <span id="hud-driver-stage-text">Preparing installation...</span>
-                <span id="hud-driver-pct-text">0%</span>
-              </div>
             </div>
           </div>
 
@@ -806,6 +786,7 @@
           </div>
         </div>
 
+
         <!-- Floating quick-type keyboard trigger (bottom-right of the live screen) -->
         <button type="button" id="btn-screen-keyboard" class="screen-kbd-fab" aria-label="Open keyboard to type on PC" title="Type on PC">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -837,7 +818,7 @@
           <svg class="deck-icon" width="14" height="14"><use href="#icon-show-desktop"/></svg>
           <span>Desktop</span>
         </button>
-        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle native-only-feature" style="display: none !important;">
+        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle" style="background: var(--neo-cyan); color: #000; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;" title="Switch Trackpad to Gamepad Controller">
           <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
           <span>Gamepad</span>
         </button>
@@ -893,7 +874,7 @@
       </div>
 
       <!-- ================= STANDALONE FULL-DECK CONTROLLER (GAMEPAD) ================= -->
-      <div id="gamepad-container" class="gamepad-main-layout" style="display: none;">
+      <div id="gamepad-container" class="gamepad-main-layout" style="display: none; height: 100%; flex: 1;">
         <!-- Top Shoulder Triggers & System Header Bar -->
         <div class="gp-top-shoulder-bar" id="gp-top-shoulder-bar">
           <!-- Back to Trackpad & Gyro Super Quick Toggles (Top Left) -->
@@ -943,7 +924,7 @@
             </div>
             <button type="button" class="gp-driver-status-chip" id="gp-driver-badge" title="Tap to Switch Console Layouts (Xbox / PlayStation / Racing / WASD)">
               <span class="pulse-dot"></span>
-              <span id="gp-driver-text">Virtual Xbox 360: Active</span>
+              <span id="gp-driver-text">Game Deck: Active (WASD + Aim)</span>
               <span class="gp-driver-arrow">▼</span>
             </button>
           </div>
@@ -963,29 +944,6 @@
                 </button>
                 <div class="trigger-meter-gauge"><div class="trigger-fill" id="rt-meter-fill"></div></div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Virtual Gamepad Driver Status / 1-Click Installer -->
-        <div id="gamepad-driver-banner" class="driver-alert-box" style="display: none; margin: 4px 16px 10px 16px; padding: 10px 14px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.28); border-radius: 8px; transition: all 0.3s ease;">
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-            <div style="display: flex; flex-direction: column; gap: 2px;">
-              <span id="gamepad-driver-status-text" style="font-size: 0.76rem; color: var(--neo-cyan); font-weight: 700;">Driver Installation Required</span>
-              <span id="gamepad-driver-subtext" style="font-size: 0.65rem; color: #94a3b8; font-weight: 500;">Virtual controller driver needed to control PC games</span>
-            </div>
-            <button type="button" id="btn-install-gamepad-driver" class="neo-btn btn-cyan" style="padding: 5px 12px; font-size: 0.70rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
-              <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
-              <span>Install Driver</span>
-            </button>
-          </div>
-          <div id="gamepad-driver-progress-box" style="display: none; margin-top: 8px;">
-            <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden;">
-              <div id="gamepad-driver-progress-fill" style="width: 0%; height: 100%; background: #00f0ff; transition: width 0.4s ease;"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #a0aec0; margin-top: 4px; font-weight: 600;">
-              <span id="gamepad-driver-stage-text">Preparing installation...</span>
-              <span id="gamepad-driver-pct-text">0%</span>
             </div>
           </div>
         </div>
@@ -1455,6 +1413,9 @@
         </div>
       </div>
     </section>
+ 
+    <!-- ================= TAB: GAMEPAD (STANDALONE FULL-DECK CONTROLLER ALIAS) ================= -->
+    <section id="tab-gamepad" class="tab-view" style="display: none;"></section>
 
     <!-- ================= TAB 3: KEYS, NUMPAD & NAVIGATION ================= -->
     <section id="tab-keyboard" class="tab-view">
@@ -2061,26 +2022,6 @@
             <span id="mic-status-badge" class="mini-status-chip offline">STANDBY</span>
           </div>
           
-          <!-- Virtual Mic Driver Status / 1-Click Installer -->
-          <div id="mic-driver-banner" class="driver-alert-box" style="display: none; margin: 6px 0 10px 0; padding: 9px 12px; background: rgba(255, 68, 68, 0.12); border: 1px solid rgba(255, 68, 68, 0.35); border-radius: 6px; transition: all 0.3s ease;">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-              <span id="mic-driver-status-text" style="font-size: 0.72rem; color: #ff6b6b; font-weight: 700;">Virtual Audio Driver Required</span>
-              <button type="button" id="btn-install-mic-driver" class="neo-btn btn-lime" style="padding: 4px 10px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
-                <svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg>
-                <span>Install Driver</span>
-              </button>
-            </div>
-            <div id="mic-driver-progress-box" style="display: none; margin-top: 8px;">
-              <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden;">
-                <div id="mic-driver-progress-fill" style="width: 0%; height: 100%; background: #39ff14; transition: width 0.4s ease;"></div>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #a0aec0; margin-top: 4px; font-weight: 600;">
-                <span id="mic-driver-stage-text">Preparing installation...</span>
-                <span id="mic-driver-pct-text">0%</span>
-              </div>
-            </div>
-          </div>
-
           <div class="vu-meter-container" style="margin: 10px 0 12px 0;">
             <div class="vu-meter-labels">
               <span>INPUT LEVEL</span>
@@ -2120,26 +2061,6 @@
               <span class="card-title-text">Camera</span>
             </div>
             <span id="cam-status-badge" class="mini-status-chip offline">STANDBY</span>
-          </div>
-
-          <!-- Virtual Camera Driver Status / 1-Click Installer -->
-          <div id="cam-driver-banner" class="driver-alert-box" style="display: none; margin: 6px 0 10px 0; padding: 9px 12px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.28); border-radius: 6px; transition: all 0.3s ease;">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-              <span id="cam-driver-status-text" style="font-size: 0.72rem; color: var(--neo-cyan); font-weight: 700;">Virtual Camera Driver Required</span>
-              <button type="button" id="btn-install-cam-driver" class="neo-btn btn-cyan" style="padding: 4px 10px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
-                <svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg>
-                <span>Install Driver</span>
-              </button>
-            </div>
-            <div id="cam-driver-progress-box" style="display: none; margin-top: 8px;">
-              <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden;">
-                <div id="cam-driver-progress-fill" style="width: 0%; height: 100%; background: #00f0ff; transition: width 0.4s ease;"></div>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #a0aec0; margin-top: 4px; font-weight: 600;">
-                <span id="cam-driver-stage-text">Preparing installation...</span>
-                <span id="cam-driver-pct-text">0%</span>
-              </div>
-            </div>
           </div>
 
           <!-- Clean Segmented Lens Selector (Rear vs Front) -->
@@ -2677,6 +2598,13 @@
         <span class="dock-label">Trackpad</span>
       </button>
 
+      <button class="dock-tab" data-target="tab-gamepad" onclick="window.switchTabNav(this, 'tab-gamepad')">
+        <span class="dock-icon">
+          <svg class="deck-icon" width="20" height="20"><use href="#icon-gamepad"/></svg>
+        </span>
+        <span class="dock-label">Gamepad</span>
+      </button>
+
       <button class="dock-tab" data-target="tab-keyboard" onclick="window.switchTabNav(this, 'tab-keyboard')">
         <span class="dock-icon">
           <svg class="deck-icon" width="20" height="20"><use href="#icon-keys"/></svg>
@@ -2797,50 +2725,6 @@
       </div>
     </div>
   </div>
-  <!-- ================= HIGH-TRUST VIRTUAL CONTROLLER DRIVER MODAL ================= -->
-  <div id="driver-trust-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-card pro-modal-card" style="padding: 22px; max-width: 440px;">
-      <div class="pro-modal-header" style="text-align: left; margin-bottom: 12px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.5rem;"><svg class="deck-icon" width="28" height="28"><use href="#icon-gamepad"/></svg></span>
-          <div class="pro-modal-title" style="font-size: 1.2rem; font-weight: 800; color: #fff;">Virtual Xbox Controller Setup</div>
-        </div>
-        <div class="pro-modal-sub" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-          Enables PC games (Steam, Xbox Game Pass, Epic Games, Emulators) to recognize your phone as a genuine Xbox 360 controller.
-        </div>
-      </div>
-
-      <div class="trust-credential-card" style="background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-          <span style="color: var(--neo-lime); font-weight: 900; font-size: 1rem;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--neo-lime)" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-          <strong style="color: #fff; font-size: 0.88rem;">Microsoft WHQL Certified Driver</strong>
-        </div>
-        <ul style="font-size: 0.76rem; color: #cbd5e1; line-height: 1.5; margin: 0; padding-left: 18px;">
-          <li>Driver: <strong>ViGEmBus</strong> by Nefarius Software Solutions</li>
-          <li>100% Open-Source &amp; trusted by millions in DS4Windows and Steam tools</li>
-          <li>Silent 2-second background setup • No PC restart required</li>
-        </ul>
-      </div>
-
-      <div id="driver-install-status-box" style="display: none; padding: 10px; margin-bottom: 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-align: center;"></div>
-
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button id="btn-modal-install-driver" class="neo-btn btn-cyan" style="width: 100%; font-weight: 900; padding: 12px;">
-          <span>INSTALL ON PC (1-CLICK SETUP)</span>
-        </button>
-        <button id="btn-modal-skip-driver" class="neo-btn btn-dark" style="width: 100%; font-size: 0.78rem;">
-          Use Basic Mode (Keyboard/WASD Only • No Driver Needed)
-        </button>
-      </div>
-
-      <div style="text-align: center; margin-top: 14px;">
-        <a href="https://github.com/nefarius/ViGEmBus" target="_blank" rel="noopener" style="font-size: 0.72rem; color: var(--neo-cyan); text-decoration: underline;">
-          View ViGEmBus open-source code on GitHub
-        </a>
-      </div>
-    </div>
-  </div>
-
   <!-- ================= MODAL FOR ADDING CUSTOM BUTTON IN HUD ================= -->
   <div id="hud-add-btn-modal" class="modal-backdrop" style="display: none; z-index: 10000;">
     <div class="modal-card pro-modal-card" style="padding: 16px; max-width: 440px; width: 92%; max-height: 85vh; display: flex; flex-direction: column; text-align: center;">

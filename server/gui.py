@@ -34,6 +34,20 @@ _ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT_DIR not in sys.path:
     sys.path.insert(0, _ROOT_DIR)
 
+# Suppress benign Windows connection reset exceptions (WinError 10054/10053) on abrupt mobile client disconnect
+if sys.platform == "win32":
+    try:
+        from asyncio.proactor_events import _ProactorBasePipeTransport
+        _orig_call_conn_lost = _ProactorBasePipeTransport._call_connection_lost
+        def _safe_call_conn_lost(self, exc):
+            try:
+                _orig_call_conn_lost(self, exc)
+            except (ConnectionResetError, ConnectionAbortedError, OSError):
+                pass
+        _ProactorBasePipeTransport._call_connection_lost = _safe_call_conn_lost
+    except Exception:
+        pass
+
 from PIL import Image, ImageTk
 import qrcode
 import uvicorn
@@ -707,56 +721,7 @@ class PCDeckProGUI:
             pady=3,
         )
 
-        # 1.5 Driver Installation Live Progress Card (Appears during install)
-        self.driver_prog_frame = tk.Frame(
-            self.root,
-            bg=C_SURFACE,
-            bd=1,
-            relief="solid",
-            highlightbackground=C_ACCENT,
-            highlightthickness=1,
-        )
-        dp_inner = tk.Frame(self.driver_prog_frame, bg=C_SURFACE, padx=14, pady=8)
-        dp_inner.pack(fill="x", expand=True)
 
-        dp_top = tk.Frame(dp_inner, bg=C_SURFACE)
-        dp_top.pack(fill="x")
-
-        self.driver_prog_title = tk.Label(
-            dp_top,
-            text="DRIVER INSTALLATION",
-            font=F_BODY_STRONG,
-            fg=C_ACCENT,
-            bg=C_SURFACE,
-        )
-        self.driver_prog_title.pack(side="left")
-
-        self.driver_prog_pct = tk.Label(
-            dp_top,
-            text="0%",
-            font=F_BODY_STRONG,
-            fg=C_TEXT,
-            bg=C_SURFACE_2,
-            padx=8,
-            pady=1,
-        )
-        self.driver_prog_pct.pack(side="right")
-
-        dp_bar_bg = tk.Frame(dp_inner, bg=C_SURFACE_2, height=6, bd=0)
-        dp_bar_bg.pack(fill="x", pady=(6, 4))
-        dp_bar_bg.pack_propagate(False)
-
-        self.driver_prog_fill = tk.Frame(dp_bar_bg, bg=C_ACCENT, height=6)
-        self.driver_prog_fill.place(x=0, y=0, relwidth=0.0, relheight=1.0)
-
-        self.driver_prog_stage = tk.Label(
-            dp_inner,
-            text="Initializing driver installation...",
-            font=F_SMALL,
-            fg=C_TEXT_DIM,
-            bg=C_SURFACE,
-        )
-        self.driver_prog_stage.pack(anchor="w")
 
         # 2. Main 2-Column Content Layout
         content = tk.Frame(self.root, bg=C_BG)
@@ -1869,62 +1834,11 @@ class PCDeckProGUI:
         dlg.grab_set()
 
     def on_driver_progress(self, driver_name: str, percent: int, stage_text: str, status: str = "running"):
-        """Thread-safe entry point for backend driver installation progress updates."""
-        try:
-            if not self.root or not self.root.winfo_exists():
-                return
-            self.root.after(0, lambda: self._update_driver_progress_ui(driver_name, percent, stage_text, status))
-        except Exception:
-            pass
+        """Driverless architecture - no-op."""
+        pass
 
     def _update_driver_progress_ui(self, driver_name: str, percent: int, stage_text: str, status: str = "running"):
-        """Updates the PC GUI live progress banner for driver installations."""
-        try:
-            if not hasattr(self, "driver_prog_frame") or not self.driver_prog_frame.winfo_exists():
-                return
-
-            if status == "running":
-                # Ensure card is visible above content frame
-                if not self.driver_prog_frame.winfo_ismapped():
-                    self.driver_prog_frame.pack(fill="x", padx=16, pady=(0, 6), before=self.content_frame)
-
-                self.driver_prog_frame.config(highlightbackground=C_ACCENT)
-                self.driver_prog_title.config(text=f"Installing: {driver_name.upper()}", fg=C_ACCENT)
-                self.driver_prog_pct.config(text=f"{percent}%", fg=C_TEXT)
-                self.driver_prog_fill.config(bg=C_ACCENT)
-                self.driver_prog_fill.place(x=0, y=0, relwidth=max(0.04, min(1.0, percent / 100.0)), relheight=1.0)
-                self.driver_prog_stage.config(text=stage_text, fg=C_TEXT)
-
-            elif status == "success":
-                if not self.driver_prog_frame.winfo_ismapped():
-                    self.driver_prog_frame.pack(fill="x", padx=16, pady=(0, 6), before=self.content_frame)
-
-                self.driver_prog_frame.config(highlightbackground="#3fb950")
-                self.driver_prog_title.config(text=f"Driver Ready: {driver_name.upper()}", fg="#3fb950")
-                self.driver_prog_pct.config(text="100%", fg="#3fb950")
-                self.driver_prog_fill.config(bg="#3fb950")
-                self.driver_prog_fill.place(x=0, y=0, relwidth=1.0, relheight=1.0)
-                self.driver_prog_stage.config(text=stage_text or "Driver installed and verified in Windows.", fg=C_TEXT)
-
-                # Auto-hide after 4 seconds
-                self.root.after(4000, lambda: self.driver_prog_frame.pack_forget() if self.driver_prog_frame.winfo_exists() else None)
-
-            elif status == "failed":
-                if not self.driver_prog_frame.winfo_ismapped():
-                    self.driver_prog_frame.pack(fill="x", padx=16, pady=(0, 6), before=self.content_frame)
-
-                self.driver_prog_frame.config(highlightbackground="#f85149")
-                self.driver_prog_title.config(text=f"Install Failed: {driver_name.upper()}", fg="#f85149")
-                self.driver_prog_pct.config(text="ERROR", fg="#f85149")
-                self.driver_prog_fill.config(bg="#f85149")
-                self.driver_prog_fill.place(x=0, y=0, relwidth=1.0, relheight=1.0)
-                self.driver_prog_stage.config(text=stage_text, fg="#f85149")
-
-                # Auto-hide failed banner after 8 seconds
-                self.root.after(8000, lambda: self.driver_prog_frame.pack_forget() if self.driver_prog_frame.winfo_exists() else None)
-
-        except Exception as e:
-            log_debug(f"Error updating driver progress UI: {e}")
+        pass
 
     def open_license_dialog(self):
         """Open native license activation and management dialog."""
@@ -2915,7 +2829,7 @@ class PCDeckProGUI:
             self.flyout_qr_photo = ImageTk.PhotoImage(img)
             self.flyout_qr_lbl.config(image=self.flyout_qr_photo)
 
-            clean_url = gateway_url.replace("/connect", "")
+            clean_url = gateway_url.replace("/connect?", "/?tab=screen&").replace("/connect", "/?tab=screen")
             self.flyout_url_entry.config(state="normal")
             self.flyout_url_entry.delete(0, tk.END)
             self.flyout_url_entry.insert(0, clean_url)

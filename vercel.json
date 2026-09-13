@@ -10,6 +10,26 @@
       "source": "/website/:path*",
       "destination": "/:path*",
       "permanent": true
+    },
+    {
+      "source": "/PCDeck-Setup.exe",
+      "destination": "https://github.com/greson719/pcdeck/releases/latest/download/PCDeck-Setup.exe",
+      "permanent": false
+    },
+    {
+      "source": "/PCDeck.exe",
+      "destination": "https://github.com/greson719/pcdeck/releases/latest/download/PCDeck.exe",
+      "permanent": false
+    },
+    {
+      "source": "/PCDeck_Package.zip",
+      "destination": "https://github.com/greson719/pcdeck/releases/latest/download/PCDeck_Package.zip",
+      "permanent": false
+    },
+    {
+      "source": "/PCDeck.apk",
+      "destination": "https://github.com/greson719/pcdeck/releases/latest/download/PCDeck.apk",
+      "permanent": false
     }
   ]
 }

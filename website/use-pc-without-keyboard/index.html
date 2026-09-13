@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,15 +51,44 @@
       "inLanguage": "en",
       "datePublished": "2026-08-25",
       "dateModified": "2026-08-25",
-      "author": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
-      "publisher": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "author": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
       "proficiencyLevel": "Beginner",
       "about": [
-        { "@type": "Thing", "name": "Windows On-Screen Keyboard" },
-        { "@type": "Thing", "name": "Voice typing" },
-        { "@type": "Thing", "name": "Broken keyboard" }
+        {
+          "@type": "Thing",
+          "name": "Windows On-Screen Keyboard"
+        },
+        {
+          "@type": "Thing",
+          "name": "Voice typing"
+        },
+        {
+          "@type": "Thing",
+          "name": "Broken keyboard"
+        }
       ],
-      "mainEntityOfPage": { "@id": "https://pcdeck.vercel.app/use-pc-without-keyboard/#webpage" }
+      "mainEntityOfPage": {
+        "@id": "https://pcdeck.vercel.app/use-pc-without-keyboard/",
+        "@type": "WebPage"
+      },
+      "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
       "@type": "HowTo",
@@ -68,36 +97,62 @@
       "description": "Open the Windows On-Screen Keyboard from the sign-in screen so you can enter your password with the mouse when the physical keyboard does not work.",
       "totalTime": "PT1M",
       "tool": [
-        { "@type": "HowToTool", "name": "A working mouse or touchpad" }
+        {
+          "@type": "HowToTool",
+          "name": "A working mouse or touchpad"
+        }
       ],
       "step": [
         {
           "@type": "HowToStep",
           "name": "Find the accessibility button on the sign-in screen",
-          "text": "Look at the lower-right corner of the Windows sign-in screen. On Windows 11 the button is labelled Accessibility; on Windows 10 it is labelled Ease of Access. Click it."
+          "text": "Look at the lower-right corner of the Windows sign-in screen. On Windows 11 the button is labelled Accessibility; on Windows 10 it is labelled Ease of Access. Click it.",
+          "position": 1,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-pc-without-keyboard/#step-1"
         },
         {
           "@type": "HowToStep",
           "name": "Choose On-Screen Keyboard",
-          "text": "Select On-Screen Keyboard from the menu that appears. A clickable keyboard opens on top of the sign-in screen."
+          "text": "Select On-Screen Keyboard from the menu that appears. A clickable keyboard opens on top of the sign-in screen.",
+          "position": 2,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-pc-without-keyboard/#step-2"
         },
         {
           "@type": "HowToStep",
           "name": "Click your password in and sign in",
-          "text": "Click the password field, then click the characters of your password on the on-screen keyboard and click the arrow or press the Enter key on it."
+          "text": "Click the password field, then click the characters of your password on the on-screen keyboard and click the arrow or press the Enter key on it.",
+          "position": 3,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-pc-without-keyboard/#step-3"
         },
         {
           "@type": "HowToStep",
           "name": "Keep it available inside Windows",
-          "text": "Once signed in, press Windows logo key + Ctrl + O to turn on the On-Screen Keyboard again, or turn on the On-Screen Keyboard toggle in Settings under Accessibility and then Keyboard."
+          "text": "Once signed in, press Windows logo key + Ctrl + O to turn on the On-Screen Keyboard again, or turn on the On-Screen Keyboard toggle in Settings under Accessibility and then Keyboard.",
+          "position": 4,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-pc-without-keyboard/#step-4"
         }
-      ]
+      ],
+      "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
-        { "@type": "ListItem", "position": 2, "name": "Use a PC without a keyboard", "item": "https://pcdeck.vercel.app/use-pc-without-keyboard/" }
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://pcdeck.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Use a PC without a keyboard",
+          "item": "https://pcdeck.vercel.app/use-pc-without-keyboard/"
+        }
       ]
     },
     {
@@ -105,7 +160,11 @@
       "@id": "https://pcdeck.vercel.app/use-pc-without-keyboard/#webpage",
       "url": "https://pcdeck.vercel.app/use-pc-without-keyboard/",
       "name": "How to use a PC without a keyboard",
-      "isPartOf": { "@type": "WebSite", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" }
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/"
+      }
     }
   ]
 }

@@ -498,6 +498,12 @@ h1 {
     <p class="subtitle">Choose how you want to control your computer</p>
   </div>
 
+  <!-- Helpful Local IP Banner for users viewing on PC -->
+  <div id="local-ip-banner" style="display: none; background: rgba(37, 99, 235, 0.12); border: 1px solid rgba(37, 99, 235, 0.35); border-radius: 10px; padding: 12px 14px; font-size: 0.84rem; text-align: center; color: #93c5fd; margin-bottom: 8px;">
+    📱 <strong>Opening on your phone?</strong> Connect to the same Wi-Fi and visit:<br>
+    <a id="phone-direct-link" href="#" style="color: #60a5fa; font-weight: 700; word-break: break-all; text-decoration: underline; margin-top: 4px; display: inline-block;"></a>
+  </div>
+
   <!-- Side-by-Side Options (Clean comparison: Web Remote vs Android App) -->
   <div class="options-grid">
     <!-- Web Remote Option -->
@@ -518,24 +524,20 @@ h1 {
         <ul class="feature-list">
           <li>
             <svg class="feat-icon feat-web" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Trackpad &amp; mouse</span>
+            <span>Live Screen &amp; PC Audio stream</span>
           </li>
           <li>
             <svg class="feat-icon feat-web" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Full keyboard typing</span>
+            <span>Trackpad, mouse &amp; keyboard</span>
           </li>
           <li>
             <svg class="feat-icon feat-web" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Media remote keys</span>
-          </li>
-          <li>
-            <svg class="feat-icon feat-web" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>No install needed</span>
+            <span>Instant connection (No install)</span>
           </li>
         </ul>
       </div>
 
-      <a href="/" class="btn btn-secondary" id="btn-launch-web">Open Remote</a>
+      <a href="/?tab=screen" class="btn btn-secondary" id="btn-launch-web">Launch Web Remote</a>
     </div>
 
     <!-- Android App Option -->
@@ -574,6 +576,11 @@ h1 {
       </div>
 
       <a href="/PCDeck.apk" download="PCDeck.apk" class="btn btn-primary" id="btn-download-apk">Download APK</a>
+      <a href="https://pcdeck.vercel.app/PCDeck.apk" download="PCDeck.apk" target="_blank" class="btn" style="margin-top: 6px; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(96, 165, 250, 0.3); color: #93c5fd; font-size: 0.76rem; padding: 7px 10px; border-radius: 9px; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Fast Cloud Mirror (5G / Cellular)</span>
+      </a>
+      <button type="button" id="btn-show-install-help" style="background:none; border:none; color:var(--text-muted, #94a3b8); font-size:0.75rem; text-decoration:underline; margin-top:8px; cursor:pointer; width:100%; text-align:center;">Installation guide &amp; help</button>
     </div>
   </div>
 
@@ -609,7 +616,7 @@ h1 {
       <a href="/PCDeck.apk" download="PCDeck.apk" id="modal-btn-download" class="btn btn-primary btn-block">
         Download APK (1.2 MB)
       </a>
-      <a href="/" id="modal-btn-web" class="alt-link">Or open Web Remote in browser &rarr;</a>
+      <a href="/?tab=screen" id="modal-btn-web" class="alt-link">Or launch Web Remote in browser &rarr;</a>
     </div>
   </div>
 </div>
@@ -626,16 +633,19 @@ h1 {
     try { token = localStorage.getItem('pcdeck_token') || ''; } catch (e) {}
   }
 
-  const tokenQuery = token ? ('?token=' + encodeURIComponent(token)) : '';
+  const tokenQuery = token ? ('&token=' + encodeURIComponent(token)) : '';
 
   // Determine base host/port
   let baseRemoteOrigin = '';
+  const isVercel = window.location.hostname.includes('vercel.app');
   if (ipParam) {
     const cleanIp = ipParam.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
     baseRemoteOrigin = 'http://' + cleanIp;
+  } else if (!isVercel) {
+    baseRemoteOrigin = window.location.origin;
   }
 
-  const webHref = (baseRemoteOrigin ? (baseRemoteOrigin + '/') : '/') + tokenQuery;
+  const webHref = (baseRemoteOrigin ? (baseRemoteOrigin + '/?tab=screen') : '/?tab=screen') + tokenQuery;
   const apkHref = (baseRemoteOrigin ? baseRemoteOrigin : '') + '/PCDeck.apk';
 
   const btnLaunchWeb = document.getElementById('btn-launch-web');
@@ -651,6 +661,49 @@ h1 {
   btnDownloadApk.href = apkHref;
   modalBtnDownload.href = apkHref;
 
+  btnLaunchWeb.addEventListener('click', function() {
+    this.innerHTML = '<span style="display:inline-block;">⚡</span> Opening PC Screen...';
+  });
+
+  if (isVercel && !ipParam) {
+    btnLaunchWeb.addEventListener('click', function(e) {
+      e.preventDefault();
+      const userIp = prompt("Enter your PC's IP address (shown in PCDeck app, e.g. 192.168.1.5:8000):", "");
+      if (userIp && userIp.trim()) {
+        const clean = userIp.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+        window.location.href = `http://${clean}/?tab=screen${tokenQuery}`;
+      }
+    });
+  }
+
+  // Fetch ping to discover local LAN IP and active pairing token
+  if (!isVercel) {
+    fetch('/api/ping')
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (data.token) {
+            token = data.token;
+            try { localStorage.setItem('pcdeck_token', token); } catch (e) {}
+            const newWebHref = (baseRemoteOrigin ? (baseRemoteOrigin + '/?tab=screen') : '/?tab=screen') + '&token=' + encodeURIComponent(token);
+            btnLaunchWeb.href = newWebHref;
+            modalBtnWeb.href = newWebHref;
+          }
+          if (data.ip && data.ip !== '127.0.0.1' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            const banner = document.getElementById('local-ip-banner');
+            const phoneLink = document.getElementById('phone-direct-link');
+            if (banner && phoneLink) {
+              const phoneUrl = `http://${data.ip}:${data.port || 8000}/connect${token ? ('?t=' + encodeURIComponent(token)) : ''}`;
+              phoneLink.href = phoneUrl;
+              phoneLink.textContent = phoneUrl;
+              banner.style.display = 'block';
+            }
+          }
+        }
+      })
+      .catch(() => {});
+  }
+
   function openModal() {
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -661,10 +714,10 @@ h1 {
     document.body.style.overflow = '';
   }
 
-  btnDownloadApk.addEventListener('click', function() {
-    // Show instruction modal while download begins
-    setTimeout(openModal, 400);
-  });
+  const btnHelp = document.getElementById('btn-show-install-help');
+  if (btnHelp) {
+    btnHelp.addEventListener('click', openModal);
+  }
 
   modalCloseBtn.addEventListener('click', closeModal);
   modalBackdrop.addEventListener('click', closeModal);

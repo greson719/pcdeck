@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,15 +47,44 @@
       "inLanguage": "en",
       "datePublished": "2026-08-26",
       "dateModified": "2026-09-09",
-      "author": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
-      "publisher": { "@type": "Organization", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" },
+      "author": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
       "proficiencyLevel": "Beginner",
       "about": [
-        { "@type": "Thing", "name": "Broken monitor" },
-        { "@type": "Thing", "name": "Screen mirroring" },
-        { "@type": "Thing", "name": "Headless Windows PC" }
+        {
+          "@type": "Thing",
+          "name": "Broken monitor"
+        },
+        {
+          "@type": "Thing",
+          "name": "Screen mirroring"
+        },
+        {
+          "@type": "Thing",
+          "name": "Headless Windows PC"
+        }
       ],
-      "mainEntityOfPage": { "@id": "https://pcdeck.vercel.app/use-pc-without-monitor/#webpage" }
+      "mainEntityOfPage": {
+        "@id": "https://pcdeck.vercel.app/use-pc-without-monitor/",
+        "@type": "WebPage"
+      },
+      "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
       "@type": "HowTo",
@@ -64,34 +93,68 @@
       "description": "Stream the Windows desktop in real-time to your phone screen over local Wi-Fi and control it with multi-touch input.",
       "totalTime": "PT2M",
       "tool": [
-        { "@type": "HowToTool", "name": "Windows 10 or 11 PC" },
-        { "@type": "HowToTool", "name": "Any Smartphone (iPhone or Android)" },
-        { "@type": "HowToTool", "name": "Local Wi-Fi network or Phone Hotspot" }
+        {
+          "@type": "HowToTool",
+          "name": "Windows 10 or 11 PC"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Any Smartphone (iPhone or Android)"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Local Wi-Fi network or Phone Hotspot"
+        }
       ],
       "step": [
         {
           "@type": "HowToStep",
           "name": "Start PCDeck on PC",
-          "text": "Boot the PC and launch PCDeck.exe (or place it in the Windows Startup folder so it loads automatically)."
+          "text": "Boot the PC and launch PCDeck.exe (or place it in the Windows Startup folder so it loads automatically).",
+          "position": 1,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-pc-without-monitor/#step-1"
         },
         {
           "@type": "HowToStep",
           "name": "Connect phone over local Wi-Fi",
-          "text": "Open your phone camera to scan the QR code or navigate to your PC's local IP address in Safari or Chrome."
+          "text": "Open your phone camera to scan the QR code or navigate to your PC's local IP address in Safari or Chrome.",
+          "position": 2,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-pc-without-monitor/#step-2"
         },
         {
           "@type": "HowToStep",
           "name": "View and touch Windows screen",
-          "text": "Switch to the Screen Viewer tab. Your Windows desktop appears live on your phone with direct touch click support."
+          "text": "Switch to the Screen Viewer tab. Your Windows desktop appears live on your phone with direct touch click support.",
+          "position": 3,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/use-pc-without-monitor/#step-3"
         }
-      ]
+      ],
+      "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "PCDeck", "item": "https://pcdeck.vercel.app/" },
-        { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://pcdeck.vercel.app/guides/" },
-        { "@type": "ListItem", "position": 3, "name": "Use PC Without a Monitor", "item": "https://pcdeck.vercel.app/use-pc-without-monitor/" }
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://pcdeck.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://pcdeck.vercel.app/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Use PC Without a Monitor",
+          "item": "https://pcdeck.vercel.app/use-pc-without-monitor/"
+        }
       ]
     },
     {
@@ -99,7 +162,11 @@
       "@id": "https://pcdeck.vercel.app/use-pc-without-monitor/#webpage",
       "url": "https://pcdeck.vercel.app/use-pc-without-monitor/",
       "name": "How to Use a PC Without a Monitor (Display Screen on Phone)",
-      "isPartOf": { "@type": "WebSite", "name": "PCDeck", "url": "https://pcdeck.vercel.app/" }
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/"
+      }
     }
   ]
 }

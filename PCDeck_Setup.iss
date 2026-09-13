@@ -44,11 +44,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "startupicon"; Description: "Automatically start PCDeck when Windows boots"; GroupDescription: "Startup options:"
-Name: "webcamdriver"; Description: "Register Virtual HD Webcam DirectShow filters (For OBS, Discord, Zoom)"; GroupDescription: "Hardware Drivers:"; Flags: checkedonce
 
 [Files]
 Source: "PCDeck.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "drivers\*"; DestDir: "{app}\drivers"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "app_icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "PCDeck.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "PCDeck.apk"; DestDir: "{app}"; Flags: ignoreversion
@@ -63,14 +61,10 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#MyAppName}"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: startupicon
 
 [Run]
-; 1. Register 64-bit and 32-bit DirectShow Virtual Webcam Filters silently
-Filename: "regsvr32.exe"; Parameters: "/s ""{app}\drivers\UnityCaptureFilter64.dll"""; Flags: runhidden; Tasks: webcamdriver
-Filename: "regsvr32.exe"; Parameters: "/s ""{app}\drivers\UnityCaptureFilter32.dll"""; Flags: runhidden; Tasks: webcamdriver
-
-; 2. Add inbound Windows Defender Firewall rule so phone connects seamlessly over local Wi-Fi
+; 1. Add inbound Windows Defender Firewall rule so phone connects seamlessly over local Wi-Fi
 Filename: "netsh.exe"; Parameters: "advfirewall firewall add rule name=""PCDeck"" dir=in action=allow program=""{app}\{#MyAppExeName}"" enable=yes profile=any"; Flags: runhidden
 
-; 3. Option to launch PCDeck right away (skipped if running silent /VERYSILENT installer)
+; 2. Option to launch PCDeck right away (skipped if running silent /VERYSILENT installer)
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent shellexec
 
 [UninstallRun]
@@ -78,20 +72,11 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 Filename: "taskkill.exe"; Parameters: "/F /IM {#MyAppExeName}"; Flags: runhidden
 Filename: "taskkill.exe"; Parameters: "/F /FI ""IMAGENAME eq PCDeck*"""; Flags: runhidden
 
-; 1. Unregister DirectShow Virtual Webcam Filters cleanly
-Filename: "regsvr32.exe"; Parameters: "/u /s ""{app}\drivers\UnityCaptureFilter64.dll"""; Flags: runhidden
-Filename: "regsvr32.exe"; Parameters: "/u /s ""{app}\drivers\UnityCaptureFilter32.dll"""; Flags: runhidden
-Filename: "regsvr32.exe"; Parameters: "/u /s ""{autopf}\{#MyAppName}\drivers\UnityCaptureFilter64.dll"""; Flags: runhidden
-Filename: "regsvr32.exe"; Parameters: "/u /s ""{autopf}\{#MyAppName}\drivers\UnityCaptureFilter32.dll"""; Flags: runhidden
-
-; 2. Remove Windows Defender Firewall rule
+; 1. Remove Windows Defender Firewall rule
 Filename: "netsh.exe"; Parameters: "advfirewall firewall delete rule name=""PCDeck"""; Flags: runhidden
 
-; 3. Delete Task Scheduler autostart task
+; 2. Delete Task Scheduler autostart task
 Filename: "schtasks.exe"; Parameters: "/delete /tn ""PCDeck"" /f"; Flags: runhidden
-
-; 4. Uninstall ViGEmBus virtual gamepad driver silently via MSI if installed
-Filename: "msiexec.exe"; Parameters: "/x ""{app}\drivers\ViGEmBus_x64.msi"" /qn /norestart"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
