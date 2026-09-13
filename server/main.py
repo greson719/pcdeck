@@ -1442,6 +1442,21 @@ async def delete_file_legacy(filename: str):
     return perform_delete_item(os.path.join(TRANSFER_DIR, os.path.basename(filename)))
 
 
+@app.get("/")
+async def get_root(request: Request):
+    """Serve the Web Control interface (index.html) with auto-auth and token cookie."""
+    client_ip = request.client.host if request.client else ""
+    token = request.query_params.get("token") or request.query_params.get("t")
+    if client_ip:
+        _authenticated_ips.add(client_ip)
+    index_file = os.path.join(STATIC_DIR, "index.html")
+    response = FileResponse(index_file)
+    tok = token or get_pairing_token()
+    if tok:
+        response.set_cookie(key="pcdeck_token", value=tok, max_age=86400 * 30, path="/", samesite="lax")
+    return response
+
+
 @app.get("/desktop")
 async def get_desktop():
     """Serve the PC Companion / QR dashboard."""

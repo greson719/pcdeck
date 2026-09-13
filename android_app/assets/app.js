@@ -804,29 +804,12 @@
       return { x: normX, y: normY, inBounds };
     }
 
-    function flushScreenMove() {
-      rAfMoveScheduled = false;
-      if (!touchActive) return;
-
-      if (state.screenMode === 'mouse') {
-        // Virtual Cursor Trackpad Mode: relative move
-        if (pendingRelDx !== 0 || pendingRelDy !== 0) {
-          sendBinaryMoveRel(pendingRelDx, pendingRelDy);
-          pendingRelDx = 0;
-          pendingRelDy = 0;
-        }
-      } else {
-        // Direct Touch Mode: absolute move
-        sendBinaryMoveAbs(pendingNormX, pendingNormY);
-      }
-    }
-
     const touchArena = el.screenViewport || el.screenCanvas;
 
     touchArena.addEventListener('touchstart', (e) => {
       globalLastTouchTime = Date.now();
       // Check if Gamepad HUD is active or touch is on UI overlays
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, #btn-screen-mode-pill'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
         return;
       }
 
@@ -839,7 +822,7 @@
         }
       }
 
-      // 2-Finger Touch handling (Pinch-to-Zoom & Two-Finger Scroll)
+      // 2-Finger Touch handling (Pinch-to-Zoom & Pan)
       if (e.touches.length === 2) {
         if (longPressTimer) {
           clearTimeout(longPressTimer);
@@ -854,10 +837,9 @@
         twoFingerStartDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
         twoFingerMidX = (t1.clientX + t2.clientX) / 2;
         twoFingerMidY = (t1.clientY + t2.clientY) / 2;
-        lastTwoFingerMidX = twoFingerMidX;
-        lastTwoFingerMidY = twoFingerMidY;
 
         if (state.pinchZoomEnabled) {
+          state.isPinching = true;
           state.initialPinchDist = twoFingerStartDist;
           state.initialZoom = state.zoomScale;
           state.initialPanX = state.panX;
@@ -891,11 +873,11 @@
       pendingRelDx = 0;
       pendingRelDy = 0;
 
-      // 1-Finger Long-Press Timer (320ms): Engages Drag & Move Mode for Files / Windows / Text!
+      // 1-Finger Long-Press Timer (350ms): Engages Drag & Move Mode for Files / Windows / Text!
       longPressTimer = setTimeout(() => {
         if (touchActive && !isScrolling && !state.isPinching) {
           const dist = Math.hypot(lastX - touchStartX, lastY - touchStartY);
-          if (dist < 16) {
+          if (dist < 14) {
             isLongPressDrag = true;
             spawnTouchRipple(lastX, lastY, 'double');
             vibrate(45);
@@ -905,16 +887,16 @@
             sendBinaryTouchDown(curNorm.x, curNorm.y, 'left');
           }
         }
-      }, 320);
+      }, 350);
     }, { passive: false });
 
     touchArena.addEventListener('touchmove', (e) => {
       globalLastTouchTime = Date.now();
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, #btn-screen-mode-pill'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
         return;
       }
 
-      // 2-Finger Pinch-to-Zoom & Two-Finger Scroll
+      // 2-Finger Pinch-to-Zoom & Pan
       if (e.touches.length === 2 && twoFingerActive) {
         const t1 = e.touches[0];
         const t2 = e.touches[1];
@@ -922,33 +904,16 @@
         const midX = (t1.clientX + t2.clientX) / 2;
         const midY = (t1.clientY + t2.clientY) / 2;
 
-        const distDiff = Math.abs(curDist - twoFingerStartDist);
-        const moveDist = Math.hypot(midX - twoFingerMidX, midY - twoFingerMidY);
-
-        if (distDiff > 14 || moveDist > 6) {
+        if (Math.abs(curDist - twoFingerStartDist) > 10 || Math.hypot(midX - twoFingerMidX, midY - twoFingerMidY) > 8) {
           twoFingerMoved = true;
         }
 
-        if (state.pinchZoomEnabled && (state.isPinching || distDiff > 28)) {
-          state.isPinching = true;
+        if (state.pinchZoomEnabled && state.isPinching && state.initialPinchDist > 0) {
           const factor = (curDist / state.initialPinchDist - 1) * state.zoomSens + 1;
-          state.zoomScale = Math.max(1.0, Math.min(5.0, state.initialZoom * factor));
+          state.zoomScale = Math.max(0.7, Math.min(5.0, state.initialZoom * factor));
           state.panX = state.initialPanX + (midX - state.pinchMidX);
           state.panY = state.initialPanY + (midY - state.pinchMidY);
           updateCanvasTransform();
-        } else if (!state.isPinching && moveDist > 5) {
-          // 2-Finger Natural Physical Scroll (Vertical & Horizontal)
-          const stepDy = midY - (lastTwoFingerMidY || midY);
-          const stepDx = midX - (lastTwoFingerMidX || midX);
-          lastTwoFingerMidX = midX;
-          lastTwoFingerMidY = midY;
-
-          const scrollFactor = state.invertScroll ? -1 : 1;
-          const wheelDy = stepDy * 1.8 * state.scrollSpeed * scrollFactor;
-          const wheelDx = stepDx * 1.8 * state.scrollSpeed * scrollFactor;
-          if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
-            sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
-          }
         }
         e.preventDefault();
         return;
@@ -981,31 +946,50 @@
         return;
       }
 
-      // If moved before long-press engaged (> 14px), cancel long-press timer
-      if (totalDist > 14 && longPressTimer) {
+      // If moved before long-press engaged (> 7px), cancel long-press timer and scroll
+      if (totalDist > 7 && longPressTimer) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
       }
 
-      if (state.screenMode === 'mouse') {
-        // Virtual Cursor Trackpad Glide
-        pendingRelDx += dx * state.cursorSpeed;
-        pendingRelDy += dy * state.cursorSpeed;
-        if (!rAfMoveScheduled) {
-          rAfMoveScheduled = true;
-          requestAnimationFrame(flushScreenMove);
+      // Direct Mobile Touch 1:1 Scroll Drag Physics
+      if (totalDist > 7) {
+        isScrolling = true;
+
+        // Anchor the PC mouse cursor once at the initial touch point:
+        // 1. Keeps scroll focus strictly on the target list in Windows File Explorer (no treeview/header drift).
+        // 2. Eliminates hover lag, link flickers, and selection interrupts in web browsers.
+        if (!scrollCursorAnchored) {
+          scrollCursorAnchored = true;
+          sendBinaryMoveAbs(touchAnchorNormX, touchAnchorNormY);
         }
-      } else {
-        // Direct Touch Mode: PC cursor directly tracks finger in real time across the desktop!
-        const norm = getNormalizedCoords(touch.clientX, touch.clientY);
-        sendBinaryMoveAbs(norm.x, norm.y);
+
+        const rect = el.screenCanvas.getBoundingClientRect();
+        const canvasH = (el.screenCanvas.height && el.screenCanvas.height > 0) ? el.screenCanvas.height : 1080;
+        const canvasW = (el.screenCanvas.width && el.screenCanvas.width > 0) ? el.screenCanvas.width : 1920;
+        const rectH = (rect && rect.height > 0) ? rect.height : 360;
+        const rectW = (rect && rect.width > 0) ? rect.width : 640;
+        const effectiveZoom = (state.zoomScale && state.zoomScale > 0.1) ? state.zoomScale : 1.0;
+        const scrollFactor = state.invertScroll ? -1 : 1;
+
+        // 1:1 Physical Screen Tracking:
+        // Translating mobile touch pixels to PC canvas pixels * 1.25 yields exact 1:1 physical finger tracking.
+        const scaleY = (canvasH / rectH) / effectiveZoom;
+        const scaleX = (canvasW / rectW) / effectiveZoom;
+
+        const wheelDy = dy * scaleY * 1.25 * state.scrollSpeed * scrollFactor;
+        const wheelDx = dx * scaleX * 1.25 * state.scrollSpeed * scrollFactor;
+
+        if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+          sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
+        }
       }
       e.preventDefault();
     }, { passive: false });
 
     touchArena.addEventListener('touchend', (e) => {
       globalLastTouchTime = Date.now();
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, #btn-screen-mode-pill'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
         return;
       }
 
@@ -1028,7 +1012,7 @@
         }
         twoFingerActive = false;
         state.isPinching = false;
-        if (state.zoomScale <= 1.05) {
+        if (state.zoomScale < 0.9) {
           resetPinchZoom();
         }
         e.preventDefault();
@@ -1049,33 +1033,100 @@
         sendBinaryTouchUp(norm.x, norm.y, 'left');
 
         if (moveDist < 12) {
+          // Held in place without dragging -> Trigger Right-Click Context Menu!
           sendBinaryClick('right');
           spawnTouchRipple(lastX, lastY, 'right');
           showToast('Right Click', 'success', '🖱️');
           vibrate(30);
         } else {
+          // Dragged and released -> Dropped file/item/selection!
           spawnTouchRipple(lastX, lastY, 'tap');
           showToast('Item Dropped / Moved', 'success');
           vibrate(35);
         }
-        e.preventDefault();
         return;
       }
 
-      if (tapDuration < 320 && moveDist < 16) {
-        const norm = getNormalizedCoords(lastX, lastY);
-        if (!norm.inBounds) {
-          e.preventDefault();
-          return;
+      // Calculate release velocity for kinetic momentum (fling physics)
+      const now = Date.now();
+      const recentPoints = touchHistory.filter(p => now - p.time < 80);
+      let vy = 0, vx = 0;
+      if (recentPoints.length >= 2) {
+        const first = recentPoints[0];
+        const last = recentPoints[recentPoints.length - 1];
+        const dt = last.time - first.time;
+        if (dt > 10) {
+          vy = (last.y - first.y) / dt; // px per millisecond
+          vx = (last.x - first.x) / dt;
         }
+      }
 
+      // If user was scrolling / dragged finger, don't trigger click on release
+      if (isScrolling || moveDist > 14) {
+        const wasScrolling = isScrolling;
+        isScrolling = false;
+        scrollCursorAnchored = false;
+
+        // Engage Kinetic Momentum Glide if flicked with velocity (> 0.35 px/ms)
+        if (wasScrolling && (Math.abs(vy) > 0.35 || Math.abs(vx) > 0.35)) {
+          const rect = el.screenCanvas.getBoundingClientRect();
+          const canvasH = (el.screenCanvas.height && el.screenCanvas.height > 0) ? el.screenCanvas.height : 1080;
+          const canvasW = (el.screenCanvas.width && el.screenCanvas.width > 0) ? el.screenCanvas.width : 1920;
+          const rectH = (rect && rect.height > 0) ? rect.height : 360;
+          const rectW = (rect && rect.width > 0) ? rect.width : 640;
+          const effectiveZoom = (state.zoomScale && state.zoomScale > 0.1) ? state.zoomScale : 1.0;
+          const scrollFactor = state.invertScroll ? -1 : 1;
+          const scaleY = (canvasH / rectH) / effectiveZoom;
+          const scaleX = (canvasW / rectW) / effectiveZoom;
+
+          let momentumVy = vy;
+          let momentumVx = vx;
+          let lastMomentumTime = performance.now();
+
+          const stepMomentum = (curTime) => {
+            if (!isMomentumActive) return;
+            const dt = Math.min(32, curTime - lastMomentumTime);
+            lastMomentumTime = curTime;
+
+            // Smooth exponential deceleration curve
+            const friction = Math.pow(0.93, dt / 16.67);
+            momentumVy *= friction;
+            momentumVx *= friction;
+
+            const stepDy = momentumVy * dt;
+            const stepDx = momentumVx * dt;
+
+            // 1:1 Physical kinetic momentum
+            const wheelDy = stepDy * scaleY * 1.25 * state.scrollSpeed * scrollFactor;
+            const wheelDx = stepDx * scaleX * 1.25 * state.scrollSpeed * scrollFactor;
+
+            if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+              sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
+            }
+
+            if (Math.abs(momentumVy) > 0.04 || Math.abs(momentumVx) > 0.04) {
+              momentumAnimId = requestAnimationFrame(stepMomentum);
+            } else {
+              isMomentumActive = false;
+              momentumAnimId = null;
+            }
+          };
+
+          isMomentumActive = true;
+          momentumAnimId = requestAnimationFrame(stepMomentum);
+        }
+        return;
+      }
+
+      if (tapDuration < 280 && moveDist < 14) {
         const timeSinceLastTap = touchEndTime - lastTapTime;
         const tapDistance = Math.hypot(lastX - lastTapX, lastY - lastTapY);
 
-        if (timeSinceLastTap < 350 && tapDistance < 28) {
+        if (timeSinceLastTap < 350 && tapDistance < 24) {
           // 1-Finger Double Tap -> Double Click (Opens file/app/folder)
           lastTapTime = 0;
           spawnTouchRipple(lastX, lastY, 'double');
+          const norm = getNormalizedCoords(lastX, lastY);
           sendBinaryMoveAbs(norm.x, norm.y);
           sendBinaryClick('double');
           vibrate(30);
@@ -1087,18 +1138,11 @@
           lastTapY = lastY;
           vibrate(18);
 
-          spawnTouchRipple(lastX, lastY, state.screenMode === 'rclick' ? 'right' : 'tap');
-          sendBinaryMoveAbs(norm.x, norm.y);
+          spawnTouchRipple(lastX, lastY, 'tap');
 
-          if (state.screenMode === 'rclick') {
-            sendBinaryClick('right');
-            state.screenMode = 'touch';
-            if (el.toolRclickStatus) el.toolRclickStatus.textContent = 'Next Tap: Normal';
-            updateScreenModePillUi();
-            showToast('Right Click', 'success', '🖱️');
-          } else {
-            sendBinaryClick('left');
-          }
+          const norm = getNormalizedCoords(lastX, lastY);
+          sendBinaryMoveAbs(norm.x, norm.y);
+          sendBinaryClick('left');
         }
       }
       e.preventDefault();
@@ -1114,7 +1158,7 @@
 
     touchArena.addEventListener('mousedown', (e) => {
       if (Date.now() - globalLastTouchTime < 650) return;
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
         return;
       }
       isMouseDown = true;
@@ -1154,7 +1198,7 @@
     });
 
     touchArena.addEventListener('wheel', (e) => {
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
         return;
       }
       const norm = getNormalizedCoords(e.clientX, e.clientY);
@@ -1171,7 +1215,7 @@
 
     touchArena.addEventListener('dblclick', (e) => {
       if (Date.now() - globalLastTouchTime < 650) return;
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
         return;
       }
       const norm = getNormalizedCoords(e.clientX, e.clientY);
@@ -1180,51 +1224,6 @@
       spawnTouchRipple(e.clientX, e.clientY, 'double');
       e.preventDefault();
     });
-
-    // Floating Screen Mode Pill UI & Click Handler
-    function updateScreenModePillUi() {
-      const pill = document.getElementById('btn-screen-mode-pill');
-      const icon = document.getElementById('screen-mode-pill-icon');
-      const label = document.getElementById('screen-mode-pill-label');
-      if (!pill) return;
-      if (state.screenMode === 'mouse') {
-        pill.classList.add('mode-mouse');
-        pill.classList.remove('mode-touch', 'mode-rclick');
-        if (icon) icon.textContent = '🖱️';
-        if (label) label.textContent = 'Glide';
-      } else if (state.screenMode === 'rclick') {
-        pill.classList.add('mode-rclick');
-        pill.classList.remove('mode-touch', 'mode-mouse');
-        if (icon) icon.textContent = '⚡';
-        if (label) label.textContent = 'R-Click';
-      } else {
-        pill.classList.add('mode-touch');
-        pill.classList.remove('mode-mouse', 'mode-rclick');
-        if (icon) icon.textContent = '👆';
-        if (label) label.textContent = 'Direct';
-      }
-    }
-    window.updateScreenModePillUi = updateScreenModePillUi;
-
-    const btnScreenModePill = document.getElementById('btn-screen-mode-pill');
-    if (btnScreenModePill) {
-      btnScreenModePill.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        vibrate(20);
-        state.screenMode = state.screenMode === 'touch' ? 'mouse' : 'touch';
-        updateScreenModePillUi();
-        if (typeof updateQuickToolsUi === 'function') updateQuickToolsUi();
-        showToast(
-          state.screenMode === 'touch'
-            ? 'Direct Touch: Tap & drag directly on desktop items'
-            : 'Trackpad Glide: Slide finger to glide PC cursor',
-          'info',
-          state.screenMode === 'touch' ? '👆' : '🖱️'
-        );
-      };
-    }
-    updateScreenModePillUi();
   }
 
   // --- Pinch-to-Zoom & Pan Gesture Engine ---
@@ -1300,6 +1299,11 @@
   };
 
   function triggerDiscoveryAndSweep() {
+    // In web browser mode: host is already window.location.hostname; avoid sweeping LAN which chokes web connections
+    const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
+    const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+    if (!isNativeApp && isHttp) return;
+
     // 1. Trigger Native Android UDP Broadcast Discovery (< 5ms)
     if (window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
       try {
