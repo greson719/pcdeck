@@ -453,3 +453,53 @@ Before committing or releasing updates:
   4. **Zero-Discontinuity Micro-Ramps**:
      - Added an exponential micro-fade ramp if `available <= 1` mid-quantum, preventing any step discontinuities or audible clicks.
      - Added a 220ms hard safety ceiling to fast-forward stale backlogs if the browser tab sleeps or pauses.
+
+---
+
+## 23. UI/UX Standards, Gateway Routing & Layout Ergonomics
+
+- **Zero-Popup Gateway QR Standard (`/connect`)**:
+  - Scanning the pairing QR code or opening `/connect` must never trigger automatic popups, download dialogs, or unsolicited modal overlays.
+  - The gateway displays balanced 50/50 split cards:
+    - **Web Remote**: 3 bullet points + 1 primary button (`Launch Web Remote`).
+    - **Android App**: 3 bullet points + 1 secondary button (`Download APK`).
+  - Both cards maintain identical structural height, typography, and clean visual parity.
+
+- **Single Floating On-Screen HUD FAB Invariant**:
+  - The in-display gaming HUD toggle is strictly located on the floating on-screen FAB (`#btn-screen-hud-fab`) over the screen streaming viewport.
+  - Redundant or duplicate HUD toggle buttons on the top titlebar/header (`#btn-screen-gamepad-hud`) are permanently removed to keep the titlebar uncluttered.
+
+- **Inline SVG Dock Navigation Standard**:
+  - All 7 dock navigation tabs (`Screen`, `Trackpad`, `Gamepad`, `Keys`, `Files`, `Media`, `Settings`) must use direct inline SVG paths (`<path>`, `<rect>`, `<circle>`) with single `viewBox="0 0 24 24"`.
+  - Never use external `<svg><use href="#..."></use></svg>` references for core navigation icons, preventing Chrome/WebKit double-viewBox cutoff bugs in both vertical dock (landscape) and horizontal nav (portrait).
+
+- **Responsive 2-Column Landscape Control Layout (`#tab-keyboard`)**:
+  - On landscape mobile screens, control pages such as the virtual keyboard arrange content in a 2-column side-by-side grid (`1.05fr 0.95fr` for Live Typing and Full Numpad).
+  - Keeps all interactive controls within the viewport height without requiring vertical scrolling or overflowing beyond the bottom edge of the screen.
+
+- **File Transfer Cancellation & X Button Invariant**:
+  - Closing the file transfer progress card via the X button (`.transfer-close-btn` / `#btn-transfer-close`) must actively abort the live `XMLHttpRequest` (`activeUploadXhr.abort()`), set `activeUploadCancelled = true` to halt the remaining queue, cancel download batches, and show a confirmation toast.
+  - Never allow transfer progress modals to hide while transfers continue running invisibly in the background.
+
+- **File Manager Long-Press Selection Mode Standard**:
+  - File browser items (both PC files and Phone files) hide selection checkboxes and multi-select bars by default to prevent visual clutter.
+  - A long-press (480ms hold + haptic vibration) enters selection mode, selects the target file/folder, reveals checkboxes, hides individual per-item action rows, and opens the batch action bar.
+  - While in selection mode, single taps toggle item selection.
+  - Tapping the batch bar X or clearing all selections automatically exits selection mode and restores standard tap-to-open and per-item action buttons.
+
+- **Browser File Download Direct Stream Invariant (No `target="_blank"`)**:
+  - Direct browser downloads via `<a download="..." href="...">` must never use `target="_blank"`. On Android Chrome / mobile browsers, `target="_blank"` spawns an orphaned blank tab that Android freezes after the initial 10 TCP packets (14.48 KB = TCP `initcwnd`), stalling the download indefinitely.
+  - Server endpoint `/api/fs/download` uses Starlette `FileResponse` for native non-blocking async chunk streaming, automatic RFC 6266 `Content-Disposition`, and standard HTTP 206 `Range` resume.
+  - `SmartGZipMiddleware` and `track_client_and_set_token` middleware bypass streaming routes (`/api/fs/download`, `/api/fs/upload`) to avoid response buffering or cookie header mutation during binary transfers.
+
+- **Agent Communication Standard (Caveman Mode)**:
+  - Keep all agent communication terse, direct, and high-signal with zero fluff or conversational filler.
+
+- **IndexNow SEO & Search Engine Indexing Standard**:
+  - **Protocol Key**: `2b967b3e45cd4a0cafab08e647e1fc47`
+  - **Verification File URL**: `https://pcdeck.vercel.app/2b967b3e45cd4a0cafab08e647e1fc47.txt`
+  - **Key File Locations in Repo**:
+    - Root: `2b967b3e45cd4a0cafab08e647e1fc47.txt`
+    - Mirror: `website/2b967b3e45cd4a0cafab08e647e1fc47.txt`
+  - **Automated Workflow**: `.github/workflows/indexnow.yml` parses `website/sitemap.xml` and dispatches immediate batch indexing pings to Bing/IndexNow on every push touching HTML, site guides, or `sitemap.xml`.
+  - **Environment Storage**: `.env` and `.env.example` store `INDEXNOW_KEY`, `INDEXNOW_KEY_LOCATION`, and `INDEXNOW_HOST`.

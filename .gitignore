@@ -44,5 +44,5 @@ msstore_assets/
 *.obf.tmp
 static/PCDeck.apk
 .agents/
-
-
+.env
+.env.*.local
