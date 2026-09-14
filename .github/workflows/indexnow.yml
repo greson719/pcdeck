@@ -1,0 +1,40 @@
+﻿name: IndexNow Auto-Ping
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'website/**'
+      - '*.html'
+      - 'sitemap.xml'
+  workflow_dispatch:
+
+jobs:
+  ping-indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ping Bing IndexNow
+        run: |
+          python -c "
+          import urllib.request, json, xml.etree.ElementTree as ET
+          tree = ET.parse('website/sitemap.xml')
+          ns = {'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+          urls = [u.find('sm:loc', ns).text.strip() for u in tree.getroot().findall('sm:url', ns)]
+          payload = {
+              'host': 'pcdeck.vercel.app',
+              'key': '2b967b3e45cd4a0cafab08e647e1fc47',
+              'keyLocation': 'https://pcdeck.vercel.app/2b967b3e45cd4a0cafab08e647e1fc47.txt',
+              'urlList': urls
+          }
+          data = json.dumps(payload).encode('utf-8')
+          req = urllib.request.Request(
+              'https://www.bing.com/indexnow',
+              data=data,
+              headers={'Content-Type': 'application/json; charset=utf-8'}
+          )
+          with urllib.request.urlopen(req) as resp:
+              print('IndexNow Ping Status:', resp.status)
+          "
