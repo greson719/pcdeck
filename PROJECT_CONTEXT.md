@@ -503,3 +503,40 @@ Before committing or releasing updates:
     - Mirror: `website/2b967b3e45cd4a0cafab08e647e1fc47.txt`
   - **Automated Workflow**: `.github/workflows/indexnow.yml` parses `website/sitemap.xml` and dispatches immediate batch indexing pings to Bing/IndexNow on every push touching HTML, site guides, or `sitemap.xml`.
   - **Environment Storage**: `.env` and `.env.example` store `INDEXNOW_KEY`, `INDEXNOW_KEY_LOCATION`, and `INDEXNOW_HOST`.
+
+---
+
+## 24. Search Engine Optimization (SEO) & Webmaster Invariants
+
+- **Google Search Console (GSC) Production State & Protocol**:
+  - **Property**: `https://pcdeck.vercel.app/`
+  - **Sitemap Submission**: `/sitemap.xml` verified as **Success** (Green) on Sep 14, 2026 with exactly **23 discovered pages**.
+  - **GSC Indexing Lifecycle & Queue Dynamics**:
+    - Status *"Discovered - currently not indexed"* represents normal crawl backlog for young domains with low initial authority, NOT an error, duplicate flag, or penalty.
+    - GSC Overview / Page Indexing charts update with a 3–10 day aggregation lag; the dashboard is not a real-time monitor.
+    - Manual "Request Indexing" has a hard daily quota (~10–12 requests/day per property). Never attempt bulk manual submission; allow the active sitemap discovery to ingest pages automatically.
+    - Automated alerts for traffic dips (e.g., "-79% impressions on `/use-pc-without-mouse/`") trigger routinely on low baseline sample sizes (<10 clicks) and do not represent technical regressions.
+
+- **Microsoft Bing Webmaster Tools Production State & Protocol**:
+  - **Property**: `https://pcdeck.vercel.app/`
+  - **Sitemap Status**: Resubmitted Sep 14, 2026; actively in **Processing** state covering all 23 URLs.
+  - **IndexNow Protocol**:
+    - Active API Key: `2b967b3e45cd4a0cafab08e647e1fc47`
+    - Key Verification URL: `https://pcdeck.vercel.app/2b967b3e45cd4a0cafab08e647e1fc47.txt` (HTTP 200)
+    - All 23 URLs submitted to `https://www.bing.com/indexnow` returning `HTTP 202 Accepted`.
+    - Automated CI/CD ping pipeline configured in `.github/workflows/indexnow.yml` on pushes modifying `website/**`, HTML, or `sitemap.xml`.
+  - **Bing Dashboard Cache Invariant**:
+    - Home dashboard recommendation banners (*"Important new pages are missing from your sitemaps"*, *"Set up IndexNow"*) are batch-computed on a 24–48 hour crawl/scan cycle.
+    - Do not re-edit code or re-upload keys when these banners persist immediately after deployment; verify live status directly under the **Sitemaps** and **IndexNow** sidebar tabs.
+
+- **On-Page SEO & Structured Data Technical Standards**:
+  - **Page Length Constraints**:
+    - `<title>` tags must strictly remain between **50 and 64 characters** (Bing limit: 15–65 characters).
+    - `<meta name="description">` tags must strictly remain between **140 and 155 characters** (Bing limit: 25–160 characters).
+  - **Structured Data Standards**:
+    - Include `prefix="og: https://ogp.me/ns#"` on `<html>` across all guide templates.
+    - All guide pages must supply fully populated JSON-LD schemas (`TechArticle`, `HowTo`, `BreadcrumbList`) with explicit `image`, `publisher.logo`, `author.logo`, `tool`, and step hash-anchors (`#step-1`..`#step-4`).
+  - **Routing & Crawler Directives**:
+    - `robots.txt` disallows raw shell scripts (`/*.sh$`) to prevent search engine bots from expecting non-HTML installation scripts in XML sitemaps.
+    - `vercel.json` enforces `"trailingSlash": true` to eliminate 308 redirect loops between slash and non-slash canonical URLs.
+    - Full parity is strictly maintained between root files and `website/` distribution mirror.
