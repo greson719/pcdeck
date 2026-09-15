@@ -540,3 +540,22 @@ Before committing or releasing updates:
     - `robots.txt` disallows raw shell scripts (`/*.sh$`) to prevent search engine bots from expecting non-HTML installation scripts in XML sitemaps.
     - `vercel.json` enforces `"trailingSlash": true` to eliminate 308 redirect loops between slash and non-slash canonical URLs.
     - Full parity is strictly maintained between root files and `website/` distribution mirror.
+
+---
+
+## 25. User-Mode Virtual HD Webcam Architecture & Invariants
+
+- **Zero-Kernel User-Mode DirectShow Pipeline**:
+  - **Technology**: `drivers/UnityCaptureFilter64.dll` (157 KB 64-bit DirectShow COM filter) interfaced via `pyvirtualcam`.
+  - **User-Space Self-Registration (`HKCU`)**:
+    - Registers silently into `HKEY_CURRENT_USER\Software\Classes\CLSID\{5C2CD55C-92AD-4999-8666-912BD3E70010}` and `CLSID\{860BB310-5D01-11D0-BD3B-00A0C911CE86}\Instance\{5C2CD55C-92AD-4999-8666-912BD3E70010}`.
+    - **Zero Administrator Rights**: Requires no UAC elevation, no installer hooks, no system reboots, and no kernel `.sys` drivers.
+    - **Microsoft Store & MSIX Compliant**: Safe for Microsoft Store certification and sandboxed packaging because no kernel drivers are used.
+  - **Compatibility**:
+    - Windows DirectShow and Media Foundation instantly recognize the device as **"Unity Video Capture"**.
+    - All PC web browsers (Chrome, Edge, Firefox), external testing sites (`webcamtests.com`, `webcammictest.com`), and desktop conferencing software (Zoom, Teams, Discord, Google Meet, OBS) detect the phone camera as a native HD webcam.
+  - **Zero Breakage Invariant**:
+    - Never delete `drivers/UnityCaptureFilter64.dll` or unbind `pyvirtualcam`.
+    - Always bundle `drivers;drivers` in `build_exe.py` and `PCDeck.spec`.
+    - Maintain `/ws/cam` streaming, standby frames, and aspect-ratio preserving fit.
+

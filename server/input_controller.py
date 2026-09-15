@@ -417,40 +417,28 @@ class WindowsInputController:
         self.click(button)
 
     def scroll(self, dx: float, dy: float):
-        """Scroll vertical or horizontal mouse wheel with high-precision sub-unit accumulator.
-        Dispatches standard Win32 WHEEL_DELTA (120) increments so native Win32 controls
-        (Windows File Explorer SysListView32/DirectUIHWND, Notepad, Task Manager) receive
-        valid scroll clicks, while smoothly retaining fractional movement."""
+        """Scroll vertical or horizontal mouse wheel with ultra-high precision sub-unit accumulator.
+        Dispatches continuous sub-unit wheel events to Windows SendInput on every frame so
+        modern apps (browsers, Windows 11 Explorer, documents) scroll with 60/120 FPS buttery fluid
+        responsiveness, matching a native touchscreen display with zero quantization delay."""
         now = time.time()
-        # Reset small residual accumulation if user was idle for > 0.35s
-        if now - getattr(self, '_last_scroll_time', 0.0) > 0.35:
+        # Reset fractional residual accumulation (< 1.0) if user was idle for > 0.5s
+        if now - getattr(self, '_last_scroll_time', 0.0) > 0.5:
             self._accum_scroll_y = 0.0
             self._accum_scroll_x = 0.0
         self._last_scroll_time = now
 
-        self._accum_scroll_y += dy
-        self._accum_scroll_x += dx
+        self._accum_scroll_y += float(dy)
+        self._accum_scroll_x += float(dx)
 
-        # Smooth high-precision sub-tick wheel dispatch (24 units = 1/5th of standard 120 tick).
-        # Allows modern Windows apps (browsers, documents, Windows 11 Explorer) to scroll
-        # with fluid, pixel-by-pixel responsiveness without 120-unit notch stutter.
-        SMOOTH_WHEEL_STEP = 24
-        step_y = 0
-        if abs(self._accum_scroll_y) >= SMOOTH_WHEEL_STEP:
-            notches_y = int(self._accum_scroll_y / SMOOTH_WHEEL_STEP)
-            step_y = notches_y * SMOOTH_WHEEL_STEP
-            self._accum_scroll_y -= step_y
-
-        step_x = 0
-        if abs(self._accum_scroll_x) >= SMOOTH_WHEEL_STEP:
-            notches_x = int(self._accum_scroll_x / SMOOTH_WHEEL_STEP)
-            step_x = notches_x * SMOOTH_WHEEL_STEP
-            self._accum_scroll_x -= step_x
-
+        step_y = int(self._accum_scroll_y)
         if step_y != 0:
+            self._accum_scroll_y -= step_y
             self._send_mouse(MOUSEEVENTF_WHEEL, 0, 0, step_y)
 
+        step_x = int(self._accum_scroll_x)
         if step_x != 0:
+            self._accum_scroll_x -= step_x
             self._send_mouse(MOUSEEVENTF_HWHEEL, 0, 0, step_x)
 
     def key_down(self, key_name: str):

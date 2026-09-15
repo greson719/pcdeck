@@ -1707,7 +1707,12 @@ public class MainActivity extends Activity {
                             return;
                         }
 
-                        final String finalFileName = fileName;
+                        String safeFileName = (fileName != null && !fileName.trim().isEmpty()) ? fileName.trim() : "upload.dat";
+                        safeFileName = safeFileName.replace(':', '-').replaceAll("[<>\"/\\\\|?*\\x00-\\x1f]", "_").trim();
+                        if (safeFileName.isEmpty() || safeFileName.equals(".") || safeFileName.equals("..")) {
+                            safeFileName = "upload.dat";
+                        }
+                        final String finalFileName = safeFileName;
                         final long finalTotalBytes = totalBytes;
                         final String charset = "UTF-8";
 
@@ -1721,7 +1726,7 @@ public class MainActivity extends Activity {
                         long resumeOffset = 0;
                         if (finalTotalBytes > 10485760) { // Check resume for files > 10MB
                             try {
-                                String verifyUrl = baseServer + "/api/fs/verify?filename=" + java.net.URLEncoder.encode(fileName, charset);
+                                String verifyUrl = baseServer + "/api/fs/verify?filename=" + java.net.URLEncoder.encode(finalFileName, charset);
                                 if (pcDestDir != null && !pcDestDir.isEmpty()) {
                                     verifyUrl += "&dest_dir=" + java.net.URLEncoder.encode(pcDestDir, charset);
                                 }
@@ -1763,7 +1768,7 @@ public class MainActivity extends Activity {
                         }
 
                         // Stream directly to /api/fs/upload-stream for ultra-fast zero-tempfile transfer
-                        String targetUrl = baseServer + "/api/fs/upload-stream?filename=" + java.net.URLEncoder.encode(fileName, charset);
+                        String targetUrl = baseServer + "/api/fs/upload-stream?filename=" + java.net.URLEncoder.encode(finalFileName, charset);
                         if (pcDestDir != null && !pcDestDir.isEmpty()) {
                             targetUrl += "&dest_dir=" + java.net.URLEncoder.encode(pcDestDir, charset);
                         }
@@ -1781,7 +1786,7 @@ public class MainActivity extends Activity {
                         conn.setRequestProperty("Connection", "Keep-Alive");
                         conn.setRequestProperty("Accept-Encoding", "identity");
                         conn.setRequestProperty("Content-Type", "application/octet-stream");
-                        conn.setRequestProperty("X-File-Name", java.net.URLEncoder.encode(fileName, charset));
+                        conn.setRequestProperty("X-File-Name", java.net.URLEncoder.encode(finalFileName, charset));
                         if (pcDestDir != null && !pcDestDir.isEmpty()) {
                             conn.setRequestProperty("X-Dest-Dir", java.net.URLEncoder.encode(pcDestDir, charset));
                         }
@@ -1862,7 +1867,7 @@ public class MainActivity extends Activity {
                                 final String speedStr = speedMb > 0 ? String.format("%.1f MB/s", speedMb) : "--";
 
                                 updateTransferNotification(
-                                    "📤 Uploading " + fileName,
+                                    "📤 Uploading " + finalFileName,
                                     percent + "% (" + formatSize(loaded) + " of " + formatSize(finalTotalBytes) + ") • " + speedStr,
                                     percent,
                                     true

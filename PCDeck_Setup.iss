@@ -51,6 +51,7 @@ Source: "app_icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "PCDeck.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "PCDeck.apk"; DestDir: "{app}"; Flags: ignoreversion
 Source: "static\*"; DestDir: "{app}\static"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "drivers\*"; DestDir: "{app}\drivers"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\PCDeck.ico"
@@ -59,6 +60,8 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#MyAppName}"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: startupicon
+Root: HKCU; Subkey: "Software\Classes\CLSID\{{5C2CD55C-92AD-4999-8666-912BD3E70010}"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\CLSID\{{860BB310-5D01-11D0-BD3B-00A0C911CE86}\Instance\{{5C2CD55C-92AD-4999-8666-912BD3E70010}"; Flags: uninsdeletekey
 
 [Run]
 ; 1. Add inbound Windows Defender Firewall rule so phone connects seamlessly over local Wi-Fi

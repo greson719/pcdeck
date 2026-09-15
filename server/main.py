@@ -153,12 +153,37 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import qrcode
 from uvicorn import Config, Server
-from fastapi.middleware.gzip import GZipMiddleware
+from starlette.middleware.gzip import GZipMiddleware
+
+
+class SmartGZipMiddleware:
+    """High-performance selective GZip middleware.
+    Compresses HTML, CSS, JS, JSON, SVG and text for fast page loads,
+    but strictly bypasses pre-compressed packages (.apk, .zip, .exe), media, and file downloads.
+    Preserves exact Content-Length, Content-Disposition, and Accept-Ranges: bytes for reliable mobile downloads.
+    """
+    def __init__(self, app, minimum_size: int = 1000, compresslevel: int = 6):
+        self.app = app
+        self.gzip_app = GZipMiddleware(app, minimum_size=minimum_size, compresslevel=compresslevel)
+        self.binary_exts = {
+            ".apk", ".zip", ".exe", ".gz", ".tar", ".tgz", ".rar", ".7z",
+            ".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico",
+            ".mp4", ".webm", ".wav", ".mp3", ".flac", ".ogg"
+        }
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            path = (scope.get("path") or "").lower()
+            if any(path.endswith(ext) for ext in self.binary_exts) or path.startswith(("/api/fs/download", "/api/fs/upload", "/api/screen/shot", "/api/apk", "/api/zip", "/api/exe")):
+                await self.app(scope, receive, send)
+                return
+        await self.gzip_app(scope, receive, send)
+
 
 colorama.init(autoreset=True)
 
 app = FastAPI(title="PCDeck Pro Server", version="2.1.0")
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(SmartGZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -377,6 +402,8 @@ async def track_client_and_set_token(request: Request, call_next):
     client_ip = request.client.host if request.client else ""
     if client_ip:
         _authenticated_ips.add(client_ip)
+    if request.url.path.startswith(("/api/fs/download", "/api/fs/upload", "/api/screen/shot", "/api/apk", "/api/zip", "/api/exe")):
+        return await call_next(request)
     response = await call_next(request)
     try:
         tok = get_pairing_token()
@@ -518,6 +545,97 @@ def format_bytes(bytes_num: int) -> str:
     p = math.pow(1024, i)
     s = round(bytes_num / p, 2)
     return f"{s} {units[i]}"
+
+
+RESERVED_DEVICE_NAMES = frozenset(
+    {"CON", "PRN", "AUX", "NUL"}
+    | {f"COM{i}" for i in range(1, 10)}
+    | {f"LPT{i}" for i in range(1, 10)}
+)
+
+
+def sanitize_windows_filename(name: str) -> str:
+    """Sanitize any arbitrary mobile or web filename for safe Windows NTFS storage.
+
+    Decodes URL encoding (including + for spaces), strips directory traversals,
+    replaces Windows illegal characters (< > : " / \\ | ? * and control chars),
+    protects reserved Windows device names (CON, AUX, NUL, COM1-9, etc.),
+    and trims trailing dots/spaces to prevent OS-level Errno 22/13 crashes.
+    """
+    if not name:
+        return "upload.dat"
+    try:
+        decoded = urllib.parse.unquote_plus(str(name).strip())
+    except Exception:
+        try:
+            decoded = urllib.parse.unquote(str(name).strip())
+        except Exception:
+            decoded = str(name).strip()
+
+    # Extract clean basename and normalize path separators
+    clean = decoded.replace("\\", "/")
+    clean = os.path.basename(clean).strip()
+    if not clean or clean in (".", ".."):
+        return "upload.dat"
+
+    # Replace colons (frequent in phone camera/screenshot timestamps like 12:30:00) with hyphens
+    clean = clean.replace(":", "-")
+    # Replace other Windows illegal characters and non-printable control chars with underscores
+    clean = re.sub(r'[<>"\\/|?*\x00-\x1f]', "_", clean)
+
+    # Split into stem and extension
+    base, ext = os.path.splitext(clean)
+    base = base.rstrip(". ")
+    ext = ext.rstrip(". ")
+    if not base:
+        base = "upload"
+
+    # Protect against Windows reserved device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9)
+    stem_first = base.split(".")[0].upper()
+    if stem_first in RESERVED_DEVICE_NAMES or base.upper() in RESERVED_DEVICE_NAMES:
+        base = f"_{base}"
+
+    # Enforce Windows MAX_PATH filename safety (keep under 240 chars)
+    if len(base) + len(ext) > 240:
+        base = base[: 240 - len(ext)]
+
+    result = f"{base}{ext}"
+    return result if result else "upload.dat"
+
+
+def _safe_open_for_write(target_directory: str, filename: str, offset: int = 0) -> Tuple[Any, str]:
+    """Safely open a file in target_directory for writing with automatic collision and lock resolution.
+
+    If offset == 0, auto-increments filename (file_1.ext, file_2.ext) if the file exists or is locked.
+    If offset > 0, opens existing file in r+b or ab mode and seeks to offset.
+    """
+    clean_filename = sanitize_windows_filename(filename)
+    base, ext = os.path.splitext(clean_filename)
+    dest_path = os.path.join(target_directory, clean_filename)
+
+    if offset == 0 and os.path.exists(dest_path):
+        counter = 1
+        while os.path.exists(dest_path):
+            dest_path = os.path.join(target_directory, f"{base}_{counter}{ext}")
+            counter += 1
+
+    mode = "r+b" if (offset > 0 and os.path.exists(dest_path)) else ("ab" if offset > 0 else "wb")
+
+    counter = 1
+    while True:
+        try:
+            f = open(dest_path, mode, buffering=1048576)
+            if offset > 0 and mode == "r+b":
+                f.seek(offset)
+            return f, dest_path
+        except (PermissionError, OSError):
+            # If offset is 0 and the file is locked or in use by another app, roll over to next name
+            if offset == 0 and counter <= 100:
+                dest_path = os.path.join(target_directory, f"{base}_{counter}{ext}")
+                counter += 1
+                continue
+            raise
+
 
 
 
@@ -752,64 +870,71 @@ async def upload_file_stream(
     dest_dir: Optional[str] = None,
     dir: Optional[str] = None,
     path: Optional[str] = None,
-    offset: Optional[int] = Header(0, alias="X-File-Offset"),
     x_filename: Optional[str] = Header(None, alias="X-File-Name"),
     x_dest_dir: Optional[str] = Header(None, alias="X-Dest-Dir"),
 ):
     """Direct high-speed binary stream upload bypassing multipart parsing overhead.
-    
-    Streams raw chunks (supporting multi-gigabytes without temp file bloat) directly into the destination file with 2MB I/O buffer.
-    Supports resume via X-File-Offset or query parameters.
+
+    Streams raw chunks directly into the destination file with 1MB I/O buffer.
+    Supports resume via X-File-Offset header or query parameters.
+    Sanitizes filenames to eliminate Windows forbidden characters and handles locked files automatically.
     """
     if request.method == "OPTIONS":
         return Response(status_code=200, headers={"Allow": "GET, POST, PUT, OPTIONS, HEAD"})
     if request.method in ("GET", "HEAD"):
         return {"status": "ok", "message": "Upload stream endpoint ready"}
+
+    # Extract filename safely
     raw_name = x_filename or filename or request.query_params.get("filename") or "upload.dat"
-    # Support URL decoding for safe filename transfer
-    try:
-        clean_filename = os.path.basename(urllib.parse.unquote(raw_name))
-    except Exception:
-        clean_filename = os.path.basename(raw_name)
+    clean_filename = sanitize_windows_filename(raw_name)
 
-    if not clean_filename or clean_filename in [".", ".."]:
-        clean_filename = "upload.dat"
-
-    # Strictly save all phone uploads into TRANSFER_DIR (Downloads/PCDeck_Transfers)
+    # Resolve destination directory
+    raw_dest = x_dest_dir or dest_dir or dir or path or request.query_params.get("dest_dir") or ""
     target_directory = os.path.abspath(TRANSFER_DIR)
-    os.makedirs(target_directory, exist_ok=True)
-    dest_path = os.path.join(target_directory, clean_filename)
+    if raw_dest:
+        try:
+            cand = os.path.abspath(urllib.parse.unquote_plus(raw_dest))
+            if os.path.exists(cand) and os.path.isdir(cand):
+                target_directory = cand
+        except Exception:
+            pass
+    try:
+        os.makedirs(target_directory, exist_ok=True)
+    except Exception:
+        target_directory = os.path.abspath(TRANSFER_DIR)
+        os.makedirs(target_directory, exist_ok=True)
 
-    # If not resuming and file already exists, create non-colliding name
-    if offset == 0 and os.path.exists(dest_path):
-        base, ext = os.path.splitext(clean_filename)
-        counter = 1
-        while os.path.exists(dest_path):
-            dest_path = os.path.join(target_directory, f"{base}_{counter}{ext}")
-            counter += 1
+    # Safely parse offset (from header or query parameter)
+    raw_offset = request.headers.get("X-File-Offset") or request.query_params.get("offset") or "0"
+    try:
+        offset = max(0, int(str(raw_offset).strip()))
+    except (ValueError, TypeError):
+        offset = 0
 
-    mode = "r+b" if (offset > 0 and os.path.exists(dest_path)) else ("ab" if offset > 0 else "wb")
+    # Open file safely (handling collisions and file locks)
+    try:
+        f, dest_path = _safe_open_for_write(target_directory, clean_filename, offset)
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": f"Cannot open destination file: {e}"})
 
     try:
         total_written = 0
+
         def _write_bytes(f_obj, data):
             f_obj.write(data)
 
-        with open(dest_path, mode, buffering=1048576) as f:
-            if offset > 0 and mode == "r+b":
-                f.seek(offset)
-            buf = bytearray()
-            async for chunk in request.stream():
-                if chunk:
-                    buf.extend(chunk)
-                    total_written += len(chunk)
-                    if len(buf) >= 524288:  # 512KB batch write
-                        await asyncio.to_thread(_write_bytes, f, bytes(buf))
-                        buf.clear()
-            if buf:
-                await asyncio.to_thread(_write_bytes, f, bytes(buf))
-                buf.clear()
-            await asyncio.to_thread(f.flush)
+        buf = bytearray()
+        async for chunk in request.stream():
+            if chunk:
+                buf.extend(chunk)
+                total_written += len(chunk)
+                if len(buf) >= 524288:  # 512KB batch write
+                    await asyncio.to_thread(_write_bytes, f, bytes(buf))
+                    buf.clear()
+        if buf:
+            await asyncio.to_thread(_write_bytes, f, bytes(buf))
+            buf.clear()
+        await asyncio.to_thread(f.flush)
 
         final_size = os.path.getsize(dest_path)
         return {
@@ -820,8 +945,23 @@ async def upload_file_stream(
             "path": dest_path,
             "folder": target_directory,
         }
+    except (asyncio.CancelledError, GeneratorExit):
+        final_size = os.path.getsize(dest_path) if os.path.exists(dest_path) else 0
+        return {
+            "status": "partial",
+            "name": os.path.basename(dest_path),
+            "size": final_size,
+            "size_formatted": format_bytes(final_size),
+            "path": dest_path,
+            "folder": target_directory,
+        }
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"Stream upload failed: {e}"})
+        return JSONResponse(status_code=400, content={"error": f"Stream upload interrupted: {e}"})
+    finally:
+        try:
+            await asyncio.to_thread(f.close)
+        except Exception:
+            pass
 
 
 @app.post("/api/fs/upload")
@@ -837,27 +977,39 @@ async def upload_file_to_folder(
     if not target_file:
         return JSONResponse(status_code=400, content={"error": "No file uploaded"})
 
+    raw_dest = dest_dir or dir or path
     target_directory = os.path.abspath(TRANSFER_DIR)
-    os.makedirs(target_directory, exist_ok=True)
-    clean_filename = os.path.basename(target_file.filename or "upload.dat")
-    dest_path = os.path.join(target_directory, clean_filename)
+    if raw_dest:
+        try:
+            cand = os.path.abspath(urllib.parse.unquote_plus(raw_dest))
+            if os.path.exists(cand) and os.path.isdir(cand):
+                target_directory = cand
+        except Exception:
+            pass
+    try:
+        os.makedirs(target_directory, exist_ok=True)
+    except Exception:
+        target_directory = os.path.abspath(TRANSFER_DIR)
+        os.makedirs(target_directory, exist_ok=True)
 
-    base, ext = os.path.splitext(clean_filename)
-    counter = 1
-    while os.path.exists(dest_path):
-        dest_path = os.path.join(target_directory, f"{base}_{counter}{ext}")
-        counter += 1
+    clean_filename = sanitize_windows_filename(target_file.filename or "upload.dat")
+    try:
+        f, dest_path = _safe_open_for_write(target_directory, clean_filename, 0)
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": f"Cannot open destination file: {e}"})
 
     def _write_file():
-        bytes_written = 0
-        with open(dest_path, "wb", buffering=1048576) as buffer:
-            shutil.copyfileobj(target_file.file, buffer, length=1048576)
+        try:
+            shutil.copyfileobj(target_file.file, f, length=1048576)
+            f.flush()
+        finally:
+            f.close()
         return os.path.getsize(dest_path)
 
     try:
         bytes_written = await asyncio.to_thread(_write_file)
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"Failed to write file: {e}"})
+        return JSONResponse(status_code=400, content={"error": f"Failed to write file: {e}"})
     finally:
         try:
             await target_file.close()
@@ -887,11 +1039,23 @@ async def verify_file_on_pc(
     """Verify presence, exact byte size, and integrity of a file on PC."""
     target_path = path or ""
     if not target_path and filename:
-        clean_name = os.path.basename(urllib.parse.unquote(filename))
-        target_dir = os.path.abspath(urllib.parse.unquote(dest_dir) if dest_dir else TRANSFER_DIR)
+        clean_name = sanitize_windows_filename(filename)
+        raw_dest = dest_dir or TRANSFER_DIR
+        try:
+            target_dir = os.path.abspath(urllib.parse.unquote_plus(raw_dest))
+        except Exception:
+            target_dir = os.path.abspath(TRANSFER_DIR)
         target_path = os.path.join(target_dir, clean_name)
 
-    if not target_path or not os.path.exists(target_path):
+    if not target_path:
+        return JSONResponse(status_code=404, content={"status": "not_found", "exists": False, "path": ""})
+
+    try:
+        target_path = os.path.abspath(urllib.parse.unquote_plus(target_path))
+    except Exception:
+        pass
+
+    if not os.path.exists(target_path):
         return JSONResponse(status_code=404, content={"status": "not_found", "exists": False, "path": target_path})
 
     try:
@@ -910,7 +1074,7 @@ async def verify_file_on_pc(
             "expected_size": expected_size,
         }
     except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error", "error": str(e)})
+        return JSONResponse(status_code=400, content={"status": "error", "error": str(e)})
 
 
 @app.api_route("/api/fs/download", methods=["GET", "POST", "OPTIONS", "HEAD"])
@@ -918,117 +1082,79 @@ async def verify_file_on_pc(
 async def download_any_file(
     request: Request,
     path: Optional[str] = None,
-    range_header: Optional[str] = Header(None, alias="Range"),
 ):
-    """Download any specified file from PC to phone with smooth non-blocking streaming and HTTP Range support."""
+    """Download any specified file from PC to phone with high-speed non-blocking FileResponse and HTTP Range support."""
     if request.method == "OPTIONS":
         return Response(status_code=200, headers={"Accept-Ranges": "bytes", "Allow": "GET, POST, OPTIONS, HEAD"})
 
-    target_path = path or request.query_params.get("path") or ""
-    if not target_path or not os.path.exists(target_path) or not os.path.isfile(target_path):
+    raw_path = path or request.query_params.get("path") or ""
+    if not raw_path:
         return JSONResponse(status_code=404, content={"error": "File not found"})
+
     try:
-        file_size = os.path.getsize(target_path)
+        target_path = os.path.abspath(urllib.parse.unquote_plus(raw_path))
+    except Exception:
+        target_path = os.path.abspath(raw_path)
+
+    if not os.path.exists(target_path) or not os.path.isfile(target_path):
+        return JSONResponse(status_code=404, content={"error": "File not found"})
+
+    try:
         clean_filename = os.path.basename(target_path)
-
-        start = 0
-        end = file_size - 1
-        status_code = 200
-
-        if isinstance(range_header, str) and range_header.startswith("bytes="):
-            spec = range_header.replace("bytes=", "").strip()
-            parts = spec.split("-")
-            if parts[0]:
-                start = int(parts[0])
-                if len(parts) > 1 and parts[1]:
-                    end = min(file_size - 1, int(parts[1]))
-            elif len(parts) > 1 and parts[1]:
-                suffix_len = int(parts[1])
-                start = max(0, file_size - suffix_len)
-
-            if start >= file_size or start > end:
-                return Response(
-                    status_code=416,
-                    headers={
-                        "Content-Range": f"bytes */{file_size}",
-                        "Accept-Ranges": "bytes",
-                    },
-                )
-            status_code = 206
-
-        content_length = max(0, end - start + 1)
-
-        headers = {
-            "Content-Length": str(content_length),
-            "Content-Disposition": f'attachment; filename="{urllib.parse.quote(clean_filename)}"',
-            "Accept-Ranges": "bytes",
-            "Connection": "keep-alive",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "X-Content-Type-Options": "nosniff",
-            "X-Accel-Buffering": "no",
-        }
-
-        if status_code == 206:
-            headers["Content-Range"] = f"bytes {start}-{end}/{file_size}"
-
-        if request is not None and getattr(request, "method", "") == "HEAD":
-            return Response(status_code=status_code, media_type="application/octet-stream", headers=headers)
-
-        async def file_iterator():
-            def _read_chunk(f_obj, n):
-                return f_obj.read(n)
-
-            try:
-                with open(target_path, "rb", buffering=1048576) as f:
-                    if start > 0:
-                        f.seek(start)
-                    remaining = content_length
-                    chunk_size = 131072  # 128KB smooth streaming chunks
-                    while remaining > 0:
-                        read_len = min(chunk_size, remaining)
-                        chunk = await asyncio.to_thread(_read_chunk, f, read_len)
-                        if not chunk:
-                            break
-                        remaining -= len(chunk)
-                        yield chunk
-                        await asyncio.sleep(0)  # Yield to asyncio event loop
-            except (asyncio.CancelledError, GeneratorExit):
-                pass
-            except Exception:
-                pass
-
-        return StreamingResponse(
-            file_iterator(),
-            status_code=status_code,
+        return FileResponse(
+            path=target_path,
+            filename=clean_filename,
             media_type="application/octet-stream",
-            headers=headers,
+            content_disposition_type="attachment",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "X-Content-Type-Options": "nosniff",
+            },
         )
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
 
 @app.api_route("/api/fs/download-batch", methods=["GET", "POST", "OPTIONS"])
 @app.api_route("/api/fs/download-batch/", methods=["GET", "POST", "OPTIONS"])
-async def download_batch_zip(paths: list[str] = Body(...)):
+async def download_batch_zip(request: Request, paths: Optional[List[str]] = None):
     """Package marked multiple files and folders into a streamed ZIP archive on the fly."""
-    if not paths:
+    if request.method == "OPTIONS":
+        return Response(status_code=200)
+
+    target_paths = paths or []
+    if not target_paths and request.method == "POST":
+        try:
+            body = await request.json()
+            if isinstance(body, list):
+                target_paths = body
+            elif isinstance(body, dict) and "paths" in body:
+                target_paths = body["paths"]
+        except Exception:
+            pass
+
+    if not target_paths:
         return JSONResponse(status_code=400, content={"error": "No files selected"})
 
     zip_buffer = io.BytesIO()
     added_count = 0
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for p in paths:
-            if not os.path.exists(p):
+        for p in target_paths:
+            try:
+                p_clean = urllib.parse.unquote_plus(p)
+            except Exception:
+                p_clean = p
+            if not os.path.exists(p_clean):
                 continue
-            if os.path.isfile(p):
-                zf.write(p, os.path.basename(p))
+            if os.path.isfile(p_clean):
+                zf.write(p_clean, os.path.basename(p_clean))
                 added_count += 1
-            elif os.path.isdir(p):
-                base_folder = os.path.basename(p.rstrip(r"\/"))
-                for root, _, files in os.walk(p):
+            elif os.path.isdir(p_clean):
+                base_folder = os.path.basename(p_clean.rstrip(r"\/"))
+                for root, _, files in os.walk(p_clean):
                     for f in files:
                         full_f = os.path.join(root, f)
-                        rel_f = os.path.relpath(full_f, p)
+                        rel_f = os.path.relpath(full_f, p_clean)
                         zf.write(full_f, os.path.join(base_folder, rel_f))
                         added_count += 1
 
@@ -1048,23 +1174,57 @@ async def download_batch_zip(paths: list[str] = Body(...)):
 
 @app.api_route("/api/fs/delete-batch", methods=["GET", "POST", "DELETE", "OPTIONS"])
 @app.api_route("/api/fs/delete-batch/", methods=["GET", "POST", "DELETE", "OPTIONS"])
-async def delete_batch_items(paths: list[str] = Body(...)):
+async def delete_batch_items(request: Request, paths: Optional[List[str]] = None):
     """Delete multiple marked files or folders in one operation."""
-    if not paths:
+    if request.method == "OPTIONS":
+        return Response(status_code=200)
+
+    target_paths = paths or []
+    if not target_paths and request.method in ("POST", "DELETE"):
+        try:
+            body = await request.json()
+            if isinstance(body, list):
+                target_paths = body
+            elif isinstance(body, dict) and "paths" in body:
+                target_paths = body["paths"]
+        except Exception:
+            pass
+
+    if not target_paths:
         return JSONResponse(status_code=400, content={"error": "No files provided"})
     deleted = []
     errors = []
-    for p in paths:
+    for p in target_paths:
         try:
-            if os.path.exists(p):
-                if os.path.isdir(p):
-                    shutil.rmtree(p)
+            p_clean = urllib.parse.unquote_plus(p)
+        except Exception:
+            p_clean = p
+        try:
+            if os.path.exists(p_clean):
+                if os.path.isdir(p_clean):
+                    shutil.rmtree(p_clean)
                 else:
-                    os.remove(p)
-                deleted.append(p)
+                    os.remove(p_clean)
+                deleted.append(p_clean)
         except Exception as e:
-            errors.append(f"{os.path.basename(p)}: {e}")
+            errors.append(f"{os.path.basename(p_clean)}: {e}")
     return {"deleted": len(deleted), "errors": errors}
+
+
+def _perform_open_file(target: str):
+    target = (target or "").strip()
+    if target:
+        try:
+            target = urllib.parse.unquote_plus(target)
+        except Exception:
+            pass
+    if not target or not os.path.exists(target):
+        target = TRANSFER_DIR
+    try:
+        os.startfile(os.path.abspath(target))
+        return {"status": "ok", "path": target}
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
 
 @app.api_route("/api/fs/open", methods=["GET", "POST", "OPTIONS"])
@@ -1081,14 +1241,7 @@ async def open_file_on_pc(request: Request, path: Optional[str] = None):
                 target = body.get("path", "")
         except Exception:
             pass
-    target = (target or "").strip()
-    if not target or not os.path.exists(target):
-        target = TRANSFER_DIR
-    try:
-        os.startfile(os.path.abspath(target))
-        return {"status": "ok", "path": target}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+    return _perform_open_file(target)
 
 
 @app.api_route("/api/fs/open-location", methods=["GET", "POST", "OPTIONS"])
@@ -1106,6 +1259,11 @@ async def open_file_location_on_pc(request: Request, path: Optional[str] = None)
         except Exception:
             pass
     target = (target or "").strip()
+    if target:
+        try:
+            target = urllib.parse.unquote_plus(target)
+        except Exception:
+            pass
     if not target or not os.path.exists(target):
         target = TRANSFER_DIR
 
@@ -1127,7 +1285,7 @@ async def open_file_location_on_pc(request: Request, path: Optional[str] = None)
             os.startfile(folder)
             return {"status": "ok", "path": folder}
         except Exception as e2:
-            return JSONResponse(status_code=500, content={"error": str(e2)})
+            return JSONResponse(status_code=400, content={"error": str(e2)})
 
 
 @app.api_route("/api/fs/open-transfers-folder", methods=["GET", "POST", "OPTIONS"])
@@ -1139,7 +1297,7 @@ async def open_transfers_folder_on_pc():
         os.startfile(TRANSFER_DIR)
         return {"status": "ok", "path": TRANSFER_DIR}
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
 
 def _parse_range(range_header: Optional[str], file_size: int):
@@ -1206,8 +1364,8 @@ def serve_resumable(
     content_length = end - start + 1
 
     def file_iterator():
-        # 16 KB chunks: prevents overwhelming USB 2.0 Wi-Fi adapter FIFO buffers and avoids TCP stalls
-        chunk_size = 16384
+        # 64 KB chunks for fast, low-overhead Wi-Fi transfer
+        chunk_size = 65536
         try:
             with open(path, "rb", buffering=chunk_size) as handle:
                 handle.seek(start)
@@ -1225,11 +1383,13 @@ def serve_resumable(
     headers = {
         "Content-Length": str(content_length),
         "Content-Disposition": f'attachment; filename="{download_name}"',
+        "Content-Type": media_type,
         "Accept-Ranges": "bytes",
         "ETag": etag,
         "Last-Modified": last_modified,
-        "Cache-Control": "no-cache",
+        "Cache-Control": "public, max-age=3600",
         "X-Content-Type-Options": "nosniff",
+        "Content-Encoding": "identity",
     }
     if is_partial:
         headers["Content-Range"] = f"bytes {start}-{end}/{file_size}"
@@ -1244,12 +1404,44 @@ def serve_resumable(
 
 @app.head("/api/apk")
 @app.head("/PCDeck.apk")
+@app.head("/PCDeck_Pro.apk")
+@app.head("/NeonTrack.apk")
+async def head_apk():
+    """Fast HEAD handler providing exact Content-Length and binary headers without body."""
+    exe_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else parent_dir
+    meipass = getattr(sys, "_MEIPASS", "")
+    candidates = [
+        os.path.join(STATIC_DIR, "PCDeck.apk"),
+        os.path.join(exe_dir, "PCDeck.apk"),
+        os.path.join(parent_dir, "PCDeck.apk"),
+        os.path.join(current_dir, "PCDeck.apk"),
+        os.path.join(parent_dir, "PCDeck_Package", "PCDeck.apk"),
+    ]
+    if meipass:
+        candidates.insert(0, os.path.join(meipass, "static", "PCDeck.apk"))
+        candidates.insert(0, os.path.join(meipass, "PCDeck.apk"))
+    for c in candidates:
+        if os.path.exists(c) and os.path.isfile(c) and os.path.getsize(c) > 1000:
+            sz = os.path.getsize(c)
+            return Response(
+                status_code=200,
+                headers={
+                    "Content-Length": str(sz),
+                    "Content-Type": "application/vnd.android.package-archive",
+                    "Content-Disposition": 'attachment; filename="PCDeck.apk"',
+                    "Accept-Ranges": "bytes",
+                    "Content-Encoding": "identity",
+                },
+            )
+    return JSONResponse(status_code=404, content={"error": "PCDeck.apk not found"})
+
+
 @app.get("/api/apk")
 @app.get("/PCDeck.apk")
 @app.get("/PCDeck_Pro.apk")
 @app.get("/NeonTrack.apk")
 async def download_apk(range_header: Optional[str] = Header(None, alias="Range")):
-    """Direct, resumable download for the latest PCDeck Android APK.
+    """Direct, uncompressed, resumable download for the latest PCDeck Android APK.
 
     The legacy /PCDeck_Pro.apk and /NeonTrack.apk routes are kept so older QR
     codes and links keep resolving, but they all serve the current PCDeck build.
@@ -1268,12 +1460,6 @@ async def download_apk(range_header: Optional[str] = Header(None, alias="Range")
         candidates.insert(0, os.path.join(meipass, "PCDeck.apk"))
     for c in candidates:
         if os.path.exists(c) and os.path.isfile(c) and os.path.getsize(c) > 1000:
-            if not range_header:
-                return FileResponse(
-                    c,
-                    filename="PCDeck.apk",
-                    media_type="application/vnd.android.package-archive",
-                )
             return serve_resumable(
                 c, "PCDeck.apk", "application/vnd.android.package-archive", range_header
             )
@@ -1320,6 +1506,11 @@ async def download_exe(range_header: Optional[str] = Header(None, alias="Range")
 
 def perform_delete_item(target: str):
     target = (target or "").strip()
+    if target:
+        try:
+            target = os.path.abspath(urllib.parse.unquote_plus(target))
+        except Exception:
+            target = os.path.abspath(target)
     if not target or not os.path.exists(target):
         return JSONResponse(status_code=404, content={"error": "Path not found"})
     try:
@@ -1329,7 +1520,7 @@ def perform_delete_item(target: str):
             os.remove(target)
         return {"status": "deleted", "path": target}
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
 
 @app.api_route("/api/fs/delete", methods=["GET", "POST", "DELETE", "OPTIONS"])
@@ -1369,17 +1560,22 @@ async def make_directory(
                 f_name = f_name or body.get("folder_name", "")
         except Exception:
             pass
+    if p_dir:
+        try:
+            p_dir = os.path.abspath(urllib.parse.unquote_plus(p_dir))
+        except Exception:
+            p_dir = os.path.abspath(p_dir)
     if not p_dir or not os.path.exists(p_dir):
         p_dir = TRANSFER_DIR
-    clean_name = os.path.basename((f_name or "").strip())
-    if not clean_name:
+    clean_name = sanitize_windows_filename(f_name)
+    if not clean_name or clean_name in ("upload.dat", ".", ".."):
         return JSONResponse(status_code=400, content={"error": "Invalid folder name"})
     new_dir = os.path.join(p_dir, clean_name)
     try:
         os.makedirs(new_dir, exist_ok=True)
         return {"status": "created", "path": new_dir}
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
 
 @app.api_route("/api/fs/rename", methods=["GET", "POST", "OPTIONS"])
@@ -1402,9 +1598,14 @@ async def rename_item(
                 n_name = n_name or body.get("new_name", "")
         except Exception:
             pass
+    if o_path:
+        try:
+            o_path = os.path.abspath(urllib.parse.unquote_plus(o_path))
+        except Exception:
+            o_path = os.path.abspath(o_path)
     if not o_path or not os.path.exists(o_path):
         return JSONResponse(status_code=404, content={"error": "Original path not found"})
-    clean_name = os.path.basename((n_name or "").strip())
+    clean_name = sanitize_windows_filename(n_name)
     if not clean_name:
         return JSONResponse(status_code=400, content={"error": "Invalid new name"})
     new_path = os.path.join(os.path.dirname(o_path), clean_name)
@@ -1412,7 +1613,7 @@ async def rename_item(
         os.rename(o_path, new_path)
         return {"status": "renamed", "old": o_path, "new": new_path}
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(status_code=400, content={"error": str(e)})
 
 
 # ================= LEGACY COMPATIBILITY FILE ENDPOINTS =================
@@ -1427,19 +1628,22 @@ async def upload_file_legacy(file: UploadFile = File(...)):
 
 @app.get("/api/files/download/{filename}")
 async def download_file_legacy(request: Request, filename: str):
-    return await download_any_file(request=request, path=os.path.join(TRANSFER_DIR, os.path.basename(filename)))
+    clean_name = sanitize_windows_filename(filename)
+    return await download_any_file(request=request, path=os.path.join(TRANSFER_DIR, clean_name))
 
 @app.post("/api/files/open/{filename}")
 async def open_file_legacy(filename: str):
-    return await open_any_item_on_pc(os.path.join(TRANSFER_DIR, os.path.basename(filename)))
+    clean_name = sanitize_windows_filename(filename)
+    return _perform_open_file(os.path.join(TRANSFER_DIR, clean_name))
 
 @app.post("/api/files/open-folder")
 async def open_transfer_folder_legacy():
-    return await open_any_item_on_pc(TRANSFER_DIR)
+    return _perform_open_file(TRANSFER_DIR)
 
 @app.post("/api/files/delete/{filename}")
 async def delete_file_legacy(filename: str):
-    return perform_delete_item(os.path.join(TRANSFER_DIR, os.path.basename(filename)))
+    clean_name = sanitize_windows_filename(filename)
+    return perform_delete_item(os.path.join(TRANSFER_DIR, clean_name))
 
 
 @app.get("/")
@@ -2487,6 +2691,22 @@ async def websocket_screen_endpoint(websocket: WebSocket):
     frame_event = asyncio.Event()
     streamer.register_async_listener(loop, frame_event)
 
+    ws_send_lock = asyncio.Lock()
+
+    async def safe_send_bytes(b: bytes):
+        try:
+            async with ws_send_lock:
+                await websocket.send_bytes(b)
+        except Exception:
+            pass
+
+    async def safe_send_text(t: str):
+        try:
+            async with ws_send_lock:
+                await websocket.send_text(t)
+        except Exception:
+            pass
+
     # Instantly deliver the latest frame so the client renders in <10ms without a black/loading screen
     initial_jpeg, initial_id = streamer.get_latest_frame()
     if not initial_jpeg:
@@ -2495,19 +2715,20 @@ async def websocket_screen_endpoint(websocket: WebSocket):
         except Exception:
             pass
     if initial_jpeg:
-        try:
-            await websocket.send_bytes(initial_jpeg)
-        except Exception:
-            pass
+        await safe_send_bytes(initial_jpeg)
 
     # In-flight frame flow control to completely eliminate TCP bufferbloat
     client_ready_event = asyncio.Event()
     client_ready_event.set()
+    client_has_acked_frame = False
     is_paused = False
 
     async def send_frames():
-        last_sent_id = initial_id if initial_jpeg else -1
+        nonlocal client_has_acked_frame
+        last_sent_id = -1
         last_keepalive_at = time.time()
+        last_sent_time = time.time()
+        initial_burst = 5
         while True:
             try:
                 if is_paused:
@@ -2524,7 +2745,23 @@ async def websocket_screen_endpoint(websocket: WebSocket):
 
                 now = time.time()
                 jpeg, frame_id = streamer.get_latest_frame()
-                if jpeg and frame_id != last_sent_id:
+                if not jpeg and not client_has_acked_frame:
+                    try:
+                        jpeg, _, _ = streamer.grab_single_frame(quality=streamer.quality, scale=streamer.scale)
+                    except Exception:
+                        pass
+
+                # If client hasn't acknowledged receiving a frame yet, re-send every 450ms so static screens never get stuck
+                is_unacked_retry = (not client_has_acked_frame and (now - last_sent_time > 0.45))
+                # Periodic keyframe refresh (every 2.0s) to guarantee frames even on a 100% still PC desktop
+                is_keyframe = (now - last_sent_time > 2.0)
+                is_burst = (initial_burst > 0)
+                should_send = jpeg and (frame_id != last_sent_id or is_unacked_retry or is_keyframe or is_burst)
+
+                if should_send:
+                    if is_burst:
+                        initial_burst -= 1
+
                     # Prevent TCP bufferbloat: verify transport write buffer is not congested (>256KB)
                     if wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket, max_buffered_bytes=262144):
                         await asyncio.sleep(0.01)
@@ -2538,19 +2775,20 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     client_ready_event.clear()
 
                     last_sent_id = frame_id
+                    last_sent_time = now
                     last_keepalive_at = now
                     if wifi_latency_manager and hasattr(wifi_latency_manager, "touch_stream_activity"):
                         wifi_latency_manager.touch_stream_activity()
-                    await websocket.send_bytes(jpeg)
+                    await safe_send_bytes(jpeg)
                 elif (now - last_keepalive_at) > 1.0:
                     last_keepalive_at = now
                     # Lightweight keepalive ping to keep connection alive without flooding video pipe
-                    await websocket.send_text("h")
+                    await safe_send_text("h")
             except (asyncio.CancelledError, WebSocketDisconnect, Exception):
                 break
 
     async def receive_cmds():
-        nonlocal is_paused
+        nonlocal is_paused, client_has_acked_frame
         try:
             while True:
                 msg = await websocket.receive()
@@ -2559,6 +2797,7 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                 if wifi_latency_manager and hasattr(wifi_latency_manager, "touch_stream_activity"):
                     wifi_latency_manager.touch_stream_activity()
                 if "bytes" in msg and msg["bytes"]:
+                    client_has_acked_frame = True
                     await dispatch_binary_command(msg["bytes"], websocket)
                     continue
                 data = msg.get("text")
@@ -2566,7 +2805,22 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     continue
 
                 if data == "a" or data.startswith("ack"):
+                    client_has_acked_frame = True
                     client_ready_event.set()
+                elif data == "req_frame" or data == "refresh":
+                    client_ready_event.set()
+                    is_paused = False
+                    streamer.resume_consumer(client_key)
+                    if wifi_latency_manager:
+                        wifi_latency_manager.acquire_streaming_mode(ws_client_id)
+                    f_jpeg, f_id = streamer.get_latest_frame()
+                    if not f_jpeg:
+                        try:
+                            f_jpeg, _, _ = streamer.grab_single_frame(quality=streamer.quality, scale=streamer.scale)
+                        except Exception:
+                            pass
+                    if f_jpeg:
+                        await safe_send_bytes(f_jpeg)
                 elif data == "pause":
                     is_paused = True
                     streamer.pause_consumer(client_key)
@@ -2579,6 +2833,14 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     if wifi_latency_manager:
                         wifi_latency_manager.acquire_streaming_mode(ws_client_id)
                     client_ready_event.set()
+                    f_jpeg, f_id = streamer.get_latest_frame()
+                    if not f_jpeg:
+                        try:
+                            f_jpeg, _, _ = streamer.grab_single_frame(quality=streamer.quality, scale=streamer.scale)
+                        except Exception:
+                            pass
+                    if f_jpeg:
+                        await safe_send_bytes(f_jpeg)
                     print("[ScreenStreamer] Client focused screen tab -> Screen stream RESUMED", flush=True)
                 elif data.startswith("lat,"):
                     parts = data.split(",")
@@ -2603,7 +2865,7 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                             pass
                 elif data.startswith("p,"):
                     parts = data.split(",")
-                    await websocket.send_text(f"pong,{parts[1]}")
+                    await safe_send_text(f"pong,{parts[1]}")
                 else:
                     dispatch_command(data)
         except (asyncio.CancelledError, WebSocketDisconnect, Exception):

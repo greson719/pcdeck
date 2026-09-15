@@ -10,8 +10,8 @@ import zipfile
 import shutil
 
 ANDROID_SDK = r"C:\Android"
-BUILD_TOOLS_VER = "36.0.0"
-PLATFORM_VER = "android-36"
+BUILD_TOOLS_VER = "34.0.0"
+PLATFORM_VER = "android-34"
 
 AAPT2 = os.path.join(ANDROID_SDK, "build-tools", BUILD_TOOLS_VER, "aapt2.exe")
 D8 = os.path.join(ANDROID_SDK, "build-tools", BUILD_TOOLS_VER, "d8.bat")
@@ -98,7 +98,7 @@ def main():
 
     # 2. Link resources and generate R.java
     run(
-        f'"{AAPT2}" link -o "{BUILD_DIR}/unaligned.apk" -I "{ANDROID_JAR}" --manifest android_app/AndroidManifest.xml -A android_app/assets --java "{BUILD_DIR}/gen" "{BUILD_DIR}/res.zip" --min-sdk-version 21 --target-sdk-version 36 --auto-add-overlay',
+        f'"{AAPT2}" link -o "{BUILD_DIR}/unaligned.apk" -I "{ANDROID_JAR}" --manifest android_app/AndroidManifest.xml -A android_app/assets --java "{BUILD_DIR}/gen" "{BUILD_DIR}/res.zip" --min-sdk-version 21 --target-sdk-version 34 --auto-add-overlay',
         "Linking Resources & Generating R.java"
     )
 

@@ -335,14 +335,14 @@ body::before {
   bottom: 62px;
   right: 16px;
   z-index: 20;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   width: 38px;
   height: 38px;
   background: var(--bg-surface-elevated);
   color: var(--neo-yellow);
-  border: 2px solid var(--neo-yellow);
+  border: 2px solid var(--neo-dark);
   border-radius: var(--radius-sm);
   box-shadow: 2.5px 2.5px 0px var(--neo-dark);
   cursor: pointer;
@@ -352,12 +352,19 @@ body::before {
 
 .screen-hud-fab:active {
   transform: translate(2px, 2px);
-  box-shadow: 0.5px 0.5px 0px var(--neo-dark);
+  box-shadow: 0px 0px 0px;
+}
+
+.screen-hud-fab.active {
+  background: var(--neo-yellow) !important;
+  color: #000000 !important;
+  border-color: var(--neo-dark) !important;
+  box-shadow: 0 0 12px rgba(255, 230, 0, 0.7);
 }
 
 .screen-hud-fab svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
@@ -677,7 +684,7 @@ header.top-nav {
   border-radius: var(--radius-sm);
   height: 28px;
   padding: 0 7px;
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
   gap: 4px;
@@ -1037,8 +1044,13 @@ header.top-nav.hidden-bar {
     border-radius: var(--radius-md) !important;
     box-shadow: 2.5px 2.5px 0px var(--neo-dark) !important;
     z-index: 500 !important;
-    overflow: visible !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none !important;
     transition: transform 0.2s ease, opacity 0.2s ease !important;
+  }
+  nav.floating-dock::-webkit-scrollbar {
+    display: none !important;
   }
 
   /* When Title Bar is hidden in landscape, left rail expands vertically */
@@ -1059,8 +1071,8 @@ header.top-nav.hidden-bar {
     width: 50px !important;
     height: auto !important;
     flex: 1 1 auto !important;
-    max-height: 48px !important;
-    min-height: 36px !important;
+    max-height: 46px !important;
+    min-height: 30px !important;
     background: transparent !important;
     border: 1.5px solid transparent !important;
     border-radius: var(--radius-xs) !important;
@@ -1071,18 +1083,38 @@ header.top-nav.hidden-bar {
     gap: 1px !important;
     padding: 2px 0 !important;
     color: var(--text-muted) !important;
+    overflow: visible !important;
   }
 
-  .dock-icon { font-size: 1.15rem !important; line-height: 1 !important; }
-  .dock-icon svg { width: 18px !important; height: 18px !important; }
+  .dock-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+  }
+  .dock-icon svg,
+  .dock-icon .deck-icon {
+    width: 20px !important;
+    height: 20px !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+  }
   .dock-label {
     display: block !important;
-    font-size: 0.56rem !important;
+    font-size: 0.54rem !important;
     font-weight: 800 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.3px !important;
+    letter-spacing: 0.2px !important;
     line-height: 1 !important;
     white-space: nowrap !important;
+    overflow: visible !important;
   }
 
   .dock-tab.active {
@@ -1250,6 +1282,20 @@ header.top-nav.hidden-bar {
     width: 100% !important;
     max-width: 680px !important;
     height: auto !important;
+  }
+
+  #tab-keyboard .scroll-container {
+    display: grid !important;
+    grid-template-columns: 1.05fr 0.95fr !important;
+    align-items: start !important;
+    gap: 10px !important;
+    padding: 6px 10px 24px 10px !important;
+    max-width: 100% !important;
+  }
+
+  #tab-keyboard .scroll-container > .neo-card {
+    max-width: 100% !important;
+    margin: 0 !important;
   }
 
   .scroll-container > .neo-card > .settings-action-row,
@@ -2140,12 +2186,34 @@ header.top-nav.hidden-bar {
   gap: 8px;
 }
 
-.fs-batch-checkbox, .fs-item-checkbox {
+.fs-batch-checkbox {
   width: 20px;
   height: 20px;
   cursor: pointer;
   accent-color: var(--neo-cyan);
   border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.fs-item-checkbox {
+  display: none;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--neo-cyan);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+#tab-files.fs-select-mode .fs-item-checkbox,
+#tab-files.phone-select-mode .fs-item-checkbox,
+.fs-item-card.is-marked .fs-item-checkbox {
+  display: inline-block;
+}
+
+#tab-files.fs-select-mode .fs-actions-row,
+#tab-files.phone-select-mode .fs-actions-row {
+  display: none !important;
 }
 
 .fs-batch-count {
@@ -2178,6 +2246,7 @@ header.top-nav.hidden-bar {
 .fs-item-card.is-marked {
   background: rgba(0, 240, 255, 0.14) !important;
   border-color: var(--neo-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
 }
 
 .fs-item-card.is-highlighted {
@@ -2321,10 +2390,12 @@ header.top-nav.hidden-bar {
   box-shadow: 0px 0px 0px;
 }
 
-/* Hide FAB completely while typing bar is open so it NEVER overlaps the  close button */
+/* Hide FABs completely while typing bar is open so they NEVER overlap the close button */
 .screen-kbd-fab.active,
 body.typing-active .screen-kbd-fab,
-.screen-type-bar:not([hidden]) ~ .screen-kbd-fab {
+.screen-type-bar:not([hidden]) ~ .screen-kbd-fab,
+body.typing-active .screen-hud-fab,
+.screen-type-bar:not([hidden]) ~ .screen-hud-fab {
   display: none !important;
 }
 
@@ -4091,7 +4162,26 @@ nav.floating-dock {
   transition: all 0.08s ease;
 }
 
-.dock-icon { font-size: 1.3rem; }
+.dock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.dock-icon svg,
+.dock-icon .deck-icon {
+  width: 20px;
+  height: 20px;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
+}
 .dock-label {
   font-size: 0.65rem;
   font-weight: 800;
@@ -6972,13 +7062,28 @@ body.gp-layout-editing .gp-is-dragging,
 
 /* ==========================================================================
    🌐 WEB BROWSER VS NATIVE APP CONDITIONAL VISIBILITY
-/* ==========================================================================
-   NATIVE-ONLY HARDWARE FEATURE GATE
-   Hides native mic/cam hardware when in web browser without native hardware plugins.
-   Gaming Controller HUD, Standalone Gamepad, and Screen streaming work seamlessly everywhere!
+   ==========================================================================
+   HUD and Gamepad are Android APK only — strictly hidden in web control.
+   Mic/Cam hardware features are also native-only.
    ========================================================================== */
+html.is-web-browser .gamepad-feature,
+body.is-web-browser .gamepad-feature,
 html.is-web-browser .native-only-feature,
 body.is-web-browser .native-only-feature,
+html.is-web-browser #btn-screen-hud-fab,
+body.is-web-browser #btn-screen-hud-fab,
+html.is-web-browser #btn-screen-gamepad-hud,
+body.is-web-browser #btn-screen-gamepad-hud,
+html.is-web-browser #screen-gamepad-overlay,
+body.is-web-browser #screen-gamepad-overlay,
+html.is-web-browser #btn-gamepad-mode-toggle,
+body.is-web-browser #btn-gamepad-mode-toggle,
+html.is-web-browser .dock-tab[data-target="tab-gamepad"],
+body.is-web-browser .dock-tab[data-target="tab-gamepad"],
+html.is-web-browser #tab-gamepad,
+body.is-web-browser #tab-gamepad,
+html.is-web-browser #setting-row-gamepad-hud,
+body.is-web-browser #setting-row-gamepad-hud,
 html.is-web-browser #btn-quick-mic-toggle,
 body.is-web-browser #btn-quick-mic-toggle,
 html.is-web-browser #btn-quick-cam-toggle,
@@ -6988,6 +7093,17 @@ body.is-web-browser #mic-panel-card,
 html.is-web-browser #cam-panel-card,
 body.is-web-browser #cam-panel-card {
   display: none !important;
+}
+
+/* Gamepad HUD controls: strictly visible ONLY when setting is enabled AND in native app */
+body:not(.gamepad-hud-enabled) #btn-screen-hud-fab,
+body:not(.gamepad-hud-enabled) .screen-hud-fab {
+  display: none !important;
+}
+
+body.gamepad-hud-enabled.is-native-app #btn-screen-hud-fab,
+body.gamepad-hud-enabled.is-native-app .screen-hud-fab {
+  display: flex !important;
 }
 
 /* Hide web-only promo when inside native APK */
@@ -7006,6 +7122,12 @@ body.is-native-app .web-only-feature {
   vertical-align: middle;
   color: inherit;
   flex-shrink: 0;
+}
+
+svg use,
+.deck-icon use {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .deck-spin {

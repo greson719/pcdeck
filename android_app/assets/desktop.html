@@ -3,36 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PCDeck - PC Server Hub</title>
+  <title>PCDeck Pro — Control Center &amp; Server Hub</title>
+  <link rel="icon" type="image/png" href="icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
-  </noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-main: #0a0e17;
-      --bg-surface: #131926;
-      --bg-surface-elevated: #1c2436;
-      --bg-input: #0e131f;
+      --bg-main: #060911;
+      --bg-surface: rgba(14, 20, 33, 0.88);
+      --bg-surface-elevated: rgba(22, 31, 51, 0.95);
+      --bg-card-glow: rgba(0, 240, 255, 0.04);
+      --bg-input: #0b101c;
 
       --neo-cyan: #00f0ff;
+      --neo-cyan-glow: rgba(0, 240, 255, 0.35);
       --neo-yellow: #ffe600;
       --neo-pink: #ff2a85;
       --neo-lime: #00ff66;
+      --neo-lime-glow: rgba(0, 255, 102, 0.35);
       --neo-dark: #000000;
-      --neo-white: #ffffff;
+      --neo-border: rgba(0, 240, 255, 0.22);
 
       --text-main: #ffffff;
       --text-muted: #94a3b8;
+      --text-dim: #64748b;
 
       --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
 
-      --shadow-md: 4px 4px 0px #000000;
-      --shadow-lg: 6px 6px 0px #000000;
-      --shadow-cyan: 5px 5px 0px var(--neo-cyan);
+      --shadow-brutal: 4px 4px 0px #000000;
+      --shadow-cyan: 0 0 20px rgba(0, 240, 255, 0.25);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,140 +42,197 @@
     body {
       background-color: var(--bg-main);
       color: var(--text-main);
-      font-family: var(--font-heading);
+      font-family: var(--font-body);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 24px 16px;
       position: relative;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
-      background-size: 20px 20px;
-      pointer-events: none;
-      z-index: 0;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(ellipse at top left, rgba(0, 240, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(255, 42, 133, 0.06) 0%, transparent 50%),
+        radial-gradient(rgba(255, 255, 255, 0.06) 1.2px, transparent 1.2px);
+      background-size: 100% 100%, 100% 100%, 24px 24px;
     }
 
     .container {
       position: relative;
       z-index: 1;
-      max-width: 960px;
+      max-width: 1040px;
       width: 100%;
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
 
+    /* Cyber Header */
     header.hub-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: var(--bg-surface);
-      border: 3px solid var(--neo-dark);
-      border-radius: 12px;
-      padding: 14px 20px;
-      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 2px solid var(--neo-border);
+      border-radius: 16px;
+      padding: 16px 24px;
+      box-shadow: var(--shadow-brutal), 0 8px 32px rgba(0, 0, 0, 0.5);
     }
 
     .brand-box {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .brand-box img {
-      width: 36px;
-      height: 36px;
-      border: 2px solid var(--neo-dark);
-      border-radius: 6px;
-      box-shadow: 2px 2px 0px var(--neo-dark);
+      width: 42px;
+      height: 42px;
+      border: 2px solid var(--neo-cyan);
+      border-radius: 10px;
+      box-shadow: 0 0 12px var(--neo-cyan-glow);
     }
 
     .brand-title {
-      font-size: 1.5rem;
+      font-family: var(--font-heading);
+      font-size: 1.6rem;
       font-weight: 900;
-      color: var(--neo-cyan);
-      text-transform: uppercase;
       letter-spacing: -0.5px;
-      text-shadow: 2px 2px 0px var(--neo-dark);
+      color: #ffffff;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-title span.accent {
+      color: var(--neo-cyan);
+      text-shadow: 0 0 10px var(--neo-cyan-glow);
+    }
+
+    .header-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.2px;
     }
 
     .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      background: var(--neo-lime);
-      color: var(--neo-dark);
-      border: 2px solid var(--neo-dark);
+      gap: 10px;
+      background: rgba(0, 255, 102, 0.12);
+      border: 2px solid var(--neo-lime);
+      color: var(--neo-lime);
       border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 0.85rem;
+      padding: 8px 18px;
+      font-family: var(--font-heading);
+      font-size: 0.82rem;
       font-weight: 900;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
-      box-shadow: 2px 2px 0px var(--neo-dark);
+      box-shadow: 0 0 16px rgba(0, 255, 102, 0.2);
     }
 
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--neo-lime);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neo-lime);
+      animation: pulse-dot 1.8s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+
+    /* Main 2-Column Grid */
     .grid-hub {
       display: grid;
-      grid-template-columns: 1.1fr 1.3fr;
+      grid-template-columns: 1.15fr 1.25fr;
       gap: 20px;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 840px) {
       .grid-hub { grid-template-columns: 1fr; }
     }
 
-    .neo-card {
+    .cyber-card {
       background: var(--bg-surface);
-      border: 3px solid var(--neo-dark);
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 2px solid var(--neo-border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow-brutal), 0 12px 36px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
+      position: relative;
+    }
+
+    .card-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .card-badge {
       display: inline-flex;
-      align-self: flex-start;
+      align-items: center;
+      gap: 6px;
       background: var(--neo-yellow);
-      color: var(--neo-dark);
+      color: #000000;
       border: 2px solid var(--neo-dark);
-      border-radius: 4px;
-      padding: 3px 10px;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-family: var(--font-heading);
       font-size: 0.75rem;
       font-weight: 900;
       text-transform: uppercase;
+      letter-spacing: 0.4px;
       box-shadow: 2px 2px 0px var(--neo-dark);
     }
 
-    /* QR Code Display */
-    .qr-container {
+    .card-badge.pink {
+      background: var(--neo-pink);
+      color: #ffffff;
+    }
+
+    /* QR Frame with Cyber Brackets */
+    .qr-bracket-box {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 14px;
-      padding: 10px;
+      padding: 16px;
       background: var(--bg-surface-elevated);
-      border: 2.5px solid var(--neo-dark);
-      border-radius: 10px;
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      position: relative;
+    }
+
+    .qr-frame {
+      position: relative;
+      padding: 8px;
+      background: #000000;
+      border: 2px solid var(--neo-cyan);
+      border-radius: 12px;
+      box-shadow: 0 0 20px var(--neo-cyan-glow);
     }
 
     .qr-image {
-      width: 200px;
-      height: 200px;
-      border: 3px solid var(--neo-dark);
-      border-radius: 8px;
+      width: 190px;
+      height: 190px;
+      display: block;
+      border-radius: 6px;
       background: #000;
-      box-shadow: 4px 4px 0px var(--neo-cyan);
     }
 
     .ip-display-bar {
@@ -183,62 +242,138 @@
       width: 100%;
       background: var(--bg-input);
       border: 2px solid var(--neo-dark);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 8px 12px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
 
     .ip-text {
       flex: 1;
       font-family: var(--font-mono);
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 800;
       color: var(--neo-cyan);
+      letter-spacing: 0.5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
+    /* Buttons */
     .neo-btn {
-      height: 42px;
+      height: 44px;
       background: var(--neo-cyan);
       color: var(--neo-dark);
       border: 2px solid var(--neo-dark);
-      border-radius: 8px;
+      border-radius: 10px;
       font-family: var(--font-heading);
-      font-size: 0.85rem;
+      font-size: 0.86rem;
       font-weight: 900;
       text-transform: uppercase;
+      letter-spacing: 0.4px;
       cursor: pointer;
       padding: 0 16px;
-      box-shadow: var(--shadow-md);
-      transition: all 0.08s ease;
+      box-shadow: var(--shadow-brutal);
+      transition: all 0.12s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .neo-btn:hover {
+      transform: translate(-1.5px, -1.5px);
+      box-shadow: 5.5px 5.5px 0px #000000;
     }
 
     .neo-btn:active {
       transform: translate(2px, 2px);
-      box-shadow: 1px 1px 0px var(--neo-dark);
+      box-shadow: 1px 1px 0px #000000;
     }
 
-    .btn-yellow { background: var(--neo-yellow); }
-    .btn-pink { background: var(--neo-pink); color: #fff; }
-    .btn-lime { background: var(--neo-lime); }
+    .btn-lime {
+      background: var(--neo-lime);
+      color: #000000;
+      box-shadow: var(--shadow-brutal), 0 0 16px var(--neo-lime-glow);
+    }
+
+    .btn-yellow {
+      background: var(--neo-yellow);
+      color: #000000;
+    }
+
+    .btn-pink {
+      background: var(--neo-pink);
+      color: #ffffff;
+    }
+
+    .btn-dark {
+      background: #192237;
+      color: #e2e8f0;
+      border-color: var(--neo-dark);
+    }
+
+    .btn-launch-hero {
+      height: 50px;
+      font-size: 0.96rem;
+      background: linear-gradient(135deg, #00ff66 0%, #00f0ff 100%);
+      color: #000000;
+      box-shadow: var(--shadow-brutal), 0 0 24px rgba(0, 255, 102, 0.4);
+    }
+
+    /* Diagnostics Table */
+    .diag-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.82rem;
+      background: var(--bg-input);
+      border: 2px solid var(--neo-dark);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .diag-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .diag-table tr:last-child td { border-bottom: none; }
+    .diag-key {
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .diag-val {
+      color: var(--neo-cyan);
+      font-family: var(--font-mono);
+      font-weight: 800;
+      text-align: right;
+    }
 
     /* Radio Setting Option Group */
     .setting-group {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      border-bottom: 1.5px dashed rgba(255, 255, 255, 0.12);
-      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 14px;
     }
 
     .setting-group:last-child { border-bottom: none; padding-bottom: 0; }
 
     .group-label {
+      font-family: var(--font-heading);
       font-size: 0.88rem;
       font-weight: 800;
-      color: #fff;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .radio-pill-deck {
@@ -254,6 +389,7 @@
     .radio-card input {
       position: absolute;
       opacity: 0;
+      pointer-events: none;
     }
 
     .radio-card label {
@@ -262,14 +398,14 @@
       gap: 8px;
       background: var(--bg-surface-elevated);
       border: 2px solid var(--neo-dark);
-      border-radius: 8px;
-      padding: 8px 12px;
+      border-radius: 10px;
+      padding: 9px 12px;
       cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 800;
+      font-size: 0.82rem;
+      font-weight: 700;
       color: var(--text-muted);
       box-shadow: 2px 2px 0px var(--neo-dark);
-      transition: all 0.08s;
+      transition: all 0.12s ease;
     }
 
     .radio-card input:checked + label {
@@ -286,156 +422,167 @@
       border-radius: 50%;
       border: 1.5px solid var(--neo-dark);
       background: var(--bg-input);
+      flex-shrink: 0;
     }
 
     .radio-card input:checked + label .radio-dot {
       background: var(--neo-pink);
     }
 
-    /* Diagnostics Table */
-    .diag-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-      background: var(--bg-input);
-      border: 2px solid var(--neo-dark);
-      border-radius: 8px;
-      overflow: hidden;
+    /* Quick Tools Deck */
+    .tools-deck {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
 
-    .diag-table td {
-      padding: 8px 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    .tool-chip {
+      background: var(--bg-surface-elevated);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      text-decoration: none;
     }
 
-    .diag-table tr:last-child td { border-bottom: none; }
-    .diag-key { color: var(--text-muted); font-weight: 700; }
-    .diag-val { color: var(--neo-cyan); font-family: var(--font-mono); font-weight: 800; text-align: right; }
+    .tool-chip:hover {
+      background: rgba(0, 240, 255, 0.12);
+      border-color: var(--neo-cyan);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* Footer */
+    footer.hub-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      padding: 0 6px;
+    }
+
+    footer.hub-footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+
+    footer.hub-footer a:hover {
+      color: var(--neo-cyan);
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Header -->
     <header class="hub-header">
       <div class="brand-box">
-        <img src="icon.png" alt="PCDeck">
+        <img src="icon.png" alt="PCDeck Logo">
         <div>
-          <span class="brand-title">PCDeck Server Hub</span>
-          <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">PC Remote Control &amp; Low-Latency Display Server</div>
+          <div class="brand-title">PC<span class="accent">Deck</span> Control Hub</div>
+          <div class="header-sub">Ultra-Low-Latency Display Streaming &amp; Input Simulator</div>
         </div>
       </div>
-      <div class="status-badge">
-        <span style="display:inline-block; width:8px; height:8px; background:#000; border-radius:50%;"></span>
-        <span>SERVER ONLINE</span>
+      <div class="status-badge" id="server-status-pill">
+        <span class="status-dot"></span>
+        <span id="server-status-text">SERVER ONLINE</span>
       </div>
     </header>
 
+    <!-- Main Grid -->
     <div class="grid-hub">
-      <!-- Left Column: QR Code & Connection -->
-      <div class="neo-card">
-        <span class="card-badge">Connect Mobile App</span>
-        <div class="qr-container">
-          <img src="/api/qr" alt="Connection QR Code" class="qr-image" id="qr-img">
-          <div class="ip-display-bar">
-            <span class="ip-text" id="ip-text">Loading IP...</span>
-            <button class="neo-btn btn-yellow" id="btn-copy-ip" style="height: 32px; padding: 0 10px; font-size: 0.75rem;">COPY</button>
-          </div>
+      <!-- Left Column: Mobile Connect Gateway & QR Code -->
+      <div class="cyber-card">
+        <div class="card-header-bar">
+          <span class="card-badge">Instant Connect Gateway</span>
+          <span style="font-size: 0.75rem; color: var(--neo-cyan); font-weight: 800; font-family: var(--font-mono);">PORT 8000</span>
         </div>
 
-        <p style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-align: center;">
-          Open the PCDeck app on your Android phone and scan this QR code to connect instantly.
-        </p>
+        <div class="qr-bracket-box">
+          <div class="qr-frame">
+            <img src="/api/qr" alt="Connection QR Code" class="qr-image" id="qr-img">
+          </div>
+          <div class="ip-display-bar">
+            <span class="ip-text" id="ip-text">Detecting Local IP...</span>
+            <button class="neo-btn btn-yellow" id="btn-copy-ip" style="height: 32px; padding: 0 12px; font-size: 0.75rem;">COPY IP</button>
+          </div>
+          <p style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-align: center; line-height: 1.4;">
+            Scan with your phone camera or PCDeck app to control this PC instantly over local Wi-Fi.
+          </p>
+        </div>
 
-        <!-- System Diagnostics Info -->
+        <!-- Launch Web Control Hero Button -->
+        <a href="/?tab=screen" target="_blank" id="btn-desktop-web" class="neo-btn btn-launch-hero">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>LAUNCH WEB CONTROL</span>
+        </a>
+
+        <!-- Download Buttons: Direct uncompressed APK & Pro Package -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <a href="/PCDeck.apk" download="PCDeck.apk" id="btn-desktop-apk" class="neo-btn" style="padding: 0 10px; font-size: 0.8rem; background: var(--neo-cyan);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>DOWNLOAD APK</span>
+          </a>
+          <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="padding: 0 10px; font-size: 0.8rem;">
+            <span>UPGRADE PRO ⚡</span>
+          </a>
+        </div>
+
+        <!-- Live Diagnostics -->
         <table class="diag-table">
           <tr>
-            <td class="diag-key">Connected Clients</td>
+            <td class="diag-key">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Connected Clients
+            </td>
             <td class="diag-val" id="diag-clients">0 Active</td>
           </tr>
           <tr>
-            <td class="diag-key">Screen Resolution</td>
+            <td class="diag-key">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+              Screen Resolution
+            </td>
             <td class="diag-val" id="diag-screen">Detecting...</td>
           </tr>
           <tr>
-            <td class="diag-key">Local LAN IP</td>
+            <td class="diag-key">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              Local LAN IP
+            </td>
             <td class="diag-val" id="diag-ip">...</td>
           </tr>
           <tr>
-            <td class="diag-key">Port</td>
-            <td class="diag-val">8000 (WebSocket)</td>
-          </tr>
-          <tr>
-            <td class="diag-key">Network Latency</td>
+            <td class="diag-key">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+              Network Latency
+            </td>
             <td class="diag-val" id="diag-latency">Standby</td>
           </tr>
         </table>
-
-        <!-- Action Buttons: Launch Web Control, Download APK & Upgrade Pro -->
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-          <a href="/?tab=screen" target="_blank" id="btn-desktop-web" class="neo-btn btn-lime" style="text-decoration: none; font-size: 0.85rem; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 0 15px rgba(132, 204, 22, 0.3);">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <span>LAUNCH WEB CONTROL</span>
-          </a>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <a href="/PCDeck.apk" download="PCDeck.apk" id="btn-desktop-apk" class="neo-btn" style="text-decoration: none; font-size: 0.8rem; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 4px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span>DOWNLOAD APK</span>
-            </a>
-            <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="text-decoration: none; font-size: 0.8rem; padding: 0 8px; display: flex; align-items: center; justify-content: center;">
-              <span>UPGRADE PRO</span>
-            </a>
-          </div>
-        </div>
       </div>
 
-      <!-- Right Column: Radio Settings & Controls -->
-      <div class="neo-card">
-        <span class="card-badge" style="background: var(--neo-pink); color: #fff;">PC Server Preferences</span>
-
-        <!-- Setting 1: Start with Windows -->
-        <div class="setting-group">
-          <div class="group-label">Start With Windows Boot</div>
-          <div class="radio-pill-deck">
-            <div class="radio-card">
-              <input type="radio" id="boot-enabled" name="win-boot" value="true" checked>
-              <label for="boot-enabled">
-                <span class="radio-dot"></span>
-                <span>Auto-Start on Boot</span>
-              </label>
-            </div>
-            <div class="radio-card">
-              <input type="radio" id="boot-disabled" name="win-boot" value="false">
-              <label for="boot-disabled">
-                <span class="radio-dot"></span>
-                <span>Manual Launch Only</span>
-              </label>
-            </div>
-          </div>
+      <!-- Right Column: Controls, Tools & Preferences -->
+      <div class="cyber-card">
+        <div class="card-header-bar">
+          <span class="card-badge pink">PC Server Controls &amp; Tools</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">v2.1.0 High-Perf</span>
         </div>
 
-        <!-- Setting 2: Reconnection Policy -->
+        <!-- Setting 1: Screen Stream FPS Engine -->
         <div class="setting-group">
-          <div class="group-label">Reconnect to Previous Phone</div>
-          <div class="radio-pill-deck">
-            <div class="radio-card">
-              <input type="radio" id="reconn-auto" name="reconn-policy" value="auto" checked>
-              <label for="reconn-auto">
-                <span class="radio-dot"></span>
-                <span>Auto-Accept Saved</span>
-              </label>
-            </div>
-            <div class="radio-card">
-              <input type="radio" id="reconn-prompt" name="reconn-policy" value="prompt">
-              <label for="reconn-prompt">
-                <span class="radio-dot"></span>
-                <span>Require Confirmation</span>
-              </label>
-            </div>
+          <div class="group-label">
+            <span>Screen Streaming Refresh Rate</span>
+            <span style="font-size: 0.72rem; color: var(--neo-cyan); font-family: var(--font-mono);">Adaptive Engine</span>
           </div>
-        </div>
-
-        <!-- Setting 3: Screen Stream FPS Engine -->
-        <div class="setting-group">
-          <div class="group-label">Screen Streaming Frame Rate</div>
           <div class="radio-pill-deck">
             <div class="radio-card">
               <input type="radio" id="fps-60" name="fps-mode" value="60">
@@ -461,9 +608,81 @@
           </div>
         </div>
 
+        <!-- Setting 2: Start with Windows -->
+        <div class="setting-group">
+          <div class="group-label">
+            <span>Start With Windows Boot</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Background Daemon</span>
+          </div>
+          <div class="radio-pill-deck">
+            <div class="radio-card">
+              <input type="radio" id="boot-enabled" name="win-boot" value="true" checked>
+              <label for="boot-enabled">
+                <span class="radio-dot"></span>
+                <span>Auto-Start on Boot</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="boot-disabled" name="win-boot" value="false">
+              <label for="boot-disabled">
+                <span class="radio-dot"></span>
+                <span>Manual Only</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Setting 3: Reconnection Policy -->
+        <div class="setting-group">
+          <div class="group-label">
+            <span>Trusted Phone Reconnect Policy</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Cryptographic Pairing</span>
+          </div>
+          <div class="radio-pill-deck">
+            <div class="radio-card">
+              <input type="radio" id="reconn-auto" name="reconn-policy" value="auto" checked>
+              <label for="reconn-auto">
+                <span class="radio-dot"></span>
+                <span>Auto-Accept Saved</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="reconn-prompt" name="reconn-policy" value="prompt">
+              <label for="reconn-prompt">
+                <span class="radio-dot"></span>
+                <span>Prompt PIN</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick PC System Shortcuts -->
+        <div class="setting-group">
+          <div class="group-label">Quick PC System Actions</div>
+          <div class="tools-deck">
+            <button type="button" class="tool-chip" id="btn-tool-open-folder">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>Received Files</span>
+            </button>
+            <a href="/api/screen/shot.jpg" target="_blank" class="tool-chip" id="btn-tool-screenshot">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <span>Take Snapshot</span>
+            </a>
+            <a href="/PCDeck_Package.zip" download="PCDeck_Package.zip" class="tool-chip">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+              <span>Download ZIP Package</span>
+            </a>
+            <a href="/connect" target="_blank" class="tool-chip">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+              <span>Mobile Connect Gateway</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
         <div style="display: flex; gap: 10px; margin-top: 4px;">
           <button class="neo-btn btn-lime" id="btn-save-pc-settings" style="flex: 1;">
-            <span>SAVE PC SETTINGS</span>
+            <span>SAVE PREFERENCES</span>
           </button>
           <button class="neo-btn btn-pink" id="btn-restart-stream" style="flex: 1;">
             <span>RESTART STREAM</span>
@@ -471,60 +690,118 @@
         </div>
       </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="hub-footer">
+      <div>🔒 100% Peer-to-Peer • End-to-End Encrypted over your Private Local Wi-Fi</div>
+      <div>PCDeck Pro &copy; 2026 • <a href="https://pcdeck.vercel.app" target="_blank">Official Website</a></div>
+    </footer>
   </div>
 
   <script>
+    let currentToken = '';
+
     async function fetchInfo() {
       try {
         const res = await fetch('/api/info');
+        if (!res.ok) return;
         const data = await res.json();
-        document.getElementById('ip-text').textContent = data.url || `${data.ip}:${data.port}`;
-        document.getElementById('diag-ip').textContent = data.ip;
-        document.getElementById('diag-clients').textContent = `${data.clients_connected} Active`;
-        document.getElementById('diag-screen').textContent = `${data.screen.width} x ${data.screen.height}`;
+        
+        const ipText = data.url || (data.ip ? `http://${data.ip}:${data.port || 8000}` : '127.0.0.1:8000');
+        document.getElementById('ip-text').textContent = ipText;
+        document.getElementById('diag-ip').textContent = data.ip || '127.0.0.1';
+        document.getElementById('diag-clients').textContent = `${data.clients_connected || 0} Active`;
+        
+        if (data.screen && data.screen.width) {
+          document.getElementById('diag-screen').textContent = `${data.screen.width} x ${data.screen.height}`;
+        }
+
         if (data.token) {
+          currentToken = data.token;
           try { localStorage.setItem('pcdeck_token', data.token); } catch (e) {}
+          
           const webBtn = document.getElementById('btn-desktop-web');
           if (webBtn) {
             webBtn.href = `/?tab=screen&token=${encodeURIComponent(data.token)}`;
           }
         }
+
         if (data.network && document.getElementById('diag-latency')) {
           const n = data.network;
           const latEl = document.getElementById('diag-latency');
           if (n.active) {
-            const hw = n.hardware && n.hardware.speed_mbps ? ` • ${n.hardware.band} (${Math.round(n.hardware.speed_mbps)} Mbps)` : '';
+            const hw = n.hardware && n.hardware.speed_mbps ? ` • ${n.hardware.band || 'Wi-Fi'} (${Math.round(n.hardware.speed_mbps)} Mbps)` : '';
             latEl.textContent = `${n.rtt_ms} ms (${n.status})${hw}`;
             latEl.style.color = n.color || 'var(--neo-cyan)';
           } else {
-            const hw = n.hardware && n.hardware.speed_mbps ? `${n.hardware.band} (${Math.round(n.hardware.speed_mbps)} Mbps) • ` : '';
+            const hw = n.hardware && n.hardware.speed_mbps ? `${n.hardware.band || 'Wi-Fi'} (${Math.round(n.hardware.speed_mbps)} Mbps) • ` : '';
             latEl.textContent = `${hw}Standby`;
             latEl.style.color = 'var(--text-muted)';
           }
         }
       } catch (e) {
-        console.error(e);
+        console.warn('Status poll:', e);
       }
     }
 
-    document.getElementById('btn-copy-ip').onclick = () => {
-      const text = document.getElementById('ip-text').textContent;
-      navigator.clipboard.writeText(text);
-      const btn = document.getElementById('btn-copy-ip');
-      btn.textContent = 'COPIED!';
-      setTimeout(() => btn.textContent = 'COPY', 2000);
-    };
+    // Copy IP with instant visual feedback
+    const btnCopyIp = document.getElementById('btn-copy-ip');
+    if (btnCopyIp) {
+      btnCopyIp.onclick = () => {
+        const text = document.getElementById('ip-text').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          btnCopyIp.textContent = 'COPIED!';
+          btnCopyIp.style.background = 'var(--neo-lime)';
+          setTimeout(() => {
+            btnCopyIp.textContent = 'COPY IP';
+            btnCopyIp.style.background = 'var(--neo-yellow)';
+          }, 2000);
+        }).catch(() => {
+          btnCopyIp.textContent = 'COPIED!';
+          setTimeout(() => btnCopyIp.textContent = 'COPY IP', 1500);
+        });
+      };
+    }
 
-    document.getElementById('btn-save-pc-settings').onclick = () => {
-      const btn = document.getElementById('btn-save-pc-settings');
-      btn.innerHTML = '<span>SAVED!</span>';
-      setTimeout(() => btn.innerHTML = '<span>SAVE PC SETTINGS</span>', 2000);
-    };
+    // Save preferences
+    const btnSave = document.getElementById('btn-save-pc-settings');
+    if (btnSave) {
+      btnSave.onclick = () => {
+        const fps = document.querySelector('input[name="fps-mode"]:checked')?.value || '30';
+        try { localStorage.setItem('pcdeck_server_fps', fps); } catch (e) {}
+        btnSave.innerHTML = '<span>SAVED! ✓</span>';
+        setTimeout(() => btnSave.innerHTML = '<span>SAVE PREFERENCES</span>', 2000);
+      };
+    }
 
+    // Restart Stream action
+    const btnRestart = document.getElementById('btn-restart-stream');
+    if (btnRestart) {
+      btnRestart.onclick = async () => {
+        btnRestart.innerHTML = '<span>RESTARTING...</span>';
+        try {
+          await fetch('/api/screen/shot.jpg?q=10&scale=0.2');
+        } catch (e) {}
+        setTimeout(() => {
+          btnRestart.innerHTML = '<span>STREAM ACTIVE ✓</span>';
+          setTimeout(() => btnRestart.innerHTML = '<span>RESTART STREAM</span>', 2000);
+        }, 600);
+      };
+    }
+
+    // Open Transfers Folder
+    const btnOpenFolder = document.getElementById('btn-tool-open-folder');
+    if (btnOpenFolder) {
+      btnOpenFolder.onclick = () => {
+        fetch('/api/fs/open-transfers-folder', { method: 'POST' }).catch(() => {});
+      };
+    }
+
+    // Launch Web Control auto-inject token
     const webBtn = document.getElementById('btn-desktop-web');
     if (webBtn) {
       webBtn.addEventListener('click', function(e) {
-        const tok = localStorage.getItem('pcdeck_token');
+        const tok = currentToken || localStorage.getItem('pcdeck_token');
         if (tok && !this.href.includes('token=')) {
           this.href = `/?tab=screen&token=${encodeURIComponent(tok)}`;
         }
@@ -532,7 +809,7 @@
     }
 
     fetchInfo();
-    setInterval(fetchInfo, 3000);
+    setInterval(fetchInfo, 2500);
   </script>
 </body>
 </html>

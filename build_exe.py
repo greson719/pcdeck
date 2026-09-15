@@ -36,6 +36,7 @@ def build():
         "--icon", "app_icon.ico",
         "--version-file", "version_info.txt",
         "--add-data", "static;static",
+        "--add-data", "drivers;drivers",
         "--add-data", "PCDeck.apk;.",
         "--add-data", "app_icon.ico;.",
         "--add-data", "PCDeck.ico;.",

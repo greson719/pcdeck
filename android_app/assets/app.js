@@ -6,12 +6,18 @@
 (function () {
   'use strict';
 
-  const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+  function checkIsNativeApp() {
+    return !!(window.AndroidApp || window.AndroidBridge || window.isNativeApp || (window.location && window.location.protocol === 'file:') || (window.navigator && window.navigator.userAgent && window.navigator.userAgent.includes('PCDeckNativeApp')) || (typeof document !== 'undefined' && ((document.documentElement && document.documentElement.classList.contains('is-native-app')) || (document.body && document.body.classList.contains('is-native-app')))));
+  }
+  window.checkIsNativeApp = checkIsNativeApp;
+  const isNativeApp = checkIsNativeApp();
   try {
     if (isNativeApp) {
       document.documentElement.classList.add('is-native-app');
+      document.documentElement.classList.remove('is-web-browser');
     } else {
       document.documentElement.classList.add('is-web-browser');
+      document.documentElement.classList.remove('is-native-app');
     }
   } catch (e) {}
 
@@ -148,7 +154,7 @@
     screenMode: 'touch', // 'touch', 'mouse', or 'rclick'
     dragLocked: false,
     titleBarHidden: false,
-    gamepadHudEnabled: true,
+    gamepadHudEnabled: false,
     gamepadHudActive: false,
     gamepadHudEditing: false,
     gamepadDriverInstalled: true,
@@ -180,6 +186,7 @@
     fsFiles: [],
     fsFilterText: '',
     markedFsPaths: new Set(),
+    fsSelectMode: false,       // true = long-press selection mode active (PC files)
     // In-Built Phone File Manager State
     phoneFs: {
       currentPath: 'default',
@@ -188,6 +195,7 @@
       files: [],
       filterText: '',
       markedPaths: new Set(),
+      selectMode: false,       // true = long-press selection mode active (phone files)
     },
     // QR Scanner stream
     qrStream: null,
@@ -198,6 +206,27 @@
   // --- DOM Elements & Context Holder ---
   let el = {};
   let screenCtx = null;
+
+  function updateGamepadHudVisibility() {
+    const isNative = (typeof checkIsNativeApp === 'function') ? checkIsNativeApp() : isNativeApp;
+    const shouldShow = !!(state.gamepadHudEnabled && isNative);
+
+    if (document.body) {
+      document.body.classList.toggle('gamepad-hud-enabled', shouldShow);
+    }
+
+    const fab = document.getElementById('btn-screen-hud-fab');
+    if (fab) {
+      fab.style.setProperty('display', (shouldShow && state.activeTab === 'tab-screen') ? 'flex' : 'none', 'important');
+    }
+
+    if (!shouldShow && state.gamepadHudActive) {
+      if (typeof window.toggleGamepadHUD === 'function') {
+        window.toggleGamepadHUD(false);
+      }
+    }
+  }
+  window.updateGamepadHudVisibility = updateGamepadHudVisibility;
 
   function initDomElements() {
     el = {
@@ -336,6 +365,8 @@
       settingsBtnScanQr: document.getElementById('settings-btn-scan-qr'),
       settingsBtnRotate: document.getElementById('settings-btn-rotate'),
       settingGamepadHud: document.getElementById('setting-gamepad-hud'),
+      btnScreenGamepadHud: document.getElementById('btn-screen-gamepad-hud'),
+      btnScreenHudFab: document.getElementById('btn-screen-hud-fab'),
       settingPinchZoom: document.getElementById('setting-pinch-zoom'),
       settingZoomSens: document.getElementById('setting-zoom-sens'),
       valZoomSens: document.getElementById('val-zoom-sens'),
@@ -610,8 +641,11 @@
         state.gamepadHudEnabled = hudEnabled === 'true';
         if (el.settingGamepadHud) el.settingGamepadHud.checked = state.gamepadHudEnabled;
       } else {
-        state.gamepadHudEnabled = true;
-        if (el.settingGamepadHud) el.settingGamepadHud.checked = true;
+        state.gamepadHudEnabled = false;
+        if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
+      }
+      if (typeof updateGamepadHudVisibility === 'function') {
+        updateGamepadHudVisibility();
       }
 
       const autoAudio = getPref('auto_audio');
@@ -700,8 +734,11 @@
     state.invertScroll = false;
     state.hapticsEnabled = true;
     state.wakelockEnabled = true;
-    state.gamepadHudEnabled = true;
-    if (el.settingGamepadHud) el.settingGamepadHud.checked = true;
+    state.gamepadHudEnabled = false;
+    if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
+    if (typeof updateGamepadHudVisibility === 'function') {
+      updateGamepadHudVisibility();
+    }
     state.autoAudioStream = false;
     state.titleBarHidden = false;
     if (el.topNav) el.topNav.classList.remove('hidden-bar');
@@ -769,17 +806,20 @@
     let pendingRelDx = 0, pendingRelDy = 0;
     let lastTrailTime = 0;
 
-    // 1-Finger and 2-Finger Touch State Engine
     let isScrolling = false;
+    let isLongPressTriggered = false;
     let isLongPressDrag = false;
     let touchAnchorNormX = 0.5;
     let touchAnchorNormY = 0.5;
     let scrollCursorAnchored = false;
+    let scrollLastX = 0, scrollLastY = 0;
+    let wasMomentumStopped = false;
     let twoFingerActive = false;
     let twoFingerStartTime = 0;
     let twoFingerStartDist = 0;
     let twoFingerMoved = false;
     let twoFingerMidX = 0, twoFingerMidY = 0;
+    let twoFingerLastTapTime = 0;
 
     // Velocity Tracker for True Mobile Kinetic Momentum (Fling Inertia)
     let touchHistory = [];
@@ -809,17 +849,20 @@
     touchArena.addEventListener('touchstart', (e) => {
       globalLastTouchTime = Date.now();
       // Check if Gamepad HUD is active or touch is on UI overlays
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
         return;
       }
 
       // Instantly cancel any ongoing kinetic momentum glide (tap-to-stop)
       if (isMomentumActive) {
         isMomentumActive = false;
+        wasMomentumStopped = true;
         if (momentumAnimId) {
           cancelAnimationFrame(momentumAnimId);
           momentumAnimId = null;
         }
+      } else {
+        wasMomentumStopped = false;
       }
 
       // 2-Finger Touch handling (Pinch-to-Zoom & Pan)
@@ -839,7 +882,7 @@
         twoFingerMidY = (t1.clientY + t2.clientY) / 2;
 
         if (state.pinchZoomEnabled) {
-          state.isPinching = true;
+          state.isPinching = false;
           state.initialPinchDist = twoFingerStartDist;
           state.initialZoom = state.zoomScale;
           state.initialPanX = state.panX;
@@ -856,11 +899,12 @@
       twoFingerActive = false;
       touchActive = true;
       isScrolling = false;
+      isLongPressTriggered = false;
       isLongPressDrag = false;
       scrollCursorAnchored = false;
       const touch = e.touches[0];
-      touchStartX = lastX = touch.clientX;
-      touchStartY = lastY = touch.clientY;
+      touchStartX = lastX = scrollLastX = touch.clientX;
+      touchStartY = lastY = scrollLastY = touch.clientY;
       touchStartTime = Date.now();
 
       touchHistory = [{ time: touchStartTime, x: touch.clientX, y: touch.clientY }];
@@ -873,18 +917,19 @@
       pendingRelDx = 0;
       pendingRelDy = 0;
 
-      // 1-Finger Long-Press Timer (350ms): Engages Drag & Move Mode for Files / Windows / Text!
+      // 1-Finger Long-Press Timer (350ms): Hold still in place -> Engage Drag Mode (Left Mouse Down)!
       longPressTimer = setTimeout(() => {
         if (touchActive && !isScrolling && !state.isPinching) {
           const dist = Math.hypot(lastX - touchStartX, lastY - touchStartY);
           if (dist < 14) {
+            isLongPressTriggered = true;
             isLongPressDrag = true;
-            spawnTouchRipple(lastX, lastY, 'double');
-            vibrate(45);
-            showToast('Drag & Move Locked (Move to drag, release to drop)', 'info');
             const curNorm = getNormalizedCoords(lastX, lastY);
-            // Move cursor to position and press down left mouse button on PC
+            sendBinaryMoveAbs(curNorm.x, curNorm.y);
             sendBinaryTouchDown(curNorm.x, curNorm.y, 'left');
+            spawnTouchRipple(lastX, lastY, 'tap');
+            vibrate(40);
+            showToast('Drag to Move', 'info', '✋');
           }
         }
       }, 350);
@@ -892,7 +937,7 @@
 
     touchArena.addEventListener('touchmove', (e) => {
       globalLastTouchTime = Date.now();
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
         return;
       }
 
@@ -906,6 +951,9 @@
 
         if (Math.abs(curDist - twoFingerStartDist) > 10 || Math.hypot(midX - twoFingerMidX, midY - twoFingerMidY) > 8) {
           twoFingerMoved = true;
+          if (state.pinchZoomEnabled) {
+            state.isPinching = true;
+          }
         }
 
         if (state.pinchZoomEnabled && state.isPinching && state.initialPinchDist > 0) {
@@ -921,8 +969,6 @@
 
       if (state.isPinching || e.touches.length > 1 || !touchActive) return;
       const touch = e.touches[0];
-      const dx = touch.clientX - lastX;
-      const dy = touch.clientY - lastY;
       lastX = touch.clientX;
       lastY = touch.clientY;
 
@@ -932,29 +978,54 @@
         touchHistory.shift();
       }
 
-      const totalDist = Math.hypot(lastX - touchStartX, lastY - touchStartY);
+      const totalDist = Math.hypot(touch.clientX - touchStartX, touch.clientY - touchStartY);
 
       // If in Long-Press Drag Mode: move the file / item / window / selection on PC!
-      if (isLongPressDrag) {
-        const norm = getNormalizedCoords(touch.clientX, touch.clientY);
-        sendBinaryTouchMove(norm.x, norm.y);
-        if (now - lastTrailTime > 40) {
-          lastTrailTime = now;
-          spawnTouchRipple(touch.clientX, touch.clientY, 'trail');
+      if (isLongPressTriggered) {
+        if (!isLongPressDrag && totalDist > 14) {
+          isLongPressDrag = true;
+          const startNorm = getNormalizedCoords(touchStartX, touchStartY);
+          sendBinaryTouchDown(startNorm.x, startNorm.y, 'left');
+          vibrate(40);
         }
-        e.preventDefault();
-        return;
+        if (isLongPressDrag) {
+          const norm = getNormalizedCoords(touch.clientX, touch.clientY);
+          sendBinaryTouchMove(norm.x, norm.y);
+          if (now - lastTrailTime > 40) {
+            lastTrailTime = now;
+            spawnTouchRipple(touch.clientX, touch.clientY, 'trail');
+          }
+          e.preventDefault();
+          return;
+        }
       }
 
-      // If moved before long-press engaged (> 7px), cancel long-press timer and scroll
-      if (totalDist > 7 && longPressTimer) {
+      // If finger moved beyond micro-slop (> 3px), cancel long-press timer and engage mobile scrolling
+      if (totalDist > 3 && longPressTimer) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
       }
 
       // Direct Mobile Touch 1:1 Scroll Drag Physics
-      if (totalDist > 7) {
-        isScrolling = true;
+      if (totalDist > 3) {
+        let scrollDx = 0;
+        let scrollDy = 0;
+
+        if (!isScrolling) {
+          // Transitioning from tap to active mobile scroll:
+          // Immediately include the initial displacement from touchStartX/Y so there is zero lost movement or deadzone!
+          isScrolling = true;
+          scrollDx = touch.clientX - touchStartX;
+          scrollDy = touch.clientY - touchStartY;
+          scrollLastX = touch.clientX;
+          scrollLastY = touch.clientY;
+        } else {
+          // Continuous mobile touch scroll frame delta
+          scrollDx = touch.clientX - scrollLastX;
+          scrollDy = touch.clientY - scrollLastY;
+          scrollLastX = touch.clientX;
+          scrollLastY = touch.clientY;
+        }
 
         // Anchor the PC mouse cursor once at the initial touch point:
         // 1. Keeps scroll focus strictly on the target list in Windows File Explorer (no treeview/header drift).
@@ -973,14 +1044,15 @@
         const scrollFactor = state.invertScroll ? -1 : 1;
 
         // 1:1 Physical Screen Tracking:
-        // Translating mobile touch pixels to PC canvas pixels * 1.25 yields exact 1:1 physical finger tracking.
+        // Translating mobile touch pixels to PC canvas pixels yields exact 1:1 physical finger tracking.
         const scaleY = (canvasH / rectH) / effectiveZoom;
         const scaleX = (canvasW / rectW) / effectiveZoom;
+        const speedMultiplier = (state.scrollSpeed || 1.4) * 2.2;
 
-        const wheelDy = dy * scaleY * 1.25 * state.scrollSpeed * scrollFactor;
-        const wheelDx = dx * scaleX * 1.25 * state.scrollSpeed * scrollFactor;
+        const wheelDy = scrollDy * scaleY * speedMultiplier * scrollFactor;
+        const wheelDx = scrollDx * scaleX * speedMultiplier * scrollFactor;
 
-        if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+        if (Math.abs(wheelDy) >= 0.05 || Math.abs(wheelDx) >= 0.05) {
           sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
         }
       }
@@ -989,7 +1061,7 @@
 
     touchArena.addEventListener('touchend', (e) => {
       globalLastTouchTime = Date.now();
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
         return;
       }
 
@@ -998,17 +1070,20 @@
         longPressTimer = null;
       }
 
-      // 2-Finger Release
+      // 2-Finger Release: Single Tap or Double Click triggers Right Click!
       if (twoFingerActive && e.touches.length < 2) {
         const dur = Date.now() - twoFingerStartTime;
-        if (!twoFingerMoved && !state.isPinching && dur < 320) {
-          // Two-finger tap -> Instant Right-Click!
+        if (!twoFingerMoved && dur < 380) {
+          const now = Date.now();
+          const isDoubleTap = (now - twoFingerLastTapTime < 450);
+          twoFingerLastTapTime = now;
+          // Two-finger tap or two-finger double tap -> Instant Right-Click!
           const norm = getNormalizedCoords(twoFingerMidX, twoFingerMidY);
           sendBinaryMoveAbs(norm.x, norm.y);
           sendBinaryClick('right');
           spawnTouchRipple(twoFingerMidX, twoFingerMidY, 'right');
-          vibrate(25);
-          showToast('Right Click', 'success', '🖱️');
+          vibrate(isDoubleTap ? 35 : 25);
+          showToast(isDoubleTap ? '2-Finger Double Tap (Right Click)' : 'Right Click', 'success', '🖱️');
         }
         twoFingerActive = false;
         state.isPinching = false;
@@ -1022,6 +1097,13 @@
       if (state.isPinching || !touchActive) return;
       touchActive = false;
 
+      // If touch was solely a tap-to-stop to cancel kinetic momentum, don't trigger click!
+      if (wasMomentumStopped) {
+        wasMomentumStopped = false;
+        e.preventDefault();
+        return;
+      }
+
       const touchEndTime = Date.now();
       const tapDuration = touchEndTime - touchStartTime;
       const moveDist = Math.hypot(lastX - touchStartX, lastY - touchStartY);
@@ -1029,21 +1111,18 @@
       // If user was in Long-Press Drag Mode: Release mouse button at drop location!
       if (isLongPressDrag) {
         isLongPressDrag = false;
+        isLongPressTriggered = false;
         const norm = getNormalizedCoords(lastX, lastY);
         sendBinaryTouchUp(norm.x, norm.y, 'left');
+        spawnTouchRipple(lastX, lastY, 'tap');
+        showToast('Item Dropped / Moved', 'success');
+        vibrate(30);
+        return;
+      }
 
-        if (moveDist < 12) {
-          // Held in place without dragging -> Trigger Right-Click Context Menu!
-          sendBinaryClick('right');
-          spawnTouchRipple(lastX, lastY, 'right');
-          showToast('Right Click', 'success', '🖱️');
-          vibrate(30);
-        } else {
-          // Dragged and released -> Dropped file/item/selection!
-          spawnTouchRipple(lastX, lastY, 'tap');
-          showToast('Item Dropped / Moved', 'success');
-          vibrate(35);
-        }
+      // If long press triggered right click and user released without dragging, we're done
+      if (isLongPressTriggered) {
+        isLongPressTriggered = false;
         return;
       }
 
@@ -1067,8 +1146,8 @@
         isScrolling = false;
         scrollCursorAnchored = false;
 
-        // Engage Kinetic Momentum Glide if flicked with velocity (> 0.35 px/ms)
-        if (wasScrolling && (Math.abs(vy) > 0.35 || Math.abs(vx) > 0.35)) {
+        // Engage Kinetic Momentum Glide if flicked with velocity (> 0.18 px/ms)
+        if (wasScrolling && (Math.abs(vy) > 0.18 || Math.abs(vx) > 0.18)) {
           const rect = el.screenCanvas.getBoundingClientRect();
           const canvasH = (el.screenCanvas.height && el.screenCanvas.height > 0) ? el.screenCanvas.height : 1080;
           const canvasW = (el.screenCanvas.width && el.screenCanvas.width > 0) ? el.screenCanvas.width : 1920;
@@ -1078,9 +1157,10 @@
           const scrollFactor = state.invertScroll ? -1 : 1;
           const scaleY = (canvasH / rectH) / effectiveZoom;
           const scaleX = (canvasW / rectW) / effectiveZoom;
+          const speedMultiplier = (state.scrollSpeed || 1.4) * 2.2;
 
-          let momentumVy = vy;
-          let momentumVx = vx;
+          let momentumVy = vy * 1.35;
+          let momentumVx = vx * 1.35;
           let lastMomentumTime = performance.now();
 
           const stepMomentum = (curTime) => {
@@ -1088,8 +1168,8 @@
             const dt = Math.min(32, curTime - lastMomentumTime);
             lastMomentumTime = curTime;
 
-            // Smooth exponential deceleration curve
-            const friction = Math.pow(0.93, dt / 16.67);
+            // Smooth exponential deceleration curve matching natural fluid touchscreen glide
+            const friction = Math.pow(0.952, dt / 16.67);
             momentumVy *= friction;
             momentumVx *= friction;
 
@@ -1097,14 +1177,14 @@
             const stepDx = momentumVx * dt;
 
             // 1:1 Physical kinetic momentum
-            const wheelDy = stepDy * scaleY * 1.25 * state.scrollSpeed * scrollFactor;
-            const wheelDx = stepDx * scaleX * 1.25 * state.scrollSpeed * scrollFactor;
+            const wheelDy = stepDy * scaleY * speedMultiplier * scrollFactor;
+            const wheelDx = stepDx * scaleX * speedMultiplier * scrollFactor;
 
-            if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+            if (Math.abs(wheelDy) >= 0.05 || Math.abs(wheelDx) >= 0.05) {
               sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
             }
 
-            if (Math.abs(momentumVy) > 0.04 || Math.abs(momentumVx) > 0.04) {
+            if (Math.abs(momentumVy) > 0.02 || Math.abs(momentumVx) > 0.02) {
               momentumAnimId = requestAnimationFrame(stepMomentum);
             } else {
               isMomentumActive = false;
@@ -1118,19 +1198,20 @@
         return;
       }
 
-      if (tapDuration < 280 && moveDist < 14) {
+      // 1-Finger Tap & Double Tap Handling (Simple, Fast, Natural)
+      if (tapDuration < 350 && moveDist < 16) {
         const timeSinceLastTap = touchEndTime - lastTapTime;
         const tapDistance = Math.hypot(lastX - lastTapX, lastY - lastTapY);
 
-        if (timeSinceLastTap < 350 && tapDistance < 24) {
+        if (timeSinceLastTap < 400 && tapDistance < 36) {
           // 1-Finger Double Tap -> Double Click (Opens file/app/folder)
           lastTapTime = 0;
           spawnTouchRipple(lastX, lastY, 'double');
           const norm = getNormalizedCoords(lastX, lastY);
           sendBinaryMoveAbs(norm.x, norm.y);
           sendBinaryClick('double');
-          vibrate(30);
-          showToast('Double Click (Open/Run)', 'success', '⚡');
+          vibrate(28);
+          showToast('Double Click', 'success', '⚡');
         } else {
           // 1-Finger Single Tap -> Left Click at exact touch position!
           lastTapTime = touchEndTime;
@@ -1148,6 +1229,20 @@
       e.preventDefault();
     }, { passive: false });
 
+    touchArena.addEventListener('touchcancel', () => {
+      touchActive = false;
+      isScrolling = false;
+      scrollCursorAnchored = false;
+      isLongPressTriggered = false;
+      isLongPressDrag = false;
+      twoFingerActive = false;
+      state.isPinching = false;
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    });
+
     // Desktop Web Control: Mouse & Pointer Interaction Handling
     let isMouseDown = false;
     let mouseDownBtn = 'left';
@@ -1158,7 +1253,7 @@
 
     touchArena.addEventListener('mousedown', (e) => {
       if (Date.now() - globalLastTouchTime < 650) return;
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
         return;
       }
       isMouseDown = true;
@@ -1198,13 +1293,13 @@
     });
 
     touchArena.addEventListener('wheel', (e) => {
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
         return;
       }
       const norm = getNormalizedCoords(e.clientX, e.clientY);
       const scrollFactor = state.invertScroll ? -1 : 1;
-      const dy = -e.deltaY * 0.45 * state.scrollSpeed * scrollFactor;
-      const dx = -e.deltaX * 0.45 * state.scrollSpeed * scrollFactor;
+      const dy = -e.deltaY * 1.2 * state.scrollSpeed * scrollFactor;
+      const dx = -e.deltaX * 1.2 * state.scrollSpeed * scrollFactor;
       sendBinaryScrollAbs(norm.x, norm.y, dx, dy);
       e.preventDefault();
     }, { passive: false });
@@ -1215,7 +1310,7 @@
 
     touchArena.addEventListener('dblclick', (e) => {
       if (Date.now() - globalLastTouchTime < 650) return;
-      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud'))) {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
         return;
       }
       const norm = getNormalizedCoords(e.clientX, e.clientY);
@@ -1618,34 +1713,47 @@
 
   let screenReconnectTimer = null;
   let lastScreenFrameReceivedTime = Date.now();
+  let lastVideoFrameReceivedTime = Date.now();
   let screenFirstFrameSeen = false;
   let screenWatchdogTimer = null;
+  let screenLoaderInterval = null;
 
-  let screenLoaderTimeout = null;
+  function hideScreenLoader() {
+    screenFirstFrameSeen = true;
+    if (screenLoaderInterval) {
+      clearInterval(screenLoaderInterval);
+      screenLoaderInterval = null;
+    }
+    if (el.screenLoader) {
+      el.screenLoader.style.display = 'none';
+    }
+  }
+
   function showScreenLoader(message) {
     if (!el.screenLoader) return;
-    if (screenFirstFrameSeen) return; // Never flicker the loader if a frame is already displayed
+    if (screenFirstFrameSeen) {
+      el.screenLoader.style.display = 'none';
+      return;
+    }
     el.screenLoader.style.display = '';
     const label = el.screenLoader.querySelector('span');
-    if (label && message) label.textContent = message;
+    if (label) label.textContent = message || 'STREAMING PC SCREEN...';
 
-    if (!el.screenLoader.dataset.hasTapHandler) {
-      el.screenLoader.dataset.hasTapHandler = 'true';
-      el.screenLoader.style.cursor = 'pointer';
-      el.screenLoader.addEventListener('click', () => {
-        connectScreenWs();
-      });
-    }
-
-    if (screenLoaderTimeout) clearTimeout(screenLoaderTimeout);
-    screenLoaderTimeout = setTimeout(() => {
-      if (!screenFirstFrameSeen && el.screenLoader) {
-        if (label) label.textContent = 'Tap to refresh screen or switch to Trackpad tab';
-        if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
+    if (screenLoaderInterval) clearInterval(screenLoaderInterval);
+    screenLoaderInterval = setInterval(() => {
+      if (screenFirstFrameSeen) {
+        hideScreenLoader();
+        return;
+      }
+      if (state.activeTab === 'tab-screen') {
+        if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+          try { screenWs.send('resume'); } catch (e) {}
+          try { screenWs.send('req_frame'); } catch (e) {}
+        } else if (!screenWs || screenWs.readyState === WebSocket.CLOSED) {
           connectScreenWs();
         }
       }
-    }, 3500);
+    }, 800);
   }
 
   // Self-heals a stalled stream gently without repeatedly destroying active sockets.
@@ -1656,20 +1764,32 @@
       if (!screenWs || screenWs.readyState === WebSocket.CLOSED) {
         connectScreenWs();
       } else if (screenWs.readyState === WebSocket.OPEN) {
-        // If connected but no frame arrived for > 4.5s (idle screen), nudge server for fresh frame
-        const stalled = Date.now() - lastScreenFrameReceivedTime > 4500;
-        if (stalled) {
-          lastScreenFrameReceivedTime = Date.now();
+        const now = Date.now();
+        // Check actual video frames received (not just heartbeat string 'h')
+        const noVideo = (!screenFirstFrameSeen && (now - lastVideoFrameReceivedTime > 700)) ||
+                        (now - lastVideoFrameReceivedTime > 2000);
+        if (noVideo) {
+          lastVideoFrameReceivedTime = now;
+          try { screenWs.send('resume'); } catch (e) {}
+          try { screenWs.send('req_frame'); } catch (e) {}
           sendStreamConfig();
         }
       }
-    }, 2500);
+    }, 800);
   }
 
   function disconnectScreenWs() {
     if (screenReconnectTimer) {
       clearTimeout(screenReconnectTimer);
       screenReconnectTimer = null;
+    }
+    if (screenLoaderInterval) {
+      clearInterval(screenLoaderInterval);
+      screenLoaderInterval = null;
+    }
+    if (screenWatchdogTimer) {
+      clearInterval(screenWatchdogTimer);
+      screenWatchdogTimer = null;
     }
     if (screenWs) {
       const ws = screenWs;
@@ -1838,16 +1958,29 @@
     }
   }
 
-  function connectScreenWs() {
+  function connectScreenWs(force = false) {
     if (screenReconnectTimer) {
       clearTimeout(screenReconnectTimer);
       screenReconnectTimer = null;
     }
-    // If socket is already OPEN or CONNECTING, do not tear it down
-    if (screenWs && (screenWs.readyState === WebSocket.OPEN || screenWs.readyState === WebSocket.CONNECTING)) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token') || urlParams.get('t') || '';
+    const currentToken = localStorage.getItem('pcdeck_token') || urlToken;
+    const tokenQuery = currentToken ? `?token=${encodeURIComponent(currentToken)}` : '';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen${tokenQuery}`;
+    state.screenWsUrl = screenWsUrl;
+
+    // If socket is already OPEN or CONNECTING to the same exact URL, maintain it and nudge for frames
+    if (!force && screenWs && (screenWs.readyState === WebSocket.OPEN || screenWs.readyState === WebSocket.CONNECTING) && screenWs.url === screenWsUrl) {
       sendStreamConfig();
+      if (screenWs.readyState === WebSocket.OPEN && state.activeTab === 'tab-screen') {
+        try { screenWs.send('resume'); } catch (e) {}
+        try { screenWs.send('req_frame'); } catch (e) {}
+      }
       return;
     }
+
     try {
       if (screenWs) {
         const oldScreenWs = screenWs;
@@ -1859,16 +1992,10 @@
         try { oldScreenWs.close(); } catch (e) {}
       }
       lastScreenFrameReceivedTime = Date.now();
+      lastVideoFrameReceivedTime = Date.now();
       if (!screenFirstFrameSeen) {
         showScreenLoader('STREAMING PC SCREEN...');
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlToken = urlParams.get('token') || urlParams.get('t') || '';
-      const currentToken = localStorage.getItem('pcdeck_token') || urlToken;
-      const tokenQuery = currentToken ? `?token=${encodeURIComponent(currentToken)}` : '';
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen${tokenQuery}`;
-      state.screenWsUrl = screenWsUrl;
       const ws = new WebSocket(screenWsUrl);
       screenWs = ws;
       ws.binaryType = 'blob';
@@ -1876,11 +2003,14 @@
         if (ws !== screenWs) return;
         state.screenConnected = true;
         lastScreenFrameReceivedTime = Date.now();
+        lastVideoFrameReceivedTime = Date.now();
         startScreenWatchdog();
         // Re-apply encoder settings
         sendStreamConfig();
-        // If client is not on screen tab, tell server to pause stream immediately to save 100% Wi-Fi bandwidth
-        if (state.activeTab !== 'tab-screen') {
+        if (state.activeTab === 'tab-screen') {
+          try { ws.send('resume'); } catch (e) {}
+          try { ws.send('req_frame'); } catch (e) {}
+        } else {
           try { ws.send('pause'); } catch (e) {}
         }
       };
@@ -1889,10 +2019,11 @@
         if (event.data) {
           lastScreenFrameReceivedTime = Date.now();
           if (typeof event.data !== 'string') {
+            lastVideoFrameReceivedTime = Date.now();
             // Instant frame ACK back to server so server knows this frame cleared the network pipe!
             try { ws.send('a'); } catch (e) {}
+            renderScreenFrame(event.data);
           }
-          renderScreenFrame(event.data);
         }
       };
       ws.onclose = () => {
@@ -2362,6 +2493,7 @@
       return;
     }
     lastScreenFrameReceivedTime = Date.now();
+    lastVideoFrameReceivedTime = Date.now();
     nextFrameBuffer = data;
     if (!isDecodingScreen) {
       processNextScreenFrame();
@@ -2437,10 +2569,7 @@
       }
 
       if (renderedOk || screenFirstFrameSeen) {
-        if (el.screenLoader && el.screenLoader.style.display !== 'none') {
-          el.screenLoader.style.display = 'none';
-        }
-        screenFirstFrameSeen = true;
+        hideScreenLoader();
       }
     } catch (e) {
       console.warn('Frame render error:', e);
@@ -2469,6 +2598,7 @@
     let twoFingerStartMidX = 0, twoFingerStartMidY = 0;
     let lastTwoFingerMidX = 0, lastTwoFingerMidY = 0;
     let twoFingerMoved = false;
+    let twoFingerLastTapTime = 0;
 
     // Double-tap and tap-to-drag state
     let lastTapTime = 0;
@@ -2655,10 +2785,13 @@
       globalLastTouchTime = Date.now();
       if (twoFingerActive && e.touches.length < 2) {
         const dur = Date.now() - twoFingerStartTime;
-        if (!twoFingerMoved && dur < 320) {
-          vibrate(25);
+        if (!twoFingerMoved && dur < 380) {
+          const now = Date.now();
+          const isDoubleTap = (now - twoFingerLastTapTime < 450);
+          twoFingerLastTapTime = now;
+          vibrate(isDoubleTap ? 35 : 25);
           sendBinaryClick('right');
-          showToast('Right Click', 'success', '🖱️');
+          showToast(isDoubleTap ? '2-Finger Double Tap (Right Click)' : 'Right Click', 'success', '🖱️');
         }
         twoFingerActive = false;
         e.preventDefault();
@@ -2796,7 +2929,7 @@
     let isGpActivation = false;
     if (targetId === 'tab-gamepad') {
       targetId = 'tab-trackpad';
-      isGpActivation = true;
+      isGpActivation = isNativeApp;
     } else if (targetId === 'tab-trackpad' && gamepadActive) {
       if (typeof window.setGamepadMode === 'function') {
         window.setGamepadMode(false);
@@ -2859,6 +2992,7 @@
         connectScreenWs();
       } else if (screenWs.readyState === WebSocket.OPEN) {
         try { screenWs.send('resume'); } catch (e) {}
+        try { screenWs.send('req_frame'); } catch (e) {}
         sendStreamConfig();
       }
       // Preserve and allow PC Audio Streaming (essential for movies, videos, and games)
@@ -3226,10 +3360,64 @@
   }
 
   // --- In-Built PC File Manager & Explorer Module ---
+  // --- File Manager Long-Press Selection Mode ---
+  function enterFsSelectMode(path) {
+    state.fsSelectMode = true;
+    document.getElementById('tab-files')?.classList.add('fs-select-mode');
+    state.markedFsPaths.add(path);
+    vibrate([30, 20, 30]); // distinct double-pulse feedback
+    updateBatchBar();
+    renderFilteredFsItems();
+  }
+
+  function exitFsSelectMode() {
+    state.fsSelectMode = false;
+    document.getElementById('tab-files')?.classList.remove('fs-select-mode');
+    state.markedFsPaths.clear();
+    updateBatchBar();
+    renderFilteredFsItems();
+  }
+
+  function enterPhoneSelectMode(path) {
+    state.phoneFs.selectMode = true;
+    document.getElementById('tab-files')?.classList.add('phone-select-mode');
+    state.phoneFs.markedPaths.add(path);
+    vibrate([30, 20, 30]);
+    updatePhoneBatchBar();
+    renderFilteredPhoneFsItems();
+  }
+
+  function exitPhoneSelectMode() {
+    state.phoneFs.selectMode = false;
+    document.getElementById('tab-files')?.classList.remove('phone-select-mode');
+    state.phoneFs.markedPaths.clear();
+    updatePhoneBatchBar();
+    renderFilteredPhoneFsItems();
+  }
+
+  function makeLongPressHandler(onLongPress, onTap) {
+    let timer = null;
+    let moved = false;
+    const LONG_MS = 480;
+    return {
+      start(e) {
+        moved = false;
+        timer = setTimeout(() => { timer = null; onLongPress(e); }, LONG_MS);
+      },
+      move() { if (timer) { clearTimeout(timer); timer = null; moved = true; } },
+      end(e)  {
+        if (timer) { clearTimeout(timer); timer = null; if (!moved) onTap(e); }
+      },
+      cancel() { if (timer) { clearTimeout(timer); timer = null; } }
+    };
+  }
+
   function updateBatchBar() {
     if (!el.fsBatchBar) return;
     const count = state.markedFsPaths.size;
     if (count > 0) {
+      state.fsSelectMode = true;
+      document.getElementById('tab-files')?.classList.add('fs-select-mode');
       el.fsBatchBar.style.display = 'flex';
       if (el.fsBatchCountLabel) el.fsBatchCountLabel.textContent = `${count} marked`;
       if (el.fsBatchDlLabel) el.fsBatchDlLabel.textContent = `SAVE TO PHONE (${count})`;
@@ -3237,6 +3425,8 @@
       const allSelected = allPaths.length > 0 && allPaths.every(p => state.markedFsPaths.has(p));
       if (el.fsBatchSelectAll) el.fsBatchSelectAll.checked = allSelected;
     } else {
+      state.fsSelectMode = false;
+      document.getElementById('tab-files')?.classList.remove('fs-select-mode');
       el.fsBatchBar.style.display = 'none';
       if (el.fsBatchSelectAll) el.fsBatchSelectAll.checked = false;
       if (el.fsBatchDlLabel) el.fsBatchDlLabel.textContent = 'SAVE TO PHONE';
@@ -3414,9 +3604,8 @@
 
     if (el.btnPhoneFsBatchClear) {
       el.btnPhoneFsBatchClear.onclick = () => {
-        state.phoneFs.markedPaths.clear();
-        updatePhoneBatchBar();
-        renderFilteredPhoneFsItems();
+        vibrate(10);
+        exitPhoneSelectMode();
       };
     }
 
@@ -3586,9 +3775,7 @@
     if (el.btnFsBatchClear) {
       el.btnFsBatchClear.onclick = () => {
         vibrate(10);
-        state.markedFsPaths.clear();
-        updateBatchBar();
-        renderFilteredFsItems();
+        exitFsSelectMode();
       };
     }
   }
@@ -3793,7 +3980,6 @@
           </div>
         </div>
         <div class="fs-actions-row">
-          <button class="fs-btn fs-btn-open" data-action="open-folder" title="Open Folder">Open</button>
           <button class="fs-btn fs-btn-locate fs-btn-icon-only" data-action="locate-folder-pc" title="Open this folder on PC in Windows File Explorer"><svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg></button>
           <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del-folder" title="Delete Folder"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
         </div>
@@ -3806,29 +3992,38 @@
           state.markedFsPaths.delete(folder.path);
           card.classList.remove('is-marked');
           cb.checked = false;
+          // Auto-exit select mode if nothing left
+          if (state.markedFsPaths.size === 0) exitFsSelectMode();
+          else updateBatchBar();
         } else {
           state.markedFsPaths.add(folder.path);
           card.classList.add('is-marked');
           cb.checked = true;
+          updateBatchBar();
         }
-        updateBatchBar();
       };
 
-      cb.onclick = (e) => {
-        e.stopPropagation();
-        toggleMark();
-      };
+      cb.onclick = (e) => { e.stopPropagation(); toggleMark(); };
 
-      // Tapping folder opens it directly
       const itemInfo = card.querySelector('.fs-item-info');
+      const lp = makeLongPressHandler(
+        () => { // long-press → enter/add to select mode
+          if (!state.fsSelectMode) enterFsSelectMode(folder.path);
+          else toggleMark();
+        },
+        () => { // tap → open if not in select mode, else toggle mark
+          if (state.fsSelectMode) { toggleMark(); return; }
+          vibrate(15);
+          browseFsDirectory(folder.path);
+        }
+      );
+      itemInfo.addEventListener('touchstart', (e) => { if (e.target !== cb) lp.start(e); }, { passive: true });
+      itemInfo.addEventListener('touchmove',  () => lp.move(), { passive: true });
+      itemInfo.addEventListener('touchend',   (e) => { if (e.target !== cb) lp.end(e); });
+      itemInfo.addEventListener('touchcancel',() => lp.cancel());
       itemInfo.onclick = (e) => {
-        if (e.target === cb) return;
-        vibrate(15);
-        browseFsDirectory(folder.path);
-      };
-
-      card.querySelector('[data-action="open-folder"]').onclick = (e) => {
-        e.stopPropagation();
+        if (e.target === cb || e.isTrusted === false) return;
+        if (state.fsSelectMode) { toggleMark(); return; }
         vibrate(15);
         browseFsDirectory(folder.path);
       };
@@ -3888,27 +4083,42 @@
           state.markedFsPaths.delete(file.path);
           card.classList.remove('is-marked');
           cb.checked = false;
+          if (state.markedFsPaths.size === 0) exitFsSelectMode();
+          else updateBatchBar();
         } else {
           state.markedFsPaths.add(file.path);
           card.classList.add('is-marked');
           cb.checked = true;
+          updateBatchBar();
         }
-        updateBatchBar();
       };
 
-      cb.onclick = (e) => {
-        e.stopPropagation();
-        toggleMark();
-      };
+      cb.onclick = (e) => { e.stopPropagation(); toggleMark(); };
 
-      // Tapping file row checks/unchecks without triggering download
       const fileInfo = card.querySelector('.fs-item-info');
+      const lp = makeLongPressHandler(
+        () => { // long-press → enter select mode
+          if (!state.fsSelectMode) enterFsSelectMode(file.path);
+          else toggleMark();
+        },
+        () => { // tap → toggle mark if in select mode, else download
+          if (state.fsSelectMode) { toggleMark(); return; }
+          vibrate(15);
+          downloadFileFromPC(file.path, file.name, file.size_formatted);
+        }
+      );
+      fileInfo.addEventListener('touchstart', (e) => { if (e.target !== cb) lp.start(e); }, { passive: true });
+      fileInfo.addEventListener('touchmove',  () => lp.move(), { passive: true });
+      fileInfo.addEventListener('touchend',   (e) => { if (e.target !== cb) lp.end(e); });
+      fileInfo.addEventListener('touchcancel',() => lp.cancel());
       fileInfo.onclick = (e) => {
-        if (e.target === cb) return;
-        toggleMark();
+        if (e.target === cb || e.isTrusted === false) return;
+        if (state.fsSelectMode) { toggleMark(); return; }
+        vibrate(15);
+        downloadFileFromPC(file.path, file.name, file.size_formatted);
       };
 
-      // Explicit Download Action
+      // Explicit Download Action (always available)
       card.querySelector('[data-action="save"]').onclick = (e) => {
         e.stopPropagation();
         vibrate(15);
@@ -3925,7 +4135,7 @@
           .catch(() => showToast('Could not open on PC', 'error'));
       };
 
-      // Locate on PC Action (Reveal & Select in Explorer)
+      // Locate on PC Action
       card.querySelector('[data-action="locate-pc"]').onclick = (e) => {
         e.stopPropagation();
         vibrate(15);
@@ -4015,6 +4225,8 @@
     if (!el.phoneFsBatchBar) return;
     const count = state.phoneFs.markedPaths.size;
     if (count > 0) {
+      state.phoneFs.selectMode = true;
+      document.getElementById('tab-files')?.classList.add('phone-select-mode');
       el.phoneFsBatchBar.style.display = 'flex';
       if (el.phoneFsBatchCountLabel) el.phoneFsBatchCountLabel.textContent = `${count} marked`;
       if (el.phoneFsBatchSendLabel) el.phoneFsBatchSendLabel.textContent = `SEND TO PC (${count})`;
@@ -4022,6 +4234,8 @@
       const allSelected = allPaths.length > 0 && allPaths.every(p => state.phoneFs.markedPaths.has(p));
       if (el.phoneFsBatchSelectAll) el.phoneFsBatchSelectAll.checked = allSelected;
     } else {
+      state.phoneFs.selectMode = false;
+      document.getElementById('tab-files')?.classList.remove('phone-select-mode');
       el.phoneFsBatchBar.style.display = 'none';
       if (el.phoneFsBatchSelectAll) el.phoneFsBatchSelectAll.checked = false;
       if (el.phoneFsBatchSendLabel) el.phoneFsBatchSendLabel.textContent = 'SEND TO PC';
@@ -4202,12 +4416,14 @@
           state.phoneFs.markedPaths.delete(file.path);
           card.classList.remove('is-marked');
           cb.checked = false;
+          if (state.phoneFs.markedPaths.size === 0) exitPhoneSelectMode();
+          else updatePhoneBatchBar();
         } else {
           state.phoneFs.markedPaths.add(file.path);
           card.classList.add('is-marked');
           cb.checked = true;
+          updatePhoneBatchBar();
         }
-        updatePhoneBatchBar();
       };
 
       cb.onclick = (e) => {
@@ -4215,9 +4431,35 @@
         toggleMark();
       };
 
-      card.querySelector('.fs-item-info').onclick = (e) => {
-        if (e.target === cb) return;
-        toggleMark();
+      const fileInfo = card.querySelector('.fs-item-info');
+      const lp = makeLongPressHandler(
+        () => {
+          if (!state.phoneFs.selectMode) enterPhoneSelectMode(file.path);
+          else toggleMark();
+        },
+        () => {
+          if (state.phoneFs.selectMode) { toggleMark(); return; }
+          vibrate(15);
+          if (window.AndroidApp && typeof window.AndroidApp.openPhoneFile === 'function') {
+            window.AndroidApp.openPhoneFile(file.path);
+          } else {
+            showToast(`Opening ${file.name}`, 'info');
+          }
+        }
+      );
+      fileInfo.addEventListener('touchstart', (e) => { if (e.target !== cb) lp.start(e); }, { passive: true });
+      fileInfo.addEventListener('touchmove',  () => lp.move(), { passive: true });
+      fileInfo.addEventListener('touchend',   (e) => { if (e.target !== cb) lp.end(e); });
+      fileInfo.addEventListener('touchcancel',() => lp.cancel());
+      fileInfo.onclick = (e) => {
+        if (e.target === cb || e.isTrusted === false) return;
+        if (state.phoneFs.selectMode) { toggleMark(); return; }
+        vibrate(15);
+        if (window.AndroidApp && typeof window.AndroidApp.openPhoneFile === 'function') {
+          window.AndroidApp.openPhoneFile(file.path);
+        } else {
+          showToast(`Opening ${file.name}`, 'info');
+        }
       };
 
       // Direct Upload to PC
@@ -4370,6 +4612,18 @@
         btnClose.onclick = (e) => {
           e.preventDefault();
           e.stopPropagation();
+          // Abort active upload XHR and stop the queue
+          activeUploadCancelled = true;
+          if (activeUploadXhr) {
+            try { activeUploadXhr.abort(); } catch (_) {}
+            activeUploadXhr = null;
+          }
+          // Cancel active download batch
+          if (activeDownloadBatch && activeDownloadBatch.active) {
+            activeDownloadBatch.active = false;
+            activeDownloadBatch.cancelled = true;
+          }
+          showToast('Transfer cancelled', 'warn');
           hideTransferProgress(0);
         };
       }
@@ -4406,6 +4660,8 @@
 
   // --- Phone -> PC File Upload Handler & Batch Operations ---
   let phoneUploadStartTime = 0;
+  let activeUploadXhr = null;    // current live XHR — aborted by X button
+  let activeUploadCancelled = false; // flag to stop the queue
   let activeBatchTransfer = {
     active: false,
     total: 0,
@@ -4812,13 +5068,12 @@
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = downloadUrl;
-      a.setAttribute('download', fileName);
-      a.setAttribute('target', '_blank');
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
-        if (a.parentNode) document.body.removeChild(a);
-      }, 2000);
+        if (a.parentNode) a.parentNode.removeChild(a);
+      }, 1500);
 
       showTransferProgress({
         badge: 'DOWNLOADING',
@@ -4833,7 +5088,7 @@
       hideTransferProgress(8000);
       if (onDone) onDone();
     } catch (err) {
-      window.open(downloadUrl, '_blank');
+      window.location.assign(downloadUrl);
       if (onDone) onDone();
     }
   }
@@ -4859,12 +5114,18 @@
       active: true,
       total: total,
       current: 0,
-      successCount: 0
+      successCount: 0,
+      cancelled: false
     };
 
     showToast(`Queued ${total} files for sequential download...`, 'success');
 
     function downloadNext() {
+      if (activeDownloadBatch.cancelled) {
+        activeDownloadBatch.active = false;
+        hideTransferProgress(0);
+        return;
+      }
       if (currentIndex >= total) {
         vibrate(30);
         activeDownloadBatch.active = false;
@@ -4957,6 +5218,9 @@
   function uploadFilesToCurrentDir(fileList) {
     if (!fileList || fileList.length === 0) return;
 
+    // Reset cancel flag
+    activeUploadCancelled = false;
+
     // Prioritize 100% Wi-Fi bandwidth for file upload by putting any background screen stream to sleep
     if (screenWs && screenWs.readyState === WebSocket.OPEN) {
       try { screenWs.send('pause'); } catch (e) {}
@@ -4967,6 +5231,12 @@
     let errorOccurred = false;
 
     function uploadNext() {
+      // User pressed X — stop the queue immediately
+      if (activeUploadCancelled) {
+        activeUploadXhr = null;
+        hideTransferProgress(0);
+        return;
+      }
       if (currentIndex >= files.length) {
         vibrate(30);
         if (errorOccurred) {
@@ -5008,6 +5278,7 @@
 
       const uploadUrl = `http://${state.serverHost}:${state.serverPort}/api/fs/upload-stream?filename=${encodeURIComponent(file.name)}&dest_dir=${encodeURIComponent(state.currentFsPath || '')}`;
       const xhr = new XMLHttpRequest();
+      activeUploadXhr = xhr; // expose for X button cancellation
       xhr.open('POST', uploadUrl, true);
       xhr.setRequestHeader('Content-Type', 'application/octet-stream');
       xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
@@ -5707,6 +5978,9 @@
     if (el.settingGamepadHud) {
       el.settingGamepadHud.onchange = () => {
         state.gamepadHudEnabled = el.settingGamepadHud.checked;
+        if (typeof updateGamepadHudVisibility === 'function') {
+          updateGamepadHudVisibility();
+        }
         if (window.updateTitlebarActions) {
           window.updateTitlebarActions();
         }
@@ -6951,11 +7225,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       const isNativeApp = !!(window.AndroidApp || window.isNativeApp || (window.navigator && window.navigator.userAgent && window.navigator.userAgent.includes('PCDeckNativeApp')));
       const isWebBrowser = !isNativeApp && (document.documentElement.classList.contains('is-web-browser') || document.body.classList.contains('is-web-browser'));
 
-      if (btnGameHud) {
-        btnGameHud.style.display = 'none';
-      }
-      if (btnHeaderGp) {
-        btnHeaderGp.style.display = 'none';
+      if (typeof updateGamepadHudVisibility === 'function') {
+        updateGamepadHudVisibility();
       }
 
       if (activeTab === 'tab-files') {
@@ -7947,6 +8218,9 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     applyGpLayout();
 
     function setGamepadMode(active) {
+      if (!isNativeApp && active) {
+        return;
+      }
       gamepadActive = active;
       if (stdTrackpad) stdTrackpad.style.display = active ? 'none' : '';
       if (gpContainer) gpContainer.style.display = active ? 'flex' : 'none';
@@ -8958,7 +9232,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
      IN-DISPLAY MOBILE GAMING CONTROLLER HUD (PUBG / COD STYLE)
      ========================================================================== */
   function initScreenGamepadHUD() {
-    const btnToggleHud = document.getElementById('btn-screen-gamepad-hud');
+    const btnToggleHud = document.getElementById('btn-screen-gamepad-hud') || document.getElementById('btn-screen-hud-fab');
     const hudOverlay = document.getElementById('screen-gamepad-overlay');
     const hudContainer = document.getElementById('hud-elements-container');
     const btnCloseHud = document.getElementById('btn-hud-close');
@@ -8983,7 +9257,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const filterTabs = document.querySelectorAll('.hud-filter-tab');
     const keyPickBtns = document.querySelectorAll('.hud-key-pick-btn');
 
-    if (!btnToggleHud || !hudOverlay || !hudContainer) return;
+    if (!hudOverlay || !hudContainer) return;
 
     let isEditing = false;
     let selectedElemId = null;
@@ -9142,17 +9416,24 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       return btn;
     }
 
-    // Toggle In-Display Gaming HUD
+    // Toggle In-Display Gaming HUD (APK Only)
     function toggleGamepadHUD(forceState) {
+      const isNative = (typeof checkIsNativeApp === 'function') ? checkIsNativeApp() : isNativeApp;
+      if (!isNative && !state.gamepadHudEnabled) {
+        return;
+      }
       const nextState = forceState !== undefined ? forceState : !state.gamepadHudActive;
       state.gamepadHudActive = nextState;
-      btnToggleHud.classList.toggle('active', nextState);
       const btnScreenHudFab = document.getElementById('btn-screen-hud-fab');
       if (btnScreenHudFab) btnScreenHudFab.classList.toggle('active', nextState);
       document.body.classList.toggle('gamepad-hud-active', nextState);
 
+      const hudOverlay = document.getElementById('screen-gamepad-overlay');
+      if (hudOverlay) {
+        hudOverlay.style.setProperty('display', nextState ? 'flex' : 'none', 'important');
+      }
+
       if (nextState) {
-        hudOverlay.style.display = 'flex';
         applyLayout(currentLayout);
         if (mainWs && mainWs.readyState === WebSocket.OPEN) {
           mainWs.send('driver_check');
@@ -9161,7 +9442,6 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         showToast('🎮 In-Display Gaming HUD Active (Full Screen View)', 'info');
       } else {
         exitEditMode();
-        hudOverlay.style.display = 'none';
         sendCommand('gr');
         vibrate(15);
         showToast('Gaming HUD Closed', 'info');
@@ -9169,16 +9449,41 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
 
     window.toggleGamepadHUD = toggleGamepadHUD;
-    if (btnToggleHud) btnToggleHud.onclick = () => toggleGamepadHUD();
-    const btnScreenHudFab = document.getElementById('btn-screen-hud-fab');
-    if (btnScreenHudFab) {
-      btnScreenHudFab.onclick = (e) => {
+    if (typeof updateGamepadHudVisibility === 'function') {
+      updateGamepadHudVisibility();
+    }
+
+    const handleHudToggle = (e) => {
+      if (e) {
         e.preventDefault();
         e.stopPropagation();
-        toggleGamepadHUD();
-      };
+      }
+      toggleGamepadHUD();
+    };
+
+    const hudButtons = [document.getElementById('btn-screen-hud-fab')];
+    hudButtons.forEach(btn => {
+      if (!btn) return;
+      btn.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+      }, { passive: true });
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleHudToggle(e);
+      }, { passive: false });
+      btn.onclick = handleHudToggle;
+    });
+
+    if (btnCloseHud) {
+      btnCloseHud.addEventListener('touchstart', (e) => { e.stopPropagation(); }, { passive: true });
+      btnCloseHud.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleGamepadHUD(false);
+      }, { passive: false });
+      btnCloseHud.onclick = () => toggleGamepadHUD(false);
     }
-    if (btnCloseHud) btnCloseHud.onclick = () => toggleGamepadHUD(false);
 
     const btnHudInstallDriver = document.getElementById('btn-hud-install-driver');
     if (btnHudInstallDriver) {
@@ -10439,6 +10744,9 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       document.body.classList.add('is-web-browser');
       document.body.classList.remove('is-native-app');
     }
+    if (typeof updateGamepadHudVisibility === 'function') {
+      updateGamepadHudVisibility();
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const urlTab = urlParams.get('tab');
@@ -10449,10 +10757,11 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       if (el.connectModal) el.connectModal.classList.remove('show');
       const obModal = document.getElementById('onboarding-modal');
       if (obModal) obModal.classList.remove('show');
-      switchTab(targetTab);
+      const safeTab = targetTab === 'tab-gamepad' ? 'tab-trackpad' : targetTab;
+      switchTab(safeTab);
       connect();
     } else if (savedIp) {
-      if (urlTab) switchTab(targetTab);
+      switchTab(targetTab);
       connect();
     } else if (isNativeApp && !onboardingDone) {
       if (typeof window.openOnboardingModal === 'function') {
@@ -10498,8 +10807,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
   // ==========================================
   // IN-APP OTA AUTO-UPDATER SYSTEM
   // ==========================================
-  const CURRENT_APP_VERSION_CODE = 270;
-  const CURRENT_APP_VERSION_NAME = '2.7.0';
+  const CURRENT_APP_VERSION_CODE = 271;
+  const CURRENT_APP_VERSION_NAME = '2.7.1';
   let updateDownloadApkUrl = 'https://pcdeck.vercel.app/PCDeck.apk';
 
   function initAppUpdater() {
@@ -10538,6 +10847,13 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       try {
         if (updateStatusText && isManual) updateStatusText.innerText = 'Checking for updates...';
         
+        // In web browser mode, do not auto-check for APK updates
+        const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+        if (!isNativeApp && !isManual) {
+          if (updateStatusText) updateStatusText.innerText = 'Web Client v' + CURRENT_APP_VERSION_NAME + ' (Latest)';
+          return;
+        }
+
         let localCode = CURRENT_APP_VERSION_CODE;
         if (window.AndroidApp && typeof window.AndroidApp.getAppVersionCode === 'function') {
           localCode = window.AndroidApp.getAppVersionCode();
@@ -10570,11 +10886,19 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
             btnNowLabel.innerText = hasPlayStore ? 'OPEN PLAY STORE' : 'GET UPDATE ON WEBSITE';
           }
 
-          if (updateModal) {
-            updateModal.style.display = 'flex';
-            updateModal.classList.add('show');
+          // ONLY display the modal if the user explicitly clicked "Check for updates" in Settings.
+          // Never interrupt the user's active control screen with an automatic popup.
+          if (isManual) {
+            if (updateModal) {
+              updateModal.style.display = 'flex';
+              updateModal.classList.add('show');
+            }
+            vibrate(30);
+          } else {
+            // Background check: show non-intrusive badge/status only
+            const settingsBadge = document.querySelector('.nav-item[data-tab="tab-settings"] .nav-dot');
+            if (settingsBadge) settingsBadge.style.display = 'block';
           }
-          vibrate(30);
         } else {
           if (updateStatusText) updateStatusText.innerText = 'PCDeck is up to date (v' + (data.versionName || CURRENT_APP_VERSION_NAME) + ')';
           if (isManual) {
@@ -10583,7 +10907,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         }
       } catch (err) {
         if (isManual) {
-          showToast('Could not check for updates. Check internet.', 'warn', '️');
+          showToast('Could not check for updates. Check internet.', 'warn', '⚠️');
         }
         if (updateStatusText) updateStatusText.innerText = 'Latest version verified';
       }
