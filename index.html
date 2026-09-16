@@ -920,6 +920,190 @@ footer{padding:44px 0 56px}
 .foot-guides a{color:var(--graphite);font-weight:500;padding:4px 0}
 .foot-guides a:hover{color:var(--signal-ink)}
 
+/* ==================== Emergency Keyboard Guide ==================== */
+.emergency-guide-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,#fffbeb 0%,#ffffff 100%);
+  color:var(--ink);border:1px solid #f59e0b;
+  padding:10px 16px;border-radius:var(--r);
+  font-family:var(--body);font-size:14px;font-weight:600;
+  cursor:pointer;box-shadow:0 2px 8px rgba(245,158,11,0.12);
+  transition:all .15s ease;text-align:left;line-height:1.4;
+  outline:none;
+}
+.emergency-guide-btn:hover{
+  border-color:#d97706;background:#fffbeb;
+  box-shadow:0 4px 14px rgba(245,158,11,0.22);
+  transform:translateY(-1px);
+}
+.emergency-guide-btn:focus-visible{
+  outline:2px solid var(--signal);outline-offset:2px;
+}
+.emergency-badge-pulse{
+  display:inline-block;width:9px;height:9px;border-radius:50%;
+  background:#f59e0b;box-shadow:0 0 0 0 rgba(245,158,11,0.7);
+  animation:pulse-badge 2s infinite;flex-shrink:0;
+}
+@keyframes pulse-badge{
+  0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(245,158,11,0.7)}
+  70%{transform:scale(1);box-shadow:0 0 0 6px rgba(245,158,11,0)}
+  100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(245,158,11,0)}
+}
+.emergency-guide-btn kbd{
+  background:#1e293b;color:#f8fafc;
+  border-color:#334155;border-bottom-color:#0f172a;
+  padding:1px 5px;font-size:11px;
+}
+
+.emergency-modal-backdrop{
+  position:fixed;inset:0;
+  background:rgba(15,23,42,0.65);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+  padding:20px 16px;opacity:0;pointer-events:none;
+  transition:opacity .2s ease;
+}
+.emergency-modal-backdrop.active{
+  opacity:1;pointer-events:auto;
+}
+.emergency-modal-card{
+  background:var(--panel);border:1px solid var(--grid);
+  border-radius:12px;width:100%;max-width:680px;
+  max-height:90vh;display:flex;flex-direction:column;
+  box-shadow:0 24px 48px -12px rgba(15,23,42,0.35),0 0 0 1px rgba(0,0,0,0.05);
+  transform:translateY(16px) scale(0.98);
+  transition:transform .2s cubic-bezier(0.16,1,0.3,1);
+  overflow:hidden;
+}
+.emergency-modal-backdrop.active .emergency-modal-card{
+  transform:translateY(0) scale(1);
+}
+.emergency-modal-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:22px 24px 16px;border-bottom:1px solid var(--grid-soft);
+  gap:16px;background:#fafbfc;
+}
+.emergency-modal-header h2{
+  font-size:20px;font-weight:800;color:var(--ink);
+  margin:6px 0 4px;line-height:1.25;
+}
+.emergency-modal-header p{
+  margin:0;font-size:14px;color:var(--graphite);line-height:1.45;
+}
+.emergency-close-btn{
+  background:var(--paper);border:1px solid var(--grid);
+  border-radius:6px;padding:6px 10px;font-size:16px;font-weight:600;
+  color:var(--graphite);cursor:pointer;display:inline-flex;
+  align-items:center;gap:6px;line-height:1;transition:all .15s ease;
+  flex-shrink:0;
+}
+.emergency-close-btn:hover{
+  background:var(--ink);color:#fff;border-color:var(--ink);
+}
+.emergency-close-btn kbd{
+  font-size:10px;padding:1px 4px;
+}
+.emergency-modal-body{
+  padding:20px 24px;overflow-y:auto;display:flex;
+  flex-direction:column;gap:16px;
+}
+.emergency-ps-box{
+  background:#0f172a;border:1px solid #1e293b;
+  border-radius:8px;padding:14px 16px;color:#e2e8f0;
+}
+.emergency-ps-head{
+  display:flex;flex-wrap:wrap;align-items:center;
+  justify-content:space-between;gap:8px;margin-bottom:10px;
+  font-size:12.5px;color:#94a3b8;
+}
+.emergency-ps-tag{
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  text-transform:uppercase;color:#38bdf8;letter-spacing:.06em;
+}
+.emergency-ps-head kbd{
+  background:#1e293b;color:#f8fafc;
+  border-color:#334155;border-bottom-color:#0f172a;
+  font-size:11px;
+}
+.emergency-ps-code-row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;background:#020617;border:1px solid #1e293b;
+  border-radius:6px;padding:8px 12px;
+}
+.emergency-ps-code-row code{
+  font-family:var(--mono);font-size:13px;color:#38ef7d;
+  user-select:all;word-break:break-all;
+}
+.emergency-copy-btn{
+  background:#1e293b;color:#f8fafc;border:1px solid #334155;
+  border-radius:4px;padding:6px 12px;font-family:var(--mono);
+  font-size:11.5px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  transition:all .15s ease;flex-shrink:0;
+}
+.emergency-copy-btn:hover{
+  background:var(--signal);border-color:var(--signal);
+}
+.emergency-steps-list{
+  list-style:none;padding:0;margin:0;display:flex;
+  flex-direction:column;gap:12px;
+}
+.emergency-step-item{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--panel);border:1px solid var(--grid);
+  border-radius:8px;padding:14px 16px;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.emergency-step-item:hover{
+  border-color:#94a3b8;box-shadow:0 2px 8px rgba(0,0,0,0.04);
+}
+.emergency-step-num{
+  width:28px;height:28px;border-radius:50%;background:var(--ink);
+  color:#fff;display:grid;place-items:center;
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  flex-shrink:0;margin-top:2px;
+}
+.emergency-step-content{
+  flex:1;min-width:0;
+}
+.emergency-step-content h3{
+  font-size:15px;font-weight:700;color:var(--ink);
+  margin:0 0 5px;line-height:1.3;
+}
+.emergency-step-content p{
+  margin:0 0 6px;font-size:13.5px;color:var(--graphite);
+  line-height:1.5;
+}
+.emergency-step-content p:last-child{
+  margin-bottom:0;
+}
+.emergency-step-content code{
+  font-family:var(--mono);font-size:12px;background:var(--paper);
+  border:1px solid var(--grid);padding:1px 5px;border-radius:3px;
+  color:var(--ink);
+}
+.emergency-subnote{
+  margin-top:6px;background:var(--caution-wash);
+  border:1px solid var(--caution-line);border-radius:6px;
+  padding:8px 10px;font-size:12.5px;color:#78350f;line-height:1.45;
+}
+.emergency-tip{
+  margin-top:4px;font-size:12.5px;color:var(--muted);line-height:1.4;
+}
+.emergency-success-badge{
+  margin-top:6px;background:#ecfdf5;border:1px solid #a7f3d0;
+  border-radius:6px;padding:8px 10px;font-size:12.5px;
+  color:#065f46;line-height:1.45;
+}
+.emergency-modal-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;border-top:1px solid var(--grid-soft);
+  background:#fafbfc;gap:12px;flex-wrap:wrap;
+}
+.emergency-full-guide-link{
+  font-size:13px;font-weight:600;color:var(--signal-ink);
+}
+
 /* ==================== responsive ==================== */
 @media (max-width:900px){
   .hero{padding:40px 0 16px}
@@ -1138,8 +1322,18 @@ footer{padding:44px 0 56px}
   .sumrow{grid-template-columns:1fr;gap:4px;padding:10px 0}
   .sumrow dd{font-size:11px}
 
-  .foot{flex-direction:column;align-items:flex-start;gap:16px}
-  .foot-guides{display:flex;flex-wrap:wrap;gap:6px 12px}
+  .emergency-guide-btn{width:100%;box-sizing:border-box;font-size:13px;padding:9px 12px}
+  .emergency-modal-backdrop{padding:10px;align-items:flex-end}
+  .emergency-modal-card{max-height:85vh;border-radius:12px 12px 0 0}
+  .emergency-modal-header{padding:16px 18px 12px}
+  .emergency-modal-header h2{font-size:17px}
+  .emergency-modal-body{padding:14px 16px;gap:12px}
+  .emergency-step-item{padding:12px;gap:10px}
+  .emergency-modal-footer{padding:12px 16px;flex-direction:column-reverse;align-items:stretch}
+  .emergency-modal-footer button{width:100%;justify-content:center}
+  .emergency-full-guide-link{text-align:center}
+  .emergency-ps-code-row{flex-direction:column;align-items:stretch;gap:8px}
+  .emergency-copy-btn{justify-content:center}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -1263,6 +1457,12 @@ footer{padding:44px 0 56px}
                 <small style="display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; opacity: 0.9; margin-top: 3px; letter-spacing: .03em;">v2.7.0 · Windows 10 / 11 · 46.8 MB · No Install Needed</small>
               </div>
             </a>
+
+            <!-- No Mouse Emergency Keyboard Guide Trigger Badge -->
+            <button type="button" id="btn-emergency-guide" class="emergency-guide-btn" aria-haspopup="dialog" aria-controls="emergency-guide-modal" aria-expanded="false">
+              <span class="emergency-badge-pulse" aria-hidden="true"></span>
+              <span>Mouse broken right now? <span style="display:inline-block;">Press <kbd>M</kbd></span> or <u style="text-underline-offset: 3px;">Click here for 30-Second Keyboard Guide</u></span>
+            </button>
 
             <div class="hero-alt-links" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: var(--graphite); padding: 4px 0 0 2px;">
               <span>Other options:</span>
@@ -1489,7 +1689,7 @@ footer{padding:44px 0 56px}
         <p>No app store installation required on your phone. Simply run PCDeck on your computer, scan the on-screen QR code with your phone camera, and control your PC directly inside your browser.</p>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
         <div style="background: var(--panel); border: 1px solid var(--grid); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
           <img src="/screenshots/qr-pairing.png" alt="PCDeck QR Code pairing window on Windows desktop" loading="lazy" style="width: 100%; height: auto; display: block; border-bottom: 1px solid var(--grid);">
           <div style="padding: 16px 18px;">
@@ -1937,6 +2137,92 @@ footer{padding:44px 0 56px}
           On Android, any file-hash utility works. If the values differ, delete the file and download
           it again — do not run it.
         </p>
+  <!-- ==================== NO MOUSE? EMERGENCY KEYBOARD GUIDE MODAL ==================== -->
+  <section id="emergency-guide-modal" class="emergency-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="emergency-guide-title">
+    <div class="emergency-modal-card" id="emergency-modal-card" tabindex="-1">
+      <div class="emergency-modal-header">
+        <div>
+          <span class="tag" style="background: var(--caution-wash); color: var(--caution); border: 1px solid var(--caution-line); padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 10.5px;">EMERGENCY KEYBOARD GUIDE</span>
+          <h2 id="emergency-guide-title">No Mouse? Follow These 4 Steps (30 Seconds)</h2>
+          <p>Mouse or trackpad stopped working? Use these exact Windows keyboard shortcuts to download, locate, and launch PCDeck without touching a mouse.</p>
+        </div>
+        <button type="button" id="emergency-modal-close" class="emergency-close-btn" aria-label="Close emergency guide">
+          <span>&times;</span>
+          <kbd>Esc</kbd>
+        </button>
+      </div>
+
+      <div class="emergency-modal-body">
+        <!-- 1-Click PowerShell Direct Launch Option (ExecutionPolicy Bypass) -->
+        <div class="emergency-ps-box">
+          <div class="emergency-ps-head">
+            <span class="emergency-ps-tag">⚡ Bulletproof Quick-Launch (PowerShell)</span>
+            <span>Press <kbd>Win</kbd> + <kbd>R</kbd>, type <kbd>powershell</kbd>, hit <kbd>Enter</kbd>, then paste:</span>
+          </div>
+          <div class="emergency-ps-code-row">
+            <code id="ps-cmd-text">powershell -ExecutionPolicy Bypass -Command "irm https://pcdeck.vercel.app/install.ps1 | iex"</code>
+            <button type="button" id="btn-copy-ps" class="emergency-copy-btn" title="Copy bulletproof PowerShell command">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copy Command</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Step Card Sequence in Semantic <ol> -->
+        <ol class="emergency-steps-list">
+          <!-- Step 1 -->
+          <li class="emergency-step-item">
+            <div class="emergency-step-num">1</div>
+            <div class="emergency-step-content">
+              <h3>Download PCDeck without a mouse</h3>
+              <p>Press <kbd>Tab</kbd> repeatedly on this browser page until the <strong>"Download PCDeck for Windows"</strong> button is highlighted with an outline, then press <kbd>Enter</kbd>.</p>
+              <div class="emergency-tip">
+                <em>Tip:</em> Press <kbd>Ctrl</kbd> + <kbd>J</kbd> in your browser to view your active download.
+              </div>
+            </div>
+          </li>
+
+          <!-- Step 2 -->
+          <li class="emergency-step-item">
+            <div class="emergency-step-num">2</div>
+            <div class="emergency-step-content">
+              <h3>Access your Downloads folder</h3>
+              <p>Press <kbd>Win</kbd> + <kbd>E</kbd> to open Windows File Explorer.</p>
+              <p>Press <kbd>Ctrl</kbd> + <kbd>L</kbd> to highlight the address bar, type <code>shell:downloads</code>, and press <kbd>Enter</kbd>.</p>
+            </div>
+          </li>
+
+          <!-- Step 3 -->
+          <li class="emergency-step-item">
+            <div class="emergency-step-num">3</div>
+            <div class="emergency-step-content">
+              <h3>Run the application</h3>
+              <p>Use the arrow keys (<kbd>↑</kbd>, <kbd>↓</kbd>) or type <code>PCDeck</code> to jump to <code>PCDeck.exe</code>.</p>
+              <p>Press <kbd>Enter</kbd> to launch the application.</p>
+              <div class="emergency-subnote">
+                <strong>If Windows SmartScreen appears:</strong> Press <kbd>Tab</kbd> to select <em>"More info"</em>, hit <kbd>Enter</kbd>, press <kbd>Tab</kbd> to select <em>"Run anyway"</em>, and hit <kbd>Enter</kbd>.
+              </div>
+            </div>
+          </li>
+
+          <!-- Step 4 -->
+          <li class="emergency-step-item">
+            <div class="emergency-step-num">4</div>
+            <div class="emergency-step-content">
+              <h3>Connect your phone</h3>
+              <p>Once PCDeck opens on your PC, it displays your local Wi-Fi URL and a QR code (e.g. <code>http://192.168.1.5:8000</code>).</p>
+              <p>On your phone browser (Chrome or Safari), scan the QR code or type the displayed IP address. No app install required.</p>
+              <div class="emergency-success-badge">
+                ✔ <strong>Ready!</strong> Your phone screen instantly turns into a responsive trackpad and keyboard to control this PC.
+              </div>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="emergency-modal-footer">
+        <button type="button" class="btn sm ghost" id="emergency-modal-done-btn">Done / Close (<kbd>Esc</kbd>)</button>
+        <a href="/use-pc-without-mouse/" class="emergency-full-guide-link">Read In-Depth Windows Keyboard Shortcuts Guide &rarr;</a>
       </div>
     </div>
   </section>
@@ -2452,6 +2738,138 @@ footer{padding:44px 0 56px}
       toggleMenu(false);
     }
   });
+})();
+
+/* ==========================================================================
+   4. Emergency Keyboard Guide Modal & 'M' / 'Esc' Shortcut Listeners
+   ========================================================================== */
+(function () {
+  var triggerBtn = document.getElementById('btn-emergency-guide');
+  var modal = document.getElementById('emergency-guide-modal');
+  var modalCard = document.getElementById('emergency-modal-card');
+  var closeBtn = document.getElementById('emergency-modal-close');
+  var doneBtn = document.getElementById('emergency-modal-done-btn');
+  var copyPsBtn = document.getElementById('btn-copy-ps');
+  if (!modal) return;
+
+  function openModal() {
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+    
+    // Immediate Initial Focus inside modal to prevent background scrolling
+    if (copyPsBtn) {
+      copyPsBtn.focus();
+    } else if (closeBtn) {
+      closeBtn.focus();
+    } else if (modalCard) {
+      modalCard.focus();
+    }
+  }
+
+  function closeModal() {
+    if (!modal.classList.contains('active')) return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    if (triggerBtn) {
+      triggerBtn.setAttribute('aria-expanded', 'false');
+      triggerBtn.focus();
+    }
+    document.body.style.overflow = '';
+  }
+
+  if (triggerBtn) {
+    triggerBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      openModal();
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      closeModal();
+    });
+  }
+
+  if (doneBtn) {
+    doneBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      closeModal();
+    });
+  }
+
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Focus Trapping within Modal
+  modal.addEventListener('keydown', function (e) {
+    if (e.key === 'Tab') {
+      var focusables = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (focusables.length === 0) return;
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first || document.activeElement === modal || document.activeElement === modalCard) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  });
+
+  // Global Keyboard Shortcuts: 'M' to open/toggle, 'Escape' to close
+  window.addEventListener('keydown', function (e) {
+    var activeTag = document.activeElement ? document.activeElement.tagName : '';
+    var targetTag = e.target ? e.target.tagName : '';
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(targetTag) ||
+        (e.target && e.target.isContentEditable) ||
+        (document.activeElement && document.activeElement.isContentEditable)) {
+      return;
+    }
+
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      if (modal.classList.contains('active')) {
+        e.preventDefault();
+        closeModal();
+      }
+    } else if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      if (modal.classList.contains('active')) {
+        closeModal();
+      } else {
+        openModal();
+      }
+    }
+  });
+
+  // PowerShell Bulletproof 1-Click Copy
+  if (copyPsBtn) {
+    copyPsBtn.addEventListener('click', function () {
+      var cmd = 'powershell -ExecutionPolicy Bypass -Command "irm https://pcdeck.vercel.app/install.ps1 | iex"';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cmd).then(function () {
+          var span = copyPsBtn.querySelector('span');
+          if (span) {
+            var old = span.textContent;
+            span.textContent = 'Copied!';
+            setTimeout(function () { span.textContent = old; }, 2000);
+          }
+        }).catch(function () {});
+      }
+    });
+  }
 })();
 </script>
 <script defer src=/_vercel/insights/script.js></script>
