@@ -2174,10 +2174,16 @@ footer{padding:44px 0 56px}
           <li class="emergency-step-item">
             <div class="emergency-step-num">1</div>
             <div class="emergency-step-content">
-              <h3>Download PCDeck without a mouse</h3>
-              <p>Press <kbd>Tab</kbd> repeatedly on this browser page until the <strong>"Download PCDeck for Windows"</strong> button is highlighted with an outline, then press <kbd>Enter</kbd>.</p>
+              <h3>Download PCDeck directly without a mouse</h3>
+              <p>Press <kbd>Tab</kbd> to highlight the download button below and hit <kbd>Enter</kbd> to start downloading <code>PCDeck.exe</code> right now:</p>
+              <div style="margin: 10px 0 10px;">
+                <a href="/PCDeck.exe" download="PCDeck.exe" id="modal-direct-dl-btn" class="btn" style="background: var(--signal); border-color: var(--signal); color: #fff; font-size: 14.5px; font-weight: 700; padding: 10px 20px; border-radius: 6px; display: inline-flex; align-items: center; gap: 9px; text-decoration: none; box-shadow: 0 4px 14px rgba(27,68,216,0.22);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; flex-shrink: 0;"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
+                  <span>Download PCDeck.exe (Press Enter)</span>
+                </a>
+              </div>
               <div class="emergency-tip">
-                <em>Tip:</em> Press <kbd>Ctrl</kbd> + <kbd>J</kbd> in your browser to view your active download.
+                <em>Shortcut tips:</em> Press <kbd>Ctrl</kbd> + <kbd>J</kbd> to view your active download. Press <kbd>Esc</kbd> anytime to close this popup.
               </div>
             </div>
           </li>
@@ -2750,6 +2756,7 @@ footer{padding:44px 0 56px}
   var closeBtn = document.getElementById('emergency-modal-close');
   var doneBtn = document.getElementById('emergency-modal-done-btn');
   var copyPsBtn = document.getElementById('btn-copy-ps');
+  var modalDlBtn = document.getElementById('modal-direct-dl-btn');
   if (!modal) return;
 
   function openModal() {
@@ -2758,8 +2765,10 @@ footer{padding:44px 0 56px}
     if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
     
-    // Immediate Initial Focus inside modal to prevent background scrolling
-    if (copyPsBtn) {
+    // Immediate Initial Focus on Direct Download button for 1-keypress download
+    if (modalDlBtn) {
+      modalDlBtn.focus();
+    } else if (copyPsBtn) {
       copyPsBtn.focus();
     } else if (closeBtn) {
       closeBtn.focus();

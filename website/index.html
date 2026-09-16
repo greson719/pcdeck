@@ -2111,20 +2111,20 @@ footer{padding:44px 0 56px}
              run the tool after every rebuild. A checksum that silently goes stale is worse
              than none, because it tells honest users their good download is corrupt. -->
         <dl class="sumrow">
-          <dt>PCDeck.apk<span>699,155 BYTES</span></dt>
-          <dd>d7993b11599bed0b21fbe765c3b724dd881be30d02baa94c022ddb31abab0400</dd>
+          <dt>PCDeck.apk<span>690,963 BYTES</span></dt>
+          <dd>2b729b56dfe47aefa2ec974942457f85360efe4336e56cacd2d53132270a2d88</dd>
         </dl>
         <dl class="sumrow">
           <dt>PCDeck.aab<span>682,195 BYTES</span></dt>
           <dd>7a4d52f2981f4b753506b7b9483eb46a8307fbbf8f51d50c405d1901b9805cc9</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck.exe<span>38,007,059 BYTES</span></dt>
-          <dd>f0bd771c6572b2a8c1015f33eb3568f52df68cbf1e62752d594d90bde2f709bd</dd>
+          <dt>PCDeck.exe<span>37,809,412 BYTES</span></dt>
+          <dd>03fedac96909da5662e1edbfaa57b5615b80a0a0b3153681219010ec377989a4</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck-Setup.exe<span>39,463,199 BYTES</span></dt>
-          <dd>97d3ca84d79cac07b80b2ba886fc9235480944523086dc6c4c730af5f48dc566</dd>
+          <dt>PCDeck-Setup.exe<span>39,266,524 BYTES</span></dt>
+          <dd>0c93e9b1fe2f0f820387ad7904dda9462bcdb5ec5137371a18609a77f4df2e65</dd>
         </dl>
         <dl class="sumrow">
           <dt>PCDeck_Package.zip<span>52,157,822 BYTES</span></dt>
@@ -2174,10 +2174,16 @@ footer{padding:44px 0 56px}
           <li class="emergency-step-item">
             <div class="emergency-step-num">1</div>
             <div class="emergency-step-content">
-              <h3>Download PCDeck without a mouse</h3>
-              <p>Press <kbd>Tab</kbd> repeatedly on this browser page until the <strong>"Download PCDeck for Windows"</strong> button is highlighted with an outline, then press <kbd>Enter</kbd>.</p>
+              <h3>Download PCDeck directly without a mouse</h3>
+              <p>Press <kbd>Tab</kbd> to highlight the download button below and hit <kbd>Enter</kbd> to start downloading <code>PCDeck.exe</code> right now:</p>
+              <div style="margin: 10px 0 10px;">
+                <a href="/PCDeck.exe" download="PCDeck.exe" id="modal-direct-dl-btn" class="btn" style="background: var(--signal); border-color: var(--signal); color: #fff; font-size: 14.5px; font-weight: 700; padding: 10px 20px; border-radius: 6px; display: inline-flex; align-items: center; gap: 9px; text-decoration: none; box-shadow: 0 4px 14px rgba(27,68,216,0.22);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; flex-shrink: 0;"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
+                  <span>Download PCDeck.exe (Press Enter)</span>
+                </a>
+              </div>
               <div class="emergency-tip">
-                <em>Tip:</em> Press <kbd>Ctrl</kbd> + <kbd>J</kbd> in your browser to view your active download.
+                <em>Shortcut tips:</em> Press <kbd>Ctrl</kbd> + <kbd>J</kbd> to view your active download. Press <kbd>Esc</kbd> anytime to close this popup.
               </div>
             </div>
           </li>
@@ -2750,6 +2756,7 @@ footer{padding:44px 0 56px}
   var closeBtn = document.getElementById('emergency-modal-close');
   var doneBtn = document.getElementById('emergency-modal-done-btn');
   var copyPsBtn = document.getElementById('btn-copy-ps');
+  var modalDlBtn = document.getElementById('modal-direct-dl-btn');
   if (!modal) return;
 
   function openModal() {
@@ -2758,8 +2765,10 @@ footer{padding:44px 0 56px}
     if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
     
-    // Immediate Initial Focus inside modal to prevent background scrolling
-    if (copyPsBtn) {
+    // Immediate Initial Focus on Direct Download button for 1-keypress download
+    if (modalDlBtn) {
+      modalDlBtn.focus();
+    } else if (copyPsBtn) {
       copyPsBtn.focus();
     } else if (closeBtn) {
       closeBtn.focus();
