@@ -104,6 +104,124 @@ def install_vigem_silently(msi_path: Optional[str] = None) -> Tuple[bool, str]:
 
 
 
+# Hardware Scan Codes (Set 1 Make Codes)
+SCAN_W      = 0x11
+SCAN_A      = 0x1E
+SCAN_S      = 0x1F
+SCAN_D      = 0x20
+SCAN_LSHIFT = 0x2A
+
+DIR_W   = 1 << 0
+DIR_A   = 1 << 1
+DIR_S   = 1 << 2
+DIR_D   = 1 << 3
+DIR_RUN = 1 << 4
+
+DIR_KEYS = (
+    (DIR_W, SCAN_W, "w"),
+    (DIR_A, SCAN_A, "a"),
+    (DIR_S, SCAN_S, "s"),
+    (DIR_D, SCAN_D, "d"),
+    (DIR_RUN, SCAN_LSHIFT, "shift"),
+)
+
+# Standard Gamepad / XInput Bitmask mappings
+BUTTON_BIT_MAPPINGS = (
+    (1 << 0, "A"),
+    (1 << 1, "B"),
+    (1 << 2, "X"),
+    (1 << 3, "Y"),
+    (1 << 4, "LB"),
+    (1 << 5, "RB"),
+    (1 << 6, "THUMBL"),
+    (1 << 7, "THUMBR"),
+    (1 << 8, "DPAD_UP"),
+    (1 << 9, "DPAD_DOWN"),
+    (1 << 10, "DPAD_LEFT"),
+    (1 << 11, "DPAD_RIGHT"),
+    (1 << 12, "START"),
+    (1 << 13, "BACK"),
+    (1 << 14, "GUIDE"),
+)
+
+
+class WASDTranslator:
+    """
+    Translates raw analog stick coordinates into 8-way WASD scan code injection.
+    Features radial deadzone, 45-degree sectoring, and sprint modifier (LShift).
+    """
+    __slots__ = ('_deadzone', '_run_threshold', '_prev_dir_mask')
+
+    def __init__(self, deadzone: int = 5000, run_threshold: int = 24000):
+        self._deadzone = deadzone
+        self._run_threshold = run_threshold
+        self._prev_dir_mask = 0
+
+    def resolve(self, axis_x: int, axis_y: int):
+        """
+        Translates raw stick coords (x, y in -32767..32767) into WASD key presses.
+        axis_y > 0 is UP, axis_y < 0 is DOWN.
+        """
+        mag = math.hypot(axis_x, axis_y)
+        current_mask = 0
+
+        if mag > self._deadzone:
+            angle = math.degrees(math.atan2(axis_y, axis_x))
+
+            # 8-Way Sectoring (45-degree slices)
+            if 67.5 <= angle < 112.5:
+                current_mask = DIR_W
+            elif 22.5 <= angle < 67.5:
+                current_mask = DIR_W | DIR_D
+            elif -22.5 <= angle < 22.5:
+                current_mask = DIR_D
+            elif -67.5 <= angle < -22.5:
+                current_mask = DIR_S | DIR_D
+            elif -112.5 <= angle < -67.5:
+                current_mask = DIR_S
+            elif -157.5 <= angle < -112.5:
+                current_mask = DIR_S | DIR_A
+            elif angle >= 157.5 or angle < -157.5:
+                current_mask = DIR_A
+            elif 112.5 <= angle < 157.5:
+                current_mask = DIR_W | DIR_A
+
+            # Check Sprint / Run Threshold
+            if mag >= self._run_threshold:
+                current_mask |= DIR_RUN
+
+        diff = current_mask ^ self._prev_dir_mask
+        if diff:
+            self._apply_diff(diff, current_mask)
+            self._prev_dir_mask = current_mask
+
+    def _apply_diff(self, diff: int, current_mask: int):
+        if not kbm_controller:
+            return
+        is_win32 = sys.platform == "win32"
+        for mask_bit, scan_code, key_name in DIR_KEYS:
+            if diff & mask_bit:
+                is_down = bool(current_mask & mask_bit)
+                if is_win32:
+                    try:
+                        import ctypes
+                        user32 = ctypes.windll.user32
+                        flags = 0x0008 if is_down else (0x0008 | 0x0002)  # KEYEVENTF_SCANCODE
+                        user32.keybd_event(0, scan_code, flags, 0)
+                        continue
+                    except Exception:
+                        pass
+                if is_down:
+                    kbm_controller.key_down(key_name)
+                else:
+                    kbm_controller.key_up(key_name)
+
+    def reset(self):
+        if self._prev_dir_mask:
+            self._apply_diff(self._prev_dir_mask, 0)
+            self._prev_dir_mask = 0
+
+
 class GamepadManager:
     """
     Unified Gamepad Engine.
@@ -112,7 +230,7 @@ class GamepadManager:
     """
 
     def __init__(self):
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.mode = "none" # "xinput" or "sendinput"
         self.x360: Optional[Any] = None
         self._button_map_vg: Dict[str, Any] = {}
@@ -125,32 +243,40 @@ class GamepadManager:
             "left": 0.0,
             "right": 0.0
         }
+        self.wasd_translator = WASDTranslator()
+        self._prev_buttons_mask = 0
 
-        # Fallback keybindings for SendInput mode
+        # Universal Web Game & Browser Mode: Dual-emits keyboard keystrokes for WebGL, Flash, Canvas & Native games
+        self.hybrid_mode: bool = True
+        self._hybrid_wasd_keys: Dict[str, bool] = {"up": False, "down": False, "left": False, "right": False}
+        self._hybrid_trigger_keys: Dict[str, bool] = {"left": False, "right": False}
+        self._held_fallback_keys = set()
+
+        # Fallback & Hybrid keybindings (covers web browser games, driving simulators, and standard PC titles)
         self.fallback_keymap = {
-            "A": "space",
-            "B": "c",
-            "X": "r",
-            "Y": "e",
-            "LB": "shift",
-            "RB": "f",
-            "LT": "right_click",
-            "RT": "left_click",
-            "DPAD_UP": "up",
-            "DPAD_DOWN": "down",
-            "DPAD_LEFT": "left",
-            "DPAD_RIGHT": "right",
-            "START": "esc",
-            "BACK": "tab",
-            "GUIDE": "win",
-            "THUMBL": "shift",
-            "THUMBR": "ctrl",
-            "1": "1",
-            "2": "2",
-            "3": "3",
-            "4": "4",
-            "TAB": "tab",
-            "ESC": "esc"
+            "A": ["space"],
+            "B": ["c"],
+            "X": ["r"],
+            "Y": ["e"],
+            "LB": ["shift", "q"],
+            "RB": ["f", "e"],
+            "LT": ["left", "a"],   # Brake / Reverse / Lean-Left for Web & PC Racing
+            "RT": ["right", "d"],  # Gas / Accelerate / Lean-Right for Web & PC Racing
+            "DPAD_UP": ["up", "w"],
+            "DPAD_DOWN": ["down", "s"],
+            "DPAD_LEFT": ["left", "a"],
+            "DPAD_RIGHT": ["right", "d"],
+            "START": ["esc"],
+            "BACK": ["tab"],
+            "GUIDE": ["win"],
+            "THUMBL": ["shift"],
+            "THUMBR": ["ctrl"],
+            "1": ["1"],
+            "2": ["2"],
+            "3": ["3"],
+            "4": ["4"],
+            "TAB": ["tab"],
+            "ESC": ["esc"]
         }
 
         self.init_backend()
@@ -257,8 +383,9 @@ class GamepadManager:
                     else:
                         self.x360.release_button(button=vg_btn)
                     self.x360.update()
-            else:
-                # SendInput fallback
+
+            # Universal Web Game & Browser Mode / SendInput Fallback
+            if self.hybrid_mode or self.mode != "xinput" or not self.x360:
                 self._handle_fallback_button(btn_upper, is_down)
 
     def set_trigger(self, trigger: str, value: float):
@@ -276,11 +403,14 @@ class GamepadManager:
                 else:
                     self.x360.right_trigger_float(value_float=val)
                 self.x360.update()
-            else:
-                # Fallback: trigger threshold > 0.4 triggers mouse clicks or keys
-                is_pressed = val > 0.4
-                btn_name = "LT" if key == "left" else "RT"
-                self._handle_fallback_button(btn_name, is_pressed)
+
+            # Universal Web Game & Browser Mode / SendInput Fallback
+            if self.hybrid_mode or self.mode != "xinput" or not self.x360:
+                is_pressed = val > 0.35
+                if is_pressed != self._hybrid_trigger_keys.get(key, False):
+                    self._hybrid_trigger_keys[key] = is_pressed
+                    btn_name = "LT" if key == "left" else "RT"
+                    self._handle_fallback_button(btn_name, is_pressed)
 
     def set_stick(self, stick: str, x: float, y: float):
         """
@@ -301,12 +431,14 @@ class GamepadManager:
                 elif stick_lower in ("right", "r", "r3"):
                     self.x360.right_joystick_float(x_value_float=clamped_x, y_value_float=clamped_y)
                 self.x360.update()
-            else:
-                # Fallback: Left stick maps to WASD, Right stick maps to mouse delta
+
+            # Universal Web Game & Browser Mode / SendInput Fallback
+            if self.hybrid_mode or self.mode != "xinput" or not self.x360:
                 if stick_lower in ("left", "l", "l3"):
                     self._handle_fallback_wasd(clamped_x, clamped_y)
                 elif stick_lower in ("right", "r", "r3"):
-                    self._handle_fallback_aim(clamped_x, clamped_y)
+                    if self.mode != "xinput" or not self.x360:
+                        self._handle_fallback_aim(clamped_x, clamped_y)
 
     def apply_gyro_steer(self, steer_val: float):
         """
@@ -341,6 +473,47 @@ class GamepadManager:
             else:
                 self._handle_fallback_aim(clamped_x, clamped_y)
 
+    def sync_button_bitmask(self, buttons_mask: int):
+        """
+        Synchronizes 16-bit packed button bitmask to virtual controller or fallback keys.
+        Processes diff bits in sub-microsecond bitwise operations.
+        """
+        diff = buttons_mask ^ self._prev_buttons_mask
+        if not diff:
+            return
+        for bit, btn_name in BUTTON_BIT_MAPPINGS:
+            if diff & bit:
+                is_down = bool(buttons_mask & bit)
+                self.set_button(btn_name, is_down)
+        self._prev_buttons_mask = buttons_mask
+
+    def handle_hybrid_frame(self, flags: int, buttons: int, lx: int, ly: int, mdx: int, mdy: int):
+        """
+        Sub-millisecond processor for 12-byte OP_GAMEPAD_HYBRID frames.
+        Atomic dispatch: Left Stick (WASD/XInput) + Right Thumb (Mouse Aim) + Buttons.
+        """
+        # 1. Sync button states
+        if buttons != self._prev_buttons_mask:
+            self.sync_button_bitmask(buttons)
+
+        # 2. Locomotion & Camera
+        if self.mode == "xinput" and self.x360:
+            self.ensure_x360_connected()
+            with self.lock:
+                self.x360.left_joystick_float(x_value_float=lx / 32767.0, y_value_float=ly / 32767.0)
+                self.x360.update()
+            if mdx != 0 or mdy != 0:
+                if kbm_controller:
+                    kbm_controller.move_relative(mdx, mdy)
+        else:
+            # Zero-driver SendInput mode:
+            # Left stick -> 8-way WASD sectoring with sprint
+            self.wasd_translator.resolve(lx, ly)
+            # Right swipe -> Direct relative mouse delta
+            if mdx != 0 or mdy != 0:
+                if kbm_controller:
+                    kbm_controller.move_relative(mdx, mdy)
+
     def reset_all(self):
         """Resets all sticks and buttons to neutral rest state."""
         with self.lock:
@@ -350,12 +523,40 @@ class GamepadManager:
                     self.x360.update()
                 except Exception:
                     pass
+            self.wasd_translator.reset()
+            self._prev_buttons_mask = 0
             self._button_states.clear()
             self._axis_states = {"left": (0.0, 0.0), "right": (0.0, 0.0)}
             self._trigger_states = {"left": 0.0, "right": 0.0}
 
+            # Release any active hybrid or fallback keystrokes
+            if kbm_controller:
+                for k in list(self._held_fallback_keys):
+                    try:
+                        kbm_controller.key_up(k)
+                    except Exception:
+                        pass
+            self._held_fallback_keys.clear()
+            self._hybrid_wasd_keys = {"up": False, "down": False, "left": False, "right": False}
+            self._hybrid_trigger_keys = {"left": False, "right": False}
+
+    def set_hybrid_mode(self, enabled: bool):
+        """Toggles universal dual-emission (emits keyboard keystrokes alongside virtual controller for browser and PC games)."""
+        with self.lock:
+            self.hybrid_mode = bool(enabled)
+            if not self.hybrid_mode:
+                if kbm_controller:
+                    for k in list(self._held_fallback_keys):
+                        try:
+                            kbm_controller.key_up(k)
+                        except Exception:
+                            pass
+                self._held_fallback_keys.clear()
+                self._hybrid_wasd_keys = {"up": False, "down": False, "left": False, "right": False}
+                self._hybrid_trigger_keys = {"left": False, "right": False}
+
     # -----------------------------------------------------------------------
-    # SendInput Fallback Helpers
+    # SendInput Fallback & Universal Web Game Helpers
     # -----------------------------------------------------------------------
 
     def _handle_fallback_button(self, btn: str, is_down: bool):
@@ -365,48 +566,29 @@ class GamepadManager:
         if not mapped:
             return
 
-        if mapped == "left_click":
-            if is_down:
-                kbm_controller.mouse_down("left")
+        keys = mapped if isinstance(mapped, (list, tuple)) else [mapped]
+        for key in keys:
+            if key == "left_click":
+                if is_down:
+                    kbm_controller.mouse_down("left")
+                else:
+                    kbm_controller.mouse_up("left")
+            elif key == "right_click":
+                if is_down:
+                    kbm_controller.mouse_down("right")
+                else:
+                    kbm_controller.mouse_up("right")
             else:
-                kbm_controller.mouse_up("left")
-        elif mapped == "right_click":
-            if is_down:
-                kbm_controller.mouse_down("right")
-            else:
-                kbm_controller.mouse_up("right")
-        else:
-            if is_down:
-                kbm_controller.key_down(mapped)
-            else:
-                kbm_controller.key_up(mapped)
+                if is_down:
+                    kbm_controller.key_down(key)
+                    self._held_fallback_keys.add(key)
+                else:
+                    kbm_controller.key_up(key)
+                    self._held_fallback_keys.discard(key)
 
     def _handle_fallback_wasd(self, x: float, y: float):
-        """Maps left stick deflection to WASD keys."""
-        if not kbm_controller:
-            return
-        threshold = 0.25
-        # W / S (y is positive up, negative down)
-        if y > threshold:
-            kbm_controller.key_down("w")
-            kbm_controller.key_up("s")
-        elif y < -threshold:
-            kbm_controller.key_down("s")
-            kbm_controller.key_up("w")
-        else:
-            kbm_controller.key_up("w")
-            kbm_controller.key_up("s")
-
-        # A / D
-        if x > threshold:
-            kbm_controller.key_down("d")
-            kbm_controller.key_up("a")
-        elif x < -threshold:
-            kbm_controller.key_down("a")
-            kbm_controller.key_up("d")
-        else:
-            kbm_controller.key_up("a")
-            kbm_controller.key_up("d")
+        """Maps left stick deflection to WASD keys via 8-way sectoring."""
+        self.wasd_translator.resolve(int(round(x * 32767.0)), int(round(y * 32767.0)))
 
     def _handle_fallback_aim(self, x: float, y: float):
         """Maps right stick deflection to smooth mouse look."""

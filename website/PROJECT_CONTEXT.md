@@ -274,15 +274,20 @@ Before committing or releasing updates:
 
 ## 12. Wireless Debugging & Persistent Device Profile
 
-- **Primary Test Device**: `Motorola moto g35 5G` (`manila_g` / `manila`)
-- **Paired Hostname**: `greson@surma`
-- **Device LAN IP**: `10.23.32.178` (Subnet `10.23.32.0/24`)
-- **Pairing Key / GUID**: `adb-ZD222QY2JF-Cnk1ww`
-- **Active Wireless ADB Port**: `36589`
-- **Persistent Port Target**: `5555`
+- **Primary Test Devices**:
+  - **Realme Narzo 50i (`RMX3231`)**:
+    - **OS / API**: Android 11 (API 30, Realme UI R Edition).
+    - **Screen**: 720×1600 (360 dpi), Landscape 1600×720.
+    - **RF Band**: 2.4 GHz (Channel 3, 2422 MHz, 65 Mbps link speed).
+    - **Pairing Architecture**: Android 11+ dual-port wireless security (ephemeral pairing port for `adb pair <ip>:<pair_port> <code>`, followed by connect on active wireless debugging port via `adb connect <ip>:<connect_port>`).
+    - **Persistent Endpoint Cache**: Cached in `last_wireless_adb.txt` with sub-second auto-reconnect on daemon restarts.
+  - **Motorola moto g35 5G (`manila_g` / `manila`)**:
+    - **Device LAN IP**: `10.23.32.178` (Subnet `10.23.32.0/24`)
+    - **Pairing Key / GUID**: `adb-ZD222QY2JF-Cnk1ww`
+    - **Active Wireless ADB Port**: `36589`
 - **Standard One-Click Wireless Deploy Command**:
   ```powershell
-  adb connect 10.23.32.178:36589; adb push PCDeck.apk /data/local/tmp/PCDeck.apk; adb shell pm install -r -d /data/local/tmp/PCDeck.apk; adb shell am start -n com.neontrack.mouse/.MainActivity
+  adb connect <ip>:<port>; adb push PCDeck.apk /data/local/tmp/PCDeck.apk; adb shell pm install -r -d /data/local/tmp/PCDeck.apk; adb shell am start -n com.pcdeck.app/.MainActivity
   ```
 
 ---
@@ -356,9 +361,32 @@ Before committing or releasing updates:
   1. **On-Screen Streaming Gamepad HUD (`#screen-gamepad-overlay`)**:
      - **Use Case**: Remote Play / Handheld PC Gaming.
      - Designed for users streaming the PC screen directly to their phone display who want on-screen controls floating over the live 60 FPS video (similar to Steam Link or mobile cloud gaming).
-  2. **Dedicated Wireless Gamepad (`#gamepad-container`)**:
+     - **HUD Scale-Invariant Dragging Engine**:
+       - Eliminates visual coordinate jumping and drift caused by `getBoundingClientRect()` scale compounding on scaled elements (`transform: scale(s)`).
+       - Tracks element center in container space: `curCenterX = (rect.left + rect.width / 2) - containerRect.left`.
+       - Calculates unscaled DOM placement: `domLeft = curCenterX - (offsetWidth / 2)`, storing normalized percentages.
+       - Disables CSS transitions during drag (`.hud-elem.is-dragging { transition: none !important; }`).
+       - New buttons spawn precisely at viewport dead-center without jumping.
+     - **Add Key Modal Overhaul (`#hud-add-btn-modal`)**:
+       - Replaced cramped, shrunken 1-column layout with a 4-column auto-fill responsive grid (`repeat(auto-fill, minmax(96px, 1fr))`) constrained by `width: 100% !important`.
+       - Tactical 2-line badges (`.hud-key-pick-btn`): Top line bold primary PC key (`FIRE`, `AIM`, `SPACE`), bottom line neon-cyan controller/mouse mapping (`M-LEFT / RT`, `JUMP / A`).
+  2. **Dedicated Wireless Gamepad (`#gamepad-container.modern-gamepad-deck`)**:
      - **Use Case**: Couch Controller for PC Monitor or TV.
-     - Designed for users sitting in front of their PC or TV who use their phone purely as a wireless physical controller without needing video streaming.
+     - **1-to-1 Ergonomic Layout Alignment (User Specification)**:
+       - **Left Pod (`.gp-deck-left`)**:
+         - Top: Primary Analog Stick (dark navy disc, `#ffd700` gold glowing border, `#0284c7` blue thumb with center dot).
+         - Bottom: D-Pad diamond (4 circular buttons, gold borders, cyan directional arrows).
+         - Bottom-Left Corner: Notched `LT` trigger block (angled top-right chamfer, blue fill, gold border, vertically stacked white "L" over "T").
+       - **Center Pod (`.gp-deck-center`)**:
+         - Top: `LSHLDR` & `RSHLDR` pill buttons (blue gradient, gold border, bold white text).
+         - Mid: Circular View `[⧉]` & Menu `[≡]` buttons (gold borders, cyan icons).
+       - **Right Pod (`.gp-deck-right`)**:
+         - Top: `ABXY` diamond (gold borders; `Y` olive/yellow, `X` navy/blue, `B` burgundy/red, `A` forest/green).
+         - Bottom: Secondary Analog Stick shifted inward (gold border, blue thumb).
+         - Bottom-Right Corner: Notched `RT` trigger block (angled top-left chamfer, blue fill, gold border, vertically stacked white "R" over "T").
+     - **Console Menu & Options Modal (`#gp-console-menu-modal`)**:
+       - Cleans screen clutter by tucking all secondary controls into a dedicated modal opened by tapping Menu `[≡]`.
+       - Houses: Layout Presets (Xbox 360, PlayStation, Racing, WASD/FPS), Gyro Motion Sensor (1-Tap Center, Active toggle, Settings), Hardware Controls (Sensitivity `1.0x`/`1.5x`/`2.0x`, Haptics toggle, Edit Layout), and Return to Trackpad.
 - **Driverless SendInput Input Architecture (Store & Anti-Cheat Safe)**:
   - **Zero-Driver Requirement**: To ensure 100% compliance with Microsoft Store MSIX guidelines (Policy 10.2.9) and prevent bans from PC game anti-cheats (Easy Anti-Cheat, BattlEye, Ricochet, VAC), PCDeck does not require kernel-mode drivers (`ViGEmBus.sys`).
   - **Input Emulation Standard**:
@@ -558,4 +586,147 @@ Before committing or releasing updates:
     - Never delete `drivers/UnityCaptureFilter64.dll` or unbind `pyvirtualcam`.
     - Always bundle `drivers;drivers` in `build_exe.py` and `PCDeck.spec`.
     - Maintain `/ws/cam` streaming, standby frames, and aspect-ratio preserving fit.
+
+---
+
+## 26. Touch Gesture Engine Calibration & Drag State Machine (v2.7.1)
+
+- **Single-Finger Tap (<220ms, <8px movement)**: Dispatches Left Click (`sendBinaryClick('left')`).
+- **Single-Finger Long Press (350ms hold, <14px movement)**:
+  - Dispatches `sendBinaryMoveAbs(curNorm.x, curNorm.y)` followed by `sendBinaryTouchDown(curNorm.x, curNorm.y, 'left')`.
+  - Sets `isLongPressTriggered = true` and `isLongPressDrag = true` with haptic feedback (`vibrate(40)`) and visual indicator ("Drag to Move ✋").
+  - Subsequent single-finger dragging dispatches real-time coordinates upstream via `sendBinaryTouchMove(curNorm.x, curNorm.y)`.
+  - Releasing finger in `touchend` immediately sends `sendBinaryTouchUp(norm.x, norm.y, 'left')` with drop confirmation haptics (`vibrate(30)`).
+- **Two-Finger Tap**: Dispatches Right Click (`sendBinaryClick('right')`) with dual-touch haptic confirmation.
+- **Dedicated Scroll Strip / Multi-Touch Pan**: Dispatches calibrated `sendBinaryScroll(0, dy)` wheel steps.
+
+---
+
+## 27. Android SDK & APK Package Invariants (Android 5.0 to 16+ Compatibility)
+
+- **Version Strategy & Build Directives**:
+  - `minSdkVersion="21"`: Guarantees installability and runtime execution on **Android 5.0 (Lollipop)** through Android 16+ without deprecation blocks.
+  - `targetSdkVersion="34"`: Strictly targets stable **Android 14 LTS**.
+    - **Never** set `targetSdkVersion` to unreleased preview SDK levels (such as API 36 during dev previews), which triggers `INSTALL_PARSE_FAILED_NOT_APK` ("Package appears to be invalid") on consumer Android 10–15 devices.
+    - Android 15 & 16 use official backward-compatibility shims to run `targetSdkVersion 34` apps seamlessly.
+    - Satisfies Android 14+ minimum target SDK sideload security rules (which reject apps with `targetSdkVersion < 24`).
+- **Zero Native ELF `.so` Library Invariant**:
+  - `PCDeck.apk` contains pure `classes.dex` bytecode, Android XML resources, and HTML5 assets running inside the system Chromium WebView.
+  - Contains zero native C/C++ `.so` files in `lib/`.
+  - Immune to Android 15/16 16KB page-size memory alignment rejections and CPU architecture incompatibilities (100% universal across ARM64, ARMv7, x86, and x86_64).
+  - Do **not** re-add `android:extractNativeLibs="false"` to `AndroidManifest.xml` as it causes package parse errors on several OEM Android variants (Samsung OneUI, Xiaomi HyperOS).
+- **Signing & Alignment Pipeline**:
+  - 4-byte aligned via `zipalign -v 4`.
+  - Multi-scheme signed via `apksigner`: v1 (JAR signing), v2 (APK Signature Scheme v2), and v3 (APK Signature Scheme v3) using SHA-256 with 2048-bit RSA keys (`pcdeck_release.keystore`).
+- **Dynamic API Level Branching**:
+  - All Android OS features in [MainActivity.java](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/android_app/src/com/pcdeck/app/MainActivity.java) are guarded with explicit `Build.VERSION.SDK_INT` runtime checks:
+    - API 21+ (Android 5.0): Hardware-accelerated WebView, basic fullscreen flags, install-time permissions.
+    - API 23+ (Android 6.0): Dynamic runtime permission requests (`CAMERA`, `RECORD_AUDIO`, `STORAGE`).
+    - API 26+ (Android 8.0): Adaptive notification channels and background priority.
+    - API 29+ (Android 10): Scoped storage transitions and Wi-Fi low-latency lock (`WIFI_MODE_FULL_LOW_LATENCY`).
+    - API 33+ (Android 13): Granular media permissions (`READ_MEDIA_IMAGES`, `POST_NOTIFICATIONS`).
+    - API 34+ (Android 14): Edge-to-edge system bar insets and predictive back gestures.
+
+---
+
+## 28. Universal Multi-Browser & Multi-OS Web Controller Compatibility
+
+- **Direct Web Access (`http://<PC-IP>:8000`)**:
+  - Operates purely on standard HTML5, CSS3, Pointer Events, and WebSockets.
+  - Requires zero software installation on the remote client device.
+- **Cross-Platform Compatibility Matrix**:
+  - **Android Browsers (Chrome, Samsung Internet, Firefox, Edge)**: 100% touch, trackpad, screen streaming, audio streaming, macros, gamepad, and haptic feedback.
+  - **iOS / iPadOS Safari & Chrome**: 100% trackpad, gestures, macros, gamepad, and screen streaming. PC audio loopback unlocked on first user tap (`AudioContext` autoplay policy). Haptic vibration (`navigator.vibrate`) gracefully skipped per Apple WebKit constraints.
+  - **Windows, macOS, Linux Browsers (Chrome, Edge, Firefox, Brave, Safari)**: 100% remote trackpad, keyboard, macros, media controls, screen streaming, and audio streaming.
+  - **Smart TVs & Gaming Consoles (PS5, Xbox, Samsung Tizen)**: 100% browser pointer & screen view support.
+- **PWA Standalone Mode**:
+  - Supports "Add to Home Screen" on both iOS and Android for borderless, full-screen native-like operation (`apple-mobile-web-app-capable: yes`, `manifest.json`).
+- **Hardware Sink vs. Web Sandbox Invariant**:
+  - Direct browser camera/mic requires a Secure Context (HTTPS or localhost) due to browser WebRTC policies.
+  - The native Android APK (`PCDeck.apk`) uses direct Android SDK APIs (`android.hardware.camera2`, `AudioRecord`), completely bypassing browser HTTP sandbox restrictions.
+
+---
+
+## 29. 2.4 GHz USB Wi-Fi Dongle Adaptive Latency Engine & RF Hardening
+
+- **Physical Bottlenecks on 2.4 GHz USB Dongles (RTL8188FTV / MT7601U)**:
+  - **Co-Channel Interference**: 2.4 GHz spectrum has only 3 non-overlapping channels (1, 6, 11) crowded by neighboring routers and Bluetooth devices.
+  - **USB 3.0 Radio Frequency Interference (RFI)**: Unshielded USB 3.0 ports emit broad-spectrum RF noise around 2.4 GHz–2.5 GHz directly into nano-dongle antennas, causing packet drops and sudden latency spikes up to 200ms+.
+  - **Dongle Thermal Throttling**: Compact nano-dongles have minimal thermal dissipation, dropping frames under sustained high-throughput transmission.
+- **Closed-Loop ACK Drop Timeout Invariant**:
+  - In dynamic Wi-Fi QoS scaling (`WiFiLatencyManager`), the ACK drop timeout must **never** exceed the inter-frame capture interval:
+    $$\text{timeout} \le 0.85 \times \left(\frac{1000}{\text{target\_fps}}\right)$$
+  - Prevents the desktop capture loop from stalling during packet delivery delays, maintaining steady 20–30 FPS flow without visual hitching.
+- **Dynamic Auto-ABR RTT-Aware Pacing**:
+  - Under high RTT (>80ms) on 2.4 GHz networks, the stream encoder steps down FPS and compression quality progressively (60 -> 30 -> 24 -> 20 -> 15 FPS), immediately relieving airtime pressure and preserving low-latency control responsiveness.
+
+---
+
+## 30. Android 11+ Wireless ADB Pairing & Connection Resilience
+
+- **Dual-Port Pairing Architecture**:
+  - Android 11+ separates the dynamic pairing port (used once with a 6-digit code for `adb pair <ip>:<pair_port> <code>`) from the persistent wireless connection port (`adb connect <ip>:<connect_port>`).
+  - Desktop pairing dialogs support dual-field entry and two-phase dispatch, eliminating connection failures caused by connecting to the pairing port.
+- **Persistent Wireless ADB Endpoint Cache (`last_wireless_adb.txt`)**:
+  - Caches the last verified wireless endpoint on the host machine.
+  - On ADB daemon restarts or USB unplugs, `adb_preflight()` automatically checks and reconnects to the cached wireless device in <500ms.
+- **Unsuppressed Interactive scrcpy Mirroring**:
+  - `server/main.py` launches `scrcpy.exe` with standard process flags (`creationflags=0`), ensuring the SDL3 device mirror window renders interactively without silent background suppression.
+
+---
+
+## 31. Universal Web Game Dual-Emission Engine & Minimalist Console Gamepad
+
+- **Web Browser Game Input Mechanics (HTML5 Canvas, WebGL & Native Titles)**:
+  - Web browser games execute inside standard browser contexts (Chrome, Edge, Firefox).
+  - These games exclusively listen to browser DOM `keydown` / `keyup` events (`ArrowRight`/`D` for Throttle, `ArrowLeft`/`A` for Brake/Reverse, `Space` for Jump/Handbrake).
+  - Virtual Xbox 360 controller packets (`XUSB_REPORT`) via ViGEmBus driver are not recognized by HTML5 games lacking explicit HTML5 Gamepad API polling loops.
+- **Universal Dual-Emission Architecture (`gamepad_manager.hybrid_mode`)**:
+  - Automatically dual-emits both virtual Xbox 360 controller packets (via ViGEmBus) AND Windows SendInput keyboard events:
+    - **Right Trigger (RT / Gas)**: Sends `Right Arrow` and `D` keystrokes.
+    - **Left Trigger (LT / Brake)**: Sends `Left Arrow` and `A` keystrokes.
+    - **D-Pad Right / Left**: Sends `Right Arrow` / `Left Arrow` and `D` / `A`.
+    - **D-Pad Up / Down**: Sends `Up Arrow` / `Down Arrow` and `W` / `S`.
+    - **A / Cross Button**: Sends `Space` (Jump / Select).
+    - **B / Circle Button**: Sends `C` / `Escape`.
+    - **Analog Left Stick**: Resolves stick deflection into directional keystrokes in real time.
+  - Zero game interference: Held keys are tracked in a dedicated thread-safe set (`_held_fallback_keys`) and reliably cleared on button release or `reset_all()`.
+- **Pure Minimalist Console Deck (Exact 1:1 Layout Spec)**:
+  - Gamepad interface displays strictly 8 primary control clusters with zero on-screen clutter:
+    1. Left Analog Stick (disc)
+    2. D-Pad (4 circular diamond buttons)
+    3. Inset LT Trigger (bottom-left)
+    4. LSHLDR & RSHLDR pill buttons (top center)
+    5. Circular View `[⧉]` & Menu `[≡]` buttons (mid center)
+    6. ABXY Diamond (top right)
+    7. Right Analog Stick (disc)
+    8. Inset RT Trigger (bottom-right)
+  - All secondary buttons (L3, R3, trackpad strips, header, docks, layout presets, sensitivity, haptics, layout editor, return to trackpad) are completely housed within the Menu `[≡]` modal (`#gp-console-menu-modal`).
+
+---
+
+## 32. Gamepad Standalone Architecture, Zero-Snapping Layout Editor & Ergonomic Corner Insets
+
+- **Dedicated Gamepad Section (`#tab-gamepad`)**:
+  - `#gamepad-container` moved completely out of `#tab-trackpad` into its own standalone `<section id="tab-gamepad" class="tab-view">`.
+  - `#tab-trackpad` is 100% clean and dedicated to mouse touchpad operations with zero joystick/gamepad options or bleed-through.
+  - Dock and header switching triggers `switchTab('tab-gamepad')` and `switchTab('tab-trackpad')` cleanly with auto activation/deactivation.
+- **Prominent Close Joystick Actions**:
+  - Added full-width, high-contrast `[✕ CLOSE JOYSTICK / EXIT TO TRACKPAD]` button at the very top of `#gp-console-menu-modal`.
+  - Added dedicated `[Close Joystick]` button in `#gp-editor-toolbar`.
+  - Maintained `[← Return to Trackpad]` in bottom modal footer; all handlers synchronously call `closeGpConsoleMenu()`, `setGamepadMode(false)`, and `switchTab('tab-trackpad')`.
+- **Zero-Snapping & Scale-Invariant Drag Engine**:
+  - Fixed position context: Changed `.gp-deck-side` and `.gp-deck-center` to `position: static` (with `margin-top: auto` for bottom pods).
+  - Adopted proven HUD center-delta dragging algorithm (`elemCenter = (rect.left + rect.width / 2) - containerRect.left; newCenter = elemCenter + (e.clientX - startPointer.x)`).
+  - Eliminates DOM offset parent mismatch; eliminates snapping, jumping, and scale-distortion on drag.
+- **Ergonomic Corner Insets & Button Spacing**:
+  - Inset corner triggers (`.gp-corner-trigger`) away from physical phone corners (`bottom: clamp(10px, 2.2vh, 20px); left/right: clamp(14px, 2.8vw, 26px)`).
+  - Removed sharp polygon clip paths and added `border-radius: 14px` for comfortable thumb rest.
+  - Increased `.modern-gamepad-deck` padding and pod margins to eliminate bezel-crowding on modern smartphones.
+- **Universal Mode Branding**:
+  - Completely purged casual/external site mentions ("Poki"); renamed presets and status to `Universal (Web & PC)` and `UNIVERSAL HYBRID (WEB + PC)`.
+
+
+
+
 

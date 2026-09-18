@@ -111,6 +111,18 @@ VK_MAP = {
     'f12': 0x7B,
 }
 
+# Win32 Extended Keys requiring KEYEVENTF_EXTENDEDKEY (0x0001) flag
+EXTENDED_KEYS = {
+    'up', 'down', 'left', 'right',
+    'dpad_up', 'dpad_down', 'dpad_left', 'dpad_right',
+    'insert', 'ins', 'delete', 'del',
+    'home', 'end', 'pageup', 'pgup', 'pagedown', 'pgdn',
+    'win', 'windows', 'cmd',
+    'printscreen', 'prtsc', 'numlock',
+    'num_div', 'num_slash', 'numpad_divide', 'numpad_enter', 'num_enter',
+    'play_pause', 'prev', 'next', 'stop', 'vol_mute', 'vol_down', 'vol_up',
+}
+
 if _IS_WIN32:
     # Win32 Structures for SendInput
     class MOUSEINPUT(ctypes.Structure):
@@ -444,26 +456,28 @@ class WindowsInputController:
     def key_down(self, key_name: str):
         """Press down a key."""
         k = key_name.lower()
+        flags = KEYEVENTF_EXTENDEDKEY if k in EXTENDED_KEYS else 0
         if k in VK_MAP:
             vk = VK_MAP[k]
             scan = user32.MapVirtualKeyW(vk, 0) if user32 else 0
-            user32.keybd_event(vk, scan, 0, 0)
+            user32.keybd_event(vk, scan, flags, 0)
         elif len(k) == 1:
             vk = (user32.VkKeyScanW(ord(k)) & 0xFF) if user32 else 0
             scan = user32.MapVirtualKeyW(vk, 0) if user32 else 0
-            user32.keybd_event(vk, scan, 0, 0)
+            user32.keybd_event(vk, scan, flags, 0)
 
     def key_up(self, key_name: str):
         """Release a key."""
         k = key_name.lower()
+        flags = KEYEVENTF_KEYUP | (KEYEVENTF_EXTENDEDKEY if k in EXTENDED_KEYS else 0)
         if k in VK_MAP:
             vk = VK_MAP[k]
             scan = user32.MapVirtualKeyW(vk, 0) if user32 else 0
-            user32.keybd_event(vk, scan, KEYEVENTF_KEYUP, 0)
+            user32.keybd_event(vk, scan, flags, 0)
         elif len(k) == 1:
             vk = (user32.VkKeyScanW(ord(k)) & 0xFF) if user32 else 0
             scan = user32.MapVirtualKeyW(vk, 0) if user32 else 0
-            user32.keybd_event(vk, scan, KEYEVENTF_KEYUP, 0)
+            user32.keybd_event(vk, scan, flags, 0)
 
     def key_press(self, key_name: str):
         """Press and release a key with virtual key mapping and unicode character fallback."""

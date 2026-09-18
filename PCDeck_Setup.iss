@@ -31,7 +31,6 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
-PrivilegesRequiredOverridesAllowed=dialog
 CloseApplications=no
 RestartApplications=no
 DisableWelcomePage=no
@@ -57,9 +56,12 @@ Source: "drivers\*"; DestDir: "{app}\drivers"; Flags: ignoreversion recursesubdi
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\PCDeck.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\PCDeck.ico"; Tasks: desktopicon
+Name: "{autostartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--tray"; IconFilename: "{app}\PCDeck.ico"; Tasks: startupicon
 
 [Registry]
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#MyAppName}"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: startupicon
+; Explicitly purge any legacy HKLM / HKCU Run registry entries to prevent duplicate/triple launches
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "{#MyAppName}"; Flags: uninsdeletevalue deletevalue
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "{#MyAppName}"; Flags: uninsdeletevalue deletevalue
 Root: HKCU; Subkey: "Software\Classes\CLSID\{{5C2CD55C-92AD-4999-8666-912BD3E70010}"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\CLSID\{{860BB310-5D01-11D0-BD3B-00A0C911CE86}\Instance\{{5C2CD55C-92AD-4999-8666-912BD3E70010}"; Flags: uninsdeletekey
 
@@ -74,6 +76,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 ; 0. Forcibly close running PCDeck instance so Windows can delete all files cleanly
 Filename: "taskkill.exe"; Parameters: "/F /IM {#MyAppExeName}"; Flags: runhidden
 Filename: "taskkill.exe"; Parameters: "/F /FI ""IMAGENAME eq PCDeck*"""; Flags: runhidden
+Filename: "schtasks.exe"; Parameters: "/delete /tn ""PCDeck"" /f"; Flags: runhidden
 
 ; 1. Remove Windows Defender Firewall rule
 Filename: "netsh.exe"; Parameters: "advfirewall firewall delete rule name=""PCDeck"""; Flags: runhidden

@@ -15,6 +15,7 @@ import socket
 import sys
 import threading
 import time
+from dataclasses import dataclass
 from typing import Optional, Set, Dict, Any, Tuple
 
 try:
@@ -24,6 +25,86 @@ except ImportError:
         import wifi_manager
     except ImportError:
         wifi_manager = None
+
+
+@dataclass(slots=True, frozen=True)
+class QualityProfile:
+    name: str
+    target_fps: int
+    video_bitrate_kbps: int
+    max_frame_buffer_kb: int
+    drop_threshold_s: float  # In seconds for asyncio.wait_for
+
+
+PROFILE_ULTRA = QualityProfile(
+    name="5GHz Ultra",
+    target_fps=60,
+    video_bitrate_kbps=8000,
+    max_frame_buffer_kb=32,
+    drop_threshold_s=0.014   # ~14ms (< 16.6ms frame budget)
+)
+PROFILE_BALANCED = QualityProfile(
+    name="2.4GHz Balanced",
+    target_fps=30,
+    video_bitrate_kbps=2500,
+    max_frame_buffer_kb=24,
+    drop_threshold_s=0.028   # ~28ms (< 33.3ms frame budget)
+)
+PROFILE_SURVIVAL = QualityProfile(
+    name="2.4GHz Resilient",
+    target_fps=20,
+    video_bitrate_kbps=1000,
+    max_frame_buffer_kb=16,
+    drop_threshold_s=0.040   # ~40ms (< 50.0ms frame budget; prevents loop stalls)
+)
+
+
+class AdaptiveQoSEngine:
+    __slots__ = ('_rtt_samples', '_current_profile', '_last_upgrade_time')
+
+    def __init__(self):
+        self._rtt_samples = []
+        self._current_profile = PROFILE_BALANCED
+        self._last_upgrade_time = time.monotonic()
+
+    def record_rtt(self, rtt_ms: float) -> QualityProfile:
+        self._rtt_samples.append(float(rtt_ms))
+        if len(self._rtt_samples) > 10:
+            self._rtt_samples.pop(0)
+
+        if len(self._rtt_samples) < 3:
+            return self._current_profile
+
+        avg_rtt = sum(self._rtt_samples) / len(self._rtt_samples)
+        jitter = max(self._rtt_samples) - min(self._rtt_samples)
+        now = time.monotonic()
+
+        # 1. IMMEDIATE DOWNGRADE PATH (Zero Hysteresis on Congestion)
+        if avg_rtt > 55.0 or jitter > 40.0:
+            if self._current_profile != PROFILE_SURVIVAL:
+                self._current_profile = PROFILE_SURVIVAL
+                self._last_upgrade_time = now
+            return self._current_profile
+
+        if (avg_rtt > 22.0 or jitter > 15.0) and self._current_profile == PROFILE_ULTRA:
+            self._current_profile = PROFILE_BALANCED
+            self._last_upgrade_time = now
+            return self._current_profile
+
+        # 2. CONSERVATIVE UPGRADE PATH (Requires 3.0s sustained stability)
+        if now - self._last_upgrade_time > 3.0:
+            if self._current_profile == PROFILE_SURVIVAL and avg_rtt <= 50.0 and jitter <= 25.0:
+                self._current_profile = PROFILE_BALANCED
+                self._last_upgrade_time = now
+            elif self._current_profile == PROFILE_BALANCED and avg_rtt < 20.0 and jitter < 12.0:
+                self._current_profile = PROFILE_ULTRA
+                self._last_upgrade_time = now
+
+        return self._current_profile
+
+    @property
+    def active_profile(self) -> QualityProfile:
+        return self._current_profile
 
 
 class WiFiLatencyManager:
@@ -38,6 +119,7 @@ class WiFiLatencyManager:
         self._smoothed_rtt_ms: float = 25.0
         self._last_rtt_update: float = time.time()
         self._last_activity_time: float = time.time()
+        self.qos_engine = AdaptiveQoSEngine()
 
         # Auto-heal on startup: restore any leftover disabled WLAN autoconfig state
         self.startup_auto_heal()
@@ -62,11 +144,17 @@ class WiFiLatencyManager:
         with self._lock:
             return self._smoothed_rtt_ms
 
-    def update_measured_rtt(self, rtt_ms: float) -> None:
-        """Update exponential moving average of client RTT for dynamic pacing."""
+    @property
+    def active_profile(self) -> QualityProfile:
+        with self._lock:
+            return self.qos_engine.active_profile
+
+    def update_measured_rtt(self, rtt_ms: float) -> QualityProfile:
+        """Update exponential moving average of client RTT for dynamic pacing and evaluate QoS tier."""
         with self._lock:
             self._smoothed_rtt_ms = (self._smoothed_rtt_ms * 0.7) + (max(1.0, float(rtt_ms)) * 0.3)
             self._last_rtt_update = time.time()
+            return self.qos_engine.record_rtt(rtt_ms)
 
     def get_adaptive_ack_timeout(self) -> float:
         """Returns safe timeout before treating an ACK as dropped (scaled with RTT)."""
@@ -74,6 +162,11 @@ class WiFiLatencyManager:
             rtt_sec = self._smoothed_rtt_ms / 1000.0
             # Wait at least 350ms, or 2.5x smoothed RTT (up to 1.5s max)
             return min(1.5, max(0.35, 2.5 * rtt_sec))
+
+    def get_frame_drop_timeout(self) -> float:
+        """Returns in-flight frame ACK drop threshold in seconds from active QoS profile."""
+        with self._lock:
+            return self.qos_engine.active_profile.drop_threshold_s
 
     def get_hardware_info(self) -> Dict[str, Any]:
         """Detects current physical Wi-Fi hardware adapter, band (2.4G/5G/6G), and link speed."""
@@ -135,12 +228,22 @@ class WiFiLatencyManager:
     def get_network_health(self) -> Dict[str, Any]:
         """
         Calculates honest, dynamic network health metrics based on live RTT,
-        jitter, and connection recency with physical hardware stats.
+        jitter, and connection recency with physical hardware stats and active QoS profile.
         """
         hw = self.get_hardware_info()
         with self._lock:
             rtt = self._smoothed_rtt_ms
             age = time.time() - self._last_rtt_update
+            prof = self.qos_engine.active_profile
+
+        profile_info = {
+            "name": prof.name,
+            "target_fps": prof.target_fps,
+            "video_bitrate_kbps": prof.video_bitrate_kbps,
+            "max_frame_buffer_kb": prof.max_frame_buffer_kb,
+            "drop_threshold_s": prof.drop_threshold_s,
+            "drop_threshold_ms": round(prof.drop_threshold_s * 1000.0, 1),
+        }
 
         # If no RTT measurement received in last 10 seconds, client is not actively pinging
         if age > 10.0:
@@ -152,6 +255,7 @@ class WiFiLatencyManager:
                 "color": "#94a3b8",
                 "description": "No active client traffic",
                 "hardware": hw,
+                "profile": profile_info,
             }
 
         # Dynamic scoring curve based on real-world Wi-Fi RTT
@@ -189,6 +293,7 @@ class WiFiLatencyManager:
             "color": color,
             "description": desc,
             "hardware": hw,
+            "profile": profile_info,
         }
 
     def optimize_socket_for_low_latency(self, websocket: Any) -> bool:
@@ -223,11 +328,16 @@ class WiFiLatencyManager:
             pass
         return False
 
-    def is_transport_congested(self, websocket: Any, max_buffered_bytes: int = 262144) -> bool:
+    def is_transport_congested(self, websocket: Any, max_buffered_bytes: Optional[int] = None) -> bool:
         """
         Inspects the underlying asyncio transport's pending write buffer.
-        Returns True if the Wi-Fi link is congested (>256KB un-sent data queued).
+        Returns True if the Wi-Fi link is congested (un-sent data exceeds threshold).
+        Defaults to active QoS profile's max_frame_buffer_kb.
         """
+        if max_buffered_bytes is None:
+            with self._lock:
+                max_buffered_bytes = self.qos_engine.active_profile.max_frame_buffer_kb * 1024
+
         try:
             transport = getattr(websocket, "scope", {}).get("transport")
             if transport is None:

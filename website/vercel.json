@@ -19,6 +19,11 @@
       "permanent": true
     },
     {
+      "source": "/privacy",
+      "destination": "/privacy_policy.html",
+      "permanent": true
+    },
+    {
       "source": "/website/:path*",
       "destination": "/:path*",
       "permanent": true

@@ -1146,8 +1146,9 @@ header.top-nav.hidden-bar {
     flex-direction: column !important;
   }
 
-  /*  PURE 100% EDGE-TO-EDGE FULLSCREEN STREAMING DISPLAY */
-  #tab-screen {
+  /*  PURE 100% EDGE-TO-EDGE FULLSCREEN STREAMING & GAMEPAD DISPLAY */
+  #tab-screen,
+  #tab-gamepad {
     position: fixed !important;
     inset: 0 !important;
     top: 0 !important;
@@ -1157,6 +1158,7 @@ header.top-nav.hidden-bar {
     margin: 0 !important;
     padding: 0 !important;
     width: 100vw !important;
+    width: 100dvw !important;
     height: 100vh !important;
     height: 100dvh !important;
     min-height: 0 !important;
@@ -1166,6 +1168,14 @@ header.top-nav.hidden-bar {
     justify-content: center !important;
     background: #000000 !important;
     z-index: 30 !important;
+    box-sizing: border-box !important;
+  }
+
+  #tab-gamepad.active,
+  body.gamepad-mode-active #tab-gamepad {
+    display: flex !important;
+    flex-direction: column !important;
+    background: var(--bg-deep, #0a0e17) !important;
   }
 
   header.top-nav.hidden-bar ~ .tab-view {
@@ -2841,31 +2851,69 @@ body.gamepad-hud-active #screen-canvas-wrapper {
   font-weight: 900;
 }
 
+.hud-elem.is-dragging {
+  transition: none !important;
+  will-change: left, top;
+  z-index: 500 !important;
+}
+
+.hud-add-modal-card {
+  max-width: clamp(360px, 86vw, 680px) !important;
+  width: 92% !important;
+}
+
+.hud-key-preset-grid {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 .hud-key-pick-btn {
-  background: rgba(10, 14, 23, 0.9);
+  background: rgba(13, 20, 36, 0.92);
   color: #fff;
-  border: 1.5px solid var(--neo-dark);
-  border-radius: var(--radius-xs);
-  padding: 8px 4px;
-  font-size: 0.7rem;
-  font-weight: 800;
+  border: 1.5px solid rgba(0, 240, 255, 0.28);
+  border-radius: 6px;
+  padding: 6px 4px;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.08s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  transition: all 0.1s ease;
+  touch-action: manipulation;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
 }
 
 .hud-key-pick-btn:hover,
 .hud-key-pick-btn.selected {
-  background: rgba(0, 240, 255, 0.2);
-  color: var(--neo-cyan);
+  background: rgba(0, 240, 255, 0.22);
+  color: #fff;
   border-color: var(--neo-cyan);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
+  transform: translateY(-1px);
 }
 
 .hud-key-pick-btn:active {
   transform: scale(0.95);
+}
+
+.hud-pick-label {
+  font-size: 0.88rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.hud-pick-sub {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: var(--neo-cyan);
+  letter-spacing: 0.4px;
+  opacity: 0.85;
+  margin-top: 3px;
+  line-height: 1;
 }
 
 /* ️ Pro Esports Joystick Zone */
@@ -3101,22 +3149,6 @@ body.gamepad-hud-active #screen-canvas-wrapper {
   background: var(--neo-pink) !important;
   color: #fff !important;
   box-shadow: 0 0 22px var(--neo-pink) !important;
-}
-.hud-key-pick-btn {
-  background: var(--bg-surface-elevated);
-  color: #fff;
-  border: 1.5px solid var(--neo-dark);
-  border-radius: var(--radius-xs);
-  padding: 8px 4px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 1.5px 1.5px 0px var(--neo-dark);
-  touch-action: manipulation;
-}
-.hud-key-pick-btn:hover, .hud-key-pick-btn:active {
-  background: var(--neo-cyan);
-  color: #000;
 }
 
 /* ==========================================================================
@@ -5077,10 +5109,345 @@ body[data-theme="oled"] {
   justify-content: space-between;
 }
 
+/* ==========================================================================
+   MODERN MINIMALIST GAMEPAD DECK (MATCHING USER SPEC & DIAGRAM)
+   ========================================================================== */
+.modern-gamepad-deck {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  padding: clamp(10px, 2vh, 18px) clamp(16px, 3.5vw, 32px) !important;
+  box-sizing: border-box !important;
+  background: radial-gradient(ellipse at 50% 30%, #111a2e 0%, #060913 100%) !important;
+  overflow: hidden !important;
+  user-select: none !important;
+  touch-action: none !important;
+}
+
+/* Side Pods (Left & Right Columns) */
+.gp-deck-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  position: static;
+  z-index: 10;
+  width: clamp(210px, 34vw, 320px);
+  box-sizing: border-box;
+}
+
+.gp-deck-left {
+  align-items: flex-start;
+}
+
+.gp-deck-left .gp-stick-pod {
+  align-self: flex-start;
+  margin-left: clamp(12px, 2.5vw, 24px);
+  margin-top: clamp(8px, 1.8vh, 16px);
+}
+
+.gp-deck-left .gp-dpad-pod {
+  align-self: flex-end;
+  margin-right: clamp(16px, 3vw, 32px);
+  margin-bottom: clamp(12px, 2.2vh, 22px);
+  margin-top: auto;
+}
+
+.gp-deck-right {
+  align-items: flex-end;
+}
+
+.gp-deck-right .gp-action-pod {
+  align-self: flex-end;
+  margin-right: clamp(12px, 2.5vw, 24px);
+  margin-top: clamp(8px, 1.8vh, 16px);
+}
+
+.gp-deck-right .gp-stick-pod {
+  align-self: flex-start;
+  margin-left: clamp(16px, 3vw, 32px);
+  margin-bottom: clamp(12px, 2.2vh, 22px);
+  margin-top: auto;
+}
+
+/* Center Pod */
+.gp-deck-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(12px, 3vh, 22px);
+  padding-top: clamp(6px, 1.5vh, 14px);
+  z-index: 15;
+  flex: 1;
+}
+
+.gp-center-shoulders-row {
+  display: flex;
+  gap: clamp(16px, 4vw, 40px);
+  align-items: center;
+  justify-content: center;
+}
+
+.gp-shoulder-pill-btn {
+  background: linear-gradient(180deg, #0284c7 0%, #0055b3 100%);
+  border: 2.5px solid #ffd700;
+  border-radius: 28px;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(0.72rem, 1.8vmin, 0.92rem);
+  letter-spacing: 1px;
+  padding: clamp(6px, 1.2vh, 10px) clamp(16px, 2.5vw, 28px);
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.08s ease;
+  white-space: nowrap;
+}
+
+.gp-shoulder-pill-btn:active, .gp-shoulder-pill-btn.active {
+  transform: scale(0.95);
+  background: linear-gradient(180deg, #00f0ff 0%, #0284c7 100%);
+  box-shadow: 0 0 20px #00f0ff, inset 0 1px 2px #fff;
+}
+
+.gp-center-sys-row {
+  display: flex;
+  gap: clamp(24px, 5vw, 56px);
+  align-items: center;
+  justify-content: center;
+}
+
+.gp-circle-sys-btn {
+  width: clamp(38px, 8vmin, 46px);
+  height: clamp(38px, 8vmin, 46px);
+  border-radius: 50%;
+  border: 2.5px solid #ffd700;
+  background: rgba(15, 23, 42, 0.85);
+  color: #00f0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.08s ease;
+  backdrop-filter: blur(8px);
+}
+
+.gp-circle-sys-btn:active, .gp-circle-sys-btn.active {
+  transform: scale(0.92);
+  background: #ffd700;
+  color: #000;
+  box-shadow: 0 0 20px #ffd700;
+}
+
+/* Corner Triggers (LT & RT nicely inset for thumb reach) */
+.gp-corner-trigger {
+  position: absolute;
+  bottom: clamp(10px, 2.2vh, 20px);
+  z-index: 20;
+}
+
+.gp-corner-lt {
+  left: clamp(14px, 2.8vw, 26px);
+}
+
+.gp-corner-rt {
+  right: clamp(14px, 2.8vw, 26px);
+}
+
+.gp-trigger-corner-btn {
+  width: clamp(52px, 8vw, 68px);
+  height: clamp(52px, 11vh, 68px);
+  background: linear-gradient(135deg, #0284c7 0%, #004c9e 100%);
+  border: 2.5px solid #ffd700;
+  border-radius: 14px;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(1rem, 2.4vmin, 1.25rem);
+  line-height: 1.05;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.45), inset 0 1px 3px rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  touch-action: none;
+  transition: all 0.08s ease;
+  user-select: none;
+}
+
+.gp-btn-corner-lt {
+  border-radius: 14px;
+}
+
+.gp-btn-corner-rt {
+  border-radius: 14px;
+}
+
+.gp-trigger-corner-btn:active, .gp-trigger-corner-btn.active {
+  transform: scale(0.96);
+  background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
+  box-shadow: 0 0 24px #00f0ff;
+}
+
+.corner-trigger-letter {
+  display: block;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* Clean Gold Thumbsticks */
+.clean-stick-base {
+  border: 3px solid #ffd700 !important;
+  background: radial-gradient(circle, #0e1526 0%, #040711 75%) !important;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.35), inset 0 0 20px rgba(0,0,0,0.95) !important;
+}
+
+.clean-stick-thumb {
+  background: radial-gradient(circle at 35% 35%, #38bdf8 0%, #0284c7 60%, #0369a1 100%) !important;
+  border: 2.5px solid #ffd700 !important;
+  box-shadow: 0 0 14px rgba(2, 132, 199, 0.7), 0 4px 10px rgba(0,0,0,0.8) !important;
+}
+
+/* Clean Gold D-Pad */
+.clean-dpad-disc {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  gap: 4px;
+}
+
+.clean-dpad-circle {
+  border-radius: 50% !important;
+  border: 2.5px solid #ffd700 !important;
+  background: radial-gradient(circle, #0e1526 0%, #040711 85%) !important;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.35), inset 0 0 8px rgba(0,0,0,0.8) !important;
+  width: clamp(40px, 9vmin, 52px) !important;
+  height: clamp(40px, 9vmin, 52px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.clean-dpad-circle:active, .clean-dpad-circle.active {
+  background: #00f0ff !important;
+  box-shadow: 0 0 18px #00f0ff !important;
+}
+
+.dpad-arrow {
+  color: #00f0ff;
+  font-size: clamp(1rem, 2.2vmin, 1.3rem);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 8px #00f0ff;
+}
+
+.clean-dpad-circle:active .dpad-arrow, .clean-dpad-circle.active .dpad-arrow {
+  color: #000;
+  text-shadow: none;
+}
+
+/* Clean Gold ABXY Diamond */
+.clean-abxy-diamond {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  gap: 4px;
+}
+
+.clean-abxy-circle {
+  border-radius: 50% !important;
+  border: 2.5px solid #ffd700 !important;
+  width: clamp(42px, 9.5vmin, 54px) !important;
+  height: clamp(42px, 9.5vmin, 54px) !important;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.35), inset 0 0 8px rgba(0,0,0,0.8) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 900 !important;
+  font-size: clamp(1.1rem, 2.5vmin, 1.4rem) !important;
+}
+
+.clean-abxy-circle .gp-btn-jewel {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.circle-y {
+  background: radial-gradient(circle at 35% 35%, #554800 0%, #221d00 85%) !important;
+  color: #ffd700 !important;
+  text-shadow: 0 0 10px #ffd700;
+}
+
+.circle-x {
+  background: radial-gradient(circle at 35% 35%, #002b55 0%, #001122 85%) !important;
+  color: #38bdf8 !important;
+  text-shadow: 0 0 10px #38bdf8;
+}
+
+.circle-b {
+  background: radial-gradient(circle at 35% 35%, #55000f 0%, #220006 85%) !important;
+  color: #ff3355 !important;
+  text-shadow: 0 0 10px #ff3355;
+}
+
+.circle-a {
+  background: radial-gradient(circle at 35% 35%, #003d15 0%, #001a09 85%) !important;
+  color: #00ff66 !important;
+  text-shadow: 0 0 10px #00ff66;
+}
+
+.clean-abxy-circle:active, .clean-abxy-circle.active {
+  transform: scale(0.92);
+  filter: brightness(1.6);
+  box-shadow: 0 0 20px #fff !important;
+}
+
 /* Fullscreen Immersive Mode when Gamepad is Active */
 body.gamepad-mode-active nav.floating-dock,
 body.gamepad-mode-active header.top-nav {
   display: none !important;
+}
+
+#tab-gamepad {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100vw !important;
+  width: 100dvw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: none !important;
+  box-sizing: border-box !important;
+  background: var(--bg-deep, #0a0e17) !important;
+  z-index: 25 !important;
+}
+
+#tab-gamepad.active,
+body.gamepad-mode-active #tab-gamepad {
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100vw !important;
+  width: 100dvw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
 }
 
 body.gamepad-mode-active #tab-trackpad {
@@ -5098,6 +5465,14 @@ body.gamepad-mode-active #tab-trackpad {
 
 body.gamepad-mode-active #tab-trackpad .trackpad-options-strip {
   display: none !important;
+}
+
+body.gamepad-mode-active #tab-trackpad #standard-trackpad-view {
+  display: none !important;
+}
+
+body.gamepad-mode-active #tab-trackpad #gamepad-container {
+  display: flex !important;
 }
 
 /* Top Shoulder & Triggers Bar */
@@ -5186,10 +5561,11 @@ body.gamepad-mode-active #tab-trackpad .trackpad-options-strip {
 
 .trigger-meter-gauge {
   width: 100%;
-  height: 5px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 2.5px;
+  height: 2.5px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 1.5px;
   overflow: hidden;
+  margin-top: 1px;
 }
 
 .trigger-fill {
@@ -5495,22 +5871,10 @@ body.gamepad-mode-active #tab-trackpad .trackpad-options-strip {
 }
 
 .gp-pod-label {
-  font-size: clamp(0.52rem, 1.2vmin, 0.62rem);
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  font-family: var(--font-mono);
-  background: rgba(0, 0, 0, 0.55);
-  padding: 2px 8px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  margin-bottom: 2px;
-  text-shadow: 0 1px 2px #000;
-  white-space: nowrap;
+  display: none !important;
 }
 
-/* Center Spine Cluster & Monect-Style Artificial Horizon HUD */
+/* Center Spine Cluster & Minimalist Cyber Reticle HUD */
 .gp-col-center {
   display: flex;
   flex-direction: column;
@@ -5518,34 +5882,34 @@ body.gamepad-mode-active #tab-trackpad .trackpad-options-strip {
   justify-content: center;
   gap: 6px;
   flex-shrink: 0;
-  max-width: 160px;
+  max-width: 80px;
 }
 
 .gp-monect-spine-cluster {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .gp-center-emblem {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 3px 12px;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1.5px solid rgba(0, 240, 255, 0.25);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .gp-emblem-icon {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
 }
 
 .gp-emblem-text {
-  font-size: clamp(0.52rem, 1.2vmin, 0.65rem);
+  font-size: clamp(0.48rem, 1.1vmin, 0.58rem);
   font-weight: 900;
   letter-spacing: 1.2px;
   color: var(--neo-cyan);
@@ -5553,21 +5917,21 @@ body.gamepad-mode-active #tab-trackpad .trackpad-options-strip {
   text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
 }
 
-/* Artificial Horizon & Gyro Gimbal HUD */
+/* Minimalist Gyro Reticle Horizon HUD */
 .gp-gyro-horizon-hud {
-  width: clamp(74px, 15vmin, 100px);
-  height: clamp(74px, 15vmin, 100px);
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: radial-gradient(circle, #0e1726 0%, #060910 80%, #020306 100%);
-  border: 2px solid rgba(0, 240, 255, 0.45);
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.95), 0 0 16px rgba(0, 240, 255, 0.25);
+  border: 1.5px solid rgba(0, 240, 255, 0.45);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.95), 0 0 12px rgba(0, 240, 255, 0.2);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 4px;
+  padding: 2px;
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
@@ -5576,7 +5940,7 @@ body.gamepad-mode-active #tab-trackpad .trackpad-options-strip {
 
 .gp-gyro-horizon-hud:hover, .gp-gyro-horizon-hud:active {
   border-color: var(--neo-lime);
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 255, 102, 0.4);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.95), 0 0 16px rgba(0, 255, 102, 0.4);
 }
 
 .horizon-gimbal-ring {
@@ -5804,22 +6168,7 @@ body.gamepad-mode-active #tab-trackpad .trackpad-options-strip {
 }
 
 .gp-stick-click-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-xs);
-  color: #fff;
-  font-size: clamp(0.6rem, 1.4vmin, 0.72rem);
-  font-weight: 800;
-  padding: 3px 10px;
-  cursor: pointer;
-  transition: all 0.1s ease;
-}
-
-.gp-stick-click-btn:active, .gp-stick-click-btn.active {
-  background: var(--neo-lime);
-  color: #000;
-  border-color: #fff;
-  box-shadow: 0 0 12px var(--neo-lime);
+  display: none !important;
 }
 
 /* ==========================================================================
@@ -6094,8 +6443,16 @@ body.gamepad-mode-active #tab-trackpad .trackpad-options-strip {
 }
 
 /* Editor Mode Overlays */
+body.gp-layout-editing .gp-deck-side,
+body.gp-layout-editing .gp-deck-center {
+  position: static !important;
+}
+
 body.gp-layout-editing .gp-control-pod,
 body.gp-layout-editing .gp-system-hub,
+body.gp-layout-editing .gp-shoulder-pill-btn,
+body.gp-layout-editing .gp-corner-trigger,
+body.gp-layout-editing .gp-center-sys-row,
 body.gp-layout-editing .gp-custom-btn {
   cursor: pointer;
   outline: 1.5px dashed rgba(255, 255, 255, 0.25);
@@ -6119,6 +6476,7 @@ body.gp-layout-editing .gp-is-dragging,
   cursor: grabbing !important;
   opacity: 0.95;
   z-index: 500 !important;
+  position: absolute !important;
 }
 
 /* Floating Layout Editor Toolbar */
@@ -6420,22 +6778,277 @@ body.gp-layout-editing .gp-is-dragging,
   color: #fff;
 }
 
-/* Portrait vs Landscape Responsive Adapters */
-@media (orientation: portrait) {
-  .gp-body-layout {
-    gap: 8px;
+/* ==========================================================================
+   PORTRAIT & MOBILE RESPONSIVE ADAPTERS (GAMEPAD DECK & HUD OVERLAY)
+   ========================================================================== */
+.gp-portrait-hint-banner {
+  display: none;
+}
+
+@media (orientation: portrait), (max-width: 600px) {
+  /* Standalone Gamepad Deck */
+  .modern-gamepad-deck {
+    padding: 8px 10px 18px 10px !important;
+    justify-content: space-between !important;
+    align-items: stretch !important;
+    position: relative !important;
   }
-  .gp-col-left, .gp-col-right {
-    flex-direction: column;
-    justify-content: space-evenly;
-    gap: clamp(6px, 1.5vh, 12px);
+
+  .gp-deck-side {
+    width: 48% !important;
+    max-width: 48% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
   }
-  .gp-col-center {
-    display: none;
+
+  .gp-deck-left {
+    align-items: center !important;
   }
-  .gp-bottom-preset-bar {
-    flex-wrap: nowrap;
+
+  .gp-deck-right {
+    align-items: center !important;
   }
+
+  .gp-deck-left .gp-stick-pod,
+  .gp-deck-left .gp-dpad-pod,
+  .gp-deck-right .gp-action-pod,
+  .gp-deck-right .gp-stick-pod {
+    align-self: center !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .gp-deck-left .gp-stick-pod {
+    margin-top: 86px !important;
+  }
+
+  .gp-deck-right .gp-action-pod {
+    margin-top: 86px !important;
+  }
+
+  /* Leave clearance at bottom so D-pad and Right Stick never collide with LT/RT */
+  .gp-deck-left .gp-dpad-pod {
+    margin-bottom: 70px !important;
+  }
+
+  .gp-deck-right .gp-stick-pod {
+    margin-bottom: 70px !important;
+  }
+
+  /* Center Pod in Portrait: neatly spans the top row */
+  .gp-deck-center {
+    position: absolute !important;
+    top: 8px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding: 0 12px !important;
+    box-sizing: border-box !important;
+    z-index: 25 !important;
+    transform: none !important;
+  }
+
+  .gp-center-shoulders-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    max-width: 360px !important;
+    padding: 0 4px !important;
+    box-sizing: border-box !important;
+  }
+
+  .gp-shoulder-pill-btn {
+    font-size: 0.65rem !important;
+    padding: 4px 12px !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  .gp-center-sys-row {
+    display: flex !important;
+    gap: 12px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .gp-circle-sys-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  /* Controls scaling in portrait */
+  .gp-stick-zone {
+    width: 106px !important;
+    height: 106px !important;
+  }
+
+  .clean-stick-base {
+    width: 102px !important;
+    height: 102px !important;
+  }
+
+  .clean-stick-thumb {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .gp-stick-click-btn {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 0.62rem !important;
+    bottom: -6px !important;
+    right: -6px !important;
+  }
+
+  /* D-pad sizing in portrait */
+  .clean-dpad-disc {
+    width: 114px !important;
+    height: 114px !important;
+  }
+
+  .clean-dpad-circle {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .dpad-arrow {
+    font-size: 0.95rem !important;
+  }
+
+  /* ABXY Diamond sizing in portrait */
+  .clean-abxy-diamond {
+    width: 114px !important;
+    height: 114px !important;
+  }
+
+  .clean-abxy-circle {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* Corner Triggers LT & RT */
+  .gp-corner-trigger {
+    bottom: 10px !important;
+    z-index: 20 !important;
+  }
+
+  .gp-corner-lt {
+    left: 10px !important;
+  }
+
+  .gp-corner-rt {
+    right: 10px !important;
+  }
+
+  .gp-trigger-corner-btn {
+    width: 46px !important;
+    height: 46px !important;
+    font-size: 0.85rem !important;
+    border-radius: 10px !important;
+  }
+
+  /* Hint Banner visible in Portrait */
+  .gp-portrait-hint-banner {
+    display: flex !important;
+    position: static !important;
+    transform: none !important;
+    width: 90% !important;
+    max-width: 330px !important;
+    background: rgba(15, 23, 42, 0.9) !important;
+    border: 1px dashed rgba(255, 215, 0, 0.45) !important;
+    border-radius: 14px !important;
+    padding: 4px 10px !important;
+    font-size: 0.63rem !important;
+    font-weight: 800 !important;
+    color: #ffd700 !important;
+    text-align: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+    z-index: 12 !important;
+    backdrop-filter: blur(8px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    margin-top: 2px !important;
+  }
+
+  /* In-Display HUD Overlay in Portrait */
+  .hud-joystick-zone {
+    width: 96px !important;
+    height: 96px !important;
+  }
+
+  .hud-joystick-stick {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .hud-trigger-btn {
+    width: 54px !important;
+    height: 36px !important;
+  }
+
+  .hud-btn-text {
+    font-size: 0.72rem !important;
+  }
+
+  .hud-btn-sub {
+    font-size: 0.46rem !important;
+  }
+
+  .hud-action-circle {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .hud-circle-text {
+    font-size: 0.85rem !important;
+  }
+
+  .hud-top-bar {
+    padding: 0 4px !important;
+    gap: 4px !important;
+  }
+
+  /* In-Display HUD Overlay in Portrait */
+  .hud-elem {
+    transform: scale(0.84) !important;
+  }
+
+  .hud-elem.is-dragging {
+    transform: scale(0.92) !important;
+  }
+
+  .hud-badge {
+    font-size: 0.6rem !important;
+    padding: 3px 6px !important;
+  }
+
+  .hud-action-btn {
+    font-size: 0.6rem !important;
+    padding: 3px 6px !important;
+  }
+}
+
+/* Position toast at bottom during gamepad mode or HUD active so top console buttons are never obscured */
+body.gamepad-mode-active .neo-toast,
+body.gamepad-hud-active .neo-toast {
+  top: auto !important;
+  bottom: 24px !important;
+  transform: translateX(-50%) translateY(140%) scale(0.96) !important;
+}
+
+body.gamepad-mode-active .neo-toast.show,
+body.gamepad-hud-active .neo-toast.show {
+  transform: translateX(-50%) translateY(0) scale(1) !important;
 }
 
 /* ==========================================================================
@@ -7066,24 +7679,8 @@ body.gp-layout-editing .gp-is-dragging,
    HUD and Gamepad are Android APK only — strictly hidden in web control.
    Mic/Cam hardware features are also native-only.
    ========================================================================== */
-html.is-web-browser .gamepad-feature,
-body.is-web-browser .gamepad-feature,
 html.is-web-browser .native-only-feature,
 body.is-web-browser .native-only-feature,
-html.is-web-browser #btn-screen-hud-fab,
-body.is-web-browser #btn-screen-hud-fab,
-html.is-web-browser #btn-screen-gamepad-hud,
-body.is-web-browser #btn-screen-gamepad-hud,
-html.is-web-browser #screen-gamepad-overlay,
-body.is-web-browser #screen-gamepad-overlay,
-html.is-web-browser #btn-gamepad-mode-toggle,
-body.is-web-browser #btn-gamepad-mode-toggle,
-html.is-web-browser .dock-tab[data-target="tab-gamepad"],
-body.is-web-browser .dock-tab[data-target="tab-gamepad"],
-html.is-web-browser #tab-gamepad,
-body.is-web-browser #tab-gamepad,
-html.is-web-browser #setting-row-gamepad-hud,
-body.is-web-browser #setting-row-gamepad-hud,
 html.is-web-browser #btn-quick-mic-toggle,
 body.is-web-browser #btn-quick-mic-toggle,
 html.is-web-browser #btn-quick-cam-toggle,
@@ -7101,8 +7698,8 @@ body:not(.gamepad-hud-enabled) .screen-hud-fab {
   display: none !important;
 }
 
-body.gamepad-hud-enabled.is-native-app #btn-screen-hud-fab,
-body.gamepad-hud-enabled.is-native-app .screen-hud-fab {
+body.gamepad-hud-enabled #btn-screen-hud-fab,
+body.gamepad-hud-enabled .screen-hud-fab {
   display: flex !important;
 }
 

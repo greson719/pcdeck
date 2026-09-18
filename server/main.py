@@ -1779,6 +1779,8 @@ def dispatch_command(data: str):
                     pass
             elif len(parts) >= 2 and parts[1] == "reset":
                 gamepad_manager.reset_all()
+            elif len(parts) >= 3 and parts[1] == "hybrid":
+                gamepad_manager.set_hybrid_mode(parts[2] == "1")
             elif len(parts) >= 3:
                 btn_name = parts[1]
                 is_down = (parts[2] == "1")
@@ -1893,6 +1895,13 @@ def dispatch_binary_command_sync(raw_bytes: bytes) -> Optional[bytes]:
                     gamepad_manager.set_button(bname, bool(buttons & (1 << bit)))
             except Exception:
                 pass
+    elif cmd == "gp_hybrid":
+        flags, buttons, lx, ly, mdx, mdy = args
+        if gamepad_manager:
+            try:
+                gamepad_manager.handle_hybrid_frame(flags, buttons, lx, ly, mdx, mdy)
+            except Exception:
+                pass
     return None
 
 
@@ -1951,35 +1960,66 @@ def get_connected_devices() -> list:
     """Detect all attached Android devices via ADB with device model and state info."""
     devices = []
     adb_bin = get_adb_path()
+    last_dev_file = os.path.join(TRANSFER_DIR, "last_wireless_adb.txt")
     try:
-        res = subprocess.run(
-            [adb_bin, "devices", "-l"],
-            capture_output=True,
-            text=True,
-            timeout=6.0,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-        )
-        for line in res.stdout.strip().splitlines():
-            line = line.strip()
-            if not line or line.startswith("*") or line.startswith("List of devices"):
-                continue
-            parts = line.split()
-            if len(parts) >= 2:
-                serial = parts[0]
-                state = parts[1]
-                model = "Android Phone"
-                for p in parts[2:]:
-                    if p.startswith("model:"):
-                        model = p.split(":", 1)[1].replace("_", " ")
-                    elif p.startswith("device:"):
-                        if model == "Android Phone":
-                            model = p.split(":", 1)[1]
-                devices.append({
-                    "serial": serial,
-                    "state": state,
-                    "model": model,
-                    "is_wifi": ":" in serial,
-                })
+        def _parse_devices():
+            res = subprocess.run(
+                [adb_bin, "devices", "-l"],
+                capture_output=True,
+                text=True,
+                timeout=6.0,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            )
+            devs = []
+            for line in res.stdout.strip().splitlines():
+                line = line.strip()
+                if not line or line.startswith("*") or line.startswith("List of devices"):
+                    continue
+                parts = line.split()
+                if len(parts) >= 2:
+                    serial = parts[0]
+                    state = parts[1]
+                    model = "Android Phone"
+                    for p in parts[2:]:
+                        if p.startswith("model:"):
+                            model = p.split(":", 1)[1].replace("_", " ")
+                        elif p.startswith("device:"):
+                            if model == "Android Phone":
+                                model = p.split(":", 1)[1]
+                    devs.append({
+                        "serial": serial,
+                        "state": state,
+                        "model": model,
+                        "is_wifi": ":" in serial,
+                    })
+            return devs
+
+        devices = _parse_devices()
+        # If no devices attached, try reconnecting to last known wireless endpoint
+        if not devices and os.path.exists(last_dev_file):
+            try:
+                with open(last_dev_file, "r", encoding="utf-8") as f:
+                    last_target = f.read().strip()
+                if last_target and ":" in last_target:
+                    subprocess.run(
+                        [adb_bin, "connect", last_target],
+                        capture_output=True,
+                        text=True,
+                        timeout=2.0,
+                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    )
+                    devices = _parse_devices()
+            except Exception:
+                pass
+
+        # Save active wireless device
+        wifi_devs = [d["serial"] for d in devices if d.get("is_wifi") and d.get("state") == "device"]
+        if wifi_devs:
+            try:
+                with open(last_dev_file, "w", encoding="utf-8") as f:
+                    f.write(wifi_devs[0])
+            except Exception:
+                pass
     except Exception:
         pass
     return devices
@@ -2093,26 +2133,7 @@ def adb_preflight() -> dict:
             detail=(stderr or res.stdout or "").strip()[:400],
         )
 
-    devices = []
-    for line in (res.stdout or "").strip().splitlines():
-        line = line.strip()
-        if not line or line.startswith("*") or line.startswith("List of devices"):
-            continue
-        parts = line.split()
-        if len(parts) >= 2:
-            model = "Android Phone"
-            for p in parts[2:]:
-                if p.startswith("model:"):
-                    model = p.split(":", 1)[1].replace("_", " ")
-                elif p.startswith("device:") and model == "Android Phone":
-                    model = p.split(":", 1)[1]
-            devices.append({
-                "serial": parts[0],
-                "state": parts[1],
-                "model": model,
-                "is_wifi": ":" in parts[0],
-            })
-
+    devices = get_connected_devices()
     raw = f"{version_line}\n{(res.stdout or '').strip()}"
     if stderr:
         raw += f"\n[stderr] {stderr}"
@@ -2250,7 +2271,8 @@ def launch_scrcpy(serial: Optional[str] = None) -> tuple:
         subprocess.Popen(
             cmd,
             cwd=os.path.dirname(scrcpy_bin),
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            # Do NOT use CREATE_NO_WINDOW: scrcpy requires an interactive SDL3 GUI window
+            creationflags=0,
         )
         return True, "Launched Phone Screen Mirror (scrcpy 60FPS)!"
     except Exception as e:
@@ -2471,7 +2493,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 parts = data.split(",")
                 if len(parts) >= 2 and wifi_latency_manager:
                     try:
-                        wifi_latency_manager.update_measured_rtt(float(parts[1]))
+                        prof = wifi_latency_manager.update_measured_rtt(float(parts[1]))
+                        if not is_pro_client():
+                            streamer.fps_limit = min(30, prof.target_fps)
+                        else:
+                            streamer.fps_limit = prof.target_fps
                     except Exception:
                         pass
             elif data.startswith("pro_auth,"):
@@ -2503,12 +2529,26 @@ async def websocket_endpoint(websocket: WebSocket):
                 val = data.split(",")[1] == "1"
                 camera_streamer.set_flip_horizontal(val)
             else:
-                dispatch_command(data)
+                try:
+                    dispatch_command(data)
+                except Exception as ex:
+                    print(f"[WebSocket] Error dispatching command '{data}': {ex}")
 
     except (WebSocketDisconnect, asyncio.CancelledError, Exception):
         pass
     finally:
         active_connections.discard(websocket)
+        # Clean state teardown: release any held WASD directions, gamepad buttons, or mouse locks
+        try:
+            if gamepad_manager:
+                gamepad_manager.reset_all()
+        except Exception:
+            pass
+        try:
+            if controller and getattr(controller, "is_dragging", False):
+                controller.mouse_up("left")
+        except Exception:
+            pass
         try:
             await websocket.close()
         except Exception:
@@ -2762,16 +2802,20 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     if is_burst:
                         initial_burst -= 1
 
-                    # Prevent TCP bufferbloat: verify transport write buffer is not congested (>256KB)
-                    if wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket, max_buffered_bytes=262144):
-                        await asyncio.sleep(0.01)
-                        continue
+                    # Prevent TCP bufferbloat: verify transport write buffer is not congested
+                    is_congested = wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket)
+                    if is_congested:
+                        # Transport is backing up: wait for in-flight ACK or buffer drain
+                        ack_timeout = wifi_latency_manager.get_frame_drop_timeout() if wifi_latency_manager else 0.035
+                        try:
+                            await asyncio.wait_for(client_ready_event.wait(), timeout=ack_timeout)
+                        except asyncio.TimeoutError:
+                            pass
+                        if wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket):
+                            # Still congested -> drop frame to prevent bufferbloat
+                            await asyncio.sleep(0.005)
+                            continue
 
-                    # Wait for previous frame in-flight ACK (or 35ms timeout) to ensure zero queue bloat
-                    try:
-                        await asyncio.wait_for(client_ready_event.wait(), timeout=0.035)
-                    except asyncio.TimeoutError:
-                        pass
                     client_ready_event.clear()
 
                     last_sent_id = frame_id
@@ -2846,7 +2890,11 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     parts = data.split(",")
                     if len(parts) >= 2 and wifi_latency_manager:
                         try:
-                            wifi_latency_manager.update_measured_rtt(float(parts[1]))
+                            prof = wifi_latency_manager.update_measured_rtt(float(parts[1]))
+                            if not is_pro_client():
+                                streamer.fps_limit = min(30, prof.target_fps)
+                            else:
+                                streamer.fps_limit = prof.target_fps
                         except Exception:
                             pass
                 elif data.startswith("cfg,"):
@@ -2856,11 +2904,12 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                             req_quality = int(parts[1])
                             req_scale = float(parts[2])
                             req_fps = int(parts[3])
-                            if not is_pro_client() and req_fps > 30:
-                                req_fps = 30
+                            max_fps = wifi_latency_manager.active_profile.target_fps if wifi_latency_manager else 60
+                            if not is_pro_client():
+                                max_fps = min(30, max_fps)
                             streamer.quality = max(20, min(100, req_quality))
                             streamer.scale = max(0.2, min(1.0, req_scale))
-                            streamer.fps_limit = max(10, min(60, req_fps))
+                            streamer.fps_limit = max(10, min(max_fps, req_fps))
                         except Exception:
                             pass
                 elif data.startswith("p,"):

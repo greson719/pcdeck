@@ -1457,8 +1457,8 @@ class PCDeckProGUI:
         exe_path = self._get_autostart_exe_path()
         return f'"{exe_path}" --tray'
 
-    def _cleanup_run_key_entry(self):
-        """Cleans up Run registry keys because Windows blocks elevated binaries from starting via Run keys."""
+    def _cleanup_run_key_entry(self, delete_current: bool = False):
+        """Cleans up obsolete Run registry keys from older naming conventions."""
         if sys.platform != "win32":
             return
         try:
@@ -1468,7 +1468,10 @@ class PCDeckProGUI:
                 0,
                 winreg.KEY_SET_VALUE,
             )
-            for kname in ["PCDeck", "PCDeck_Pro", "NeonTrack", "PCDeckPro", "PCDeck_Server"]:
+            obsolete_names = ["PCDeck_Pro", "NeonTrack", "PCDeckPro", "PCDeck_Server"]
+            if delete_current:
+                obsolete_names.append("PCDeck")
+            for kname in obsolete_names:
                 try:
                     winreg.DeleteValue(key, kname)
                 except Exception:
@@ -1513,115 +1516,149 @@ class PCDeckProGUI:
             log_debug(f"Failed to create Start Menu shortcut: {e}")
 
     def _cleanup_legacy_autostart(self):
-        """Removes obsolete registry entries and startup folder shortcuts from older versions."""
+        """Purges any obsolete Run registry entries and scheduled tasks from previous versions."""
         if sys.platform != "win32":
             return
-        self._cleanup_run_key_entry()
+        # 1. Clean legacy registry Run keys (HKCU & HKLM)
         try:
-            startup_dir = os.path.join(os.environ.get("APPDATA", ""), r"Microsoft\Windows\Start Menu\Programs\Startup")
-            if os.path.exists(startup_dir):
-                for old_shortcut in ["NeonTrack.lnk", "PCDeck_Pro.lnk"]:
-                    p = os.path.join(startup_dir, old_shortcut)
-                    if os.path.exists(p):
-                        try:
-                            os.remove(p)
-                        except Exception:
-                            pass
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0,
+                winreg.KEY_SET_VALUE,
+            )
+            for kname in ["PCDeck", "PCDeck_Pro", "NeonTrack", "PCDeckPro", "PCDeck_Server"]:
+                try:
+                    winreg.DeleteValue(key, kname)
+                except Exception:
+                    pass
+            winreg.CloseKey(key)
+        except Exception:
+            pass
+
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0,
+                winreg.KEY_SET_VALUE,
+            )
+            for kname in ["PCDeck", "PCDeck_Pro", "NeonTrack", "PCDeckPro", "PCDeck_Server"]:
+                try:
+                    winreg.DeleteValue(key, kname)
+                except Exception:
+                    pass
+            winreg.CloseKey(key)
+        except Exception:
+            pass
+
+        # 2. Clean legacy scheduled tasks
+        try:
+            subprocess.run(
+                ["schtasks", "/delete", "/tn", "PCDeck", "/f"],
+                capture_output=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                timeout=3
+            )
         except Exception:
             pass
 
     def _update_task_scheduler_autostart(self, enabled: bool):
         """
-        Registers PCDeck in Windows Task Scheduler with /rl highest.
-        This allows PCDeck to launch as Administrator at Windows logon
-        WITHOUT prompting for UAC every time the PC turns on.
+        Manages PCDeck autostart using a single authoritative standard-user launcher:
+        Windows Startup Folder Shortcut (%APPDATA%\\...\\Startup\\PCDeck.lnk).
+        Prevents triple-launching, UAC blocks, and UIPI privilege isolation issues.
         """
         if sys.platform != "win32":
             return
-        task_name = "PCDeck"
+        startup_dir = os.path.join(os.environ.get("APPDATA", ""), r"Microsoft\Windows\Start Menu\Programs\Startup")
+        startup_shortcut = os.path.join(startup_dir, "PCDeck.lnk") if startup_dir else ""
+
+        # Always purge duplicate/legacy registry Run keys and scheduled tasks
+        self._cleanup_legacy_autostart()
+
         if enabled:
             exe_path = self._get_autostart_exe_path()
             if not os.path.exists(exe_path):
                 return
+            app_dir = os.path.dirname(exe_path)
 
-            success = False
-            # 1. Primary: Native PowerShell Register-ScheduledTask with Highest RunLevel and no timeout
-            ps_script = (
-                f"$action = New-ScheduledTaskAction -Execute '{exe_path}' -Argument '--tray'; "
-                f"$trigger = New-ScheduledTaskTrigger -AtLogOn; "
-                f"$principal = New-ScheduledTaskPrincipal -UserId \"$env:USERDOMAIN\\$env:USERNAME\" -LogonType Interactive -RunLevel Highest; "
-                f"$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero); "
-                f"Register-ScheduledTask -TaskName '{task_name}' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force"
-            )
-            try:
-                res = subprocess.run(
-                    ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
-                    capture_output=True,
-                    text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-                    timeout=8
-                )
-                if res.returncode == 0:
-                    success = True
-                    log_debug("[Autostart] Registered elevated Task Scheduler logon task via PowerShell.")
-            except Exception as e:
-                log_debug(f"PowerShell scheduled task registration error: {e}")
-
-            # 2. Fallback: schtasks.exe command line
-            if not success:
+            if startup_dir and os.path.exists(startup_dir):
                 try:
-                    res = subprocess.run(
-                        ["schtasks", "/create", "/tn", task_name, "/tr", f'"{exe_path}" --tray', "/sc", "onlogon", "/rl", "highest", "/f"],
+                    ps_startup = (
+                        f"$ws = New-Object -ComObject WScript.Shell; "
+                        f"$s = $ws.CreateShortcut('{startup_shortcut}'); "
+                        f"$s.TargetPath = '{exe_path}'; "
+                        f"$s.Arguments = '--tray'; "
+                        f"$s.WorkingDirectory = '{app_dir}'; "
+                        f"$s.IconLocation = '{exe_path},0'; "
+                        f"$s.Description = 'PCDeck Pro - Wireless PC Touch Deck & Streamer'; "
+                        f"$s.Save()"
+                    )
+                    subprocess.run(
+                        ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_startup],
                         capture_output=True,
-                        text=True,
                         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
                         timeout=5
                     )
-                    if res.returncode == 0:
-                        success = True
-                        log_debug("[Autostart] Registered elevated Task Scheduler logon task via schtasks.")
+                    log_debug(f"[Autostart] Authoritative startup shortcut configured: {startup_shortcut}")
                 except Exception as e:
-                    log_debug(f"schtasks fallback failed: {e}")
+                    log_debug(f"[Autostart] Failed to create startup shortcut: {e}")
 
-            # Always clean up legacy Run key to prevent Windows UAC logon block
-            self._cleanup_run_key_entry()
             self._ensure_start_menu_shortcut()
         else:
-            try:
-                subprocess.run(
-                    ["schtasks", "/delete", "/tn", task_name, "/f"],
-                    capture_output=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-                    timeout=5
-                )
-            except Exception:
-                pass
-            self._cleanup_run_key_entry()
+            if startup_shortcut and os.path.exists(startup_shortcut):
+                try:
+                    os.remove(startup_shortcut)
+                    log_debug(f"[Autostart] Removed startup shortcut: {startup_shortcut}")
+                except Exception as e:
+                    log_debug(f"[Autostart] Failed to remove startup shortcut: {e}")
 
     def _ensure_autostart_task_scheduler(self):
-        """Verifies and registers the elevated Task Scheduler startup task and Start Menu shortcut."""
+        """Verifies and ensures the authoritative startup shortcut is in sync on launch."""
         if sys.platform != "win32":
             return
         try:
             self._ensure_start_menu_shortcut()
-            self._cleanup_run_key_entry()
             if getattr(self, "autostart_enabled", False):
-                res = subprocess.run(
-                    ["schtasks", "/query", "/tn", "PCDeck"],
-                    capture_output=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-                    timeout=3
-                )
-                if res.returncode != 0:
-                    self._update_task_scheduler_autostart(True)
+                self._update_task_scheduler_autostart(True)
+            else:
+                self._cleanup_legacy_autostart()
         except Exception as e:
-            log_debug(f"Error ensuring autostart task scheduler: {e}")
+            log_debug(f"Error ensuring autostart synchronization: {e}")
 
     def check_autostart_registry(self) -> bool:
+        """
+        Checks if autostart is enabled.
+        Primary source of truth: Windows Startup folder shortcut.
+        Migrates legacy Run registry entries or scheduled tasks if found.
+        """
         if sys.platform != "win32":
             return False
 
-        # 1. Primary check: Elevated Task Scheduler task (silent admin at logon)
+        # 1. Authoritative check: Windows Startup Folder Shortcut
+        startup_dir = os.path.join(os.environ.get("APPDATA", ""), r"Microsoft\Windows\Start Menu\Programs\Startup")
+        if startup_dir and os.path.exists(os.path.join(startup_dir, "PCDeck.lnk")):
+            return True
+
+        # 2. Legacy Migration Check: HKCU Run registry
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0,
+                winreg.KEY_READ,
+            )
+            val, _ = winreg.QueryValueEx(key, "PCDeck")
+            winreg.CloseKey(key)
+            if val:
+                # Migrate to authoritative Startup shortcut and purge registry key
+                self._update_task_scheduler_autostart(True)
+                return True
+        except Exception:
+            pass
+
+        # 3. Legacy Migration Check: Task Scheduler
         try:
             res = subprocess.run(
                 ["schtasks", "/query", "/tn", "PCDeck"],
@@ -1630,33 +1667,13 @@ class PCDeckProGUI:
                 timeout=3
             )
             if res.returncode == 0:
+                # Migrate to authoritative Startup shortcut and purge task
+                self._update_task_scheduler_autostart(True)
                 return True
         except Exception:
             pass
 
-        # 2. Secondary check: Standard Windows Run registry key (for migration)
-        try:
-            key = winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                r"Software\Microsoft\Windows\CurrentVersion\Run",
-                0,
-                winreg.KEY_READ,
-            )
-            val = None
-            for kname in ["PCDeck", "PCDeck_Pro", "NeonTrack"]:
-                try:
-                    val, _ = winreg.QueryValueEx(key, kname)
-                    if val:
-                        break
-                except Exception:
-                    pass
-            winreg.CloseKey(key)
-            if not val:
-                return False
-            clean_path = str(val).strip('"').split('"')[0]
-            return os.path.exists(clean_path)
-        except Exception:
-            return False
+        return False
 
     def save_settings(self):
         autostart = self.start_boot_var.get()
@@ -2506,19 +2523,24 @@ class PCDeckProGUI:
             log_debug(f"minimize_to_tray error: {e}")
 
     def open_dashboard(self):
-        """Brings the main window to the foreground."""
+        """Brings the main window to the foreground and deiconifies from tray."""
         try:
             if hasattr(self, "flyout") and self.flyout and self.flyout.winfo_exists():
                 self.flyout.withdraw()
             self.root.deiconify()
             self.root.state("normal")
             self.root.lift()
+            self.root.attributes("-topmost", True)
+            self.root.after(250, lambda: self.root.attributes("-topmost", False))
             self.root.focus_force()
         except Exception as e:
             log_debug(f"open_dashboard error: {e}")
 
     def quit_application(self):
         """Clean shutdown of background server, tray icon, and application."""
+        # CRITICAL INVARIANT: Never explicitly CloseHandle or ReleaseMutex the single-instance
+        # mutex here. Retaining the mutex handle until OS kernel process teardown prevents
+        # a rapid re-launch race while sockets, threads, and UI resources are unmapping.
         try:
             if self.tray_icon:
                 self.tray_icon.stop()
@@ -3744,14 +3766,21 @@ class PhoneRemoteWindow:
 
         ip_row = tk.Frame(m2_card, bg=C_SURFACE_2)
         ip_row.pack(fill="x", padx=8, pady=2)
-        tk.Label(ip_row, text="Phone IP & Port:", font=F_SMALL, fg=C_TEXT_DIM, bg=C_SURFACE_2, width=14, anchor="w").pack(side="left")
+        tk.Label(ip_row, text="Connect IP:Port:", font=F_SMALL, fg=C_TEXT_DIM, bg=C_SURFACE_2, width=16, anchor="w").pack(side="left")
         ip_entry = tk.Entry(ip_row, font=F_BODY, fg=C_ACCENT, bg=C_INPUT, bd=1, relief="solid")
         ip_entry.pack(side="left", fill="x", expand=True)
-        ip_entry.insert(0, f"{LOCAL_IP.rsplit('.', 1)[0]}.:5555")
+        default_ip = getattr(self, "phone_ip", f"{LOCAL_IP.rsplit('.', 1)[0]}.")
+        ip_entry.insert(0, f"{default_ip}:5555")
+
+        pair_row = tk.Frame(m2_card, bg=C_SURFACE_2)
+        pair_row.pack(fill="x", padx=8, pady=2)
+        tk.Label(pair_row, text="Pair Port (Android 11+):", font=F_SMALL, fg=C_TEXT_DIM, bg=C_SURFACE_2, width=16, anchor="w").pack(side="left")
+        pair_port_entry = tk.Entry(pair_row, font=F_BODY, fg=C_ACCENT, bg=C_INPUT, bd=1, relief="solid")
+        pair_port_entry.pack(side="left", fill="x", expand=True)
 
         code_row = tk.Frame(m2_card, bg=C_SURFACE_2)
         code_row.pack(fill="x", padx=8, pady=2)
-        tk.Label(code_row, text="Pair Code (if pairing):", font=F_SMALL, fg=C_TEXT_DIM, bg=C_SURFACE_2, width=14, anchor="w").pack(side="left")
+        tk.Label(code_row, text="Pair Code (6-digit):", font=F_SMALL, fg=C_TEXT_DIM, bg=C_SURFACE_2, width=16, anchor="w").pack(side="left")
         code_entry = tk.Entry(code_row, font=F_BODY, fg=C_WARNING, bg=C_INPUT, bd=1, relief="solid")
         code_entry.pack(side="left", fill="x", expand=True)
 
@@ -3761,6 +3790,7 @@ class PhoneRemoteWindow:
         def _do_connect():
             target = ip_entry.get().strip()
             pair_code = code_entry.get().strip()
+            pair_port = pair_port_entry.get().strip()
             if not target:
                 return
             res_lbl.config(text="Connecting to Wireless ADB...", fg=C_ACCENT)
@@ -3770,8 +3800,10 @@ class PhoneRemoteWindow:
                 try:
                     # If 6-digit pair code provided, pair first
                     if pair_code:
+                        ip_part = target.split(":")[0]
+                        pair_target = f"{ip_part}:{pair_port}" if pair_port else target
                         res_pair = subprocess.run(
-                            [adb_bin, "pair", target, pair_code],
+                            [adb_bin, "pair", pair_target, pair_code],
                             capture_output=True,
                             text=True,
                             timeout=8.0,
@@ -3779,10 +3811,10 @@ class PhoneRemoteWindow:
                         )
                         pair_out = res_pair.stdout.strip()
                         if "successfully paired" not in pair_out.lower():
-                            dlg.after(0, lambda: res_lbl.config(text=f"Pairing: {pair_out}", fg=C_DANGER))
+                            dlg.after(0, lambda: res_lbl.config(text=f"Pairing failed: {pair_out or res_pair.stderr.strip()}", fg=C_DANGER))
                             return
 
-                    # Connect to wireless target
+                    # Connect to wireless target (connect port)
                     res = subprocess.run(
                         [adb_bin, "connect", target],
                         capture_output=True,
@@ -3886,53 +3918,343 @@ def elevate_if_needed():
             log_debug(f"Elevation request failed: {e}")
 
 
-_single_instance_mutex = None
+_SINGLE_INSTANCE_MUTEX_HANDLE = None
+_IPC_WNDPROC_REF = None
 
-def acquire_single_instance_lock() -> bool:
-    """Ensure only one instance of PCDeck runs at any time, restoring existing window if already open."""
-    global _single_instance_mutex
+IPC_WINDOW_CLASS = "PCDeck_IPC_Class"
+IPC_WINDOW_NAME = "PCDeck_IPC_Window"
+IPC_MESSAGE_STRING = "PCDeck_SingleInstance_ShowApp"
+IPC_EVENT_GLOBAL = r"Global\PCDeck_ShowApp_Event"
+IPC_EVENT_LOCAL = r"Local\PCDeck_ShowApp_Event"
+
+
+def signal_existing_instance_to_show(event_names=None, window_class=None, message_string=None):
+    """
+    Sends IPC signals to the running primary instance to wake up, un-hide from tray,
+    and bring its Tkinter GUI to the foreground. Uses dual mechanisms:
+    1. Win32 Named Event (SetEvent) for instant non-blocking wake up.
+    2. RegisterWindowMessageW broadcast and direct post to dedicated IPC window class.
+    3. Fallback: FindWindowW title scanning and ShowWindow/SetForegroundWindow.
+    """
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+        kernel32 = ctypes.windll.kernel32
+        user32 = ctypes.windll.user32
+
+        target_events = event_names if event_names is not None else [IPC_EVENT_GLOBAL, IPC_EVENT_LOCAL]
+        target_class = window_class if window_class is not None else IPC_WINDOW_CLASS
+        target_msg = message_string if message_string is not None else IPC_MESSAGE_STRING
+
+        # 1. Signal Win32 Named Event (instant, immune to window state or desktop focus restrictions)
+        for ev_name in target_events:
+            try:
+                kernel32.OpenEventW.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.LPCWSTR]
+                kernel32.OpenEventW.restype = wintypes.HANDLE
+                kernel32.SetEvent.argtypes = [wintypes.HANDLE]
+                kernel32.SetEvent.restype = wintypes.BOOL
+                kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+                kernel32.CloseHandle.restype = wintypes.BOOL
+
+                h_ev = kernel32.OpenEventW(0x0002, False, ev_name)  # EVENT_MODIFY_STATE = 0x0002
+                if h_ev:
+                    kernel32.SetEvent(h_ev)
+                    kernel32.CloseHandle(h_ev)
+            except Exception:
+                pass
+
+        # 2. Post Registered Windows Message via custom window class and session broadcast
+        try:
+            user32.RegisterWindowMessageW.argtypes = [wintypes.LPCWSTR]
+            user32.RegisterWindowMessageW.restype = ctypes.c_uint
+            user32.FindWindowW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR]
+            user32.FindWindowW.restype = wintypes.HWND
+            user32.PostMessageW.argtypes = [wintypes.HWND, ctypes.c_uint, wintypes.WPARAM, wintypes.LPARAM]
+            user32.PostMessageW.restype = wintypes.BOOL
+
+            wm_show = user32.RegisterWindowMessageW(target_msg)
+            if wm_show:
+                hwnd_ipc = user32.FindWindowW(target_class, None)
+                if hwnd_ipc:
+                    user32.PostMessageW(hwnd_ipc, wm_show, 0, 0)
+                user32.PostMessageW(0xFFFF, wm_show, 0, 0)  # HWND_BROADCAST = 0xFFFF
+        except Exception:
+            pass
+
+        # 3. Fallback: Title scan for direct HWND restore
+        try:
+            user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+            user32.ShowWindow.restype = wintypes.BOOL
+            user32.SetForegroundWindow.argtypes = [wintypes.HWND]
+            user32.SetForegroundWindow.restype = wintypes.BOOL
+
+            for title in [
+                "PCDeck - Wireless PC Touch Deck & Streamer",
+                "PCDeck Pro - Wireless PC Touch Deck & Streamer",
+                "PCDeck Pro",
+                "PCDeck Server",
+            ]:
+                hwnd = user32.FindWindowW(None, title)
+                if hwnd:
+                    user32.ShowWindow(hwnd, 9)  # 9 = SW_RESTORE
+                    user32.SetForegroundWindow(hwnd)
+                    break
+        except Exception:
+            pass
+    except Exception as e:
+        log_debug(f"Signal existing instance failed: {e}")
+
+
+def acquire_single_instance_lock(is_tray_launch: bool = False) -> bool:
+    """
+    Enforce strict single-instance mutual exclusion via Win32 Named Mutex.
+    Uses bInitialOwner=True to atomically take ownership and prevent startup race conditions.
+    Retains handle until process termination (never explicitly closed during shutdown).
+    """
+    global _SINGLE_INSTANCE_MUTEX_HANDLE
     if sys.platform == "win32":
         try:
             import ctypes
-            MUTEX_NAME = "Global\\PCDeck_SingleInstance_Mutex_Pro"
+            from ctypes import wintypes
             kernel32 = ctypes.windll.kernel32
-            _single_instance_mutex = kernel32.CreateMutexW(None, False, MUTEX_NAME)
-            last_error = kernel32.GetLastError()
             ERROR_ALREADY_EXISTS = 183
-            if last_error == ERROR_ALREADY_EXISTS:
-                log_debug("PCDeck is already running in background or system tray. Focusing existing instance...")
-                try:
-                    user32 = ctypes.windll.user32
-                    for title in [
-                        "PCDeck - Wireless PC Touch Deck & Streamer",
-                        "PCDeck Pro - Wireless PC Touch Deck & Streamer"
-                    ]:
-                        hwnd = user32.FindWindowW(None, title)
-                        if hwnd:
-                            user32.ShowWindow(hwnd, 9)  # 9 = SW_RESTORE
-                            user32.SetForegroundWindow(hwnd)
-                            break
-                except Exception:
-                    pass
-                return False
+            ERROR_ACCESS_DENIED = 5
+
+            kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+            kernel32.CreateMutexW.restype = wintypes.HANDLE
+
+            mutex_names = [
+                r"Global\PCDeck_SingleInstance_Mutex_Pro",
+                r"Local\PCDeck_SingleInstance_Mutex_Pro"
+            ]
+            for mutex_name in mutex_names:
+                h_mutex = kernel32.CreateMutexW(None, True, mutex_name)
+                last_error = kernel32.GetLastError()
+                if last_error == ERROR_ALREADY_EXISTS or (h_mutex == 0 and last_error == ERROR_ACCESS_DENIED):
+                    log_debug(f"PCDeck instance already running (detected via {mutex_name}).")
+                    if not is_tray_launch:
+                        signal_existing_instance_to_show()
+                    return False
+
+                if h_mutex != 0:
+                    _SINGLE_INSTANCE_MUTEX_HANDLE = h_mutex
+                    break
         except Exception as e:
             log_debug(f"Mutex creation exception: {e}")
     return True
 
 
+def start_single_instance_ipc_server(root: tk.Tk, on_show_callback, event_names=None, window_class=None, message_string=None):
+    """
+    Starts background listeners in the primary instance to handle show requests
+    from secondary instances:
+    1. Win32 Named Event listener thread (waits on CreateEventW).
+    2. Hidden Win32 IPC Message Window (pumps messages for RegisterWindowMessageW).
+    When triggered, queues on_show_callback onto the Tkinter main thread via root.after.
+    """
+    if sys.platform != "win32":
+        return
+
+    try:
+        import ctypes
+        from ctypes import wintypes
+        import threading
+        import time
+
+        kernel32 = ctypes.windll.kernel32
+        user32 = ctypes.windll.user32
+
+        target_events = event_names if event_names is not None else [IPC_EVENT_LOCAL, IPC_EVENT_GLOBAL]
+        target_class = window_class if window_class is not None else IPC_WINDOW_CLASS
+        target_msg = message_string if message_string is not None else IPC_MESSAGE_STRING
+
+        import queue
+        _ipc_queue = queue.Queue()
+        last_trigger_time = 0.0
+
+        def debounced_trigger():
+            nonlocal last_trigger_time
+            now = time.time()
+            if now - last_trigger_time > 0.4:
+                last_trigger_time = now
+                _ipc_queue.put(True)
+                try:
+                    root.after(0, _poll_queue)
+                except Exception:
+                    pass
+
+        def _poll_queue():
+            triggered = False
+            while not _ipc_queue.empty():
+                try:
+                    _ipc_queue.get_nowait()
+                    triggered = True
+                except Exception:
+                    break
+            if triggered:
+                try:
+                    on_show_callback()
+                except Exception as e:
+                    log_debug(f"on_show_callback error: {e}")
+            try:
+                root.after(100, _poll_queue)
+            except Exception:
+                pass
+
+        try:
+            root.after(100, _poll_queue)
+        except Exception:
+            pass
+
+        # --- 1. Named Event Listener ---
+        kernel32.CreateEventW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.BOOL, wintypes.LPCWSTR]
+        kernel32.CreateEventW.restype = wintypes.HANDLE
+        kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        kernel32.WaitForSingleObject.restype = wintypes.DWORD
+
+        h_event = None
+        for ev_name in target_events:
+            try:
+                h_event = kernel32.CreateEventW(None, False, False, ev_name)
+                if h_event:
+                    break
+            except Exception:
+                pass
+
+        if h_event:
+            def _event_listener_worker():
+                while True:
+                    res = kernel32.WaitForSingleObject(h_event, 1000)
+                    if res == 0:  # WAIT_OBJECT_0
+                        debounced_trigger()
+
+            threading.Thread(target=_event_listener_worker, daemon=True, name="PCDeck-IPC-Event").start()
+
+        # --- 2. Win32 Hidden IPC Message Window ---
+        user32.RegisterWindowMessageW.argtypes = [wintypes.LPCWSTR]
+        user32.RegisterWindowMessageW.restype = ctypes.c_uint
+        wm_show = user32.RegisterWindowMessageW(target_msg)
+        if not wm_show:
+            return
+
+        WNDPROC = ctypes.WINFUNCTYPE(
+            ctypes.c_int64,
+            wintypes.HWND,
+            ctypes.c_uint,
+            wintypes.WPARAM,
+            wintypes.LPARAM
+        )
+        user32.DefWindowProcW.argtypes = [
+            wintypes.HWND,
+            ctypes.c_uint,
+            wintypes.WPARAM,
+            wintypes.LPARAM
+        ]
+        user32.DefWindowProcW.restype = ctypes.c_int64
+
+        def py_wndproc(hwnd, msg, wparam, lparam):
+            if msg == wm_show:
+                debounced_trigger()
+                return 0
+            return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
+
+        global _IPC_WNDPROC_REF
+        _IPC_WNDPROC_REF = WNDPROC(py_wndproc)
+
+        class WNDCLASSEX(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", ctypes.c_uint),
+                ("style", ctypes.c_uint),
+                ("lpfnWndProc", WNDPROC),
+                ("cbClsExtra", ctypes.c_int),
+                ("cbWndExtra", ctypes.c_int),
+                ("hInstance", wintypes.HINSTANCE),
+                ("hIcon", wintypes.HICON),
+                ("hCursor", wintypes.HICON),
+                ("hbrBackground", wintypes.HBRUSH),
+                ("lpszMenuName", wintypes.LPCWSTR),
+                ("lpszClassName", wintypes.LPCWSTR),
+                ("hIconSm", wintypes.HICON),
+            ]
+
+        user32.RegisterClassExW.argtypes = [ctypes.POINTER(WNDCLASSEX)]
+        user32.RegisterClassExW.restype = wintypes.ATOM
+
+        user32.CreateWindowExW.argtypes = [
+            wintypes.DWORD,
+            wintypes.LPCWSTR,
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            wintypes.HWND,
+            wintypes.HMENU,
+            wintypes.HINSTANCE,
+            wintypes.LPVOID
+        ]
+        user32.CreateWindowExW.restype = wintypes.HWND
+
+        user32.GetMessageW.argtypes = [ctypes.POINTER(wintypes.MSG), wintypes.HWND, ctypes.c_uint, ctypes.c_uint]
+        user32.GetMessageW.restype = wintypes.BOOL
+
+        user32.TranslateMessage.argtypes = [ctypes.POINTER(wintypes.MSG)]
+        user32.TranslateMessage.restype = wintypes.BOOL
+
+        user32.DispatchMessageW.argtypes = [ctypes.POINTER(wintypes.MSG)]
+        user32.DispatchMessageW.restype = ctypes.c_int64
+        kernel32.GetModuleHandleW.argtypes = [wintypes.LPCWSTR]
+        kernel32.GetModuleHandleW.restype = wintypes.HINSTANCE
+
+        def _message_window_worker():
+            try:
+                h_inst = kernel32.GetModuleHandleW(None)
+                wc = WNDCLASSEX()
+                wc.cbSize = ctypes.sizeof(WNDCLASSEX)
+                wc.lpfnWndProc = _IPC_WNDPROC_REF
+                wc.hInstance = h_inst
+                wc.lpszClassName = target_class
+                user32.RegisterClassExW(ctypes.byref(wc))
+
+                hwnd = user32.CreateWindowExW(
+                    0,
+                    target_class,
+                    IPC_WINDOW_NAME,
+                    0, 0, 0, 0, 0,
+                    None, None,
+                    h_inst,
+                    None
+                )
+
+                msg = wintypes.MSG()
+                while user32.GetMessageW(ctypes.byref(msg), 0, 0, 0) > 0:
+                    user32.TranslateMessage(ctypes.byref(msg))
+                    user32.DispatchMessageW(ctypes.byref(msg))
+            except Exception as e:
+                log_debug(f"IPC message window loop exception: {e}")
+
+        threading.Thread(target=_message_window_worker, daemon=True, name="PCDeck-IPC-Msg").start()
+    except Exception as e:
+        log_debug(f"start_single_instance_ipc_server failed: {e}")
+
+
 def main():
     import multiprocessing
     multiprocessing.freeze_support()
-    # elevate_if_needed()  # Disabled: run as standard user without UAC prompt
-    if not acquire_single_instance_lock():
-        log_debug("Exiting duplicate PCDeck instance.")
-        return
     start_minimized = any(arg in sys.argv for arg in ["--tray", "--minimized", "--startup", "-m"])
+    # Enforce strict single-instance check before any UI, socket, or thread creation
+    if not acquire_single_instance_lock(is_tray_launch=start_minimized):
+        log_debug("Duplicate instance detected at startup. Exiting cleanly.")
+        sys.exit(0)
     try:
         log_debug(f"Starting PCDeck Pro GUI Application... (start_minimized={start_minimized}, admin={is_admin()})")
         root = tk.Tk()
         root.withdraw()  # Prevent top-left flashing while GUI builds and calculates centered position
         app_gui = PCDeckProGUI(root, start_minimized=start_minimized)
+        start_single_instance_ipc_server(root, app_gui.open_dashboard)
         if not start_minimized:
             root.update_idletasks()
             root.deiconify()

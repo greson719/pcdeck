@@ -304,16 +304,12 @@ class ScreenStreamer:
             old_bm = gdi32.SelectObject(hdc_mem, hbm)
             gdi32.SetStretchBltMode(hdc_mem, 3) # COLORONCOLOR
 
-            # Direct hardware Blit / StretchBlt with CAPTUREBLT for layered/accelerated windows
-            rop = 0x00CC0020 | 0x40000000
+            # Direct hardware Blit / StretchBlt with pure SRCCOPY (sub-1ms, zero DWM flush stall)
+            rop = 0x00CC0020
             if target_w != w or target_h != h:
                 res = gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, rop)
-                if not res:
-                    gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, 0x00CC0020)
             else:
                 res = gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, rop)
-                if not res:
-                    gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x00CC0020)
 
             # Draw cursor into stream image
             try:
@@ -439,16 +435,12 @@ class ScreenStreamer:
                         buf = (ctypes.c_char * (target_w * target_h * 4))()
                         last_sample = None
 
-                    # Blit/Stretch desktop directly to target memory DC using SRCCOPY | CAPTUREBLT
-                    rop = 0x00CC0020 | 0x40000000
+                    # Blit/Stretch desktop directly to target memory DC using hardware SRCCOPY (sub-1ms)
+                    rop = 0x00CC0020
                     if target_w != w or target_h != h:
                         res = gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, rop)
-                        if not res:
-                            res = gdi32.StretchBlt(hdc_mem, 0, 0, target_w, target_h, hdc_screen, 0, 0, w, h, 0x00CC0020)
                     else:
                         res = gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, rop)
-                        if not res:
-                            res = gdi32.BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, 0, 0, 0x00CC0020)
 
                     if not res:
                         # Desktop switched or DC invalidated (e.g. UAC or screen lock) -> re-attach & re-init DC

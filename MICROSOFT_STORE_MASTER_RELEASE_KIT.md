@@ -11,6 +11,7 @@ All required release binaries, store artwork, and high-DPI manifest assets are l
 
 | Asset Type | Exact File Path | Specs |
 |---|---|:---:|
+| **Official Store Package (.msix)** | [dist/PCDeck.msix](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/dist/PCDeck.msix) | Microsoft Store MSIX Package (x64, Free Store Signing) |
 | **Production Win32 Installer (.exe)** | [msstore_assets/PCDeck-Setup.exe](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/PCDeck-Setup.exe) | Windows Inno Setup Installer (x64, v2.7.0) |
 | **Store 1:1 App Box Art / Logo** | [msstore_assets/StoreLogo_300x300.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/StoreLogo_300x300.png) | 300 × 300 (32-bit PNG) |
 | **Spotlight Hero Banner (Featured)** | [msstore_assets/StoreHero_2400x1200.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/StoreHero_2400x1200.png) | 2400 × 1200 (2:1 Hero Graphic) |
@@ -23,6 +24,8 @@ All required release binaries, store artwork, and high-DPI manifest assets are l
 | **Desktop Screenshot 5** | [msstore_assets/5_Local_File_Sharing_1920x1080.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/5_Local_File_Sharing_1920x1080.png) | 1920 × 1080 (Local Wi-Fi File Transfers) |
 | **Desktop Screenshot 6** | [msstore_assets/6_PC_Audio_Loopback_Streaming_1920x1080.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/6_PC_Audio_Loopback_Streaming_1920x1080.png) | 1920 × 1080 (PC Audio Loopback Stream) |
 | **Desktop Screenshot 7** | [msstore_assets/7_Instant_QR_Code_Pairing_1920x1080.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/7_Instant_QR_Code_Pairing_1920x1080.png) | 1920 × 1080 (3-Second QR Code Pairing) |
+| **Desktop Screenshot 8** | [msstore_assets/8_Virtual_Gamepad_Controller_1920x1080.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/8_Virtual_Gamepad_Controller_1920x1080.png) | 1920 × 1080 (Wireless Virtual Gamepad Controller) |
+| **Desktop Screenshot 9** | [msstore_assets/9_OnScreen_Game_HUD_Overlay_1920x1080.png](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/9_OnScreen_Game_HUD_Overlay_1920x1080.png) | 1920 × 1080 (On-Screen Game HUD Touch Overlay) |
 | **High-DPI Manifest Icons** | [msstore_assets/Manifest_Assets/](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/msstore_assets/Manifest_Assets) | 46 Scaled Tiles (scale-100 to 400, targetsize) |
 
 ---
@@ -88,6 +91,11 @@ HIGH-SPEED LOCAL FILE TRANSFER
 STEREO AUDIO STREAMING & MEDIA CONTROLS
 • Stream audio from your PC directly to your phone earphones.
 • Dedicated media remote: Play/Pause, Next/Previous track, and master Windows volume slider.
+
+VIRTUAL GAMEPAD & ON-SCREEN GAME HUD
+• Universal Gamepad & Custom Game Deck with dual analog thumbsticks, D-Pad, and triggers.
+• Transparent On-Screen HUD touch overlay directly on your streamed PC games.
+• Custom visual layout and button position editor with zero driver installation.
 
 ============================================================
 WHY USERS CHOOSE PCDECK
@@ -199,17 +207,22 @@ Follow these steps in the [Microsoft Partner Center](https://partner.microsoft.c
 - Check **This product uses restricted capabilities** (
 unFullTrust).
 
-#### Notes for Certification (Copy & Paste for Reviewers):
-`	ext
+##### Notes for Certification (Copy & Paste for Reviewers):
+```text
 PCDeck is a 100% offline local Wi-Fi utility that enables users to control their Windows PC from their smartphone (acting as a wireless multi-touch trackpad, virtual keyboard, low-latency screen mirror, audio loopback streamer, and local file manager).
 
-Why runFullTrust is required:
-1. Win32 Input Injection: Uses user32.dll (mouse_event / SendInput) to simulate mouse cursor moves, left/right clicks, wheel scrolls, and keyboard hotkeys sent from the user's paired mobile device over local WebSocket.
-2. WASAPI Loopback Audio: Uses Windows Core Audio APIs (WASAPI loopback capture) to stream desktop audio to the user's phone earphones.
-3. Local HTTP / WebSocket Server: Hosts a lightweight local server on 127.0.0.1 / local LAN IP (port 8000) strictly for peer-to-peer communication between the user's PC and phone.
+Zero-Driver Architecture & Routine Non-Elevated Execution:
+• 100% Driverless: PCDeck does not install, package, or require any kernel-mode drivers (.sys). All input simulation uses standard user-mode Win32 APIs (SendInput, mouse_event), and all virtual webcam features use user-space DirectShow COM registration (HKCU).
+• Zero Administrator Elevation: Operates entirely in the standard user security context (Medium Integrity Level). Routine startup and daily use require zero UAC prompts.
 
-All communication occurs 100% locally over LAN. Zero external cloud servers, zero internet requirements, and zero user data collection.
-`
+Why runFullTrust capability is declared:
+1. Standard Win32 Input Simulation: Uses user32.dll (SendInput / mouse_event) to deliver user-initiated mouse cursor moves, clicks, scrolling, and keyboard keystrokes sent from the user's paired phone over local WebSocket.
+2. Pure User-Space DirectShow COM Registration: Self-registers the 64-bit DirectShow virtual camera filter (UnityCaptureFilter64.dll) into HKCU (HKEY_CURRENT_USER\Software\Classes\CLSID), allowing conferencing apps (Zoom, Teams, OBS) to receive the phone camera feed without system-level driver installation.
+3. WASAPI Loopback Audio: Uses standard Windows Core Audio APIs (WASAPI loopback capture) to stream desktop audio to the user's phone earphones.
+4. Local HTTP / WebSocket Server: Hosts a lightweight local server on 127.0.0.1 / local LAN IP (port 8000) strictly for peer-to-peer communication between the user's PC and phone.
+
+All communication occurs 100% locally over LAN. Zero external cloud servers, zero telemetry, zero internet dependencies, and zero user data collection.
+```
 
 ---
 
@@ -237,7 +250,7 @@ Navigate to **Store listings > English (United States)**:
 
 ### Step 7: Packages & Installer Configuration
 
-PCDeck distributes as a native 64-bit Windows Application Installer (.exe) with administrative capabilities to configure firewall rules and DirectShow virtual camera filters.
+PCDeck distributes as a native 64-bit Windows Application Installer (.exe) designed for standard per-user execution with zero kernel-mode drivers and zero mandatory elevation.
 
 1. Navigate to the **Package setup** or **Installer** page in Partner Center.
 2. Fill in the installer properties:
@@ -247,7 +260,7 @@ PCDeck distributes as a native 64-bit Windows Application Installer (.exe) with 
    - **Silent uninstall command:** `"{autopf}\PCDeck\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`
    - **Main executable name:** `PCDeck.exe`
    - **Installer binary architecture:** `x64`
-   - **Does installer require administrator elevation?**: Check **Yes** (required to register DirectShow filters and firewall rules).
+   - **Does installer require administrator elevation?**: Check **No** (or standard per-user / not required). PCDeck operates 100% in user-space: Virtual webcam DirectShow filters self-register silently into `HKEY_CURRENT_USER` (`HKCU`), inputs are simulated via standard Win32 `SendInput` APIs without kernel drivers, and background startup utilizes the standard user Startup folder (`shell:startup`), requiring zero UAC prompts or administrative rights for routine operation.
 3. Click **Save**.
 
 ---

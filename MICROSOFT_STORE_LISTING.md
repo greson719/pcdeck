@@ -133,13 +133,17 @@ SYSTEM REQUIREMENTS
 ```text
 PCDeck is a 100% offline local utility that enables users to control their Windows PC from their smartphone over local Wi-Fi (acting as a wireless mouse/trackpad, virtual keyboard, PC screen mirror, webcam, microphone, audio streamer, and local file manager).
 
-Why runFullTrust is required:
-1. Win32 Input Simulation: Uses user32.dll (SendInput / mouse_event) to simulate mouse cursor movement, left/right clicks, wheel scrolls, and keyboard inputs sent from the paired phone over local WebSocket.
-2. DirectShow Camera Registration: Registers a DirectShow virtual camera COM filter (UnityCaptureFilter64.dll) so video conference software (Teams, Zoom, Discord) can see the phone's camera feed.
-3. Windows Audio Subsystem: Uses Windows Core Audio (WASAPI loopback capture) to stream desktop audio to the phone earphones.
+Zero-Driver Architecture & Routine Non-Elevated Execution:
+• 100% Driverless: PCDeck does not install, package, or require any kernel-mode drivers (.sys). All input simulation uses standard user-mode Win32 APIs (SendInput, mouse_event), and all virtual webcam features use user-space DirectShow COM registration (HKCU).
+• Zero Administrator Elevation: Operates entirely in the standard user security context (Medium Integrity Level). Routine startup and daily use require zero UAC prompts.
+
+Why runFullTrust capability is declared:
+1. Standard Win32 Input Simulation: Uses user32.dll (SendInput / mouse_event) to deliver user-initiated mouse cursor moves, clicks, scrolling, and keyboard keystrokes sent from the user's paired phone over local WebSocket.
+2. Pure User-Space DirectShow COM Registration: Self-registers the 64-bit DirectShow virtual camera filter (UnityCaptureFilter64.dll) into HKCU (HKEY_CURRENT_USER\Software\Classes\CLSID), allowing conferencing apps (Zoom, Teams, OBS) to receive the phone camera feed without system-level driver installation.
+3. WASAPI Loopback Audio: Uses standard Windows Core Audio APIs (WASAPI loopback capture) to stream desktop audio to the user's phone earphones.
 4. Local HTTP / WebSocket Server: Hosts a lightweight local server on the user's local network IP (port 8000) strictly for communication between the user's PC and phone.
 
-All communication occurs 100% locally over LAN. Zero external cloud servers, zero internet requirements, and zero user data collection.
+All communication occurs 100% locally over LAN. Zero external cloud servers, zero telemetry, zero internet dependencies, and zero user data collection.
 ```
 
 ---

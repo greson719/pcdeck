@@ -1896,26 +1896,21 @@
     let targetScale = 0.85;
     let targetFps = maxAllowedFps;
 
-    if (smoothedRtt <= 65) {
-      // Clean Wi-Fi (5GHz/6GHz or strong 2.4GHz) -> Peak fidelity & full 1080p
+    if (smoothedRtt <= 20) {
+      // Tier 1: ULTRA (5 GHz / Clean RTT < 20ms) -> Peak fidelity 60 FPS @ 8 Mbps
       targetQuality = 80;
       targetScale = 1.0;
       targetFps = maxAllowedFps;
-    } else if (smoothedRtt <= 110) {
-      // Standard local Wi-Fi / Hotspot -> Maintain crisp native scale with balanced quality
+    } else if (smoothedRtt <= 55) {
+      // Tier 2: BALANCED (2.4 GHz Clean RTT 20-55ms) -> 30 FPS @ 2.5 Mbps
       targetQuality = 75;
-      targetScale = 1.0;
-      targetFps = maxAllowedFps;
-    } else if (smoothedRtt <= 160) {
-      // Moderate congestion -> Drop FPS to 30 to save 50% bandwidth while keeping text sharp
-      targetQuality = 70;
       targetScale = 0.90;
       targetFps = Math.min(maxAllowedFps, 30);
     } else {
-      // Elevated latency -> Preserve stability floor (never drop below 0.75x scale or 60 quality)
+      // Tier 3: SURVIVAL (2.4 GHz Congested RTT > 55ms) -> 20 FPS @ 1.0 Mbps
       targetQuality = 60;
       targetScale = 0.75;
-      targetFps = 24;
+      targetFps = Math.min(maxAllowedFps, 20);
     }
 
     const isDegrading = (targetQuality < currentAppliedQuality || targetFps < currentAppliedFps);
@@ -2116,8 +2111,9 @@
         state.latency = Math.max(1, delta);
         updateLatencyDisplay(state.latency);
         updateAdaptiveQuality(state.latency);
-        if (screenWs && screenWs.readyState === WebSocket.OPEN) {
-          try { screenWs.send(`lat,${state.latency}`); } catch (e) {}
+        // Synchronize measured latency strictly over mainWs (zero queue delay with TCP_NODELAY)
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          try { mainWs.send(`lat,${state.latency}`); } catch (e) {}
         }
       }
       return;
@@ -2162,9 +2158,9 @@
       state.latency = Math.max(1, Date.now() - sentTime);
       updateLatencyDisplay(state.latency);
       updateAdaptiveQuality(state.latency);
-      // Synchronize measured latency to server Wi-Fi Latency Manager for dynamic pacing
-      if (screenWs && screenWs.readyState === WebSocket.OPEN) {
-        try { screenWs.send(`lat,${state.latency}`); } catch (e) {}
+      // Synchronize measured latency strictly over mainWs
+      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        try { mainWs.send(`lat,${state.latency}`); } catch (e) {}
       }
       return;
     }
@@ -2213,7 +2209,7 @@
       if (state.connected && mainWs && mainWs.readyState === WebSocket.OPEN) {
         sendBinaryPing();
       }
-    }, 1000); // 1000ms pace keeps Wi-Fi link responsive without airtime contention or bufferbloat
+    }, 500); // 500ms probe pace for real-time closed-loop network adaptation
   }
 
   function stopUltraLowLatencyBeacon() {
@@ -2575,7 +2571,7 @@
       console.warn('Frame render error:', e);
     } finally {
       if (nextFrameBuffer) {
-        requestAnimationFrame(processNextScreenFrame);
+        setTimeout(processNextScreenFrame, 0);
       } else {
         isDecodingScreen = false;
       }
@@ -2925,30 +2921,18 @@
   // --- Global Navigation Tab Switching Function ---
   function switchTab(targetId) {
     if (!targetId) return;
-    const requestedTab = targetId;
-    let isGpActivation = false;
-    if (targetId === 'tab-gamepad') {
-      targetId = 'tab-trackpad';
-      isGpActivation = isNativeApp;
-    } else if (targetId === 'tab-trackpad' && gamepadActive) {
-      if (typeof window.setGamepadMode === 'function') {
-        window.setGamepadMode(false);
-      }
-    }
+    const isGpTarget = (targetId === 'tab-gamepad');
 
     vibrate(15);
     state.activeTab = targetId;
     document.body.classList.toggle('on-screen-tab', targetId === 'tab-screen');
-    document.body.classList.toggle('gamepad-mode-active', targetId === 'tab-trackpad' && (gamepadActive || isGpActivation));
+    document.body.classList.toggle('gamepad-mode-active', isGpTarget);
 
-    const isGamepadActive = isGpActivation || (targetId === 'tab-trackpad' && gamepadActive);
     const allTabs = (el && el.dockTabs && el.dockTabs.length) ? el.dockTabs : document.querySelectorAll('.dock-tab');
     allTabs.forEach((t) => {
       const dt = t.dataset.target;
-      if (dt === 'tab-gamepad') {
-        t.classList.toggle('active', isGamepadActive);
-      } else if (dt === 'tab-trackpad') {
-        t.classList.toggle('active', targetId === 'tab-trackpad' && !isGamepadActive);
+      if (targetId === 'tab-gamepad') {
+        t.classList.toggle('active', dt === 'tab-trackpad');
       } else {
         t.classList.toggle('active', dt === targetId);
       }
@@ -2963,8 +2947,14 @@
       }
     });
 
-    if (isGpActivation && typeof window.setGamepadMode === 'function') {
-      window.setGamepadMode(true);
+    if (isGpTarget) {
+      if (typeof window.setGamepadMode === 'function') {
+        window.setGamepadMode(true);
+      }
+    } else if (gamepadActive) {
+      if (typeof window.setGamepadMode === 'function') {
+        window.setGamepadMode(false);
+      }
     }
 
     // Update Titlebar Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
@@ -7503,12 +7493,27 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const stdTrackpad = document.getElementById('standard-trackpad-view');
     const gpContainer = document.getElementById('gamepad-container');
 
-    let activeGpPreset = 'xbox';
+    let activeGpPreset = 'universal';
     let gpSensitivity = 1.0;
     let gpHaptics = true;
+    let gpHybridMode = true;
 
     // Presets definitions
     const GP_PRESETS = {
+      universal: {
+        name: 'Universal (Web & PC)',
+        buttons: { y: 'Y', x: 'X', b: 'B', a: 'A' },
+        sublabels: { y: 'USE', x: 'RELOAD', b: 'BRAKE', a: 'GAS/JUMP' },
+        triggers: { ltTitle: 'LT', ltSub: 'BRAKE', rtTitle: 'RT', rtSub: 'GAS', lbTitle: 'LB', rbTitle: 'RB' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #fbbf24 0%, #f59e0b 60%, #d97706 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ef4444 60%, #b91c1c 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)'
+        },
+        textColors: { y: '#000', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'Universal: Web & PC Games'
+      },
       xbox: {
         name: 'Xbox 360',
         buttons: { y: 'Y', x: 'X', b: 'B', a: 'A' },
@@ -7569,7 +7574,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     function applyGamepadPreset(presetKey) {
       activeGpPreset = presetKey;
-      const conf = GP_PRESETS[presetKey] || GP_PRESETS.xbox;
+      const conf = GP_PRESETS[presetKey] || GP_PRESETS.universal;
       const driverBadge = document.getElementById('gp-driver-text');
       if (driverBadge) {
         driverBadge.textContent = conf.driverLabel;
@@ -7577,7 +7582,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
       const emblemText = document.getElementById('gp-center-emblem-text');
       if (emblemText) {
-        if (presetKey === 'xbox') emblemText.textContent = 'XBOX 360 PC DECK';
+        if (presetKey === 'universal') emblemText.textContent = 'UNIVERSAL DECK';
+        else if (presetKey === 'xbox') emblemText.textContent = 'XBOX 360 PC DECK';
         else if (presetKey === 'ps') emblemText.textContent = 'PLAYSTATION DECK';
         else if (presetKey === 'racing') emblemText.textContent = 'RACING SIM DECK';
         else if (presetKey === 'wasd') emblemText.textContent = 'PC KEYBOARD/MOUSE';
@@ -7639,27 +7645,88 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
     });
 
-    // Top Header Menu & Guide Orb: Toggle / Reveal Bottom Console Options (Xbox, PlayStation, Racing, WASD)
+    // Top Header Menu & Console Options Modal
     const btnTopMenu = document.getElementById('btn-gp-top-menu');
     const btnGuideOrb = document.getElementById('btn-gp-guide-orb');
     const btnDriverBadge = document.getElementById('gp-driver-badge');
     const bottomPresetBar = document.getElementById('gp-bottom-preset-bar');
+    const gpConsoleMenuModal = document.getElementById('gp-console-menu-modal');
+    const btnGpMenuModalClose = document.getElementById('btn-gp-menu-modal-close');
+    const btnGpMenuDone = document.getElementById('btn-gp-menu-done');
+
+    function openGpConsoleMenu() {
+      vibrate(15);
+      if (gpConsoleMenuModal) {
+        gpConsoleMenuModal.style.display = 'flex';
+      }
+    }
+
+    function closeGpConsoleMenu() {
+      vibrate(10);
+      if (gpConsoleMenuModal) {
+        gpConsoleMenuModal.style.display = 'none';
+      }
+    }
+
+    if (btnGpMenuModalClose) {
+      btnGpMenuModalClose.onclick = (e) => {
+        e.preventDefault();
+        closeGpConsoleMenu();
+      };
+    }
+    if (btnGpMenuDone) {
+      btnGpMenuDone.onclick = (e) => {
+        e.preventDefault();
+        closeGpConsoleMenu();
+      };
+    }
+    if (gpConsoleMenuModal) {
+      gpConsoleMenuModal.onclick = (e) => {
+        if (e.target === gpConsoleMenuModal) {
+          closeGpConsoleMenu();
+        }
+      };
+    }
 
     function toggleBottomConsolePresets() {
+      if (gpConsoleMenuModal) {
+        if (gpConsoleMenuModal.style.display === 'flex') {
+          closeGpConsoleMenu();
+        } else {
+          openGpConsoleMenu();
+        }
+        return;
+      }
       vibrate(15);
       if (bottomPresetBar) {
         bottomPresetBar.classList.add('pulse-highlight');
         bottomPresetBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         setTimeout(() => bottomPresetBar.classList.remove('pulse-highlight'), 1200);
       }
-      showToast(' Console Layouts: Xbox 360, PlayStation, Racing, WASD/FPS', 'info');
+      showToast('🎮 Console Layouts: Xbox 360, PlayStation, Racing, WASD/FPS', 'info');
+    }
+
+    // Input Dispatch Engine Toggle (Universal Web vs Direct Controller)
+    const btnGpHybridToggle = document.getElementById('btn-gp-hybrid-toggle');
+    const gpHybridLabel = document.getElementById('gp-hybrid-status-label');
+    if (btnGpHybridToggle) {
+      btnGpHybridToggle.onclick = () => {
+        vibrate(15);
+        gpHybridMode = !gpHybridMode;
+        btnGpHybridToggle.classList.toggle('active', gpHybridMode);
+        if (gpHybridLabel) {
+          gpHybridLabel.textContent = gpHybridMode ? '⚡ UNIVERSAL HYBRID (WEB + PC)' : '🎮 DIRECT CONTROLLER ONLY';
+        }
+        sendCommand(`gp,hybrid,${gpHybridMode ? 1 : 0}`);
+        showToast(gpHybridMode ? 'Universal Mode: Web + PC Games' : 'Direct Controller: ViGEm Only', 'info');
+      };
     }
 
     if (btnTopMenu) {
       btnTopMenu.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleBottomConsolePresets();
+        openGpConsoleMenu();
       };
     }
     if (btnGuideOrb) {
@@ -7683,8 +7750,9 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       btnTopBack.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
+        closeGpConsoleMenu();
         setGamepadMode(false);
-        showToast('Switched to Trackpad', 'info', '️');
+        showToast('Switched to Trackpad', 'info', '🖱️');
       };
     }
 
@@ -7900,7 +7968,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     // Initialize Layout Editor Controls
     const btnEditLayout = document.getElementById('btn-gp-edit-layout');
     if (btnEditLayout) {
-      btnEditLayout.onclick = () => setGamepadEditMode(!isGpLayoutEditing);
+      btnEditLayout.onclick = () => {
+        closeGpConsoleMenu();
+        setGamepadEditMode(!isGpLayoutEditing);
+      };
     }
 
     const btnExitEditor = document.getElementById('btn-gp-exit-editor');
@@ -8121,10 +8192,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
     }
 
-    // Drag-and-Drop Repositioning Engine for Layout Editor (100% Fluid, Zero Snapping)
-    // Drag-and-Drop Repositioning Engine for Layout Editor (100% Fluid, Zero Snapping)
+    // Drag-and-Drop Repositioning Engine for Layout Editor (100% Fluid, Zero Snapping & Scale-Invariant)
     let dragTarget = null;
-    let dragOffset = { x: 0, y: 0 };
+    let startPointer = { x: 0, y: 0 };
+    let elemCenter = { x: 0, y: 0 };
     let isCurrentlyDragging = false;
 
     const handleDragMove = (e) => {
@@ -8132,33 +8203,25 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       e.preventDefault();
       e.stopPropagation();
       const containerRect = gpContainer.getBoundingClientRect();
-      let leftPx = e.clientX - containerRect.left - dragOffset.x;
-      let topPx = e.clientY - containerRect.top - dragOffset.y;
+      const rect = dragTarget.getBoundingClientRect();
+      const halfW = rect.width / 2;
+      const halfH = rect.height / 2;
 
-      // Fluid continuous bounding
-      leftPx = Math.max(0, Math.min(containerRect.width - dragTarget.offsetWidth, leftPx));
-      topPx = Math.max(0, Math.min(containerRect.height - dragTarget.offsetHeight, topPx));
+      const newCenterX = elemCenter.x + (e.clientX - startPointer.x);
+      const newCenterY = elemCenter.y + (e.clientY - startPointer.y);
 
-      // High precision pixel placement during drag for instant 60/120fps response
-      dragTarget.style.left = `${leftPx.toFixed(1)}px`;
-      dragTarget.style.top = `${topPx.toFixed(1)}px`;
+      // Keep element visual center within container boundaries
+      const clampedCenterX = Math.max(halfW, Math.min(containerRect.width - halfW, newCenterX));
+      const clampedCenterY = Math.max(halfH, Math.min(containerRect.height - halfH, newCenterY));
 
-      const leftPercent = ((leftPx / containerRect.width) * 100).toFixed(2);
-      const topPercent = ((topPx / containerRect.height) * 100).toFixed(2);
+      const domLeft = clampedCenterX - (dragTarget.offsetWidth / 2);
+      const domTop = clampedCenterY - (dragTarget.offsetHeight / 2);
 
-      const elemId = dragTarget.dataset.elemId;
-      if (gpCustomLayout.elements[elemId]) {
-        gpCustomLayout.elements[elemId].left = `${leftPercent}%`;
-        gpCustomLayout.elements[elemId].top = `${topPercent}%`;
-        gpCustomLayout.elements[elemId].right = 'auto';
-        gpCustomLayout.elements[elemId].bottom = 'auto';
-      } else {
-        const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === elemId);
-        if (customEntry) {
-          customEntry.left = `${leftPercent}%`;
-          customEntry.top = `${topPercent}%`;
-        }
-      }
+      dragTarget.style.position = 'absolute';
+      dragTarget.style.left = `${domLeft.toFixed(1)}px`;
+      dragTarget.style.top = `${domTop.toFixed(1)}px`;
+      dragTarget.style.right = 'auto';
+      dragTarget.style.bottom = 'auto';
     };
 
     const handleDragEnd = (e) => {
@@ -8168,8 +8231,25 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         const rect = dragTarget.getBoundingClientRect();
         const leftPct = (((rect.left - containerRect.left) / containerRect.width) * 100).toFixed(2) + '%';
         const topPct = (((rect.top - containerRect.top) / containerRect.height) * 100).toFixed(2) + '%';
+        dragTarget.style.position = 'absolute';
         dragTarget.style.left = leftPct;
         dragTarget.style.top = topPct;
+        dragTarget.style.right = 'auto';
+        dragTarget.style.bottom = 'auto';
+
+        const elemId = dragTarget.dataset.elemId;
+        if (gpCustomLayout.elements[elemId]) {
+          gpCustomLayout.elements[elemId].left = leftPct;
+          gpCustomLayout.elements[elemId].top = topPct;
+          gpCustomLayout.elements[elemId].right = 'auto';
+          gpCustomLayout.elements[elemId].bottom = 'auto';
+        } else {
+          const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === elemId);
+          if (customEntry) {
+            customEntry.left = leftPct;
+            customEntry.top = topPct;
+          }
+        }
         try { dragTarget.releasePointerCapture(e.pointerId); } catch (_) {}
         dragTarget = null;
         isCurrentlyDragging = false;
@@ -8192,17 +8272,21 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           isCurrentlyDragging = true;
           dragTarget.classList.add('gp-is-dragging');
 
+          startPointer.x = e.clientX;
+          startPointer.y = e.clientY;
+
           const containerRect = gpContainer.getBoundingClientRect();
           const rect = selectable.getBoundingClientRect();
-          dragOffset.x = e.clientX - rect.left;
-          dragOffset.y = e.clientY - rect.top;
 
-          // Convert to container-relative coordinate immediately so there is zero jump/snap on first touch
-          const curLeftPx = rect.left - containerRect.left;
-          const curTopPx = rect.top - containerRect.top;
+          elemCenter.x = (rect.left + rect.width / 2) - containerRect.left;
+          elemCenter.y = (rect.top + rect.height / 2) - containerRect.top;
+
+          const domLeft = elemCenter.x - (selectable.offsetWidth / 2);
+          const domTop = elemCenter.y - (selectable.offsetHeight / 2);
+
           dragTarget.style.position = 'absolute';
-          dragTarget.style.left = `${curLeftPx.toFixed(1)}px`;
-          dragTarget.style.top = `${curTopPx.toFixed(1)}px`;
+          dragTarget.style.left = `${domLeft.toFixed(1)}px`;
+          dragTarget.style.top = `${domTop.toFixed(1)}px`;
           dragTarget.style.right = 'auto';
           dragTarget.style.bottom = 'auto';
 
@@ -8218,12 +8302,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     applyGpLayout();
 
     function setGamepadMode(active) {
-      if (!isNativeApp && active) {
-        return;
-      }
       gamepadActive = active;
-      if (stdTrackpad) stdTrackpad.style.display = active ? 'none' : '';
-      if (gpContainer) gpContainer.style.display = active ? 'flex' : 'none';
       document.body.classList.toggle('gamepad-mode-active', active);
       const tabTrackpad = document.getElementById('tab-trackpad');
       if (tabTrackpad) tabTrackpad.classList.toggle('gamepad-mode-active', active);
@@ -8236,24 +8315,29 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       }
       const dockGp = document.querySelector('.dock-tab[data-target="tab-gamepad"]');
       const dockTp = document.querySelector('.dock-tab[data-target="tab-trackpad"]');
-      if (dockGp && dockTp && state.activeTab === 'tab-trackpad') {
-        dockGp.classList.toggle('active', active);
-        dockTp.classList.toggle('active', !active);
-      }
+      if (dockGp) dockGp.classList.toggle('active', active);
+      if (dockTp && active) dockTp.classList.add('active');
+
       if (active) {
         applyGamepadPreset(activeGpPreset);
         applyGpLayout();
         if (gyroEngine && gyroEngine.enabled) gyroEngine.start();
         if (mainWs && mainWs.readyState === WebSocket.OPEN) {
           mainWs.send('driver_check');
+          mainWs.send(`gp,hybrid,${gpHybridMode ? 1 : 0}`);
         }
       } else {
         setGamepadEditMode(false);
+        if (typeof closeGpConsoleMenu === 'function') closeGpConsoleMenu();
         if (gyroEngine) gyroEngine.stop();
       }
       const btnHeaderGp = document.getElementById('btn-header-gamepad');
       if (btnHeaderGp) {
         btnHeaderGp.classList.toggle('active', active);
+      }
+      const btnTrackpadGpToggle = document.getElementById('btn-gamepad-mode-toggle');
+      if (btnTrackpadGpToggle) {
+        btnTrackpadGpToggle.classList.toggle('active', active);
       }
       vibrate(20);
     }
@@ -8275,14 +8359,30 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
     }
 
+    const btnTrackpadGpToggle = document.getElementById('btn-gamepad-mode-toggle');
+    if (btnTrackpadGpToggle) {
+      btnTrackpadGpToggle.onclick = () => {
+        vibrate(20);
+        switchTab('tab-gamepad');
+        setGamepadMode(true);
+        showToast('🎮 Standalone Game Controller Active', 'info');
+      };
+    }
+
     if (btnToggle) {
       btnToggle.onclick = () => setGamepadMode(!gamepadActive);
     }
-    const returnButtons = document.querySelectorAll('#btn-return-trackpad, #btn-gp-top-back-trackpad, .gp-exit-chip');
+    const returnButtons = document.querySelectorAll(
+      '#btn-return-trackpad, #btn-gp-top-back-trackpad, #btn-gp-close-joystick-top, #btn-gp-editor-close-joystick, .gp-exit-chip'
+    );
     returnButtons.forEach((btn) => {
-      btn.onclick = () => {
-        switchTab('tab-trackpad');
+      btn.onclick = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (typeof closeGpConsoleMenu === 'function') closeGpConsoleMenu();
+        if (typeof setGamepadEditMode === 'function') setGamepadEditMode(false);
         setGamepadMode(false);
+        switchTab('tab-trackpad');
+        showToast('Joystick Closed — Returned to Trackpad', 'info', '🖱️');
       };
     });
 
@@ -8290,7 +8390,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     if (gpDriverBadge) {
       gpDriverBadge.onclick = () => {
         vibrate(15);
-        const presetOrder = ['xbox', 'ps', 'racing', 'wasd'];
+        const presetOrder = ['universal', 'xbox', 'ps', 'racing', 'wasd'];
         const nextIdx = (presetOrder.indexOf(activeGpPreset) + 1) % presetOrder.length;
         applyGamepadPreset(presetOrder[nextIdx]);
         showToast(`Layout: ${GP_PRESETS[presetOrder[nextIdx]].name}`, 'info');
@@ -8300,7 +8400,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const wasdKeyMap = {
       a: 'space', b: 'c', x: 'z', y: 'r',
       lb: 'q', rb: 'e',
-      lt: 'mouse_right', rt: 'mouse_left',
+      lt: 'left', rt: 'right', // Gas and Brake for web & PC racing games
       ls_click: 'shift', rs_click: 'alt',
       back: 'm', start: 'escape', guide: 'win',
       dpad_up: 'up', dpad_down: 'down', dpad_left: 'left', dpad_right: 'right'
@@ -8481,8 +8581,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     // =========================================================================
     const gpButtons = document.querySelectorAll('#gamepad-container [data-gp]');
     gpButtons.forEach((btn) => {
-      // Skip dpad and abxy buttons as they are managed with fluid sliding above
-      if (btn.closest('#gp-dpad-disc') || btn.closest('#gp-action-diamond')) return;
+      // Skip dpad, abxy, and menu button as they are managed independently
+      if (btn.closest('#gp-dpad-disc') || btn.closest('#gp-action-diamond') || btn.id === 'btn-gp-top-menu') return;
 
       const code = btn.dataset.gp;
       let isPressed = false;
@@ -8494,6 +8594,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         e.stopPropagation();
         isPressed = true;
         btnPointerId = e.pointerId;
+        try { btn.setPointerCapture(e.pointerId); } catch (_) {}
         btn.classList.add('active');
         if (gpHaptics) vibrate(12);
 
@@ -8509,28 +8610,21 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
         sendGamepadButtonState(code, true);
 
-        const onBtnMove = (me) => {
-          if (me.pointerId !== btnPointerId) return;
-          const under = document.elementFromPoint(me.clientX, me.clientY);
-          const isOver = under && (under === btn || btn.contains(under));
-          if (!isOver && isPressed) {
-            pressUp(me);
-          }
-        };
-
         const onBtnRelease = (ue) => {
           if (ue.pointerId !== undefined && ue.pointerId !== btnPointerId) return;
+          window.removeEventListener('pointerup', onBtnRelease);
+          window.removeEventListener('pointercancel', onBtnRelease);
           pressUp(ue);
         };
 
-        window.addEventListener('pointermove', onBtnMove, { passive: false });
-        window.addEventListener('pointerup', onBtnRelease, { once: true });
-        window.addEventListener('pointercancel', onBtnRelease, { once: true });
+        window.addEventListener('pointerup', onBtnRelease);
+        window.addEventListener('pointercancel', onBtnRelease);
       };
 
       const pressUp = (e) => {
         if (!isPressed) return;
         isPressed = false;
+        try { if (btnPointerId !== null) btn.releasePointerCapture(btnPointerId); } catch (_) {}
         btnPointerId = null;
         btn.classList.remove('active');
 
@@ -8548,9 +8642,6 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
 
       btn.addEventListener('pointerdown', pressDown);
-      btn.addEventListener('pointerleave', (e) => {
-        if (isPressed) pressUp(e);
-      });
     });
 
     // Setup Dual Analog Sticks (Left & Right) with Full Window Tracking
@@ -9820,9 +9911,20 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         };
 
         const elNew = createCustomHudButton(customId, currentLayout.elements[customId]);
-        elNew.style.left = '45%';
-        elNew.style.top = '45%';
+        const containerRect = hudContainer.getBoundingClientRect();
+        const initLeftPx = Math.max(10, Math.round((containerRect.width - (elNew.offsetWidth || 64)) / 2));
+        const initTopPx = Math.max(10, Math.round((containerRect.height - (elNew.offsetHeight || 44)) / 2));
+        const leftPct = ((initLeftPx / containerRect.width) * 100).toFixed(2) + '%';
+        const topPct = ((initTopPx / containerRect.height) * 100).toFixed(2) + '%';
+        elNew.style.left = leftPct;
+        elNew.style.top = topPct;
+        elNew.style.right = 'auto';
+        elNew.style.bottom = 'auto';
         elNew.style.transform = 'scale(1.0)';
+        currentLayout.elements[customId].left = leftPct;
+        currentLayout.elements[customId].top = topPct;
+        currentLayout.elements[customId].right = 'auto';
+        currentLayout.elements[customId].bottom = 'auto';
         addBtnModal.style.display = 'none';
         selectHudElement(customId);
         showToast(` Added "${label}" (Drag to reposition)`, 'success');
@@ -9830,11 +9932,12 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
     }
 
-    // Multi-Touch Button & Drag Engine (100% Fluid, Zero Snapping)
+    // Multi-Touch Button & Drag Engine (100% Fluid, Zero Snapping & Scale-Invariant)
     function bindHudElementEvents(elElem) {
       let isDragging = false;
       let startX = 0, startY = 0;
-      let initialLeft = 0, initialTop = 0;
+      let elemCenterX = 0, elemCenterY = 0;
+      let currentDomLeft = 0, currentDomTop = 0;
 
       elElem.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -9857,13 +9960,19 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           try { elElem.setPointerCapture(e.pointerId); } catch (_) {}
           startX = e.clientX;
           startY = e.clientY;
+
           const containerRect = hudContainer.getBoundingClientRect();
-          initialLeft = rect.left - containerRect.left;
-          initialTop = rect.top - containerRect.top;
+          // Visual center of element relative to hudContainer
+          elemCenterX = (rect.left + rect.width / 2) - containerRect.left;
+          elemCenterY = (rect.top + rect.height / 2) - containerRect.top;
+
+          // Compute unscaled DOM left/top so center remains invariant under scale
+          currentDomLeft = elemCenterX - (elElem.offsetWidth / 2);
+          currentDomTop = elemCenterY - (elElem.offsetHeight / 2);
 
           elElem.style.position = 'absolute';
-          elElem.style.left = `${initialLeft.toFixed(1)}px`;
-          elElem.style.top = `${initialTop.toFixed(1)}px`;
+          elElem.style.left = `${currentDomLeft.toFixed(1)}px`;
+          elElem.style.top = `${currentDomTop.toFixed(1)}px`;
           elElem.style.right = 'auto';
           elElem.style.bottom = 'auto';
           return;
@@ -9897,12 +10006,23 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (isEditing && isDragging) {
           e.preventDefault();
           e.stopPropagation();
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
-          const newLeft = Math.max(0, Math.min(hudContainer.clientWidth - elElem.offsetWidth, initialLeft + dx));
-          const newTop = Math.max(0, Math.min(hudContainer.clientHeight - elElem.offsetHeight, initialTop + dy));
-          elElem.style.left = `${newLeft.toFixed(1)}px`;
-          elElem.style.top = `${newTop.toFixed(1)}px`;
+          const containerRect = hudContainer.getBoundingClientRect();
+          const rect = elElem.getBoundingClientRect();
+          const halfW = rect.width / 2;
+          const halfH = rect.height / 2;
+
+          const newCenterX = elemCenterX + (e.clientX - startX);
+          const newCenterY = elemCenterY + (e.clientY - startY);
+
+          // Keep element within container boundaries
+          const clampedCenterX = Math.max(halfW, Math.min(containerRect.width - halfW, newCenterX));
+          const clampedCenterY = Math.max(halfH, Math.min(containerRect.height - halfH, newCenterY));
+
+          currentDomLeft = clampedCenterX - (elElem.offsetWidth / 2);
+          currentDomTop = clampedCenterY - (elElem.offsetHeight / 2);
+
+          elElem.style.left = `${currentDomLeft.toFixed(1)}px`;
+          elElem.style.top = `${currentDomTop.toFixed(1)}px`;
           elElem.style.right = 'auto';
           elElem.style.bottom = 'auto';
         }
@@ -9914,11 +10034,12 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           elElem.classList.remove('is-dragging');
           try { elElem.releasePointerCapture(e.pointerId); } catch (_) {}
           const containerRect = hudContainer.getBoundingClientRect();
-          const rect = elElem.getBoundingClientRect();
-          const leftPct = (((rect.left - containerRect.left) / containerRect.width) * 100).toFixed(2) + '%';
-          const topPct = (((rect.top - containerRect.top) / containerRect.height) * 100).toFixed(2) + '%';
+          const leftPct = ((currentDomLeft / containerRect.width) * 100).toFixed(2) + '%';
+          const topPct = ((currentDomTop / containerRect.height) * 100).toFixed(2) + '%';
           elElem.style.left = leftPct;
           elElem.style.top = topPct;
+          elElem.style.right = 'auto';
+          elElem.style.bottom = 'auto';
           if (currentLayout.elements[elElem.dataset.elemId]) {
             currentLayout.elements[elElem.dataset.elemId].left = leftPct;
             currentLayout.elements[elElem.dataset.elemId].top = topPct;
@@ -10757,8 +10878,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       if (el.connectModal) el.connectModal.classList.remove('show');
       const obModal = document.getElementById('onboarding-modal');
       if (obModal) obModal.classList.remove('show');
-      const safeTab = targetTab === 'tab-gamepad' ? 'tab-trackpad' : targetTab;
-      switchTab(safeTab);
+      switchTab(targetTab);
       connect();
     } else if (savedIp) {
       switchTab(targetTab);
@@ -10989,6 +11109,21 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     setTimeout(() => {
       checkVersionUpdates(false);
     }, 4000);
+
+    // App Lifecycle & Interruption Release Guard (Phone calls, screen lock, app switching)
+    const purgeActiveInputsOnInterruption = () => {
+      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        try {
+          mainWs.send("gr"); // Reset all gamepad axes and held buttons on PC server
+        } catch (e) {}
+      }
+    };
+    window.onAppPause = purgeActiveInputsOnInterruption;
+    window.addEventListener('blur', purgeActiveInputsOnInterruption);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) purgeActiveInputsOnInterruption();
+    });
+    window.addEventListener('pagehide', purgeActiveInputsOnInterruption);
   }
 
   if (document.readyState === 'loading') {

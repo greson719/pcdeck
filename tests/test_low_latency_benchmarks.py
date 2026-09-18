@@ -1,4 +1,4 @@
-﻿"""
+"""
 Comprehensive Automated Low-Latency Benchmark Suite for PCDeck.
 
 Validates:
@@ -21,13 +21,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from server.binary_protocol import (
     OP_MOVE_REL, OP_MOVE_ABS, OP_TOUCH_DOWN, OP_TOUCH_MOVE, OP_TOUCH_UP,
-    OP_CLICK, OP_SCROLL_REL, OP_SCROLL_ABS, OP_PING, OP_GAMEPAD,
+    OP_CLICK, OP_SCROLL_REL, OP_SCROLL_ABS, OP_PING, OP_GAMEPAD, OP_GAMEPAD_HYBRID,
     pack_move_rel, pack_move_abs, pack_touch_down, pack_touch_move, pack_touch_up,
-    pack_click, pack_scroll_rel, pack_scroll_abs, pack_ping, pack_pong,
+    pack_click, pack_scroll_rel, pack_scroll_abs, pack_ping, pack_pong, pack_gamepad_hybrid,
     unpack_binary_message
 )
 from server.input_controller import controller, init_low_latency_environment
 from server.wifi_latency_manager import wifi_latency_manager
+from server.gamepad_manager import WASDTranslator, gamepad_manager
 
 
 def test_binary_protocol_correctness():
@@ -70,6 +71,50 @@ def test_binary_protocol_correctness():
     cmd, args = res
     assert cmd == "ping"
     assert args[0] == t_ms
+
+    # Hybrid Gamepad (12 Bytes)
+    buf_hybrid = pack_gamepad_hybrid(lx=-15000, ly=25000, mdx=45, mdy=-30, buttons=0x0005, flags=1)
+    assert len(buf_hybrid) == 12
+    res_hybrid = unpack_binary_message(buf_hybrid)
+    assert res_hybrid is not None
+    cmd, args = res_hybrid
+    assert cmd == "gp_hybrid"
+    flags, buttons, lx, ly, mdx, mdy = args
+    assert flags == 1
+    assert buttons == 0x0005
+    assert lx == -15000
+    assert ly == 25000
+    assert mdx == 45
+    assert mdy == -30
+
+
+def test_wasd_translator_sectoring():
+    """Verify 8-way WASD sectoring, deadzone, and sprint thresholding."""
+    translator = WASDTranslator(deadzone=5000, run_threshold=24000)
+
+    # 1. Deadzone: below 5000 mag should release all keys
+    translator.resolve(2000, 2000)
+    assert translator._prev_dir_mask == 0
+
+    # 2. Pure UP (W): axis_y > 0, axis_x = 0
+    translator.resolve(0, 15000)
+    assert translator._prev_dir_mask == (1 << 0)  # DIR_W
+
+    # 3. UP + RIGHT (W + D): 45 degrees
+    translator.resolve(15000, 15000)
+    assert translator._prev_dir_mask == ((1 << 0) | (1 << 3))  # DIR_W | DIR_D
+
+    # 4. Pure RIGHT (D)
+    translator.resolve(15000, 0)
+    assert translator._prev_dir_mask == (1 << 3)  # DIR_D
+
+    # 5. SPRINT + UP (W + LShift): mag >= 24000
+    translator.resolve(0, 28000)
+    assert translator._prev_dir_mask == ((1 << 0) | (1 << 4))  # DIR_W | DIR_RUN
+
+    # 6. Release on return to deadzone
+    translator.resolve(0, 0)
+    assert translator._prev_dir_mask == 0
 
 
 def test_binary_protocol_performance_benchmark():

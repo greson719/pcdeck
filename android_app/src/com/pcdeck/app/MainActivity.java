@@ -2843,6 +2843,11 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         releaseStreamingWifiLock();
+        if (webView != null) {
+            try {
+                webView.evaluateJavascript("if(window.onAppPause) window.onAppPause();", null);
+            } catch (Exception ignored) {}
+        }
         if (mSensorManager != null && mSensorListener != null) {
             try {
                 mSensorManager.unregisterListener(mSensorListener);

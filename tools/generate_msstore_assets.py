@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 import shutil
 from pathlib import Path
@@ -276,10 +276,14 @@ def copy_store_showcase_screenshots(dest_dir: Path):
         ("5_File_Transfer_1920x1080.png", "5_Local_File_Sharing_1920x1080.png"),
         ("6_Audio_Streaming_1920x1080.png", "6_PC_Audio_Loopback_Streaming_1920x1080.png"),
         ("7_Instant_QR_Pairing_1920x1080.png", "7_Instant_QR_Code_Pairing_1920x1080.png"),
+        ("8_Virtual_Gamepad_Controller_1920x1080.png", "8_Virtual_Gamepad_Controller_1920x1080.png"),
+        ("9_OnScreen_Game_HUD_Overlay_1920x1080.png", "9_OnScreen_Game_HUD_Overlay_1920x1080.png"),
     ]
     
     for src_name, dst_name in screenshot_mapping:
         src_path = PLAYSTORE_DIR / src_name
+        if not src_path.exists():
+            src_path = ROOT / "screenshots" / src_name
         if src_path.exists():
             shutil.copy2(src_path, dest_dir / dst_name)
             print(f"  [+] Synchronized Store Screenshot: {dst_name}")

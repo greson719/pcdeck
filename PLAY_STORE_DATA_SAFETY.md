@@ -17,16 +17,18 @@ Use this exact guide when filling out the **Data safety** section in the Google 
 ## 2. App Permissions Declarations
 
 ### Camera (`android.permission.CAMERA`)
-- **Category:** Device or other IDs / App Functionality
-- **Collected:** **No** (Processed ephemerally in volatile memory on-device only).
+- **Category:** App Functionality
+- **Collected:** **No** (Processed ephemerally in volatile RAM on-device only).
 - **Shared:** **No**.
-- **Purpose:** App Functionality (Scanning the PC companion pairing QR code).
+- **Purpose:** App Functionality (Scanning the PC companion pairing QR code displayed on the user's monitor).
+- **Policy Invariant:** Frames are analyzed strictly in volatile memory to extract the local IP/port pairing token and immediately discarded. Zero photos, videos, or optical data are ever stored to disk or transmitted over the network.
 
 ### Photos and Videos / Files (`Storage / Media`)
 - **Category:** Files and docs
 - **Collected:** **No** (Files are transferred peer-to-peer locally between user's own PC and phone only when user explicitly taps Send / Save).
 - **Shared:** **No**.
 - **Purpose:** App Functionality (Local Wi-Fi file sharing).
+- **Policy Invariant:** Used strictly when the user explicitly initiates a file transfer over local Wi-Fi. PCDeck does NOT request high-risk broad storage access (`MANAGE_EXTERNAL_STORAGE`), avoiding Google Play restricted permission scrutiny.
 
 ---
 

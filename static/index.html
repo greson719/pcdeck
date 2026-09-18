@@ -812,11 +812,11 @@
     <!-- ================= TAB 2: TRACKPAD ================= -->
     <section id="tab-trackpad" class="tab-view">
       <div class="trackpad-options-strip">
-        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle native-only-feature gamepad-feature" style="background: var(--neo-cyan); color: #000; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;" title="Switch Trackpad to Gamepad Controller">
-          <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
+        <button id="btn-speed-quick" class="neo-chip-toggle" style="background: var(--neo-yellow); color: #000; font-weight: 900;">1.0x</button>
+        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle gamepad-feature" style="background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);" title="Switch to Virtual Gamepad Deck">
+          <svg class="deck-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="6"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="13" r="1" fill="currentColor"/><circle cx="18" cy="11" r="1" fill="currentColor"/></svg>
           <span>Gamepad</span>
         </button>
-        <button id="btn-speed-quick" class="neo-chip-toggle" style="background: var(--neo-yellow); color: #000; font-weight: 900;">1.0x</button>
         <button id="tool-drag-lock" class="neo-chip-toggle" style="display: inline-flex; align-items: center; gap: 4px;">
           <svg class="deck-icon" width="14" height="14"><use href="#icon-lock"/></svg>
           <span id="label-drag-lock">Drag: Off</span>
@@ -876,219 +876,128 @@
           </button>
         </div>
       </div>
+    </section>
 
-      <!-- ================= STANDALONE FULL-DECK CONTROLLER (GAMEPAD) ================= -->
-      <div id="gamepad-container" class="gamepad-main-layout" style="display: none; height: 100%; flex: 1;">
-        <!-- Top Shoulder Triggers & System Header Bar -->
-        <div class="gp-top-shoulder-bar" id="gp-top-shoulder-bar">
-          <!-- Back to Trackpad & Gyro Super Quick Toggles (Top Left) -->
-          <div class="gp-top-nav-group">
-            <button type="button" id="btn-gp-top-back-trackpad" class="gp-top-action-btn gp-top-back-btn" title="Exit Gamepad & Return to Trackpad">
-              <span class="gp-top-back-icon">←</span>
-              <span>Trackpad</span>
-            </button>
-            <button type="button" id="btn-gp-gyro-toggle" class="gp-top-action-btn gp-gyro-badge-btn" title="Toggle Gyro Super Motion Sensor">
-              <span class="pulse-gyro-dot" id="gp-gyro-pulse-dot"></span>
-              <span class="gyro-label" id="gp-gyro-status-label">GYRO SUPER</span>
-            </button>
-            <button type="button" id="btn-gp-gyro-calib" class="gp-top-action-btn gp-gyro-calib-btn" title="1-Tap Calibrate / Center Neutral Angle">
-              <span>CENTER</span>
-            </button>
-            <button type="button" id="btn-gp-gyro-settings" class="gp-top-action-btn gp-gyro-settings-btn" title="Gyro Super Mode & Settings">
-              <svg class="deck-icon" width="13" height="13"><use href="#icon-settings"/></svg>
-            </button>
-          </div>
-
-          <!-- Left Triggers: LT & LB -->
-          <div class="gp-shoulder-cluster gp-shoulder-left">
-            <div class="gp-control-pod gp-trigger-pod" data-elem-id="elem-lt">
-              <div class="gp-trigger-wrapper">
-                <button type="button" class="gp-btn gp-trigger-btn monect-trigger" data-gp="lt" title="Left Trigger (Aim / Brake)">
-                  <span class="trigger-title" id="lt-btn-title">LT</span>
-                  <span class="trigger-sub" id="lt-btn-sub">AIM</span>
-                </button>
-                <div class="trigger-meter-gauge"><div class="trigger-fill" id="lt-meter-fill"></div></div>
+    <!-- ================= TAB: GAMEPAD (STANDALONE FULL-DECK CONTROLLER) ================= -->
+    <section id="tab-gamepad" class="tab-view">
+      <div id="gamepad-container" class="gamepad-main-layout modern-gamepad-deck" style="height: 100%; flex: 1; position: relative;">
+        <!-- Left Side Pod: Left Stick (Top), D-Pad (Bottom), LT (Bottom Corner) -->
+        <div class="gp-deck-side gp-deck-left">
+          <!-- Top Left: Primary Analog Stick -->
+          <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-left-stick">
+            <div class="gp-stick-zone" id="gp-left-stick-zone">
+              <div class="gp-stick-base clean-stick-base">
+                <div class="gp-stick-gimbal-ring"></div>
+                <div class="gp-stick-thumb clean-stick-thumb" id="gp-left-thumb">
+                  <div class="thumb-center-dot"></div>
+                </div>
               </div>
-            </div>
-            <div class="gp-control-pod gp-bumper-pod" data-elem-id="elem-lb">
-              <button type="button" class="gp-btn gp-bumper-btn monect-bumper" data-gp="lb" title="Left Bumper (Sprint / Alt)">
-                <span class="bumper-title" id="lb-btn-title">LB</span>
-              </button>
+              <button type="button" class="gp-stick-click-btn" data-gp="ls_click" title="Left Stick Click (L3 / Sprint)">L3</button>
             </div>
           </div>
 
-          <!-- Center System Hub & Guide Orb (Console Menu Switcher) -->
-          <div class="gp-system-hub" data-elem-id="elem-sys">
-            <div class="gp-menu-buttons">
-              <button type="button" class="gp-sys-pill" id="btn-gp-view-mode" data-gp="back" title="View / Select / Back">VIEW ⧉</button>
-              <button type="button" class="gp-guide-orb monect-guide-orb" id="btn-gp-guide-orb" data-gp="guide" title="Console Options & Presets (Xbox / PlayStation / Racing / WASD)">
-                <div class="guide-orb-inner"><svg class="deck-icon" width="18" height="18"><use href="#icon-gamepad"/></svg></div>
+          <!-- Bottom Left: D-Pad -->
+          <div class="gp-control-pod gp-dpad-pod" data-elem-id="elem-dpad">
+            <div class="gp-dpad-cross-deck clean-dpad-disc" id="gp-dpad-disc">
+              <button type="button" class="gp-dpad-btn gp-dpad-up clean-dpad-circle" data-gp="dpad_up" title="D-Pad Up">
+                <span class="dpad-arrow">▲</span>
               </button>
-              <button type="button" class="gp-sys-pill gp-sys-menu-highlight" id="btn-gp-top-menu" data-gp="start" title="Console Layout Options (Xbox, PlayStation, Racing, WASD)">MENU</button>
-            </div>
-            <button type="button" class="gp-driver-status-chip" id="gp-driver-badge" title="Tap to Switch Console Layouts (Xbox / PlayStation / Racing / WASD)">
-              <span class="pulse-dot"></span>
-              <span id="gp-driver-text">Game Deck: Active (WASD + Aim)</span>
-              <span class="gp-driver-arrow">▼</span>
-            </button>
-          </div>
-
-          <!-- Right Triggers: RB & RT -->
-          <div class="gp-shoulder-cluster gp-shoulder-right">
-            <div class="gp-control-pod gp-bumper-pod" data-elem-id="elem-rb">
-              <button type="button" class="gp-btn gp-bumper-btn monect-bumper" data-gp="rb" title="Right Bumper (Melee / Skill)">
-                <span class="bumper-title" id="rb-btn-title">RB</span>
-              </button>
-            </div>
-            <div class="gp-control-pod gp-trigger-pod" data-elem-id="elem-rt">
-              <div class="gp-trigger-wrapper">
-                <button type="button" class="gp-btn gp-trigger-btn monect-trigger" data-gp="rt" title="Right Trigger (Fire / Gas)">
-                  <span class="trigger-title" id="rt-btn-title">RT</span>
-                  <span class="trigger-sub" id="rt-btn-sub">FIRE</span>
+              <div class="gp-dpad-mid-row">
+                <button type="button" class="gp-dpad-btn gp-dpad-left clean-dpad-circle" data-gp="dpad_left" title="D-Pad Left">
+                  <span class="dpad-arrow">◀</span>
                 </button>
-                <div class="trigger-meter-gauge"><div class="trigger-fill" id="rt-meter-fill"></div></div>
+                <div class="gp-dpad-core"><div class="dpad-cup-well"></div></div>
+                <button type="button" class="gp-dpad-btn gp-dpad-right clean-dpad-circle" data-gp="dpad_right" title="D-Pad Right">
+                  <span class="dpad-arrow">▶</span>
+                </button>
               </div>
+              <button type="button" class="gp-dpad-btn gp-dpad-down clean-dpad-circle" data-gp="dpad_down" title="D-Pad Down">
+                <span class="dpad-arrow">▼</span>
+              </button>
             </div>
+          </div>
+
+          <!-- Bottom-Left Corner: LT Trigger -->
+          <div class="gp-corner-trigger gp-corner-lt" data-elem-id="elem-lt">
+            <button type="button" class="gp-trigger-corner-btn gp-btn-corner-lt" id="btn-gp-lt" data-gp="lt" title="Left Trigger (LT / Aim)">
+              <span class="corner-trigger-letter">L</span>
+              <span class="corner-trigger-letter">T</span>
+            </button>
+            <div class="trigger-meter-gauge" style="display: none;"><div class="trigger-fill" id="lt-meter-fill"></div></div>
           </div>
         </div>
 
-        <!-- Main Body Deck: Left Pod (Movement Stick + D-Pad) | Center Spine | Right Pod (Actions Diamond + Look Stick) -->
-        <div class="gp-body-layout monect-body-layout" id="gp-body-layout">
-          <!-- Left Column: Primary Movement Stick (Top) + D-Pad (Bottom) -->
-          <div class="gp-col gp-col-left">
-            <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-left-stick">
-              <span class="gp-pod-label" id="gp-left-stick-label">MOVE (LEFT STICK)</span>
-              <div class="gp-stick-zone" id="gp-left-stick-zone">
-                <div class="gp-stick-base monect-stick-base">
-                  <div class="gp-stick-ticks">
-                    <span class="tick-0"></span><span class="tick-90"></span><span class="tick-180"></span><span class="tick-270"></span>
-                  </div>
-                  <div class="gp-stick-gimbal-ring"></div>
-                  <div class="gp-stick-thumb monect-stick-thumb" id="gp-left-thumb">
-                    <div class="thumb-grip-ring"></div>
-                    <div class="thumb-cross-notches">
-                      <span></span><span></span><span></span><span></span>
-                    </div>
-                    <div class="thumb-center-dot"></div>
-                  </div>
-                </div>
-                <button type="button" class="gp-stick-click-btn" data-gp="ls_click" title="Left Stick Click (L3 / Sprint)">LS (L3)</button>
-              </div>
-            </div>
+        <!-- Center Pod: LSHLDR & RSHLDR (Top), View & Menu (Mid) -->
+        <div class="gp-deck-center">
+          <div class="gp-center-shoulders-row">
+            <button type="button" class="gp-shoulder-pill-btn" id="btn-gp-lb" data-elem-id="elem-lb" data-gp="lb" title="Left Shoulder (LB / Sprint)">
+              LSHLDR
+            </button>
+            <button type="button" class="gp-shoulder-pill-btn" id="btn-gp-rb" data-elem-id="elem-rb" data-gp="rb" title="Right Shoulder (RB / Melee)">
+              RSHLDR
+            </button>
+          </div>
 
-            <div class="gp-control-pod gp-dpad-pod" data-elem-id="elem-dpad">
-              <span class="gp-pod-label">D-PAD</span>
-              <div class="gp-dpad-cross-deck monect-dpad-disc" id="gp-dpad-disc">
-                <button type="button" class="gp-dpad-btn gp-dpad-up" data-gp="dpad_up" title="D-Pad Up">
-                  <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="12,4 5,18 19,18" fill="currentColor"/></svg>
+          <div class="gp-center-sys-row" data-elem-id="elem-sys">
+            <button type="button" class="gp-circle-sys-btn" id="btn-gp-view-mode" data-gp="back" title="View / Select / Back">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="7" width="12" height="12" rx="1.5"/><path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5H19A1.5 1.5 0 0 1 20.5 5v8.5A1.5 1.5 0 0 1 19 15h-2"/></svg>
+            </button>
+            <button type="button" class="gp-circle-sys-btn gp-exit-chip" id="btn-gp-top-back-trackpad" title="Close Gamepad &amp; Return to Trackpad" style="border-color: #ef4444; color: #ff5c7c; background: rgba(239, 68, 68, 0.2);">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <button type="button" class="gp-circle-sys-btn" id="btn-gp-top-menu" title="Console Menu &amp; Options">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- Portrait Orientation Hint Banner -->
+          <div class="gp-portrait-hint-banner" id="gp-portrait-hint">
+            <span>🔄 Rotate to landscape for full console deck</span>
+          </div>
+        </div>
+
+        <!-- Right Side Pod: ABXY (Top), Right Stick (Bottom), RT (Bottom Corner) -->
+        <div class="gp-deck-side gp-deck-right">
+          <!-- Top Right: ABXY Diamond -->
+          <div class="gp-control-pod gp-action-pod" data-elem-id="elem-actions">
+            <div class="gp-abxy-diamond clean-abxy-diamond" id="gp-action-diamond">
+              <button type="button" class="gp-action-btn btn-y clean-abxy-circle circle-y" data-gp="y" title="Y / Use">
+                <span class="gp-btn-jewel">Y</span>
+              </button>
+              <div class="gp-abxy-mid-row">
+                <button type="button" class="gp-action-btn btn-x clean-abxy-circle circle-x" data-gp="x" title="X / Reload">
+                  <span class="gp-btn-jewel">X</span>
                 </button>
-                <div class="gp-dpad-mid-row">
-                  <button type="button" class="gp-dpad-btn gp-dpad-left" data-gp="dpad_left" title="D-Pad Left">
-                    <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="4,12 18,5 18,19" fill="currentColor"/></svg>
-                  </button>
-                  <div class="gp-dpad-core"><div class="dpad-cup-well"></div></div>
-                  <button type="button" class="gp-dpad-btn gp-dpad-right" data-gp="dpad_right" title="D-Pad Right">
-                    <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="20,12 6,5 6,19" fill="currentColor"/></svg>
-                  </button>
-                </div>
-                <button type="button" class="gp-dpad-btn gp-dpad-down" data-gp="dpad_down" title="D-Pad Down">
-                  <svg viewBox="0 0 24 24" class="dpad-icon"><polygon points="12,20 5,6 19,6" fill="currentColor"/></svg>
+                <button type="button" class="gp-action-btn btn-b clean-abxy-circle circle-b" data-gp="b" title="B / Crouch">
+                  <span class="gp-btn-jewel">B</span>
                 </button>
               </div>
+              <button type="button" class="gp-action-btn btn-a clean-abxy-circle circle-a" data-gp="a" title="A / Jump">
+                <span class="gp-btn-jewel">A</span>
+              </button>
             </div>
           </div>
 
-          <!-- Center Column: Monect-Style Live Artificial Horizon & Gyro Gimbal HUD -->
-          <div class="gp-col gp-col-center" data-elem-id="elem-center-spine">
-            <div class="gp-monect-spine-cluster">
-              <div class="gp-center-emblem">
-                <span class="gp-emblem-icon"><svg class="deck-icon" width="16" height="16"><use href="#icon-gamepad"/></svg></span>
-                <span class="gp-emblem-text">PCDECK PRO</span>
-              </div>
-              <!-- Live Artificial Horizon & Gyro Gimbal HUD -->
-              <div class="gp-gyro-horizon-hud" id="gp-gyro-horizon-hud" title="Live Gyro Super Motion Tracking (Tap to Center)">
-                <div class="horizon-gimbal-ring">
-                  <div class="horizon-pitch-scale">
-                    <span class="pitch-mark mark-pos">+15°</span>
-                    <span class="pitch-mark mark-zero">0°</span>
-                    <span class="pitch-mark mark-neg">-15°</span>
-                  </div>
-                  <div class="horizon-level-line" id="gyro-horizon-line">
-                    <div class="horizon-reticle-left"></div>
-                    <div class="horizon-reticle-center"></div>
-                    <div class="horizon-reticle-right"></div>
-                  </div>
-                  <div class="horizon-fixed-crosshair"></div>
-                </div>
-                <div class="gyro-hud-status-bar">
-                  <span class="gyro-stat-val" id="gyro-live-roll">R: 0.0°</span>
-                  <span class="gyro-stat-badge" id="gyro-live-mode">STEER</span>
-                  <span class="gyro-stat-val" id="gyro-live-pitch">P: 0.0°</span>
+          <!-- Bottom Right: Secondary Analog Stick -->
+          <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-right-stick">
+            <div class="gp-stick-zone" id="gp-right-stick-zone">
+              <div class="gp-stick-base clean-stick-base">
+                <div class="gp-stick-gimbal-ring"></div>
+                <div class="gp-stick-thumb clean-stick-thumb" id="gp-right-thumb">
+                  <div class="thumb-center-dot"></div>
                 </div>
               </div>
-              <div class="gp-center-instructions">
-                <span id="gp-gyro-quick-desc">Tilt Phone to Steer / Aim</span>
-              </div>
+              <button type="button" class="gp-stick-click-btn" data-gp="rs_click" title="Right Stick Click (R3 / Melee)">R3</button>
             </div>
           </div>
 
-          <!-- Right Column: Action Buttons Diamond (Top) + Look/Aim Stick (Bottom) -->
-          <div class="gp-col gp-col-right">
-            <div class="gp-control-pod gp-action-pod" data-elem-id="elem-actions">
-              <span class="gp-pod-label" id="gp-action-diamond-label">ACTION BUTTONS</span>
-              <div class="gp-abxy-diamond monect-abxy-diamond" id="gp-action-diamond">
-                <button type="button" class="gp-action-btn btn-y monect-jewel-btn" data-gp="y" title="Y / Use / Switch Weapon">
-                  <span class="gp-jewel-bezel">
-                    <span class="gp-btn-jewel">Y</span>
-                    <span class="gp-jewel-glare"></span>
-                  </span>
-                  <span class="gp-action-sublabel" id="sub-y">USE</span>
-                </button>
-                <div class="gp-abxy-mid-row">
-                  <button type="button" class="gp-action-btn btn-x monect-jewel-btn" data-gp="x" title="X / Reload / Interact">
-                    <span class="gp-jewel-bezel">
-                      <span class="gp-btn-jewel">X</span>
-                      <span class="gp-jewel-glare"></span>
-                    </span>
-                    <span class="gp-action-sublabel" id="sub-x">RELOAD</span>
-                  </button>
-                  <button type="button" class="gp-action-btn btn-b monect-jewel-btn" data-gp="b" title="B / Crouch / Cancel">
-                    <span class="gp-jewel-bezel">
-                      <span class="gp-btn-jewel">B</span>
-                      <span class="gp-jewel-glare"></span>
-                    </span>
-                    <span class="gp-action-sublabel" id="sub-b">CROUCH</span>
-                  </button>
-                </div>
-                <button type="button" class="gp-action-btn btn-a monect-jewel-btn" data-gp="a" title="A / Jump / Accept">
-                  <span class="gp-jewel-bezel">
-                    <span class="gp-btn-jewel">A</span>
-                    <span class="gp-jewel-glare"></span>
-                  </span>
-                  <span class="gp-action-sublabel" id="sub-a">JUMP</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="gp-control-pod gp-stick-pod" data-elem-id="elem-right-stick">
-              <span class="gp-pod-label" id="gp-right-stick-label">AIM / CAMERA (RIGHT STICK)</span>
-              <div class="gp-stick-zone" id="gp-right-stick-zone">
-                <div class="gp-stick-base gp-look-base monect-stick-base">
-                  <div class="gp-stick-ticks">
-                    <span class="tick-0"></span><span class="tick-90"></span><span class="tick-180"></span><span class="tick-270"></span>
-                  </div>
-                  <div class="gp-stick-gimbal-ring"></div>
-                  <div class="gp-stick-thumb monect-stick-thumb" id="gp-right-thumb">
-                    <div class="thumb-grip-ring"></div>
-                    <div class="thumb-cross-notches">
-                      <span></span><span></span><span></span><span></span>
-                    </div>
-                    <div class="thumb-center-dot"></div>
-                  </div>
-                </div>
-                <button type="button" class="gp-stick-click-btn" data-gp="rs_click" title="Right Stick Click (R3 / Melee)">RS (R3)</button>
-              </div>
-            </div>
+          <!-- Bottom-Right Corner: RT Trigger -->
+          <div class="gp-corner-trigger gp-corner-rt" data-elem-id="elem-rt">
+            <button type="button" class="gp-trigger-corner-btn gp-btn-corner-rt" id="btn-gp-rt" data-gp="rt" title="Right Trigger (RT / Fire)">
+              <span class="corner-trigger-letter">R</span>
+              <span class="corner-trigger-letter">T</span>
+            </button>
+            <div class="trigger-meter-gauge" style="display: none;"><div class="trigger-fill" id="rt-meter-fill"></div></div>
           </div>
         </div>
 
@@ -1134,49 +1043,137 @@
               <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               <span>Done</span>
             </button>
+            <button type="button" class="gp-tool-btn gp-tool-exit" id="btn-gp-editor-close-joystick" title="Close Joystick Mode &amp; Return to Trackpad" style="background: rgba(239, 68, 68, 0.25); border-color: #ef4444; color: #fff;">
+              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <span>Close</span>
+            </button>
           </div>
         </div>
 
-        <!-- Bottom Console Mode Selection & Quick Settings Bar -->
-        <div class="gp-bottom-preset-bar" id="gp-bottom-preset-bar">
-          <div class="gp-preset-selector">
-            <button type="button" class="gp-preset-chip active" data-preset="xbox" title="Xbox 360 / Series X Layout">
-              <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
-              <span>XBOX 360</span>
-            </button>
-            <button type="button" class="gp-preset-chip" data-preset="ps" title="PlayStation DualShock / DualSense Layout">
-              <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
-              <span>PLAYSTATION</span>
-            </button>
-            <button type="button" class="gp-preset-chip" data-preset="racing" title="Racing Wheel & Pedals Layout">
-              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/></svg>
-              <span>RACING</span>
-            </button>
-            <button type="button" class="gp-preset-chip" data-preset="wasd" title="PC Keyboard WASD & Mouse Layout">
-              <svg class="deck-icon" width="14" height="14"><use href="#icon-keys"/></svg>
-              <span>WASD/FPS</span>
-            </button>
-          </div>
-          <div class="gp-quick-settings">
-            <button type="button" id="btn-gp-gyro-bottom-chip" class="gp-mini-chip" style="background: rgba(0, 255, 102, 0.15); border-color: var(--neo-lime); color: var(--neo-lime);" title="Toggle Gyro Super (Tilt Steering & Aiming)">
-              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20M2 12a10 10 0 0 0 20 0"/></svg>
-              <span>Gyro: ON</span>
-            </button>
-            <button type="button" id="btn-gp-edit-layout" class="gp-mini-chip" style="background: rgba(0, 240, 255, 0.18); border-color: var(--neo-cyan); color: #fff;" title="Customize & Edit Gamepad Layout">
-              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              <span>Edit Layout</span>
-            </button>
-            <button type="button" id="btn-gp-sens-toggle" class="gp-mini-chip" title="Stick Sensitivity (1.0x / 1.5x / 2.0x)">Sens: 1.0x</button>
-            <button type="button" id="btn-gp-haptic-toggle" class="gp-mini-chip active" title="Vibration Feedback">
-              <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="1" y1="5" x2="1" y2="19"/><line x1="23" y1="5" x2="23" y2="19"/></svg>
-              <span>Haptics: ON</span>
-            </button>
-            <button type="button" id="btn-return-trackpad" class="gp-mini-chip gp-exit-chip" title="Exit Gamepad & Return to Trackpad">
-              <svg class="deck-icon" width="14" height="14"><use href="#icon-close"/></svg>
-              <span>Trackpad</span>
-            </button>
+        <!-- ================= CONSOLE MENU & OPTIONS MODAL (ALL HIDDEN BUTTONS HERE) ================= -->
+        <div id="gp-console-menu-modal" class="modal-backdrop" style="display: none; z-index: 9999;">
+          <div class="modal-card pro-modal-card gp-menu-modal-card" style="max-width: 520px; width: 92%; max-height: 85vh; padding: 18px 22px; display: flex; flex-direction: column; text-align: left;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 10px;">
+              <div style="font-size: 1.05rem; font-weight: 900; color: var(--neo-yellow); letter-spacing: 0.8px; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+                <span>CONSOLE MENU & OPTIONS</span>
+              </div>
+              <button type="button" id="btn-gp-menu-modal-close" class="neo-btn btn-dark" style="padding: 4px 10px; font-size: 0.8rem; font-weight: 900;">✕</button>
+            </div>
+
+            <!-- Prominent Close Joystick / Exit Button -->
+            <div style="margin-bottom: 12px;">
+              <button type="button" id="btn-gp-close-joystick-top" class="neo-btn btn-pink" style="width: 100%; padding: 10px 14px; font-weight: 900; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border: 2px solid #ff4b72; color: #fff; box-shadow: 0 0 16px rgba(239,68,68,0.45); border-radius: 8px; cursor: pointer;" title="Close Joystick Mode &amp; Return to Trackpad">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <span>✕ CLOSE JOYSTICK / EXIT TO TRACKPAD</span>
+              </button>
+            </div>
+
+            <!-- Console Layout Presets -->
+            <div style="margin-bottom: 14px;">
+              <div style="font-size: 0.72rem; font-weight: 800; color: var(--neo-cyan); letter-spacing: 0.8px; margin-bottom: 6px; text-transform: uppercase;">LAYOUT PRESET</div>
+              <div class="gp-preset-selector" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="gp-preset-chip active" data-preset="universal" title="Universal Web &amp; PC Gaming Mode (Browser Games, WebGL &amp; Steam)">
+                  <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg>
+                  <span>UNIVERSAL &amp; PC</span>
+                </button>
+                <button type="button" class="gp-preset-chip" data-preset="xbox" title="Xbox 360 / Series X Layout">
+                  <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
+                  <span>XBOX 360</span>
+                </button>
+                <button type="button" class="gp-preset-chip" data-preset="ps" title="PlayStation DualShock / DualSense Layout">
+                  <svg class="deck-icon" width="14" height="14"><use href="#icon-gamepad"/></svg>
+                  <span>PLAYSTATION</span>
+                </button>
+                <button type="button" class="gp-preset-chip" data-preset="racing" title="Racing Wheel &amp; Pedals Layout">
+                  <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/></svg>
+                  <span>RACING</span>
+                </button>
+                <button type="button" class="gp-preset-chip" data-preset="wasd" title="PC Keyboard WASD &amp; Mouse Layout">
+                  <svg class="deck-icon" width="14" height="14"><use href="#icon-keys"/></svg>
+                  <span>WASD / FPS</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Input Dispatch Engine: Universal Hybrid vs Pure Controller -->
+            <div style="margin-bottom: 14px; background: rgba(0,240,255,0.06); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(0,240,255,0.2);">
+              <div style="font-size: 0.72rem; font-weight: 800; color: var(--neo-cyan); letter-spacing: 0.8px; margin-bottom: 8px; text-transform: uppercase;">
+                INPUT ENGINE &amp; GAME COMPATIBILITY
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-gp-hybrid-toggle" class="gp-top-action-btn active" style="flex: 1; min-width: 140px;" title="Universal Hybrid Mode: Emits both XInput controller and keyboard keys for instant compatibility with web &amp; PC games">
+                  <span id="gp-hybrid-status-label">⚡ UNIVERSAL HYBRID (WEB + PC)</span>
+                </button>
+              </div>
+              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 6px;">
+                Auto-maps Gas/Brake &amp; D-Pad to Keyboard keys for seamless browser &amp; PC game compatibility!
+              </div>
+            </div>
+
+            <!-- Gyro Super Motion Controls -->
+            <div style="margin-bottom: 14px; background: rgba(0,255,102,0.06); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(0,255,102,0.2);">
+              <div style="font-size: 0.72rem; font-weight: 800; color: var(--neo-lime); letter-spacing: 0.8px; margin-bottom: 8px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between;">
+                <span>GYRO MOTION SENSOR</span>
+                <span class="pulse-gyro-dot" id="gp-gyro-pulse-dot"></span>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-gp-gyro-toggle" class="gp-top-action-btn gp-gyro-badge-btn" title="Toggle Gyro Super Motion Sensor">
+                  <span class="gyro-label" id="gp-gyro-status-label">GYRO: ACTIVE</span>
+                </button>
+                <button type="button" id="btn-gp-gyro-calib" class="gp-top-action-btn gp-gyro-calib-btn" title="1-Tap Calibrate / Center Neutral Angle">
+                  <span>1-TAP CENTER</span>
+                </button>
+                <button type="button" id="btn-gp-gyro-settings" class="gp-top-action-btn gp-gyro-settings-btn" title="Gyro Super Mode & Settings">
+                  <svg class="deck-icon" width="13" height="13"><use href="#icon-settings"/></svg>
+                  <span>SETTINGS</span>
+                </button>
+              </div>
+              <!-- Hidden horizon elements kept for JS updates -->
+              <div class="gp-gyro-horizon-hud" id="gp-gyro-horizon-hud" style="display: none;">
+                <div class="horizon-gimbal-ring">
+                  <div class="horizon-pitch-scale" style="display: none;"></div>
+                  <div class="horizon-level-line" id="gyro-horizon-line"></div>
+                </div>
+                <div class="gyro-hud-status-bar" style="display: none;">
+                  <span class="gyro-stat-val" id="gyro-live-roll">0°</span>
+                  <span class="gyro-stat-badge" id="gyro-live-mode">GYRO</span>
+                  <span class="gyro-stat-val" id="gyro-live-pitch">0°</span>
+                </div>
+              </div>
+              <span id="gp-gyro-quick-desc" style="display: none;"></span>
+            </div>
+
+            <!-- Controller Settings & Layout Editing -->
+            <div style="margin-bottom: 14px;">
+              <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.8px; margin-bottom: 6px; text-transform: uppercase;">CONTROLS & HARDWARE</div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-gp-sens-toggle" class="gp-mini-chip" style="padding: 6px 12px; font-size: 0.75rem;" title="Stick Sensitivity">Sens: 1.0x</button>
+                <button type="button" id="btn-gp-haptic-toggle" class="gp-mini-chip active" style="padding: 6px 12px; font-size: 0.75rem;" title="Vibration Feedback">Haptics: ON</button>
+                <button type="button" id="btn-gp-edit-layout" class="gp-mini-chip" style="background: rgba(0, 240, 255, 0.18); border-color: var(--neo-cyan); color: #fff; padding: 6px 12px; font-size: 0.75rem;" title="Customize & Edit Gamepad Layout">
+                  <svg class="deck-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <span>Edit Layout</span>
+                </button>
+                <button type="button" id="gp-driver-badge" class="gp-driver-status-chip" style="display: none;">
+                  <span id="gp-driver-text">Active</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Exit to Trackpad -->
+            <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; gap: 10px;">
+              <button type="button" id="btn-gp-top-back-trackpad" class="neo-btn btn-cyan" style="flex: 1; padding: 10px 14px; font-weight: 900; font-size: 0.85rem;" title="Exit Gamepad &amp; Return to Trackpad">
+                ← Return to Trackpad
+              </button>
+              <button type="button" id="btn-return-trackpad" style="display: none;"></button>
+              <button type="button" id="btn-gp-menu-done" class="neo-btn btn-dark" style="width: 80px; padding: 10px 14px;">Done</button>
+            </div>
           </div>
         </div>
+
+        <!-- Hidden Legacy Elements Kept for 100% JS Backward Compatibility -->
+        <div id="gp-top-shoulder-bar" style="display: none;"></div>
+        <div class="gp-bottom-preset-bar" id="gp-bottom-preset-bar" style="display: none;"></div>
       </div>
 
       <!-- ================= ADD CONTROL / BUTTON MODAL ================= -->
@@ -1417,9 +1414,6 @@
         </div>
       </div>
     </section>
- 
-    <!-- ================= TAB: GAMEPAD (STANDALONE FULL-DECK CONTROLLER ALIAS) ================= -->
-    <section id="tab-gamepad" class="tab-view" style="display: none;"></section>
 
     <!-- ================= TAB 3: KEYS, NUMPAD & NAVIGATION ================= -->
     <section id="tab-keyboard" class="tab-view">
@@ -2602,13 +2596,6 @@
         <span class="dock-label">Trackpad</span>
       </button>
 
-      <button class="dock-tab native-only-feature gamepad-feature" data-target="tab-gamepad" onclick="window.switchTabNav(this, 'tab-gamepad')">
-        <span class="dock-icon">
-          <svg class="deck-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="6"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="13" r="1" fill="currentColor"/><circle cx="18" cy="11" r="1" fill="currentColor"/></svg>
-        </span>
-        <span class="dock-label">Gamepad</span>
-      </button>
-
       <button class="dock-tab" data-target="tab-keyboard" onclick="window.switchTabNav(this, 'tab-keyboard')">
         <span class="dock-icon">
           <svg class="deck-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>
@@ -2731,77 +2718,194 @@
   </div>
   <!-- ================= MODAL FOR ADDING CUSTOM BUTTON IN HUD ================= -->
   <div id="hud-add-btn-modal" class="modal-backdrop" style="display: none; z-index: 10000;">
-    <div class="modal-card pro-modal-card" style="padding: 16px; max-width: 440px; width: 92%; max-height: 85vh; display: flex; flex-direction: column; text-align: center;">
-      <div style="font-size: 1.1rem; font-weight: 900; color: var(--neo-cyan); margin-bottom: 4px;">ADD GAMING BUTTON</div>
-      <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Select a button or enter a key to add to your on-screen HUD:</p>
+    <div class="modal-card pro-modal-card hud-add-modal-card" style="padding: 16px 20px; max-width: 620px; width: 94%; max-height: 88vh; display: flex; flex-direction: column; text-align: center;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <div style="font-size: 1.05rem; font-weight: 900; color: var(--neo-cyan); letter-spacing: 0.8px;">ADD GAMING BUTTON</div>
+        <span style="font-size: 0.65rem; font-weight: 800; color: var(--neo-lime); background: rgba(0,255,102,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,255,102,0.3);">HUD BUILDER</span>
+      </div>
+      <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 10px; text-align: left;">Select a tactical gaming key or type a custom PC key to place on screen:</p>
 
       <!-- Category Filter Tabs -->
-      <div class="hud-add-filter-tabs" id="hud-add-filter-tabs" style="display: flex; gap: 4px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap;">
-        <button type="button" class="hud-filter-tab active" data-filter="all">ALL</button>
+      <div class="hud-add-filter-tabs" id="hud-add-filter-tabs" style="display: flex; gap: 6px; justify-content: flex-start; margin-bottom: 10px; flex-wrap: wrap;">
+        <button type="button" class="hud-filter-tab active" data-filter="all">ALL KEYS</button>
         <button type="button" class="hud-filter-tab" data-filter="actions">ACTIONS</button>
         <button type="button" class="hud-filter-tab" data-filter="combat">COMBAT</button>
-        <button type="button" class="hud-filter-tab" data-filter="weapons">NUMBERS</button>
+        <button type="button" class="hud-filter-tab" data-filter="weapons">WEAPONS</button>
         <button type="button" class="hud-filter-tab" data-filter="gamepad">GAMEPAD</button>
       </div>
 
       <!-- Scrollable Presets Grid -->
-      <div id="hud-add-presets-list" class="hud-key-preset-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; overflow-y: auto; max-height: 220px; padding: 4px;">
+      <div id="hud-add-presets-list" class="hud-key-preset-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-bottom: 12px; overflow-y: auto; max-height: 240px; padding: 4px;">
         <!-- Actions & Mouse -->
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_left" data-label="FIRE" data-gp="rt">FIRE</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_right" data-label="AIM" data-gp="lt">AIM</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_middle" data-label="M-CLICK" data-gp="rs">M-CLICK</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="space" data-label="SPACE" data-gp="a">SPACE</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="shift" data-label="SHIFT" data-gp="lb">SHIFT</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="ctrl" data-label="CTRL" data-gp="rb">CTRL</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="alt" data-label="ALT" data-gp="x">ALT</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="enter" data-label="ENTER" data-gp="start">ENTER</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="tab" data-label="TAB" data-gp="back">TAB</button>
-        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="escape" data-label="ESC" data-gp="start">ESC</button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_left" data-label="FIRE" data-gp="rt">
+          <span class="hud-pick-label">FIRE</span>
+          <span class="hud-pick-sub">M-LEFT / RT</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_right" data-label="AIM" data-gp="lt">
+          <span class="hud-pick-label">AIM</span>
+          <span class="hud-pick-sub">M-RIGHT / LT</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="mouse_middle" data-label="M-CLICK" data-gp="rs">
+          <span class="hud-pick-label">M-CLICK</span>
+          <span class="hud-pick-sub">M-MID / RS</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="space" data-label="SPACE" data-gp="a">
+          <span class="hud-pick-label">SPACE</span>
+          <span class="hud-pick-sub">JUMP / A</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="shift" data-label="SHIFT" data-gp="lb">
+          <span class="hud-pick-label">SHIFT</span>
+          <span class="hud-pick-sub">SPRINT / LB</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="ctrl" data-label="CTRL" data-gp="rb">
+          <span class="hud-pick-label">CTRL</span>
+          <span class="hud-pick-sub">CROUCH / RB</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="alt" data-label="ALT" data-gp="x">
+          <span class="hud-pick-label">ALT</span>
+          <span class="hud-pick-sub">MOD / X</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="enter" data-label="ENTER" data-gp="start">
+          <span class="hud-pick-label">ENTER</span>
+          <span class="hud-pick-sub">START</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="tab" data-label="TAB" data-gp="back">
+          <span class="hud-pick-label">TAB</span>
+          <span class="hud-pick-sub">SCORE / BACK</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="actions" data-key="escape" data-label="ESC" data-gp="start">
+          <span class="hud-pick-label">ESC</span>
+          <span class="hud-pick-sub">MENU</span>
+        </button>
 
         <!-- Combat / Movement -->
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="e" data-label="E (USE)" data-gp="y">E (USE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="r" data-label="R (RELOAD)" data-gp="x">R (RELOAD)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="f" data-label="F (LOOT)" data-gp="f">F (LOOT)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="c" data-label="C (CROUCH)" data-gp="b">C (CROUCH)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="z" data-label="Z (PRONE)" data-gp="z">Z (PRONE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="x" data-label="X (HEAL)" data-gp="x">X (HEAL)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="q" data-label="Q (PEEK L)" data-gp="q">Q (PEEK L)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="g" data-label="G (NADE)" data-gp="g">G (NADE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="v" data-label="V (MELEE)" data-gp="v">V (MELEE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="m" data-label="MAP" data-gp="m">MAP</button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="e" data-label="E" data-gp="y">
+          <span class="hud-pick-label">E</span>
+          <span class="hud-pick-sub">USE / Y</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="r" data-label="R" data-gp="x">
+          <span class="hud-pick-label">R</span>
+          <span class="hud-pick-sub">RELOAD / X</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="f" data-label="F" data-gp="f">
+          <span class="hud-pick-label">F</span>
+          <span class="hud-pick-sub">INTERACT</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="c" data-label="C" data-gp="b">
+          <span class="hud-pick-label">C</span>
+          <span class="hud-pick-sub">CROUCH / B</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="z" data-label="Z" data-gp="z">
+          <span class="hud-pick-label">Z</span>
+          <span class="hud-pick-sub">PRONE</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="x" data-label="X" data-gp="x">
+          <span class="hud-pick-label">X</span>
+          <span class="hud-pick-sub">HEAL / MED</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="q" data-label="Q" data-gp="q">
+          <span class="hud-pick-label">Q</span>
+          <span class="hud-pick-sub">PEEK LEFT</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="g" data-label="G" data-gp="g">
+          <span class="hud-pick-label">G</span>
+          <span class="hud-pick-sub">GRENADE</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="v" data-label="V" data-gp="v">
+          <span class="hud-pick-label">V</span>
+          <span class="hud-pick-sub">MELEE</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="combat" data-key="m" data-label="MAP" data-gp="m">
+          <span class="hud-pick-label">M</span>
+          <span class="hud-pick-sub">MAP</span>
+        </button>
 
         <!-- Weapons / Numbers -->
-        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="1" data-label="1" data-gp="1">1 (PRIMARY)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="2" data-label="2" data-gp="2">2 (SECONDARY)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="3" data-label="3" data-gp="3">3 (SIDEARM)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="4" data-label="4" data-gp="4">4 (GRENADE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="5" data-label="5" data-gp="5">5</button>
-        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="6" data-label="6" data-gp="6">6</button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="1" data-label="1" data-gp="1">
+          <span class="hud-pick-label">1</span>
+          <span class="hud-pick-sub">PRIMARY</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="2" data-label="2" data-gp="2">
+          <span class="hud-pick-label">2</span>
+          <span class="hud-pick-sub">SECONDARY</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="3" data-label="3" data-gp="3">
+          <span class="hud-pick-label">3</span>
+          <span class="hud-pick-sub">SIDEARM</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="4" data-label="4" data-gp="4">
+          <span class="hud-pick-label">4</span>
+          <span class="hud-pick-sub">TACTICAL</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="5" data-label="5" data-gp="5">
+          <span class="hud-pick-label">5</span>
+          <span class="hud-pick-sub">SPECIAL</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="weapons" data-key="6" data-label="6" data-gp="6">
+          <span class="hud-pick-label">6</span>
+          <span class="hud-pick-sub">UTILITY</span>
+        </button>
 
         <!-- Gamepad Triggers & D-Pad -->
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="space" data-label="A (JUMP)" data-gp="a">A</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="c" data-label="B (CROUCH)" data-gp="b">B</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="r" data-label="X (RELOAD)" data-gp="x">X</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="e" data-label="Y (USE)" data-gp="y">Y</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="mouse_right" data-label="LT" data-gp="lt">LT (AIM)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="shift" data-label="LB" data-gp="lb">LB (SPRINT)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="mouse_left" data-label="RT" data-gp="rt">RT (FIRE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="ctrl" data-label="RB" data-gp="rb">RB (PRONE)</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="up" data-label="D-UP" data-gp="dpad_up">DPAD UP</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="down" data-label="D-DOWN" data-gp="dpad_down">DPAD DOWN</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="left" data-label="D-LEFT" data-gp="dpad_left">DPAD LEFT</button>
-        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="right" data-label="D-RIGHT" data-gp="dpad_right">DPAD RIGHT</button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="space" data-label="A" data-gp="a">
+          <span class="hud-pick-label" style="color: var(--neo-lime);">A</span>
+          <span class="hud-pick-sub">JUMP</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="c" data-label="B" data-gp="b">
+          <span class="hud-pick-label" style="color: var(--neo-pink);">B</span>
+          <span class="hud-pick-sub">CROUCH</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="r" data-label="X" data-gp="x">
+          <span class="hud-pick-label" style="color: var(--neo-cyan);">X</span>
+          <span class="hud-pick-sub">RELOAD</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="e" data-label="Y" data-gp="y">
+          <span class="hud-pick-label" style="color: var(--neo-yellow);">Y</span>
+          <span class="hud-pick-sub">INTERACT</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="mouse_right" data-label="LT" data-gp="lt">
+          <span class="hud-pick-label">LT</span>
+          <span class="hud-pick-sub">L-TRIGGER</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="shift" data-label="LB" data-gp="lb">
+          <span class="hud-pick-label">LB</span>
+          <span class="hud-pick-sub">L-BUMPER</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="mouse_left" data-label="RT" data-gp="rt">
+          <span class="hud-pick-label" style="color: var(--neo-pink);">RT</span>
+          <span class="hud-pick-sub">R-TRIGGER</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="ctrl" data-label="RB" data-gp="rb">
+          <span class="hud-pick-label">RB</span>
+          <span class="hud-pick-sub">R-BUMPER</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="up" data-label="D-UP" data-gp="dpad_up">
+          <span class="hud-pick-label">▲</span>
+          <span class="hud-pick-sub">DPAD UP</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="down" data-label="D-DOWN" data-gp="dpad_down">
+          <span class="hud-pick-label">▼</span>
+          <span class="hud-pick-sub">DPAD DOWN</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="left" data-label="D-LEFT" data-gp="dpad_left">
+          <span class="hud-pick-label">◀</span>
+          <span class="hud-pick-sub">DPAD LEFT</span>
+        </button>
+        <button type="button" class="hud-key-pick-btn" data-category="gamepad" data-key="right" data-label="D-RIGHT" data-gp="dpad_right">
+          <span class="hud-pick-label">▶</span>
+          <span class="hud-pick-sub">DPAD RIGHT</span>
+        </button>
       </div>
 
       <!-- Custom Key Input Row -->
-      <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 12px; background: var(--bg-surface-elevated); padding: 6px 10px; border-radius: var(--radius-xs); border: 1px solid var(--neo-dark);">
-        <span style="font-size: 0.7rem; font-weight: 800; color: var(--neo-yellow); white-space: nowrap;">CUSTOM:</span>
-        <input type="text" id="hud-custom-key-input" placeholder="e.g. F5, J, K, G, CAPS" style="flex: 1; background: var(--neo-black); color: #fff; border: 1px solid var(--neo-dark); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;">
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; background: rgba(15,23,42,0.7); padding: 8px 12px; border-radius: var(--radius-xs); border: 1.5px solid rgba(255,255,255,0.12);">
+        <span style="font-size: 0.72rem; font-weight: 900; color: var(--neo-yellow); letter-spacing: 0.8px; white-space: nowrap;">CUSTOM KEY:</span>
+        <input type="text" id="hud-custom-key-input" placeholder="Type key: F, J, K, F5, CAPS, ENTER..." style="flex: 1; background: #020617; color: #fff; border: 1.5px solid var(--neo-dark); padding: 7px 10px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; text-transform: uppercase;">
       </div>
 
-      <div style="display: flex; gap: 8px;">
-        <button type="button" id="btn-hud-modal-add-selected" class="neo-btn btn-cyan" style="flex: 1; font-weight: 900;">ADD TO SCREEN</button>
-        <button type="button" id="btn-hud-modal-cancel" class="neo-btn btn-dark" style="width: 80px;">Cancel</button>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" id="btn-hud-modal-add-selected" class="neo-btn btn-cyan" style="flex: 1; font-weight: 900; padding: 10px 14px; font-size: 0.85rem; letter-spacing: 0.8px;">ADD BUTTON TO SCREEN</button>
+        <button type="button" id="btn-hud-modal-cancel" class="neo-btn btn-dark" style="width: 90px; padding: 10px 14px;">Cancel</button>
       </div>
     </div>
   </div>

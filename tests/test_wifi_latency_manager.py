@@ -16,7 +16,15 @@ import pytest
 # Ensure project root is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from server.wifi_latency_manager import WiFiLatencyManager, wifi_latency_manager
+from server.wifi_latency_manager import (
+    WiFiLatencyManager,
+    wifi_latency_manager,
+    AdaptiveQoSEngine,
+    QualityProfile,
+    PROFILE_ULTRA,
+    PROFILE_BALANCED,
+    PROFILE_SURVIVAL,
+)
 from server import wifi_manager
 from server.screen_streamer import ScreenStreamer, encode_frame_to_jpeg
 
@@ -353,5 +361,86 @@ def test_watchdog_auto_restores_on_link_drop(monkeypatch):
     assert not mgr._wlan_autoconfig_disabled
     assert len(restored) > 0
     assert restored[0] == (True, "Wi-Fi")
+
+
+def test_adaptive_qos_engine_tiers():
+    """Verify AdaptiveQoSEngine transitions between Ultra, Balanced, and Survival tiers."""
+    engine = AdaptiveQoSEngine()
+    assert engine.active_profile == PROFILE_BALANCED
+
+    # 1. Congested RTT -> Immediate Degrade to Survival (20 FPS) without delay
+    for _ in range(2):
+        engine.record_rtt(75.0)
+    prof = engine.record_rtt(80.0)
+    assert prof == PROFILE_SURVIVAL
+    assert engine.active_profile.target_fps == 20
+    assert engine.active_profile.max_frame_buffer_kb == 16
+    assert engine.active_profile.drop_threshold_s == 0.040
+
+    # 2. Moderate RTT -> Conservative upgrade to Balanced requires >3.0s
+    engine._last_upgrade_time = time.monotonic() - 3.5
+    for _ in range(11):
+        prof = engine.record_rtt(30.0)
+    assert prof == PROFILE_BALANCED
+    assert engine.active_profile.target_fps == 30
+    assert engine.active_profile.max_frame_buffer_kb == 24
+    assert engine.active_profile.drop_threshold_s == 0.028
+
+    # 3. Clean 5GHz RTT (<20ms) -> Conservative upgrade to Ultra requires >3.0s
+    engine._last_upgrade_time = time.monotonic() - 3.5
+    for _ in range(11):
+        prof = engine.record_rtt(12.0)
+    assert prof == PROFILE_ULTRA
+    assert engine.active_profile.target_fps == 60
+    assert engine.active_profile.max_frame_buffer_kb == 32
+    assert engine.active_profile.drop_threshold_s == 0.014
+
+
+def test_adaptive_qos_hysteresis():
+    """Verify that upgrades require >3.0s sustained stability while downgrades are immediate."""
+    engine = AdaptiveQoSEngine()
+    assert engine.active_profile == PROFILE_BALANCED
+
+    # Immediate downgrade to SURVIVAL
+    for _ in range(4):
+        engine.record_rtt(90.0)
+    assert engine.active_profile == PROFILE_SURVIVAL
+
+    # Feed clean ultra samples, but keep upgrade time recent (within 3.0s)
+    engine._last_upgrade_time = time.monotonic()
+    for _ in range(10):
+        prof = engine.record_rtt(10.0)
+
+    # Must NOT upgrade prematurely while within 3.0s window
+    assert prof == PROFILE_SURVIVAL
+    assert engine.active_profile == PROFILE_SURVIVAL
+
+
+def test_wifi_latency_manager_qos_integration():
+    """Verify WiFiLatencyManager exposes QoS profile, frame drop timeout, and buffer limits."""
+    mgr = WiFiLatencyManager()
+    assert mgr.active_profile.name == "2.4GHz Balanced"
+
+    # Frame drop timeout matches active profile (28ms -> 0.028s)
+    drop_to = mgr.get_frame_drop_timeout()
+    assert drop_to == 0.028
+
+    # Update RTT propagates through manager (upgrade after >3s)
+    mgr.qos_engine._last_upgrade_time = time.monotonic() - 3.5
+    for _ in range(11):
+        mgr.update_measured_rtt(10.0)
+
+    assert mgr.active_profile == PROFILE_ULTRA
+    drop_to_ultra = mgr.get_frame_drop_timeout()
+    assert drop_to_ultra == 0.014
+
+    # Network health dictionary includes profile info
+    health = mgr.get_network_health()
+    assert "profile" in health
+    assert health["profile"]["target_fps"] == 60
+    assert health["profile"]["name"] == "5GHz Ultra"
+    assert health["profile"]["drop_threshold_s"] == 0.014
+
+
 
 

@@ -21,6 +21,7 @@ OP_SCROLL_ABS  = 0x07  # Targeted scroll at normX, normY: dx, dy
 OP_PING        = 0x08  # Microsecond latency ping / heartbeat
 OP_GAMEPAD     = 0x09  # Full packed gamepad state (axes + buttons + triggers)
 OP_TOUCH_MOVE  = 0x0A  # Touch drag move at normX, normY
+OP_GAMEPAD_HYBRID = 0x0B # Hybrid WASD joystick + Mouse aim swipe + buttons (12 bytes)
 
 # Button ID mappings
 BTN_LEFT   = 0
@@ -53,8 +54,9 @@ STRUCT_CLICK      = struct.Struct("<BB6x")    # op, btn, 6 bytes padding
 STRUCT_SCROLL_REL = struct.Struct("<BBhhH")   # op, flags, dx*10, dy*10, reserved
 STRUCT_PING       = struct.Struct("<BBIH")    # op, flags, timestamp_ms, reserved
 
-# 12-byte struct
-STRUCT_SCROLL_ABS = struct.Struct("<BBHHhh")  # op, flags, normX*65535, normY*65535, dx*10, dy*10
+# 12-byte structs
+STRUCT_SCROLL_ABS     = struct.Struct("<BBHHhh")  # op, flags, normX*65535, normY*65535, dx*10, dy*10
+STRUCT_GAMEPAD_HYBRID = struct.Struct("<BBHhhhh") # op, flags, buttons(uint16), lx, ly, mdx, mdy
 
 # 16-byte struct
 STRUCT_GAMEPAD    = struct.Struct("<BHhhhhBB3x") # op, buttons(uint16), lx, ly, rx, ry, lt, rt, 3x reserved
@@ -117,6 +119,10 @@ def unpack_binary_message(data: bytes) -> Optional[Tuple[str, Tuple[Any, ...]]]:
     elif op == OP_GAMEPAD and n >= 16:
         _, buttons, lx, ly, rx, ry, lt, rt = STRUCT_GAMEPAD.unpack_from(data)
         return ("gp_state", (buttons, lx, ly, rx, ry, lt, rt))
+
+    elif op == OP_GAMEPAD_HYBRID and n >= 12:
+        _, flags, buttons, lx, ly, mdx, mdy = STRUCT_GAMEPAD_HYBRID.unpack_from(data)
+        return ("gp_hybrid", (flags, buttons, lx, ly, mdx, mdy))
 
     return None
 
@@ -188,3 +194,16 @@ def pack_ping(timestamp_ms: int, flags: int = 0) -> bytes:
 def pack_pong(timestamp_ms: int) -> bytes:
     """Packs pong reply into 8 bytes."""
     return STRUCT_PING.pack(OP_PING, 1, timestamp_ms & 0xFFFFFFFF, 0)
+
+
+def pack_gamepad_hybrid(lx: int, ly: int, mdx: int, mdy: int, buttons: int = 0, flags: int = 0) -> bytes:
+    """Packs 12-byte hybrid gamepad frame (WASD Left Stick + Mouse Aim Swipe + Buttons)."""
+    return STRUCT_GAMEPAD_HYBRID.pack(
+        OP_GAMEPAD_HYBRID,
+        flags & 0xFF,
+        buttons & 0xFFFF,
+        max(-32768, min(32767, int(lx))),
+        max(-32768, min(32767, int(ly))),
+        max(-32768, min(32767, int(mdx))),
+        max(-32768, min(32767, int(mdy)))
+    )
