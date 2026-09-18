@@ -171,6 +171,44 @@
         "name": "PCDeck",
         "url": "https://pcdeck.vercel.app/"
       }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://pcdeck.vercel.app/control-linux-pc-from-phone/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I control a Steam Deck in Desktop Mode from my phone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Switch your Steam Deck to Desktop Mode (Power > Switch to Desktop). Open Konsole and run: curl -sSL https://pcdeck.vercel.app/install.sh | bash. Scan the generated QR code with your phone camera to instantly turn your phone into a multi-touch trackpad and keyboard without Bluetooth or USB adapters."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does PCDeck support both Wayland and X11 on Linux?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. PCDeck supports both X11 and Wayland sessions (GNOME, KDE Plasma 5/6, XFCE, Sway, Hyprland). It interfaces with the Linux uinput and synthetic input layers to ensure smooth cursor motion, clicks, and keystrokes regardless of your display server."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I allow PCDeck through the Linux firewall?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For UFW (Ubuntu/Debian), run: sudo ufw allow 8000/tcp. For firewalld (Fedora/RHEL), run: sudo firewall-cmd --add-port=8000/tcp --permanent && sudo firewall-cmd --reload. For iptables, run: sudo iptables -A INPUT -p tcp --dport 8000 -j ACCEPT."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I control a headless Ubuntu or Raspberry Pi home server without a monitor?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Start PCDeck as a systemd service or background process. As long as the device is connected to your local Wi-Fi or LAN, you can access the Web Remote from any smartphone browser by navigating to http://[server-ip]:8000."
+          }
+        }
+      ]
     }
   ]
 }
@@ -269,6 +307,37 @@
       <li><strong>Raspberry Pi OS:</strong> Lightweight resource footprint ideal for Raspberry Pi 4/5 home servers and media boxes.</li>
     </ul>
 
+    <!-- Distro-Specific Terminal Snippets Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0 32px;">
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 14px 16px;">
+        <span class="tag" style="color: var(--signal);">Steam Deck (SteamOS)</span>
+        <h3 style="font-size: 15px; margin: 6px 0 8px;">Desktop Mode Terminal</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Power &rarr; Switch to Desktop &rarr; Konsole:</p>
+        <code style="font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.06); padding: 4px 8px; border-radius: 4px; display: block; word-break: break-all;">curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
+      </div>
+
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 14px 16px;">
+        <span class="tag" style="color: var(--signal);">Ubuntu / Debian / Mint</span>
+        <h3 style="font-size: 15px; margin: 6px 0 8px;">APT &amp; Firewall</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Allow local LAN port 8000:</p>
+        <code style="font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.06); padding: 4px 8px; border-radius: 4px; display: block; word-break: break-all;">sudo ufw allow 8000/tcp</code>
+      </div>
+
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 14px 16px;">
+        <span class="tag" style="color: var(--signal);">Fedora / RHEL</span>
+        <h3 style="font-size: 15px; margin: 6px 0 8px;">firewalld Configuration</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Open firewall port 8000 permanently:</p>
+        <code style="font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.06); padding: 4px 8px; border-radius: 4px; display: block; word-break: break-all;">sudo firewall-cmd --add-port=8000/tcp --permanent &amp;&amp; sudo firewall-cmd --reload</code>
+      </div>
+
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 14px 16px;">
+        <span class="tag" style="color: var(--signal);">Arch Linux / Manjaro</span>
+        <h3 style="font-size: 15px; margin: 6px 0 8px;">Pacman / Dependencies</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Native Python 3 environment:</p>
+        <code style="font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.06); padding: 4px 8px; border-radius: 4px; display: block; word-break: break-all;">sudo pacman -S python python-pip &amp;&amp; curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>
+      </div>
+    </div>
+
     <h2>Step-by-step setup on Linux</h2>
     <ol class="steps">
       <li>
@@ -296,6 +365,32 @@
       <p class="tag">Firewall Note for Linux Users</p>
       <p>If you have <code>ufw</code> or <code>firewalld</code> enabled, ensure port 8000 is permitted for incoming local network connections: <code>sudo ufw allow 8000/tcp</code>.</p>
     </div>
+
+    <!-- Linux Frequently Asked Questions Section -->
+    <section class="guide-faq" style="margin: 36px 0 24px;">
+      <h2>Linux Remote Control FAQ</h2>
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 18px;">
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">How do I control a Steam Deck in Desktop Mode from my phone?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Switch your Steam Deck to Desktop Mode (press Steam button &rarr; Power &rarr; Switch to Desktop). Open Konsole, paste <code>curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>, and press Enter. A pairing QR code will appear on screen. Scan it with your phone's camera, and your phone will instantly become a wireless trackpad and keyboard for your Steam Deck.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Does PCDeck support both Wayland and X11 on Linux?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. PCDeck detects whether your session is running under X11 or Wayland (GNOME 40+, KDE Plasma 6, Sway, Hyprland) and interfaces with Linux uinput and synthetic input layers so cursor motion, clicks, and typing work seamlessly on any modern desktop environment.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">How do I allow PCDeck through the Linux firewall?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">If connections time out, open port 8000 for your local subnet: on Ubuntu/Debian use <code>sudo ufw allow 8000/tcp</code>; on Fedora/CentOS use <code>sudo firewall-cmd --add-port=8000/tcp --permanent &amp;&amp; sudo firewall-cmd --reload</code>.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Can I control a headless Ubuntu or Raspberry Pi home server without a monitor?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. Start PCDeck as a background service or systemd unit. As long as your Raspberry Pi or headless machine shares the same local network, open <code>http://[server-ip]:8000</code> in your phone browser to send input or manage files.</p>
+        </div>
+      </div>
+    </section>
 
     <div class="pitch" id="phone-solution">
       <h2>Get PCDeck for Linux — Free Local Remote Control</h2>

@@ -14,11 +14,15 @@ PCDeck is an independent Windows + Linux utility with an instant browser-based m
 
 ## What it actually does
 
-- **Wireless trackpad and keyboard.** Multi-touch gestures, two-finger scrolling, left/right click, click and drag, plus a full on-screen keyboard with numpad. Works immediately in mobile browsers or via the native companion APK.
+- **Wireless trackpad and keyboard.** Multi-touch gestures, two-finger scrolling, left/right click, click and drag, plus a full on-screen keyboard with numpad and modifier chords. Works immediately in mobile browsers or via the native companion APK.
+- **HD phone webcam.** Streams phone camera video (front/rear lens, up to 1080p) directly over WebSocket (`/ws/cam`) to your PC with low latency.
+- **Wireless PC microphone.** Transmits live microphone audio from your phone to PC via raw PCM TCP socket (port 8002) with live VU meter and gain boost (0-200%).
+- **Dual-mode console gamepad & gyro.** Full-screen virtual controller with analog thumbsticks, D-Pad, ABXY, bumpers/triggers, and gyroscope motion steering for driving and aiming.
+- **On-screen gaming HUD overlay.** Floating tactical HUD overlay on the live desktop screen mirror providing WASD thumbstick, action buttons, and touch aim.
 - **Emergency display for a PC with a broken screen.** Streams the live desktop to the phone with direct touch interaction, allowing a PC with a cracked, dark, or disconnected monitor to remain completely usable.
-- **Desktop screen streaming.** Live view of the desktop on the phone at up to 60/120 FPS with adaptive quality and lossless text chroma.
-- **Live PC audio to the phone.** Windows stereo output audio is streamed to the phone so wired or Bluetooth earbuds act as wireless PC headphones.
-- **Bidirectional file transfer.** Move files between phone and PC over Wi-Fi without USB cables, using resumable HTTP range requests.
+- **Desktop screen streaming.** Live view of the desktop on the phone at 60 FPS with adaptive quality and lossless text chroma.
+- **Live PC audio to the phone.** Windows stereo output audio is streamed to the phone (port 8003) so wired or Bluetooth earbuds act as wireless PC headphones.
+- **Bidirectional file transfer.** Move files between phone and PC over Wi-Fi without USB cables, using resumable chunked HTTP requests.
 
 ## Platform requirements & Installation
 
@@ -154,8 +158,10 @@ received, and optionally upload the file to VirusTotal.
 ## Links
 
 - Homepage and download: https://pcdeck.vercel.app/
+- Complete Features & Controls documentation: https://pcdeck.vercel.app/features/
 - Guides Hub: https://pcdeck.vercel.app/guides/
-- Features: https://pcdeck.vercel.app/#features
+- Control Linux & Steam Deck: https://pcdeck.vercel.app/control-linux-pc-from-phone/
+- Features summary: https://pcdeck.vercel.app/#features
 - Real-world use cases: https://pcdeck.vercel.app/#scenarios
 - Setup guide: https://pcdeck.vercel.app/#setup
 - Security & architecture: https://pcdeck.vercel.app/security/
