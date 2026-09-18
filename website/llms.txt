@@ -42,16 +42,12 @@ phone and the PC. There is no account, no cloud relay, no analytics and no
 telemetry. Because nothing is proxied through a third-party server, screen
 content and transferred files never leave the local network.
 
-## Installation warnings (the most frequently asked question)
+## Installation & Microsoft Store Availability
 
-PCDeck is not published through the Microsoft Store or Google Play, so it does not
-carry an enterprise EV certificate. Both platforms warn about direct downloads
-regardless of what they contain. Nothing is wrong with the download.
+PCDeck is available both through the official Microsoft Store (Store ID: 9P4BK16LBGLS) and via direct portable download. 
 
-**Windows - "Windows protected your PC" (SmartScreen):**
-This dialog appears because the executable is new and unsigned, not because
-a threat was detected. To proceed: click **More info**, then **Run anyway**.
-SmartScreen reputation is earned by download volume over time.
+- **Microsoft Store (Recommended for 1-Click Install)**: Completely verified and trusted by Windows Defender with zero SmartScreen warnings.
+- **Direct Portable Download (.exe)**: Standalone zero-install binary. Because direct downloads lack an enterprise EV certificate, Windows SmartScreen may show a standard first-run advisory. To proceed: click **More info**, then **Run anyway**. SmartScreen reputation is earned automatically by download volume over time.
 
 **Windows Defender / antivirus flags:**
 Remote utility capabilities (capturing desktop frames, synthesizing mouse/keyboard input, and binding a local network port) can trigger heuristic detection on unsigned binaries. If a scanner flags the program, verify that the file came from the official PCDeck download, compare its SHA-256 checksum, review the detection details, and only override the warning if you understand and trust the software.
