@@ -316,7 +316,7 @@ Before committing or releasing updates:
   3. **Instant Control**: Trackpad & keyboard open immediately in Safari, Chrome, or any browser over local Wi-Fi.
 - **Hierarchy of Download CTA**:
   - **Primary**: Bold, glowing `Download PCDeck for Windows (.exe)`.
-  - **Secondary / Optional**: Clean inline links for Android APK (`739 KB`), Linux 1-line script, and offline recovery ZIP. Never clutter the hero section with 4 competing primary download buttons.
+  - **Secondary / Optional**: Clean inline links for Android APK (`687 KB`), Linux 1-line script, and offline recovery ZIP. Never clutter the hero section with 4 competing primary download buttons.
 - **Language & Tone Standard**: Zero technical jargon, zero AI buzzwords ("paradigm shifting", "AI-powered", "revolutionary"), and zero complex networking terms. Write for everyday humans whose physical mouse just broke.
 - **QR Code Density & Scan Invariant**:
   - **Version 3 Grid Standard (29×29 Matrix = 841 Dots)**: The pairing URL must never exceed 48–52 characters (`http://{LOCAL_IP}:{SERVER_PORT}/connect?t={12_HEX_TOKEN}`).

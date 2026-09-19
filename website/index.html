@@ -1458,7 +1458,7 @@ footer{padding:44px 0 56px}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex-shrink: 0;"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
               <div>
                 <span style="display: block; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2;">Download PCDeck for Windows</span>
-                <small style="display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; opacity: 0.9; margin-top: 3px; letter-spacing: .03em;">v2.7.0 · Windows 10 / 11 · 46.8 MB · No Install Needed</small>
+                <small style="display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; opacity: 0.9; margin-top: 3px; letter-spacing: .03em;">v2.7.0 · Windows 10 / 11 · 36.3 MB · No Install Needed</small>
               </div>
             </a>
 
@@ -1470,11 +1470,11 @@ footer{padding:44px 0 56px}
 
             <div class="hero-alt-links" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: var(--graphite); padding: 4px 0 0 2px;">
               <span>Other options:</span>
-              <a href="#card-apk" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Android APK (739 KB)</a>
+              <a href="#card-apk" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Android APK (687 KB)</a>
               <span style="color: var(--grid);">·</span>
               <a href="#card-linux" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Linux 1-Line Install</a>
               <span style="color: var(--grid);">·</span>
-              <a href="#card-zip" style="color: var(--muted); text-decoration: underline; text-underline-offset: 3px;">Offline ZIP (47.1 MB)</a>
+              <a href="#card-zip" style="color: var(--muted); text-decoration: underline; text-underline-offset: 3px;">Offline ZIP (49.7 MB)</a>
             </div>
           </div>
 
@@ -2074,10 +2074,10 @@ footer{padding:44px 0 56px}
           <p>The main PC app for Windows 10 &amp; 11. Run it, scan the QR code with your phone camera, and control immediately.</p>
           <ul class="spec">
             <li>Windows 10 or 11 (64-bit)</li>
-            <li>Standalone .exe (v2.7.0 · 46.8 MB) · No Python needed</li>
+            <li>Standalone .exe (v2.7.0 · 36.3 MB) · No Python needed</li>
             <li>Unsigned — SmartScreen prompts once</li>
           </ul>
-          <a class="btn" id="dl-exe" href="/download/windows/" style="background: var(--signal); border-color: var(--signal); font-weight: 700;">Download for Windows (v2.7.0 · 46.8 MB)</a>
+          <a class="btn" id="dl-exe" href="/download/windows/" style="background: var(--signal); border-color: var(--signal); font-weight: 700;">Download for Windows (v2.7.0 · 36.3 MB)</a>
         </div>
 
         <div class="card" id="card-apk">
@@ -2087,12 +2087,12 @@ footer{padding:44px 0 56px}
           <p>Optional companion app for Android home screen. (Or simply use your browser by scanning the QR code).</p>
           <ul class="spec">
             <li>Android 5.0 or newer</li>
-            <li>Direct APK download (v2.7.0 · 739 KB)</li>
+            <li>Direct APK download (v2.7.0 · 687 KB)</li>
             <li>Zero cloud accounts needed</li>
           </ul>
           <a class="btn ghost" id="dl-apk" href="/download/android/">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-            <span>Download APK (Optional · 739 KB)</span>
+            <span>Download APK (Optional · 687 KB)</span>
           </a>
         </div>
 
@@ -2119,11 +2119,11 @@ footer{padding:44px 0 56px}
           <h3>Full Offline Bundle (v2.7.0)</h3>
           <p>Windows executable plus the Android APK and setup notes in one archive.</p>
           <ul class="spec">
-            <li>ZIP archive (v2.7.0 · 47.1 MB)</li>
+            <li>ZIP archive (v2.7.0 · 49.7 MB)</li>
             <li>Includes Windows EXE &amp; Android APK</li>
             <li>Useful for offline recovery</li>
           </ul>
-          <a class="btn ghost" id="dl-zip" href="PCDeck_Package.zip" download>Download Offline ZIP (47.1 MB)</a>
+          <a class="btn ghost" id="dl-zip" href="PCDeck_Package.zip" download>Download Offline ZIP (49.7 MB)</a>
         </div>
       </div>
 
@@ -2664,6 +2664,9 @@ footer{padding:44px 0 56px}
 (function () {
   function formatSize(bytes) {
     if (!bytes || isNaN(bytes)) return null;
+    if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(0) + ' KB';
+    }
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
@@ -2686,13 +2689,13 @@ footer{padding:44px 0 56px}
       var ver = meta.versionName ? 'v' + meta.versionName : 'v2.7.0';
 
       var heroExe = document.querySelector('#hero-exe small');
-      if (heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · 59.4 MB';
+      if (heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · 36.3 MB · No Install Needed';
       var heroApk = document.querySelector('#hero-apk small');
-      if (heroApk) heroApk.textContent = ver + ' · Direct APK · 3.2 MB';
+      if (heroApk) heroApk.textContent = ver + ' · Direct APK · 687 KB';
       var heroLinux = document.querySelector('#hero-linux small');
       if (heroLinux) heroLinux.textContent = ver + ' · 1-Line Terminal Install';
       var heroZip = document.querySelector('#hero-zip small');
-      if (heroZip) heroZip.textContent = ver + ' · 62.1 MB · Win + Android';
+      if (heroZip) heroZip.textContent = ver + ' · 49.7 MB · Win + Android';
 
       var cardExeTitle = document.querySelector('#card-exe h3');
       if (cardExeTitle) cardExeTitle.textContent = 'PCDeck for Windows (' + ver + ')';
