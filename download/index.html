@@ -140,6 +140,27 @@
     </nav>
     <div class="top-actions">
       <a class="btn ghost sm" href="/">Back to Home</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/">Home</a>
+        <a href="/features/">Features &amp; Controls</a>
+        <a href="/guides/">Guides Hub</a>
+        <a href="/security/">Security Architecture</a>
+        <a href="/download/">All Downloads</a>
+      </div>
+      <div class="mobile-guides-title">Downloads &amp; Remote</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/download/windows/">Download for Windows (.exe)</a>
+        <a href="/download/android/">Download Android APK</a>
+        <a href="/browser-pc-remote/">Zero-Install Web Remote</a>
+      </div>
     </div>
   </div>
 </header>
@@ -175,12 +196,12 @@
       </p>
 
       <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 20px;">
-        <a class="btn" href="/PCDeck.exe" download="PCDeck.exe" style="background: var(--signal); border-color: var(--signal); font-weight: 700; font-size: 16px; padding: 12px 28px;">
+        <a class="btn" href="/download/windows/" style="background: var(--signal); border-color: var(--signal); font-weight: 700; font-size: 16px; padding: 12px 28px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-          Download for Windows (.exe &middot; 46.8 MB)
+          Download for Windows (.exe &middot; 36.3 MB)
         </a>
         <a class="btn ghost" href="/PCDeck_Package.zip" download="PCDeck_Package.zip" style="font-size: 14px;">
-          Download Portable ZIP Bundle (49.4 MB)
+          Download Portable ZIP Bundle (49.7 MB)
         </a>
       </div>
 
@@ -223,12 +244,12 @@
         </p>
         <ul class="spec" style="margin-bottom: 18px; font-size: 12.5px;">
           <li>Android 5.0 Lollipop through Android 16+</li>
-          <li>Ultra-lightweight direct APK (739 KB)</li>
+          <li>Ultra-lightweight direct APK (687 KB)</li>
           <li>Zero cloud accounts, runs 100% offline</li>
         </ul>
-        <a class="btn ghost sm" href="/PCDeck.apk" download="PCDeck.apk" style="width: 100%; justify-content: center;">
+        <a class="btn ghost sm" href="/download/android/" style="width: 100%; justify-content: center;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-          Download APK (739 KB)
+          Download APK (687 KB)
         </a>
       </div>
 
@@ -292,5 +313,51 @@
     <p class="tag">Independent software &middot; not affiliated with Microsoft or Google</p>
   </div>
 </footer>
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+
+  function toggleMenu(open) {
+    var willOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (willOpen) {
+      menu.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    } else {
+      menu.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menu.addEventListener('click', function (e) {
+    if (e.target === menu || e.target.closest('a')) {
+      toggleMenu(false);
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && menu.classList.contains('active')) {
+      toggleMenu(false);
+    }
+  });
+
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 900 && menu.classList.contains('active')) {
+      toggleMenu(false);
+    }
+  });
+})();
+</script>
+<script defer src="/va.js"></script>
 </body>
 </html>

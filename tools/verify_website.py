@@ -1,7 +1,10 @@
 import glob
 import re
 
-site_htmls = glob.glob('website/**/*.html', recursive=True)
+site_htmls = glob.glob('website/**/*.html', recursive=True) + [
+    f for f in glob.glob('*.html') + glob.glob('*/*.html') + glob.glob('*/*/*.html')
+    if not any(f.startswith(p) for p in ('android_app', '.venv', 'build', 'dist', 'static', 'website'))
+]
 print(f'Total HTML files to verify: {len(site_htmls)}')
 
 issues = []

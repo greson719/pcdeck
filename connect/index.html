@@ -537,7 +537,7 @@ h1 {
         </ul>
       </div>
 
-      <a href="/?tab=screen" class="btn btn-primary" id="btn-launch-web">Launch Web Remote</a>
+      <a href="/?tab=screen" class="btn btn-secondary" id="btn-launch-web">Launch Web Remote</a>
     </div>
 
     <!-- Android App Option -->
@@ -547,31 +547,40 @@ h1 {
           <div class="card-icon card-icon-apk">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
           </div>
-          <span class="badge badge-blue">Native</span>
+          <span class="badge badge-blue">Recommended</span>
         </div>
 
         <div class="card-title-group">
           <h2 class="card-title">Android App</h2>
-          <span class="card-sub">Direct APK</span>
+          <span class="card-sub">Companion APK</span>
         </div>
 
         <ul class="feature-list">
           <li>
             <svg class="feat-icon feat-apk" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Phone Webcam &amp; Mic broadcast</span>
+            <span>Phone Webcam &amp; Mic</span>
           </li>
           <li>
             <svg class="feat-icon feat-apk" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>60/120 FPS mirror &amp; gaming HUD</span>
+            <span>60 FPS screen mirror</span>
           </li>
           <li>
             <svg class="feat-icon feat-apk" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Volume keys, haptics &amp; transfer</span>
+            <span>Volume keys &amp; haptics</span>
+          </li>
+          <li>
+            <svg class="feat-icon feat-apk" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Fast file transfer</span>
           </li>
         </ul>
       </div>
 
-      <a href="/PCDeck.apk" download="PCDeck.apk" class="btn btn-secondary" id="btn-download-apk">Download APK</a>
+      <a href="/PCDeck.apk" download="PCDeck.apk" class="btn btn-primary" id="btn-download-apk">Download APK</a>
+      <a href="https://pcdeck.vercel.app/PCDeck.apk" download="PCDeck.apk" target="_blank" class="btn" style="margin-top: 6px; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(96, 165, 250, 0.3); color: #93c5fd; font-size: 0.76rem; padding: 7px 10px; border-radius: 9px; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Fast Cloud Mirror (5G / Cellular)</span>
+      </a>
+      <button type="button" id="btn-show-install-help" style="background:none; border:none; color:var(--text-muted, #94a3b8); font-size:0.75rem; text-decoration:underline; margin-top:8px; cursor:pointer; width:100%; text-align:center;">Installation guide &amp; help</button>
     </div>
   </div>
 
@@ -581,6 +590,35 @@ h1 {
     <span class="footer-sep">&bull;</span>
     <a href="https://pcdeck.vercel.app" target="_blank" rel="noopener noreferrer">pcdeck.vercel.app &nearr;</a>
   </footer>
+</div>
+
+<!-- Simple APK Download Modal -->
+<div class="modal-overlay" id="install-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title-text">Install Android App</div>
+      <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="install-steps">
+      <div class="step-card">
+        <div class="step-badge">1</div>
+        <div class="step-text">Tap <strong>Download</strong> and open <strong>PCDeck.apk</strong></div>
+      </div>
+      <div class="step-card">
+        <div class="step-badge">2</div>
+        <div class="step-text">If prompted &rarr; tap <strong>Settings</strong> &rarr; enable <strong>Allow from this source</strong></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <a href="/PCDeck.apk" download="PCDeck.apk" id="modal-btn-download" class="btn btn-primary btn-block">
+        Download APK (1.2 MB)
+      </a>
+      <a href="/?tab=screen" id="modal-btn-web" class="alt-link">Or launch Web Remote in browser &rarr;</a>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -612,17 +650,22 @@ h1 {
 
   const btnLaunchWeb = document.getElementById('btn-launch-web');
   const btnDownloadApk = document.getElementById('btn-download-apk');
+  const modal = document.getElementById('install-modal');
+  const modalBackdrop = document.getElementById('modal-backdrop');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+  const modalBtnDownload = document.getElementById('modal-btn-download');
+  const modalBtnWeb = document.getElementById('modal-btn-web');
 
-  if (btnLaunchWeb) btnLaunchWeb.href = webHref;
-  if (btnDownloadApk) btnDownloadApk.href = apkHref;
+  btnLaunchWeb.href = webHref;
+  modalBtnWeb.href = webHref;
+  btnDownloadApk.href = apkHref;
+  modalBtnDownload.href = apkHref;
 
-  if (btnLaunchWeb) {
-    btnLaunchWeb.addEventListener('click', function() {
-      this.innerHTML = '<span style="display:inline-block;">⚡</span> Opening PC Screen...';
-    });
-  }
+  btnLaunchWeb.addEventListener('click', function() {
+    this.innerHTML = '<span style="display:inline-block;">⚡</span> Opening PC Screen...';
+  });
 
-  if (isVercel && !ipParam && btnLaunchWeb) {
+  if (isVercel && !ipParam) {
     btnLaunchWeb.addEventListener('click', function(e) {
       e.preventDefault();
       const userIp = prompt("Enter your PC's IP address (shown in PCDeck app, e.g. 192.168.1.5:8000):", "");
@@ -643,7 +686,8 @@ h1 {
             token = data.token;
             try { localStorage.setItem('pcdeck_token', token); } catch (e) {}
             const newWebHref = (baseRemoteOrigin ? (baseRemoteOrigin + '/?tab=screen') : '/?tab=screen') + '&token=' + encodeURIComponent(token);
-            if (btnLaunchWeb) btnLaunchWeb.href = newWebHref;
+            btnLaunchWeb.href = newWebHref;
+            modalBtnWeb.href = newWebHref;
           }
           if (data.ip && data.ip !== '127.0.0.1' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
             const banner = document.getElementById('local-ip-banner');
@@ -659,6 +703,30 @@ h1 {
       })
       .catch(() => {});
   }
+
+  function openModal() {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  const btnHelp = document.getElementById('btn-show-install-help');
+  if (btnHelp) {
+    btnHelp.addEventListener('click', openModal);
+  }
+
+  modalCloseBtn.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', closeModal);
+
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeModal();
+    }
+  });
 })();
 </script>
 </body>

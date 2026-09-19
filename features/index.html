@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCDeck Features &amp; Controls Guide | Webcam, Mic, Gamepad &amp; Screen</title>
+<meta name="description" content="Complete documentation of all PCDeck features: HD phone webcam, wireless PC microphone, touch gaming HUD overlay, console gamepad, 60 FPS screen mirror, trackpad, and keyboard.">
+<meta name="keywords" content="PCDeck features, phone as webcam, wireless pc microphone, phone gamepad pc, on screen gaming hud, pcdeck controls, use phone as mouse, stream pc audio to phone, wifi trackpad">
+<link rel="canonical" href="https://pcdeck.vercel.app/features/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="author" content="PCDeck">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://pcdeck.vercel.app/features/">
+<meta property="og:title" content="PCDeck Features &amp; Controls Guide | Webcam, Mic, Gamepad &amp; Screen">
+<meta property="og:description" content="Complete documentation of all PCDeck features: HD phone webcam, wireless PC microphone, touch gaming HUD overlay, console gamepad, 60 FPS screen mirror, trackpad, and keyboard.">
+<meta property="og:image" content="https://pcdeck.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PCDeck Features &amp; Controls Guide | Webcam, Mic, Gamepad &amp; Screen">
+<meta name="twitter:description" content="Complete documentation of all PCDeck features: HD phone webcam, wireless PC microphone, touch gaming HUD overlay, console gamepad, 60 FPS screen mirror, trackpad, and keyboard.">
+<meta name="twitter:image" content="https://pcdeck.vercel.app/og-image.png">
+
+<meta name="theme-color" content="#eef0f3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<style>
+.feat-spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 28px;
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+  overflow: hidden;
+  font-size: 14.5px;
+}
+.feat-spec-table th, .feat-spec-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--grid);
+  text-align: left;
+}
+.feat-spec-table th {
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.feat-spec-table tr:last-child td {
+  border-bottom: none;
+}
+.feat-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-web { background: rgba(27, 68, 216, 0.1); color: var(--signal); border: 1px solid rgba(27,68,216,0.3); }
+.badge-app { background: rgba(0, 180, 100, 0.12); color: #0a8a4b; border: 1px solid rgba(10, 138, 75, 0.3); }
+.badge-both { background: rgba(138, 82, 0, 0.1); color: var(--caution); border: 1px solid var(--caution-line); }
+
+.feature-block {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  padding: 28px 24px;
+  margin-bottom: 32px;
+  scroll-margin-top: 80px;
+}
+.feature-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--grid-soft);
+  padding-bottom: 14px;
+}
+.feature-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.feature-num {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--signal-wash);
+  color: var(--signal-ink);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.feature-loc {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--paper);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--grid);
+}
+.steps-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+.step-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 15px;
+}
+.step-num {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--signal-ink);
+  background: var(--signal-wash);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://pcdeck.vercel.app/features/#article",
+      "headline": "PCDeck Features & Hardware Controls Complete Guide",
+      "description": "Comprehensive reference guide explaining all PCDeck features: HD phone webcam, wireless PC microphone, console gamepad, touch gaming HUD overlay, low-latency screen mirror, multi-touch trackpad, keyboard, and WASAPI audio.",
+      "url": "https://pcdeck.vercel.app/features/",
+      "inLanguage": "en",
+      "datePublished": "2026-09-01",
+      "dateModified": "2026-09-18",
+      "author": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://pcdeck.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Features & Controls",
+          "item": "https://pcdeck.vercel.app/features/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://pcdeck.vercel.app/features/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Where is the HD Webcam feature located and how do I turn it on?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Open the PCDeck mobile client and tap Tab 5 (Media Tab, film/camera icon). Scroll to the Camera Card and tap 'Start Camera' (cyan button). You can choose between Rear and Front lenses, adjust resolution from 480p to 1080p Pro, and toggle your flashlight torch. The feed streams directly over WebSocket (/ws/cam) to your PC."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I use my smartphone as a wireless PC microphone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Navigate to Tab 5 (Media Tab) in the PCDeck client. Under the Microphone Card, tap 'Transmit Mic' (lime button). A live VU meter shows your voice level in real time. Adjust the Input Gain slider (0-200%) to boost sensitivity. The audio transmits over TCP socket port 8002 directly to your PC."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where is the On-Screen Touch Gaming HUD Overlay?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Go to Tab 3 (Screen Mirror). Tap the floating Cyan Joystick FAB (#btn-screen-hud-fab) located in the corner of the video stream. This toggles a semi-transparent HUD overlay on top of the live PC screen, giving you an 8-way WASD analog thumbstick and gaming action buttons (Space, Shift, Ctrl, E, Esc, Left/Right click) directly while watching your game."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I access the Dedicated Console Gamepad?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tap the Gamepad icon in the top header bar (#btn-header-gamepad) or tap the Gamepad toggle button on the Tab 1 Trackpad toolbar (#btn-gamepad-mode-toggle). This opens a dedicated full-screen console layout with dual analog thumbsticks, D-Pad, ABXY buttons, shoulder triggers (LT/RT, LB/RB), and optional gyroscope motion steering."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do these features work in the browser or require the APK?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Multi-touch trackpad, mechanical keyboard, 60 FPS screen streaming, and Wi-Fi file transfer work 100% inside any mobile web browser (Safari, Chrome, Firefox) via QR code with zero installs. Low-latency hardware-level Webcam, Microphone, and Gamepad features run best in the native lightweight PCDeck Android APK (1.5 MB) due to browser security restrictions on background media streams."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/features/" style="color:var(--signal-ink);font-weight:700;">Features</a>
+      <a href="/guides/">Guides</a>
+      <a href="/#features">What it does</a>
+      <a href="/#scenarios">Use cases</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/#download">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/features/" class="mob-link"><span>Features &amp; Controls</span><span>&rarr;</span></a>
+        <a href="/guides/" class="mob-link"><span>Guides Hub</span><span>&rarr;</span></a>
+        <a href="/#features" class="mob-link"><span>What it does</span><span>&rarr;</span></a>
+        <a href="/#scenarios" class="mob-link"><span>Use cases</span><span>&rarr;</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>&rarr;</span></a>
+        <a href="/#faq" class="mob-link"><span>FAQ</span><span>&rarr;</span></a>
+        <a href="/#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>&darr;</span></a>
+      </div>
+      <div class="mobile-guides-title">Featured Features</div>
+      <div class="mobile-menu-sublinks">
+        <a href="#feature-trackpad" class="mob-link">Multi-Touch Trackpad</a>
+        <a href="#feature-keyboard" class="mob-link">Mechanical Keyboard</a>
+        <a href="#feature-screen" class="mob-link">60 FPS Screen Mirror</a>
+        <a href="#feature-gamepad" class="mob-link">Console Gamepad &amp; Gyro</a>
+        <a href="#feature-hud" class="mob-link">On-Screen Gaming HUD</a>
+        <a href="#feature-mic" class="mob-link">Wireless Microphone (8002)</a>
+        <a href="#feature-webcam" class="mob-link">HD Phone Webcam (/ws/cam)</a>
+        <a href="#feature-audio" class="mob-link">WASAPI Audio Receiver</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="shell crumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/">PCDeck</a></li>
+    <li aria-current="page">Features &amp; Hardware Controls</li>
+  </ol>
+</nav>
+
+<main id="main">
+  <div class="shell lede-block">
+    <h1>PCDeck Features &amp; Hardware Controls Reference</h1>
+    <p class="sub">Complete technical documentation of all 8 core input, media, and streaming modules: UI locations, button IDs, network protocols, and step-by-step instructions to turn any phone into an all-in-one PC peripheral suite.</p>
+    <p class="updated tag">Updated September 2026 · Windows 10/11 &amp; Linux (SteamOS/Ubuntu) · Local Wi-Fi</p>
+  </div>
+
+  <div class="shell guide">
+
+    <!-- Overview Matrix Table -->
+    <h2>Feature Architecture &amp; Specification Matrix</h2>
+    <p>All PCDeck features run locally without cloud servers or telemetry. Below is the quick-reference matrix of feature locations and transport channels:</p>
+
+    <div style="overflow-x: auto;">
+      <table class="feat-spec-table">
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            <th scope="col">UI Location</th>
+            <th scope="col">Protocol / Port</th>
+            <th scope="col">Platform Support</th>
+            <th scope="col">Latency Target</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Multi-Touch Trackpad</strong></td>
+            <td>Tab 1 (Trackpad View)</td>
+            <td>WebSocket <code>/ws</code> (JSON Delta)</td>
+            <td><span class="feat-badge badge-both">Web + APK</span></td>
+            <td>&lt; 5 ms</td>
+          </tr>
+          <tr>
+            <td><strong>Mechanical Keyboard</strong></td>
+            <td>Tab 2 (Keyboard View)</td>
+            <td>WebSocket <code>/ws</code> (Key Codes)</td>
+            <td><span class="feat-badge badge-both">Web + APK</span></td>
+            <td>&lt; 4 ms</td>
+          </tr>
+          <tr>
+            <td><strong>60 FPS Screen Mirror</strong></td>
+            <td>Tab 3 (Screen View)</td>
+            <td>WebSocket <code>/ws/screen</code> (JPEG Stream)</td>
+            <td><span class="feat-badge badge-both">Web + APK</span></td>
+            <td>20 - 40 ms</td>
+          </tr>
+          <tr>
+            <td><strong>On-Screen Gaming HUD</strong></td>
+            <td>Tab 3 (Screen FAB Button)</td>
+            <td>Direct Canvas Touch &rarr; SendInput</td>
+            <td><span class="feat-badge badge-app">Native APK</span></td>
+            <td>&lt; 6 ms</td>
+          </tr>
+          <tr>
+            <td><strong>Dedicated Console Gamepad</strong></td>
+            <td>Header Gamepad Icon / Tab 1 Toolbar</td>
+            <td>WebSocket <code>/ws</code> (Gamepad Payload)</td>
+            <td><span class="feat-badge badge-both">Web + APK</span></td>
+            <td>&lt; 5 ms</td>
+          </tr>
+          <tr>
+            <td><strong>Wireless Microphone</strong></td>
+            <td>Tab 5 (Media Tab) &rarr; Mic Card</td>
+            <td>Raw PCM Audio TCP Port <code>8002</code></td>
+            <td><span class="feat-badge badge-app">Native APK</span></td>
+            <td>15 - 25 ms</td>
+          </tr>
+          <tr>
+            <td><strong>HD Phone Webcam</strong></td>
+            <td>Tab 5 (Media Tab) &rarr; Camera Card</td>
+            <td>WebSocket Binary <code>/ws/cam</code></td>
+            <td><span class="feat-badge badge-app">Native APK</span></td>
+            <td>30 - 50 ms</td>
+          </tr>
+          <tr>
+            <td><strong>PC Audio Receiver</strong></td>
+            <td>Tab 5 (Media Tab) &rarr; Audio Card</td>
+            <td>WASAPI Loopback TCP Port <code>8003</code></td>
+            <td><span class="feat-badge badge-both">Web + APK</span></td>
+            <td>25 - 45 ms</td>
+          </tr>
+          <tr>
+            <td><strong>Wi-Fi File Transfer</strong></td>
+            <td>Tab 4 (Files Explorer)</td>
+            <td>HTTP Chunked Multipart Port <code>8000</code></td>
+            <td><span class="feat-badge badge-both">Web + APK</span></td>
+            <td>Line Rate (Wi-Fi)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ==================== FEATURE 1: TRACKPAD ==================== -->
+    <div class="feature-block" id="feature-trackpad">
+      <div class="feature-header">
+        <div class="feature-title-wrap">
+          <span class="feature-num">01</span>
+          <h2>Multi-Touch Trackpad &amp; Precision Gestures</h2>
+        </div>
+        <span class="feature-loc">Tab 1: Trackpad</span>
+      </div>
+      <p>Turns your smartphone touch screen into an ultra-responsive laptop trackpad. Backed by a physics momentum simulation engine that provides natural glide and inertia when scrolling or flicking.</p>
+      
+      <div class="steps-pill">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <div><strong>Single-Finger Tap:</strong> Instant Left Mouse Click at cursor position. Hold and drag for window moving or text selection.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <div><strong>Two-Finger Tap:</strong> Instant Right Mouse Click (context menu).</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <div><strong>Two-Finger Slide:</strong> Smooth vertical and horizontal scrolling with friction-tuned momentum deceleration.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4</span>
+          <div><strong>Pinch-to-Zoom:</strong> Two-finger pinch triggers native Windows <code>Ctrl + Wheel</code> zoom in browsers, documents, and code editors.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">5</span>
+          <div><strong>Toolbar Controls:</strong> Bottom toolbar features Left/Right/Middle physical buttons, Drag-Lock toggle, Sensitivity slider, and Gamepad mode toggle.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FEATURE 2: KEYBOARD ==================== -->
+    <div class="feature-block" id="feature-keyboard">
+      <div class="feature-header">
+        <div class="feature-title-wrap">
+          <span class="feature-num">02</span>
+          <h2>Mechanical Virtual Keyboard &amp; Shortcut Chords</h2>
+        </div>
+        <span class="feature-loc">Tab 2: Keyboard</span>
+      </div>
+      <p>A complete full-size virtual keyboard that matches desktop PC ergonomics, featuring sticky modifier states for complex keyboard chords.</p>
+      
+      <div class="steps-pill">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <div><strong>Sticky Modifier Chords:</strong> Tap <kbd>Ctrl</kbd>, <kbd>Alt</kbd>, <kbd>Shift</kbd>, or <kbd>Win</kbd> to latch them in an active state, allowing single-finger entry of complex shortcuts like <kbd>Ctrl + Shift + Esc</kbd> or <kbd>Win + Tab</kbd>.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <div><strong>Function Row (F1 - F12):</strong> Dedicated top function row for system actions, refreshing (<kbd>F5</kbd>), renaming (<kbd>F2</kbd>), or full screen (<kbd>F11</kbd>).</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <div><strong>Integrated Numpad &amp; Navigation:</strong> Instant toggle between QWERTY typing, standard 10-key numeric keypad, and full arrow/navigation keys (<kbd>Home</kbd>, <kbd>End</kbd>, <kbd>PgUp</kbd>, <kbd>PgDn</kbd>).</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4</span>
+          <div><strong>Native Phone Keyboard Sync:</strong> Includes a rapid text input field that syncs whole sentences or dictated voice-to-text directly into your PC cursor location.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FEATURE 3: SCREEN MIRROR ==================== -->
+    <div class="feature-block" id="feature-screen">
+      <div class="feature-header">
+        <div class="feature-title-wrap">
+          <span class="feature-num">03</span>
+          <h2>60 FPS Low-Latency Desktop Screen Mirror</h2>
+        </div>
+        <span class="feature-loc">Tab 3: Screen</span>
+      </div>
+      <p>Streams your entire Windows or Linux desktop straight to your phone display at up to 60 FPS using adaptive hardware-accelerated JPEG compression over local WebSocket (<code>/ws/screen</code>).</p>
+      
+      <div class="steps-pill">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <div><strong>Touch-to-Click on Desktop:</strong> Tapping any button, window, or file on the video feed translates the touch coordinates directly into PC cursor clicks at native monitor resolution.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <div><strong>Pinch-to-Zoom &amp; Pan:</strong> Freely zoom in on tiny UI elements, menus, or terminal windows and drag to pan across multi-monitor desktops.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <div><strong>Emergency Headless Display:</strong> Perfect for operating PCs with dead screens, cracked laptop monitors, or headless home servers without attaching physical HDMI displays.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FEATURE 4: ON-SCREEN GAMING HUD ==================== -->
+    <div class="feature-block" id="feature-hud">
+      <div class="feature-header">
+        <div class="feature-title-wrap">
+          <span class="feature-num">04</span>
+          <h2>On-Screen Touch Gaming HUD Overlay</h2>
+        </div>
+        <span class="feature-loc">Tab 3: Screen &rarr; Cyan FAB (#btn-screen-hud-fab)</span>
+      </div>
+      <p>A transparent tactical gaming heads-up display rendered directly over the live 60 FPS desktop screen feed, turning your phone into an intuitive handheld console for casual PC games and emulators.</p>
+
+      <div class="steps-pill">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <div><strong>Where to Find It:</strong> Open Tab 3 (Screen Mirror). Look for the floating cyan circular button in the corner with a controller icon (<code>#btn-screen-hud-fab</code>). Tap it to toggle the HUD.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <div><strong>Virtual 8-Way WASD Thumbstick:</strong> Left-hand analog joystick that sends high-frequency <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> movement keystrokes.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <div><strong>Tactical Action Buttons:</strong> Right-hand button cluster featuring <kbd>Space</kbd> (Jump), <kbd>Shift</kbd> (Sprint), <kbd>Ctrl</kbd> (Crouch), <kbd>E</kbd> (Interact), <kbd>Esc</kbd> (Menu/Pause), and quick Left/Right click triggers.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4</span>
+          <div><strong>Simultaneous Cursor Aiming:</strong> Move your right thumb across the center screen area to steer the game camera while holding movement keys on the left.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FEATURE 5: DEDICATED GAMEPAD ==================== -->
+    <div class="feature-block" id="feature-gamepad">
+      <div class="feature-header">
+        <div class="feature-title-wrap">
+          <span class="feature-num">05</span>
+          <h2>Dual-Mode Console Gamepad &amp; Gyro Steering</h2>
+        </div>
+        <span class="feature-loc">Header Gamepad Icon (#btn-header-gamepad) or Tab 1 Toolbar</span>
+      </div>
+      <p>A full-screen virtual controller deck replicating modern console controllers with zero driver installation required on Windows or Linux.</p>
+
+      <div class="steps-pill">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <div><strong>Where to Find It:</strong> Tap the Gamepad icon in the top header (<code>#btn-header-gamepad</code>) or the Gamepad mode button on the Tab 1 toolbar (<code>#btn-gamepad-mode-toggle</code>).</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <div><strong>Complete Controller Layout:</strong> Dual analog thumbsticks (with deadzone auto-calibration), 4-way D-Pad, ABXY face buttons, Bumpers (<kbd>LB</kbd>, <kbd>RB</kbd>), and analog triggers (<kbd>LT</kbd>, <kbd>RT</kbd>).</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <div><strong>Gyroscope Motion Steering:</strong> Enable the Gyro toggle to tilt your smartphone like a steering wheel for racing games (Forza, Assetto Corsa) or fine gyro aiming in shooters.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4</span>
+          <div><strong>Direct Windows SendInput:</strong> Emulates keyboard and mouse or integrates with virtual gamepads with zero input lag.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FEATURE 6: WIRELESS MICROPHONE ==================== -->
+    <div class="feature-block" id="feature-mic">
+      <div class="feature-header">
+        <div class="feature-title-wrap">
+          <span class="feature-num">06</span>
+          <h2>Wireless PC Microphone &amp; Gain Control</h2>
+        </div>
+        <span class="feature-loc">Tab 5 (Media Tab) &rarr; Microphone Card (#btn-toggle-mic)</span>
+      </div>
+      <p>Streams high-fidelity audio from your phone microphone directly to your PC, turning your phone into an emergency Discord, Zoom, or gaming headset microphone.</p>
+
+      <div class="steps-pill">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <div><strong>Where to Find It:</strong> Switch to Tab 5 (Media Tab, film/camera icon). The first card is the dedicated <strong>Microphone</strong> card.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <div><strong>How to Enable:</strong> Tap the lime green <strong>Transmit Mic</strong> button (<code>#btn-toggle-mic</code>). Allow the one-time microphone permission prompt in the app.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <div><strong>Live VU Meter:</strong> Watch the real-time audio level meter (<code>#vu-meter-fill</code>) and decibel readout (<code>#vu-meter-db</code>) as you speak.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4</span>
+          <div><strong>Gain Slider &amp; Mute:</strong> Adjust the Input Gain slider from 0% to 200% to boost quiet voices, or tap the dark <strong>Mute</strong> button (<code>#btn-mute-mic</code>) for instant privacy.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">5</span>
+          <div><strong>Network Socket:</strong> Transmits raw PCM audio packets over TCP port <code>8002</code> directly to the PC receiver sink.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FEATURE 7: HD PHONE WEBCAM ==================== -->
+    <div class="feature-block" id="feature-webcam">
+      <div class="feature-header">
+        <div class="feature-title-wrap">
+          <span class="feature-num">07</span>
+          <h2>HD Wireless Phone Webcam (1080p / 720p)</h2>
+        </div>
+        <span class="feature-loc">Tab 5 (Media Tab) &rarr; Camera Card (#btn-toggle-cam)</span>
+      </div>
+      <p>Turns your smartphone camera into a wireless PC webcam over local Wi-Fi. Far superior image quality and low-light performance compared to cheap built-in laptop webcams.</p>
+
+      <div class="steps-pill">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <div><strong>Where to Find It:</strong> Switch to Tab 5 (Media Tab) and scroll to the <strong>Camera</strong> card.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <div><strong>How to Enable:</strong> Tap the cyan <strong>Start Camera</strong> button (<code>#btn-toggle-cam</code>). The placeholder transitions to a live on-device preview with a green <span style="color:#00ff66;font-weight:700;">LIVE</span> badge.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <div><strong>Lens Selection:</strong> Easily toggle between <strong>Rear Camera</strong> (environment lens for ultra-crisp documents or workbench streaming) and <strong>Front Camera</strong> (selfie lens for video calls). You can also tap the quick lens switch button (<code>#btn-switch-cam-lens</code>).</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4</span>
+          <div><strong>Resolution Chips:</strong> Select between <strong>480p</strong> (for weak Wi-Fi), <strong>720p HD</strong> (recommended default), and <strong>1080p Pro</strong> (full high definition).</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">5</span>
+          <div><strong>Torch / Flashlight:</strong> Tap the yellow lightning bolt button (<code>#btn-toggle-torch</code>) to illuminate your desk or subject in dark environments.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">6</span>
+          <div><strong>Streaming Protocol:</strong> Video frames are encoded as binary JPEG buffers and streamed over WebSocket route <code>/ws/cam</code> directly into the PC backend.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FEATURE 8: AUDIO & FILE TRANSFER ==================== -->
+    <div class="feature-block" id="feature-audio">
+      <div class="feature-header">
+        <div class="feature-title-wrap">
+          <span class="feature-num">08</span>
+          <h2>WASAPI PC Audio Streaming &amp; Wi-Fi File Transfer</h2>
+        </div>
+        <span class="feature-loc">Tab 4 (Files) &amp; Tab 5 (PC Audio Card)</span>
+      </div>
+      <p>High-efficiency local network utilities for multimedia consumption and cable-free file management.</p>
+
+      <div class="steps-pill">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <div><strong>WASAPI Audio Loopback (Port 8003):</strong> Captures PC system audio directly from the Windows sound subsystem and streams high-fidelity 48 kHz stereo audio to your phone, turning your mobile earbuds into wireless PC headphones.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <div><strong>Two-Way File Explorer (Tab 4):</strong> Browse your PC file system and phone storage side-by-side. Download movies, documents, or photos to your phone, or upload mobile files directly to your PC Desktop.</div>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <div><strong>Chunked Auto-Resuming Transfers:</strong> Large files transfer in chunks over local HTTP (port 8000). If your Wi-Fi momentarily drops, transfers resume automatically where they stopped rather than starting over.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FREQUENTLY ASKED QUESTIONS ==================== -->
+    <section class="guide-faq" style="margin: 40px 0 32px;">
+      <h2>Frequently Asked Questions</h2>
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 20px;">
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 18px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Where is the HD Webcam feature located and how do I turn it on?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Open the PCDeck mobile client and tap Tab 5 (Media Tab, film/camera icon). Scroll to the Camera Card and tap 'Start Camera' (cyan button). You can choose between Rear and Front lenses, adjust resolution from 480p to 1080p Pro, and toggle your flashlight torch. The feed streams directly over WebSocket (<code>/ws/cam</code>) to your PC.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 18px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">How do I use my smartphone as a wireless PC microphone?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Navigate to Tab 5 (Media Tab) in the PCDeck client. Under the Microphone Card, tap 'Transmit Mic' (lime button). A live VU meter shows your voice level in real time. Adjust the Input Gain slider (0-200%) to boost sensitivity. The audio transmits over TCP socket port <code>8002</code> directly to your PC.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 18px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Where is the On-Screen Touch Gaming HUD Overlay?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Go to Tab 3 (Screen Mirror). Tap the floating Cyan Joystick FAB (<code>#btn-screen-hud-fab</code>) located in the corner of the video stream. This toggles a semi-transparent HUD overlay on top of the live PC screen, giving you an 8-way WASD analog thumbstick and gaming action buttons (Space, Shift, Ctrl, E, Esc, Left/Right click) directly while watching your game.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 18px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">How do I access the Dedicated Console Gamepad?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Tap the Gamepad icon in the top header bar (<code>#btn-header-gamepad</code>) or tap the Gamepad toggle button on the Tab 1 Trackpad toolbar (<code>#btn-gamepad-mode-toggle</code>). This opens a dedicated full-screen console layout with dual analog thumbsticks, D-Pad, ABXY buttons, shoulder triggers (LT/RT, LB/RB), and optional gyroscope motion steering.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 18px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Do these features work in the browser or require the APK?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Multi-touch trackpad, mechanical keyboard, 60 FPS screen streaming, and Wi-Fi file transfer work 100% inside any mobile web browser (Safari, Chrome, Firefox) via QR code with zero installs. Low-latency hardware-level Webcam, Microphone, and Gamepad features run best in the native lightweight PCDeck Android APK (1.5 MB) due to browser security restrictions on background media streams.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action Banner -->
+    <div class="pitch" id="download-cta" style="margin-top: 36px;">
+      <h2>Ready to Turn Your Phone into an All-in-One PC Peripheral?</h2>
+      <p>Get PCDeck for Windows or Linux. Zero cloud accounts, zero telemetry, 100% offline local network performance.</p>
+      <div class="row">
+        <a class="btn" href="/download/windows/">Download PCDeck for Windows (.exe)</a>
+        <a class="btn ghost" href="/download/android/">Download Android APK (1.5 MB)</a>
+      </div>
+      <p class="fine">Windows 10 / 11 · Linux (Steam Deck, Ubuntu, Arch, Fedora) · Android 5.0+ · Instant Web Remote</p>
+    </div>
+
+    <div class="next">
+      <h2>Explore Related Guides</h2>
+      <p><a href="/use-pc-without-mouse/">How to navigate and use Windows without a mouse</a></p>
+      <p><a href="/control-linux-pc-from-phone/">Control Linux and Steam Deck Desktop Mode from phone</a></p>
+      <p><a href="/browser-pc-remote/">Zero-Install Web Remote for iPhone and Android</a></p>
+      <p><a href="/security/">Read PCDeck Security Architecture and Network Isolation</a> · <a href="/guides/">All Guides Hub</a></p>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides">
+      <a href="/features/">Features &amp; Controls</a> · 
+      Guides: <a href="/guides/">All Guides Hub</a> · 
+      <a href="/download/">Download</a> · 
+      <a href="/remote-mouse-alternative/">Remote Mouse Alternative</a> · 
+      <a href="/unified-remote-alternative/">Unified Remote Alternative</a> · 
+      <a href="/wifi-mouse-alternative/">WiFi Mouse Alternative</a> · 
+      <a href="/monect-alternative/">Monect Alternative</a> · 
+      <a href="/browser-pc-remote/">Zero-Install Web Remote</a> · 
+      <a href="/use-phone-as-mouse/">Phone as mouse</a> · 
+      <a href="/use-phone-as-keyboard/">Phone as keyboard</a> · 
+      <a href="/use-phone-as-second-monitor/">Phone as PC screen</a> · 
+      <a href="/control-windows-from-android/">Windows Remote</a> · 
+      <a href="/control-linux-pc-from-phone/">Linux &amp; Steam Deck</a> · 
+      <a href="/linux-install/">Linux Terminal Install</a> · 
+      <a href="/use-pc-without-mouse/">Without a mouse</a> · 
+      <a href="/use-pc-without-keyboard/">Without a keyboard</a> · 
+      <a href="/use-pc-without-monitor/">Without a monitor</a> · 
+      <a href="/use-pc-without-internet/">Without internet</a> · 
+      <a href="/stream-pc-audio-to-phone/">Stream audio</a> · 
+      <a href="/transfer-files-pc-to-android/">Cable-free transfers</a> · 
+      <a href="/security/">Security Architecture</a> · 
+      <a href="/privacy_policy.html">Privacy Policy</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      menu.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+    } else {
+      menu.classList.remove('active');
+      menu.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  document.addEventListener('click', function (e) {
+    if (menu.classList.contains('active') && !menu.contains(e.target) && e.target !== toggle) {
+      toggleMenu(false);
+    }
+  });
+})();
+</script>
+<script defer src="/va.js"></script>
+</body>
+</html>
