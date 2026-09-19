@@ -590,7 +590,7 @@
           <span id="tool-cam-status" class="tool-tile-sub">Offline</span>
         </button>
 
-        <button id="tool-feedback-quick" class="tool-tile" onclick="window.location.href='mailto:dogonews67@gmail.com?subject=%5BPCDeck%5D%20Feedback%20%26%20Suggestion&body=Hi%20Greson%2C%0A%0AHere%20is%20my%20feedback%20%2F%20bug%20report%3A%0A'">
+        <button id="tool-feedback-quick" class="tool-tile" onclick="window.sendFeedbackMail()">
           <span class="tool-tile-icon" style="color: var(--neo-pink);">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </span>
@@ -2597,14 +2597,14 @@
             Have an idea, found a bug, or need help? Talk directly with the creator — every single message gets a reply.
           </p>
           <div style="display: flex; gap: 8px;">
-            <a href="https://www.reddit.com/user/Old_Boysenberry_4008/comments/1wkh5v0/pcdeck_official_feedback_bug_reports_feature/" target="_blank" rel="noopener" class="neo-btn btn-dark" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.75rem; font-weight: 800; padding: 10px 8px; border: 1px solid rgba(255, 69, 0, 0.45); text-decoration: none; color: #ff4500;">
+            <button type="button" onclick="window.openRedditFeedback()" class="neo-btn btn-dark" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.75rem; font-weight: 800; padding: 10px 8px; border: 1px solid rgba(255, 69, 0, 0.45); color: #ff4500; cursor: pointer; background: rgba(255, 69, 0, 0.08);">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.56 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.56 12 8 12.56 8 13.25c0 .688.56 1.25 1.25 1.25.688 0 1.25-.562 1.25-1.25 0-.69-.562-1.25-1.25-1.25zm5.5 0c-.688 0-1.25.56-1.25 1.25 0 .688.56 1.25 1.25 1.25.688 0 1.25-.562 1.25-1.25 0-.69-.562-1.25-1.25-1.25zm-5.465 4.148c-.085.17-.035.38.12.49.98.69 2.14.99 3.095.99.954 0 2.115-.3 3.095-.99a.377.377 0 0 0 .12-.49.38.38 0 0 0-.49-.12c-.78.55-1.77.8-2.725.8-.956 0-1.945-.25-2.725-.8a.384.384 0 0 0-.49.12z"/></svg>
               <span>Reddit Chat</span>
-            </a>
-            <a href="mailto:dogonews67@gmail.com?subject=%5BPCDeck%5D%20Feedback%20%26%20Suggestion&body=Hi%20Greson%2C%0A%0AHere%20is%20my%20feedback%20%2F%20bug%20report%3A%0A" class="neo-btn btn-cyan" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.75rem; font-weight: 800; padding: 10px 8px; text-decoration: none;">
+            </button>
+            <button type="button" onclick="window.sendFeedbackMail()" class="neo-btn btn-cyan" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.75rem; font-weight: 800; padding: 10px 8px; cursor: pointer; border: none;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               <span>Email Creator</span>
-            </a>
+            </button>
           </div>
         </div>
 

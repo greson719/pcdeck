@@ -47,6 +47,8 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.util.Log;
+import android.annotation.TargetApi;
 import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.MimeTypeMap;
@@ -54,6 +56,7 @@ import android.webkit.PermissionRequest;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -570,6 +573,53 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean isNativeApp() {
             return true;
+        }
+
+        @JavascriptInterface
+        public void openExternalUrl(final String url) {
+            if (url == null || url.trim().isEmpty()) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url.trim()));
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        mContext.startActivity(intent);
+                    } catch (Exception e) {
+                        Log.e("PCDeck-App", "Error opening external url: " + url, e);
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void sendEmail(final String to, final String subject, final String body) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    String targetEmail = (to != null && !to.trim().isEmpty()) ? to.trim() : "dogonews67@gmail.com";
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_SENDTO);
+                        intent.setData(Uri.parse("mailto:" + Uri.encode(targetEmail)));
+                        if (subject != null) intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+                        if (body != null) intent.putExtra(Intent.EXTRA_TEXT, body);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        mContext.startActivity(Intent.createChooser(intent, "Send Email..."));
+                    } catch (Exception e) {
+                        try {
+                            String mailUrl = "mailto:" + Uri.encode(targetEmail);
+                            if (subject != null || body != null) {
+                                mailUrl += "?subject=" + Uri.encode(subject != null ? subject : "") + "&body=" + Uri.encode(body != null ? body : "");
+                            }
+                            Intent fallback = new Intent(Intent.ACTION_VIEW, Uri.parse(mailUrl));
+                            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            mContext.startActivity(fallback);
+                        } catch (Exception err) {
+                            Log.e("PCDeck-App", "Error sending email via intent", err);
+                        }
+                    }
+                }
+            });
         }
 
         @JavascriptInterface
@@ -2557,8 +2607,53 @@ public class MainActivity extends Activity {
         webAppInterface = new WebAppInterface(this);
         webView.addJavascriptInterface(webAppInterface, "AndroidApp");
         webView.addJavascriptInterface(webAppInterface, "AndroidBridge");
+        webView.setWebViewClient(new WebViewClient() {
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleExternalUri(url != null ? Uri.parse(url) : null);
+            }
 
-        webView.setWebViewClient(new WebViewClient());
+            @TargetApi(Build.VERSION_CODES.N)
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return request != null && handleExternalUri(request.getUrl());
+            }
+
+            private boolean handleExternalUri(Uri uri) {
+                if (uri == null) return false;
+                String scheme = uri.getScheme();
+                if ("mailto".equalsIgnoreCase(scheme)) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_SENDTO, uri);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(Intent.createChooser(intent, "Send Email..."));
+                        return true;
+                    } catch (Exception e) {
+                        try {
+                            Intent fallback = new Intent(Intent.ACTION_VIEW, uri);
+                            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(fallback);
+                            return true;
+                        } catch (Exception ignored) {}
+                    }
+                    return true;
+                }
+                String host = uri.getHost();
+                if (host != null) {
+                    host = host.toLowerCase();
+                    if (host.contains("reddit.com") || host.contains("github.com") || host.contains("google.com") || host.contains("vercel.app") || (!host.equals("localhost") && !host.equals("127.0.0.1") && !host.startsWith("192.168.") && !host.startsWith("10.") && !host.endsWith(".local") && !host.startsWith("172."))) {
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            return true;
+                        } catch (Exception ignored) {}
+                    }
+                }
+                return false;
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(android.webkit.ConsoleMessage consoleMessage) {

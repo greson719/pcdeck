@@ -21,6 +21,82 @@
     }
   } catch (e) {}
 
+  window.showDeckToast = function (msg, duration) {
+    try {
+      var t = document.getElementById('deck-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'deck-toast';
+        t.style.cssText = 'position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:rgba(10,14,23,0.96);border:1.5px solid var(--neo-cyan);color:#fff;padding:10px 18px;border-radius:8px;font-size:0.8rem;font-weight:700;z-index:999999;box-shadow:0 8px 24px rgba(0,240,255,0.25);pointer-events:none;transition:opacity 0.25s,transform 0.25s;text-align:center;max-width:90vw;backdrop-filter:blur(10px);opacity:0;';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1';
+      t.style.transform = 'translateX(-50%) translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function () {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(8px)';
+      }, duration || 3000);
+    } catch (e) {
+      console.log('Toast:', msg);
+    }
+  };
+
+  window.sendFeedbackMail = function () {
+    var email = 'dogonews67@gmail.com';
+    var subject = '[PCDeck] Feedback & Suggestion';
+    var body = 'Hi Greson,\n\nHere is my feedback / bug report:\n';
+
+    // 1. Android APK native intent
+    if (window.AndroidApp && typeof window.AndroidApp.sendEmail === 'function') {
+      try {
+        window.AndroidApp.sendEmail(email, subject, body);
+        return;
+      } catch (e) {
+        console.warn('Native sendEmail failed', e);
+      }
+    }
+
+    // 2. 1-click clipboard copy
+    var copied = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(email).then(function () {
+        window.showDeckToast('Copied ' + email + ' to clipboard!');
+      }).catch(function () {});
+      copied = true;
+    }
+
+    // 3. Mailto fallback
+    var mailUrl = 'mailto:' + encodeURIComponent(email) +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body=' + encodeURIComponent(body);
+
+    var a = document.createElement('a');
+    a.href = mailUrl;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    if (!copied) {
+      window.showDeckToast('Creator email: ' + email);
+    }
+  };
+
+  window.openRedditFeedback = function () {
+    var url = 'https://www.reddit.com/user/Old_Boysenberry_4008/comments/1wkh5v0/pcdeck_official_feedback_bug_reports_feature/';
+    if (window.AndroidApp && typeof window.AndroidApp.openExternalUrl === 'function') {
+      try {
+        window.AndroidApp.openExternalUrl(url);
+        return;
+      } catch (e) {
+        console.warn('Native openExternalUrl failed', e);
+      }
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   // Global PCDeck Icon Registry & Helper Function
   const PC_DECK_ICONS = {
     lock: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
