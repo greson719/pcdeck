@@ -2662,40 +2662,22 @@ footer{padding:44px 0 56px}
    download buttons, version numbers, and file sizes 100% up-to-date automatically.
    ========================================================================== */
 (function () {
-  function formatSize(bytes) {
-    if (!bytes || isNaN(bytes)) return null;
-    if (bytes < 1024 * 1024) {
-      return (bytes / 1024).toFixed(0) + ' KB';
-    }
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  }
-
-  function fetchFileSize(url, callback) {
-    try {
-      fetch(url, { method: 'HEAD', cache: 'no-cache' })
-        .then(function(res) {
-          var len = res.headers.get('content-length');
-          if (len) {
-            callback(parseInt(len, 10));
-          }
-        })
-        .catch(function() {});
-    } catch(e) {}
-  }
-
   fetch('/version.json?t=' + Date.now(), { cache: 'no-cache' })
     .then(function(res) { return res.json(); })
     .then(function(meta) {
       var ver = meta.versionName ? 'v' + meta.versionName : 'v2.7.0';
+      var exeSize = meta.exeSize || '36.3 MB';
+      var apkSize = meta.apkSize || '687 KB';
+      var zipSize = meta.zipSize || '49.7 MB';
 
       var heroExe = document.querySelector('#hero-exe small');
-      if (heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · 36.3 MB · No Install Needed';
+      if (heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · ' + exeSize + ' · No Install Needed';
       var heroApk = document.querySelector('#hero-apk small');
-      if (heroApk) heroApk.textContent = ver + ' · Direct APK · 687 KB';
+      if (heroApk) heroApk.textContent = ver + ' · Direct APK · ' + apkSize;
       var heroLinux = document.querySelector('#hero-linux small');
       if (heroLinux) heroLinux.textContent = ver + ' · 1-Line Terminal Install';
       var heroZip = document.querySelector('#hero-zip small');
-      if (heroZip) heroZip.textContent = ver + ' · 49.7 MB · Win + Android';
+      if (heroZip) heroZip.textContent = ver + ' · ' + zipSize + ' · Win + Android';
 
       var cardExeTitle = document.querySelector('#card-exe h3');
       if (cardExeTitle) cardExeTitle.textContent = 'PCDeck for Windows (' + ver + ')';
@@ -2706,26 +2688,12 @@ footer{padding:44px 0 56px}
       var cardZipTitle = document.querySelector('#card-zip h3');
       if (cardZipTitle) cardZipTitle.textContent = 'Full Offline Bundle (' + ver + ')';
 
-      fetchFileSize('/PCDeck.exe', function(size) {
-        var str = formatSize(size);
-        if (str && heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · ' + str;
-        var btn = document.getElementById('dl-exe');
-        if (btn && str) btn.textContent = 'Download for Windows (' + ver + ' · ' + str + ')';
-      });
-
-      fetchFileSize('/PCDeck.apk', function(size) {
-        var str = formatSize(size);
-        if (str && heroApk) heroApk.textContent = ver + ' · Direct APK · ' + str;
-        var btn = document.querySelector('#dl-apk span');
-        if (btn && str) btn.textContent = 'Download for Android (' + ver + ' · ' + str + ')';
-      });
-
-      fetchFileSize('/PCDeck_Package.zip', function(size) {
-        var str = formatSize(size);
-        if (str && heroZip) heroZip.textContent = ver + ' · ' + str + ' · Win + Android';
-        var btn = document.getElementById('dl-zip');
-        if (btn && str) btn.textContent = 'Download Offline ZIP (' + str + ')';
-      });
+      var btnExe = document.getElementById('dl-exe');
+      if (btnExe) btnExe.textContent = 'Download for Windows (' + ver + ' · ' + exeSize + ')';
+      var btnApk = document.querySelector('#dl-apk span');
+      if (btnApk) btnApk.textContent = 'Download APK (Optional · ' + apkSize + ')';
+      var btnZip = document.getElementById('dl-zip');
+      if (btnZip) btnZip.textContent = 'Download Offline ZIP (' + zipSize + ')';
     })
     .catch(function() {});
 })();
