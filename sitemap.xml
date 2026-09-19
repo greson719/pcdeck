@@ -4,7 +4,7 @@
 
   <url>
     <loc>https://pcdeck.vercel.app/</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -12,6 +12,20 @@
       <image:title>PCDeck - Control Your PC From Your Phone or Browser</image:title>
       <image:caption>The mouse, keyboard and screen your PC is missing — trackpad, screen viewer, PC audio and cable-free file transfer over local Wi-Fi.</image:caption>
     </image:image>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/es/</loc>
+    <lastmod>2026-09-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <url>
+    <loc>https://pcdeck.vercel.app/pt/</loc>
+    <lastmod>2026-09-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
   </url>
 
   <url>
