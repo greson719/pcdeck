@@ -2117,18 +2117,6 @@ footer{padding:44px 0 56px}
             <span>Download Launcher (.sh)</span>
           </a>
         </div>
-
-        <div class="card" id="card-zip">
-          <p class="tag">PC + Phone · Offline Bundle</p>
-          <h3>Full Offline Bundle (v2.7.1)</h3>
-          <p>Windows executable plus the Android APK and setup notes in one archive.</p>
-          <ul class="spec">
-            <li>ZIP archive (v2.7.1 · 49.7 MB)</li>
-            <li>Includes Windows EXE &amp; Android APK</li>
-            <li>Useful for offline recovery</li>
-          </ul>
-          <a class="btn ghost" id="dl-zip" href="PCDeck_Package.zip" download>Download Offline ZIP (49.7 MB)</a>
-        </div>
       </div>
 
       <!-- Compact Feature & Pro Note Below Cards -->
@@ -2149,24 +2137,20 @@ footer{padding:44px 0 56px}
              run the tool after every rebuild. A checksum that silently goes stale is worse
              than none, because it tells honest users their good download is corrupt. -->
         <dl class="sumrow">
-          <dt>PCDeck.apk<span>703,251 BYTES</span></dt>
-          <dd>ed21d3c133baddd6bb0d3638ab3d4aaedcdc1279b67197139f643c5eaef11355</dd>
+          <dt>PCDeck.apk<span>707,347 BYTES</span></dt>
+          <dd>443268faaab48efad84f2cabbb1de066945d37b495bee1c531afd00507a8cc69</dd>
         </dl>
         <dl class="sumrow">
           <dt>PCDeck.aab<span>682,195 BYTES</span></dt>
           <dd>7a4d52f2981f4b753506b7b9483eb46a8307fbbf8f51d50c405d1901b9805cc9</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck.exe<span>38,021,534 BYTES</span></dt>
-          <dd>2dc9b75d939828cd8fad5bed6930c002684cf7212199f2e98cea106018f1c0d0</dd>
+          <dt>PCDeck.exe<span>38,038,129 BYTES</span></dt>
+          <dd>f681c5f7da7092f10d85b61610bf3bd8e6d8f66347d7f912bafefeacb80281ce</dd>
         </dl>
         <dl class="sumrow">
-          <dt>PCDeck-Setup.exe<span>39,493,439 BYTES</span></dt>
-          <dd>c25de03a9059b385d40fc14781d6e987c590919b90d13834ab4264cd2276aafc</dd>
-        </dl>
-        <dl class="sumrow">
-          <dt>PCDeck_Package.zip<span>52,157,822 BYTES</span></dt>
-          <dd>12070c35f477824fd1494b0161ca1855dc55dc9506fa5b597cebbf76a6ea5b9d</dd>
+          <dt>PCDeck-Setup.exe<span>39,514,505 BYTES</span></dt>
+          <dd>a5a1ab880348138314727f9071973eb32df7dce0bfbe2de55f6cf575be6b7740</dd>
         </dl>
         <!-- CHECKSUMS:END -->
 
@@ -2723,7 +2707,6 @@ footer{padding:44px 0 56px}
       var ver = meta.versionName ? 'v' + meta.versionName : 'v2.7.1';
       var exeSize = meta.exeSize || '36.3 MB';
       var apkSize = meta.apkSize || '691 KB';
-      var zipSize = meta.zipSize || '49.7 MB';
 
       var heroExe = document.querySelector('#hero-exe small');
       if (heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · ' + exeSize + ' · No Install Needed';
@@ -2731,8 +2714,6 @@ footer{padding:44px 0 56px}
       if (heroApk) heroApk.textContent = ver + ' · Direct APK · ' + apkSize;
       var heroLinux = document.querySelector('#hero-linux small');
       if (heroLinux) heroLinux.textContent = ver + ' · 1-Line Terminal Install';
-      var heroZip = document.querySelector('#hero-zip small');
-      if (heroZip) heroZip.textContent = ver + ' · ' + zipSize + ' · Win + Android';
 
       var cardExeTitle = document.querySelector('#card-exe h3');
       if (cardExeTitle) cardExeTitle.textContent = 'PCDeck for Windows (' + ver + ')';
@@ -2740,15 +2721,11 @@ footer{padding:44px 0 56px}
       if (cardApkTitle) cardApkTitle.textContent = 'PCDeck for Android (' + ver + ')';
       var cardLinuxTitle = document.querySelector('#card-linux h3');
       if (cardLinuxTitle) cardLinuxTitle.textContent = 'PCDeck for Linux (' + ver + ')';
-      var cardZipTitle = document.querySelector('#card-zip h3');
-      if (cardZipTitle) cardZipTitle.textContent = 'Full Offline Bundle (' + ver + ')';
 
       var btnExe = document.getElementById('dl-exe');
       if (btnExe) btnExe.textContent = 'Download for Windows (' + ver + ' · ' + exeSize + ')';
       var btnApk = document.querySelector('#dl-apk span');
       if (btnApk) btnApk.textContent = 'Download APK (Optional · ' + apkSize + ')';
-      var btnZip = document.getElementById('dl-zip');
-      if (btnZip) btnZip.textContent = 'Download Offline ZIP (' + zipSize + ')';
     })
     .catch(function() {});
 })();

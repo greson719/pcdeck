@@ -21,7 +21,6 @@ EXCLUDED_NAMES = {
     "PCDeck.exe",
     "PCDeck.apk",
     "PCDeck.aab",
-    "PCDeck_Package.zip",
     "PCDeck_Master_Logo.png",
     "icon.png",  # Preserve high-res master icon at root
 }

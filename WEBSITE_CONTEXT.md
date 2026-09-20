@@ -72,6 +72,14 @@
   1. Download & launch `PCDeck.exe` on Windows (zero drivers or setup).
   2. Scan the QR code with phone camera.
   3. Instant control over local Wi-Fi.
+- **Strict 3-Card Layout Invariant (`#download-cards`)**:
+  - The download cards grid must **strictly** contain exactly 3 primary action cards:
+    1. **Windows Card (`#card-exe`)**: Primary glowing standalone executable (`PCDeck.exe`).
+    2. **Android Card (`#card-apk`)**: Direct APK download (`PCDeck.apk`).
+    3. **Linux Card (`#card-linux`)**: 1-line curl launcher script (`run_linux.sh`).
+  - **Absolute Prohibition on 4th Offline ZIP Bundle (`PCDeck_Package.zip`)**:
+    - `PCDeck.exe` already embeds `PCDeck.apk` directly and serves it to mobile devices over local LAN at `GET /PCDeck.apk` upon scanning the pairing QR code.
+    - Never add `PCDeck_Package.zip` back to `#download-cards` or subpages. It caused confusion, layout clutter, and release bloat.
 
 ---
 

@@ -16,7 +16,6 @@ export default function handler(req, res) {
     versionName: "2.7.1",
     exeSize: "36.3 MB",
     apkSize: "691 KB",
-    zipSize: "49.7 MB",
     apkUrl: "https://pcdeck.vercel.app/PCDeck.apk",
     websiteUrl: "https://pcdeck.vercel.app",
     playStoreUrl: "",

@@ -28,7 +28,7 @@ ROOT = os.path.normpath(os.path.join(HERE, ".."))
 SITE = os.path.join(ROOT, "website")
 PAGE = os.path.join(SITE, "index.html")
 
-TARGETS = ["PCDeck.apk", "PCDeck.aab", "PCDeck.exe", "PCDeck-Setup.exe", "PCDeck_Package.zip"]
+TARGETS = ["PCDeck.apk", "PCDeck.aab", "PCDeck.exe", "PCDeck-Setup.exe"]
 
 BEGIN = "<!-- CHECKSUMS:BEGIN"
 END = "<!-- CHECKSUMS:END -->"
@@ -41,6 +41,24 @@ def sha256(path: str) -> str:
         for chunk in iter(lambda: fh.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def update_file(filepath: str, rows: list[str]) -> bool:
+    if not os.path.exists(filepath):
+        return False
+    html = io.open(filepath, encoding="utf-8").read()
+    start = html.find(BEGIN)
+    stop = html.find(END)
+    if start == -1 or stop == -1:
+        print(f"\nERROR: markers not found in {filepath}", file=sys.stderr)
+        return False
+    head_end = html.index("-->", start) + 3
+    new = html[:head_end] + "\n" + "\n".join(rows) + "\n        " + html[stop:]
+    if new == html:
+        return False
+    io.open(filepath, "w", encoding="utf-8", newline="\n").write(new)
+    print(f"Updated {os.path.normpath(filepath)}")
+    return True
 
 
 def main() -> int:
@@ -69,25 +87,10 @@ def main() -> int:
         print("Build them first, or drop them from TARGETS.", file=sys.stderr)
         return 1
 
-    html = io.open(PAGE, encoding="utf-8").read()
-
-    start = html.find(BEGIN)
-    stop = html.find(END)
-    if start == -1 or stop == -1:
-        print(f"\nERROR: markers not found in {PAGE}", file=sys.stderr)
-        return 1
-
-    # Keep the BEGIN comment itself (it carries the do-not-hand-edit note) and
-    # replace only what sits between it and END.
-    head_end = html.index("-->", start) + 3
-    new = html[:head_end] + "\n" + "\n".join(rows) + "\n        " + html[stop:]
-
-    if new == html:
+    changed_site = update_file(PAGE, rows)
+    changed_root = update_file(os.path.join(ROOT, "index.html"), rows)
+    if not changed_site and not changed_root:
         print("\nNo change — checksums already current.")
-        return 0
-
-    io.open(PAGE, "w", encoding="utf-8", newline="\n").write(new)
-    print(f"\nUpdated {os.path.normpath(PAGE)}")
     return 0
 
 

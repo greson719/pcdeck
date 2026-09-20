@@ -301,10 +301,13 @@ Before committing or releasing updates:
 | `PCDeck-Setup.exe` | **37.68 MB** | v2.7.1 | Passed · Inno Setup full installer with auto-upgrade |
 | `PCDeck.apk` | **690.8 KB** | v2.7.1 (Code 271) | Passed · v1/v2/v3 aligned & signed with OTA update check |
 | `PCDeck.aab` | **666 KB** | v2.7.1 (Code 271) | Passed · Google Play Bundletool signed |
-| `PCDeck_Package.zip` | **49.7 MB** | v2.7.1 | Passed · Offline bundle (EXE + APK) |
 | `PCDeck.msix` | **45.7 MB** | v2.7.1.0 | Passed · Store manifest validated |
 
 - **Version Consistency Invariant**: All components (`pyproject.toml`, `MainActivity.java`, `app.js` `CURRENT_APP_VERSION_NAME`, `version_info.txt`, `version.json`, and website download cards) must strictly reflect the exact same version string and integer code.
+- **Deprecation of `PCDeck_Package.zip` & Strict 3-Card Download Layout Invariant**:
+  - `PCDeck.exe` bundles `PCDeck.apk` directly inside its PyInstaller asset payload and automatically serves it over the local Wi-Fi network at `GET /PCDeck.apk`.
+  - Phone users scan the QR code and download `http://{LOCAL_IP}:8000/PCDeck.apk` directly from the PC host with zero internet needed.
+  - `PCDeck_Package.zip` is completely deprecated, removed, and prohibited. Future agents and sessions must NEVER recreate or distribute `PCDeck_Package.zip`, nor add a 4th "ZIP" card to `#download-cards`. The download grid must strictly retain 3 cards: Windows (`.exe`), Android (`.apk`), and Linux (`.sh`).
 
 ---
 
@@ -315,9 +318,10 @@ Before committing or releasing updates:
   1. **Run on PC**: Download & open `PCDeck.exe` on Windows (no install wizard or drivers required).
   2. **Scan the QR Code**: Point phone camera (iPhone or Android) at the screen's QR code.
   3. **Instant Control**: Trackpad & keyboard open immediately in Safari, Chrome, or any browser over local Wi-Fi.
-- **Hierarchy of Download CTA**:
+- **Hierarchy of Download CTA (Strict 3-Card Layout)**:
   - **Primary**: Bold, glowing `Download PCDeck for Windows (.exe)`.
-  - **Secondary / Optional**: Clean inline links for Android APK (`739 KB`), Linux 1-line script, and offline recovery ZIP. Never clutter the hero section with 4 competing primary download buttons.
+  - **Secondary**: Clean cards for Android APK (`691 KB`) and Linux 1-line script (`.sh`).
+  - **Prohibition on ZIPs**: Never add a 4th ZIP card or ZIP bundle link. Never clutter the hero or download section with competing ZIP buttons.
 - **Language & Tone Standard**: Zero technical jargon, zero AI buzzwords ("paradigm shifting", "AI-powered", "revolutionary"), and zero complex networking terms. Write for everyday humans whose physical mouse just broke.
 - **QR Code Density & Scan Invariant**:
   - **Version 3 Grid Standard (29×29 Matrix = 841 Dots)**: The pairing URL must never exceed 48–52 characters (`http://{LOCAL_IP}:{SERVER_PORT}/connect?t={12_HEX_TOKEN}`).

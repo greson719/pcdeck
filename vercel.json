@@ -40,7 +40,7 @@
     },
     {
       "source": "/PCDeck_Package.zip",
-      "destination": "https://github.com/greson719/pcdeck/releases/latest/download/PCDeck_Package.zip",
+      "destination": "/download/",
       "permanent": false
     },
     {
