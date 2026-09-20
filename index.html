@@ -1368,7 +1368,7 @@ footer{padding:44px 0 56px}
       <a href="#community">Suggestions &amp; Complaints</a>
     </nav>
     <div class="top-actions">
-      <a class="btn sm" href="#download">Download</a>
+      <a class="btn sm" href="#download-cards">Download</a>
       <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
@@ -1387,7 +1387,7 @@ footer{padding:44px 0 56px}
         <a href="#comparison" class="mob-link"><span>Comparison Table</span><span>&rarr;</span></a>
         <a href="#faq" class="mob-link"><span>FAQ</span><span>&rarr;</span></a>
         <a href="#community" class="mob-link"><span>Suggestions &amp; Complaints</span><span>&rarr;</span></a>
-        <a href="#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>&darr;</span></a>
+        <a href="#download-cards" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>&darr;</span></a>
       </div>
 
       <div class="mobile-guides-title">Guides & Troubleshooting</div>
@@ -2063,17 +2063,14 @@ footer{padding:44px 0 56px}
   </section>
 
   <!-- ============================ DOWNLOAD ============================ -->
-  <section class="sec" id="download" style="scroll-margin-top: 74px; padding-top: 48px;">
+  <section class="sec" id="download" style="scroll-margin-top: 70px; padding-top: 14px;">
     <div class="shell">
-      <div class="sec-head" style="margin-bottom: 20px; max-width: 80ch;">
-        <p class="tag" style="margin-bottom: 6px;">Instant Downloads · Free &amp; Offline</p>
-        <h2 style="margin-top: 4px; margin-bottom: 8px;">Get PCDeck</h2>
-        <p style="font-size: 15.5px; margin: 4px 0 0; color: var(--graphite); line-height: 1.5;">
-          <strong>Zero phone install needed:</strong> Run PCDeck on your computer, scan the on-screen QR code with your phone camera, and control immediately. Choose your download below:
-        </p>
+      <div class="sec-head" style="margin-bottom: 12px; max-width: 80ch;">
+        <p class="tag" style="margin-bottom: 4px;">Instant Downloads · Free &amp; Offline</p>
+        <h2 style="margin-top: 2px; margin-bottom: 4px; font-size: clamp(24px, 3.2vw, 30px);">Get PCDeck</h2>
       </div>
 
-      <div class="dl" id="download-cards" style="scroll-margin-top: 84px;">
+      <div class="dl" id="download-cards" style="scroll-margin-top: 72px;">
         <div class="card" id="card-exe" style="border: 2px solid var(--signal); position: relative;">
           <div style="position: absolute; top: -11px; right: 16px; background: var(--signal); color: #fff; font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; letter-spacing: .08em; text-transform: uppercase;">Primary · Instant Run</div>
           <p class="tag">PC · Windows</p>
@@ -2953,6 +2950,27 @@ footer{padding:44px 0 56px}
       } else {
         window.location.href = 'mailto:' + email + '?subject=%5BPCDeck%5D%20Feedback';
       }
+    });
+  }
+
+  // Smooth Scroll Directly to Download Cards (Full Visibility)
+  function scrollToDownloadCards(e) {
+    var target = document.getElementById('download-cards') || document.getElementById('download');
+    if (target) {
+      if (e && e.preventDefault) e.preventDefault();
+      var nav = document.querySelector('.top');
+      var navH = nav ? nav.offsetHeight : 62;
+      var topPos = target.getBoundingClientRect().top + window.pageYOffset - navH - 8;
+      window.scrollTo({ top: Math.max(0, topPos), behavior: 'smooth' });
+      try { history.pushState(null, null, '#download-cards'); } catch(err) {}
+    }
+  }
+  document.querySelectorAll('a[href="#download"], a[href="#download-cards"]').forEach(function(el) {
+    el.addEventListener('click', scrollToDownloadCards);
+  });
+  if (window.location.hash === '#download' || window.location.hash === '#download-cards') {
+    window.addEventListener('load', function() {
+      setTimeout(scrollToDownloadCards, 150);
     });
   }
 })();
