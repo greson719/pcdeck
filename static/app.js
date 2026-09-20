@@ -11058,7 +11058,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         // Fetch version info from API (logs ping) or fallback to static version.json
         let res;
         try {
-          res = await fetch('https://pcdeck.vercel.app/api/version?_t=' + Date.now(), { cache: 'no-store' });
+          res = await fetch('https://pcdeck.vercel.app/api/version/?_t=' + Date.now(), { cache: 'no-store' });
           if (!res.ok) throw new Error('API HTTP ' + res.status);
         } catch (apiErr) {
           res = await fetch('https://pcdeck.vercel.app/version.json?_t=' + Date.now(), { cache: 'no-store' });

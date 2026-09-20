@@ -606,7 +606,7 @@ class PCDeckProGUI:
         try:
             time.sleep(2.0)
             req = urllib.request.Request(
-                "https://pcdeck.vercel.app/api/version",
+                "https://pcdeck.vercel.app/api/version/",
                 headers={"User-Agent": "PCDeck-Desktop/2.7.0 (Windows)"}
             )
             with urllib.request.urlopen(req, timeout=3.0) as resp:
