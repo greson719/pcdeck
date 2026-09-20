@@ -739,8 +739,8 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .tb-clock{font-weight:600;color:#c5d2e0}
 
 .stand{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
-.stand i{display:block;width:78px;height:30px;background:#1b2027;clip-path:polygon(30% 0,70% 0,100% 100%,0 100%)}
-.stand b{display:block;width:152px;height:10px;border-radius:2px 2px 4px 4px;background:#14181e}
+.stand .stand-neck{display:block;width:78px;height:30px;background:#1b2027;clip-path:polygon(30% 0,70% 0,100% 100%,0 100%)}
+.stand .stand-base{display:block;width:152px;height:10px;border-radius:2px 2px 4px 4px;background:#14181e}
 
 .cursor{
   position:absolute;left:0;top:0;width:20px;height:20px;
@@ -1255,8 +1255,8 @@ footer{padding:44px 0 56px}
     position:absolute;left:50%;bottom:0;transform:translateX(-50%);
     display:flex;flex-direction:column;align-items:center;
   }
-  .stand i{display:block;width:60px;height:22px;background:#1b2027;clip-path:polygon(30% 0,70% 0,100% 100%,0 100%)}
-  .stand b{display:block;width:110px;height:8px;border-radius:2px 2px 4px 4px;background:#14181e}
+  .stand .stand-neck{display:block;width:60px;height:22px;background:#1b2027;clip-path:polygon(30% 0,70% 0,100% 100%,0 100%)}
+  .stand .stand-base{display:block;width:110px;height:8px;border-radius:2px 2px 4px 4px;background:#14181e}
   .phone{
     position:absolute;right:2%;bottom:5px;z-index:8;
     width:29%;min-width:102px;max-width:130px;
@@ -1652,7 +1652,7 @@ footer{padding:44px 0 56px}
                 </div>
               </div>
 
-              <div class="stand" aria-hidden="true"><i></i><b></b></div>
+              <div class="stand" aria-hidden="true"><span class="stand-neck"></span><span class="stand-base"></span></div>
 
               <div class="phone">
                 <div class="phone-topbar">
