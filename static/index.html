@@ -594,8 +594,8 @@
           <span class="tool-tile-icon" style="color: var(--neo-pink);">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </span>
-          <span class="tool-tile-name">Feedback</span>
-          <span class="tool-tile-sub">Email Creator</span>
+          <span class="tool-tile-name">Complaints / Ideas</span>
+          <span class="tool-tile-sub">Suggestions &amp; Help</span>
         </button>
       </div>
     </div>
@@ -618,6 +618,11 @@
       </div>
 
       <div class="nav-actions">
+        <!-- Direct Suggestion / Complaint Button for Page & Screen Viewer -->
+        <button type="button" class="neo-header-btn" id="btn-viewer-feedback" onclick="window.sendFeedbackMail()" title="Suggestions &amp; Complaints" style="color: var(--neo-pink); display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+
         <!-- Radio-style Segmented FPS Toggle in Title Bar (Screen Streaming) -->
         <div class="titlebar-fps-group" id="titlebar-fps-group" title="Screen Streaming Refresh Rate">
           <button type="button" class="fps-radio-btn active" id="btn-fps-30">30 FPS</button>
@@ -2589,12 +2594,12 @@
           <div class="card-header-clean">
             <div class="card-title-wrap">
               <span class="card-dot dot-cyan"></span>
-              <span class="card-title-text">Feedback &amp; Suggestions</span>
+              <span class="card-title-text">Suggestions, Complaints &amp; Feedback</span>
             </div>
             <span class="mini-status-chip" style="color: var(--neo-lime); border-color: var(--neo-lime);">DEVELOPER DIRECT</span>
           </div>
           <p style="font-size: 0.72rem; color: var(--text-muted); margin: 6px 0 12px; line-height: 1.45;">
-            Have an idea, found a bug, or need help? Talk directly with the creator — every single message gets a reply.
+            Have a suggestion, performance complaint, or bug to report? Talk directly with the creator — every message gets a personal reply.
           </p>
           <div style="display: flex; gap: 8px;">
             <button type="button" onclick="window.openRedditFeedback()" class="neo-btn btn-dark" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.75rem; font-weight: 800; padding: 10px 8px; border: 1px solid rgba(255, 69, 0, 0.45); color: #ff4500; cursor: pointer; background: rgba(255, 69, 0, 0.08);">

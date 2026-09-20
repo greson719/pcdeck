@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Connect PC to Another PC Using Wi-Fi (Control Laptop from PC) — PCDeck</title>
+<meta name="description" content="Step-by-step guide to connect two PCs over Wi-Fi without cables or internet. Control your desktop from a laptop, bypass Windows Home RDP limits, and transfer files instantly.">
+<meta name="keywords" content="how to connect pc to pc using wifi, connect laptop to pc wifi, control pc from another pc over wifi, remote desktop windows home wifi, connect two computers via wifi, control laptop from pc wirelessly, wireless remote desktop without internet, PCDeck">
+<link rel="canonical" href="https://pcdeck.vercel.app/connect-pc-to-pc-wifi/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://pcdeck.vercel.app/connect-pc-to-pc-wifi/">
+<meta property="og:title" content="How to Connect PC to Another PC Using Wi-Fi (Control Laptop from PC) — PCDeck">
+<meta property="og:description" content="Step-by-step guide to connect two PCs over Wi-Fi without cables or internet. Control your desktop from a laptop, bypass Windows Home RDP limits, and transfer files instantly.">
+<meta property="og:image" content="https://pcdeck.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How to Connect PC to Another PC Using Wi-Fi (Control Laptop from PC) — PCDeck">
+<meta name="twitter:description" content="Step-by-step guide to connect two PCs over Wi-Fi without cables or internet. Control your desktop from a laptop, bypass Windows Home RDP limits, and transfer files instantly.">
+<meta name="twitter:image" content="https://pcdeck.vercel.app/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/#article",
+      "headline": "How to Connect PC to Another PC Using Wi-Fi (Control Laptop from PC)",
+      "description": "Complete guide explaining how to wirelessly connect two Windows or Linux computers over local Wi-Fi to mirror screens, control mouse and keyboard, stream audio, and transfer files without cloud services.",
+      "url": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/",
+      "inLanguage": "en",
+      "datePublished": "2026-09-19",
+      "dateModified": "2026-09-19",
+      "author": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://pcdeck.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://pcdeck.vercel.app/icon-512.png"
+        }
+      },
+      "proficiencyLevel": "Beginner",
+      "about": [
+        {
+          "@type": "Thing",
+          "name": "Local Wi-Fi Remote Desktop"
+        },
+        {
+          "@type": "Thing",
+          "name": "Cross-PC wireless control"
+        },
+        {
+          "@type": "Thing",
+          "name": "Windows Home RDP alternative"
+        }
+      ],
+      "mainEntityOfPage": {
+        "@id": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/",
+        "@type": "WebPage"
+      },
+      "image": "https://pcdeck.vercel.app/og-image.png"
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/#howto",
+      "name": "How to Wirelessly Connect Two PCs Over Wi-Fi",
+      "description": "Step-by-step instructions to connect a PC to another PC or laptop over local Wi-Fi without internet or cables.",
+      "totalTime": "PT1M",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Connect both computers to the same Wi-Fi or Hotspot",
+          "text": "Ensure both PCs are on the same local Wi-Fi router network, or connect one computer to the other computer's mobile/Wi-Fi hotspot.",
+          "position": 1,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/#step-1"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Launch PCDeck on the Host PC",
+          "text": "Start PCDeck.exe on the primary computer you want to control. It automatically opens the local server on port 8000 and displays its local IP address.",
+          "position": 2,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/#step-2"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Open browser on the Client PC or Laptop",
+          "text": "On your secondary laptop or desktop, open Chrome, Edge, Firefox, or Safari and type the Host PC's IP address (e.g. http://192.168.1.50:8000).",
+          "position": 3,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/#step-3"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Interact with full desktop control and file transfers",
+          "text": "Select the Screen tab to view the live desktop at up to 60 FPS, use your laptop trackpad and keyboard to control the host PC, stream system audio, and transfer files.",
+          "position": 4,
+          "image": "https://pcdeck.vercel.app/og-image.png",
+          "url": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/#step-4"
+        }
+      ],
+      "image": "https://pcdeck.vercel.app/og-image.png",
+      "tool": [
+        {
+          "@type": "HowToTool",
+          "name": "Host PC (Windows 10/11 or Linux)"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Client PC or Laptop (Windows, Mac, Chromebook, or Linux)"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Standard Local Wi-Fi Network or Phone Hotspot"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Can I connect PC to PC over Wi-Fi without an active internet connection?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. PCDeck operates 100% locally over private Wi-Fi (LAN). It sends packets directly from device to device without routing through external servers, cloud accounts, or requiring WAN internet access. It even works via a smartphone hotspot or offline travel router."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does this work on Windows 10 and 11 Home editions without paying for Windows Pro?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Built-in Windows Remote Desktop (RDP) Server is deliberately locked on Windows Home edition, requiring a $100+ Microsoft upgrade to Windows Pro. PCDeck has zero Windows edition restrictions and works immediately on Windows 10 Home, Windows 11 Home, and Linux."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to install software on the second PC or laptop?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The second PC or laptop needs zero software installed. You simply open any standard web browser (Google Chrome, Microsoft Edge, Mozilla Firefox, or Apple Safari) and navigate to the host PC's local IP address to get complete remote control."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I transfer files between the two PCs wirelessly?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. PCDeck includes a high-speed chunked file transfer engine over local Wi-Fi. You can drag and drop gigabyte-sized videos, zip archives, and documents between both computers at maximum local router speeds without cables or USB flash drives."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is PCDeck different from TeamViewer or AnyDesk?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "TeamViewer and AnyDesk require active internet connections, cloud accounts, and enforce commercial usage limits that kick users off after 5 minutes. PCDeck is completely offline, peer-to-peer, unlimited, ad-free, and requires zero installation on the connecting computer."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://pcdeck.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://pcdeck.vercel.app/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Connect PC to PC Wi-Fi",
+          "item": "https://pcdeck.vercel.app/connect-pc-to-pc-wifi/"
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a href="#main" class="skip">Skip to main content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a href="/" class="brand" aria-label="PCDeck homepage">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30" aria-hidden="true"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="/features/">Features</a>
+      <a href="/guides/">Guides</a>
+      <a href="/security/">Security</a>
+      <a href="/#features">Capabilities</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a href="/#download" class="btn sm">Download PCDeck</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/">Home</a>
+        <a href="/features/">Features &amp; Controls</a>
+        <a href="/guides/">Guides Hub</a>
+        <a href="/security/">Security Architecture</a>
+        <a href="/#download">Download PCDeck</a>
+      </div>
+      <div class="mobile-guides-title">Featured Guides</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/connect-pc-to-pc-wifi/">Connect PC to PC via Wi-Fi</a>
+        <a href="/browser-pc-remote/">Zero-Install Web Remote</a>
+        <a href="/use-phone-as-mouse/">Phone as Mouse</a>
+        <a href="/use-phone-as-keyboard/">Phone as Keyboard</a>
+        <a href="/use-phone-as-second-monitor/">Phone as PC Screen</a>
+        <a href="/control-windows-from-android/">Control Windows from Android</a>
+        <a href="/use-pc-without-monitor/">Use PC without Monitor</a>
+        <a href="/transfer-files-pc-to-android/">Wi-Fi File Transfer</a>
+        <a href="/use-pc-without-internet/">Use PC without Internet</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="shell">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">PCDeck</a></li>
+        <li><a href="/guides/">Guides</a></li>
+        <li aria-current="page">Connect PC to PC via Wi-Fi</li>
+      </ol>
+    </nav>
+
+    <div class="lede-block">
+      <p class="tag">Local Wireless Networking · Windows 10 &amp; 11 · Zero Cloud Relay</p>
+      <h1>How to Connect PC to Another PC Using Wi-Fi (Without Internet or Cables)</h1>
+      <p class="sub">
+        Learn how to wirelessly connect two computers over local Wi-Fi to control a desktop from a laptop, stream screens at up to 60 FPS, bypass Windows Home Remote Desktop restrictions, and transfer gigabytes of files without cloud accounts or USB drives.
+      </p>
+      <p class="updated tag">Updated September 2026 · 100% Peer-to-Peer · Works on Windows Home &amp; Pro · Zero Client Install</p>
+    </div>
+
+    <!-- Quick Answer Summary Box -->
+    <div class="callout" style="background: #ffffff; border: 2px solid var(--grid); border-left: 6px solid var(--signal); border-radius: 6px; padding: 22px 24px; margin: 28px 0 36px; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+      <h2 style="font-size: 1.15rem; margin-top: 0; margin-bottom: 8px; color: var(--ink); display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--signal);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        The 30-Second Fast Method
+      </h2>
+      <p style="margin-bottom: 12px; font-size: 15px; line-height: 1.55; color: var(--graphite);">
+        To connect and control a PC from another PC or laptop over Wi-Fi without cables or internet:
+      </p>
+      <ol style="margin: 0 0 0 20px; padding: 0; font-size: 14.5px; line-height: 1.6; color: var(--ink);">
+        <li>Connect both computers to the same local Wi-Fi network or mobile hotspot.</li>
+        <li>Launch <strong>PCDeck</strong> on the Host PC (it starts instantly on port <code>8000</code>).</li>
+        <li>On the Client PC/laptop, open <strong>Chrome, Edge, or Firefox</strong> and navigate to <code>http://&lt;Host-IP&gt;:8000</code>.</li>
+        <li>Click <strong>Screen</strong> to stream the host desktop, control mouse and keyboard, stream PC audio, and drag-and-drop transfer files.</li>
+      </ol>
+    </div>
+
+    <div class="guide">
+      <!-- Section 1: Why Connect Two PCs via Wi-Fi -->
+      <section>
+        <h2>Why Connect Two PCs Wirelessly Over Wi-Fi?</h2>
+        <p>
+          There are four common scenarios where connecting two computers over a local Wi-Fi network is far superior to physical KVM cables, secondary monitors, or slow cloud software:
+        </p>
+        <ul>
+          <li><strong>Controlling a Heavy Gaming Desktop from a Lightweight Laptop:</strong> Access your multi-core GPU desktop from the couch, bed, or balcony without sitting at your desk.</li>
+          <li><strong>Managing a Headless Mini-PC or Home Server:</strong> Control a living room media server, NAS, or Intel NUC without keeping a monitor, keyboard, or mouse plugged into it.</li>
+          <li><strong>Emergency Display &amp; Mouse Replacement:</strong> When a desktop monitor breaks, a display cable disconnects, or a mouse dies, your laptop functions as an emergency monitor and input console.</li>
+          <li><strong>High-Speed File Sharing Without USB Sticks:</strong> Transfer 4K videos, ISO files, and folders between two computers at maximum 5 GHz Wi-Fi speeds without cloud upload delays.</li>
+        </ul>
+      </section>
+
+      <!-- Section 2: The Windows Home RDP Problem -->
+      <section>
+        <h2>The Windows Home RDP Trap vs. PCDeck</h2>
+        <p>
+          Most users attempting to connect two Windows computers first try Microsoft's built-in <strong>Remote Desktop Connection (RDP)</strong>. However, Microsoft deliberately disables the RDP Host service on all <strong>Windows 10 Home</strong> and <strong>Windows 11 Home</strong> editions.
+        </p>
+        <p>
+          If your host computer runs Windows Home, trying to enable Remote Desktop displays an error urging you to pay <strong>$99 to $199</strong> to upgrade to Windows 10/11 Pro. Furthermore, traditional cloud tools like TeamViewer and AnyDesk introduce distinct bottlenecks:
+        </p>
+
+        <div class="table-wrap" style="margin: 20px 0;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+            <thead>
+              <tr style="background: var(--paper); border-bottom: 2px solid var(--grid);">
+                <th style="padding: 10px 12px;">Feature</th>
+                <th style="padding: 10px 12px; color: var(--signal);">PCDeck (Local Wi-Fi)</th>
+                <th style="padding: 10px 12px;">Microsoft RDP</th>
+                <th style="padding: 10px 12px;">TeamViewer / AnyDesk</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--grid);">
+                <td style="padding: 10px 12px; font-weight: 600;">Windows Home Support</td>
+                <td style="padding: 10px 12px; color: #15803d; font-weight: 700;">✔ 100% Free &amp; Native</td>
+                <td style="padding: 10px 12px; color: #b91c1c;">✖ Blocked ($100 Pro Upgrade)</td>
+                <td style="padding: 10px 12px;">✔ Supported</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--grid);">
+                <td style="padding: 10px 12px; font-weight: 600;">Works 100% Offline (No Internet)</td>
+                <td style="padding: 10px 12px; color: #15803d; font-weight: 700;">✔ Yes (Peer-to-Peer LAN)</td>
+                <td style="padding: 10px 12px;">✔ Yes (LAN only)</td>
+                <td style="padding: 10px 12px; color: #b91c1c;">✖ Fails without Internet</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--grid);">
+                <td style="padding: 10px 12px; font-weight: 600;">Client Install Required</td>
+                <td style="padding: 10px 12px; color: #15803d; font-weight: 700;">✔ Zero (Standard Web Browser)</td>
+                <td style="padding: 10px 12px;">✖ Native RDP App</td>
+                <td style="padding: 10px 12px; color: #b91c1c;">✖ Proprietary Client App</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--grid);">
+                <td style="padding: 10px 12px; font-weight: 600;">Commercial Use Disconnects</td>
+                <td style="padding: 10px 12px; color: #15803d; font-weight: 700;">✔ None (Unlimited)</td>
+                <td style="padding: 10px 12px;">✔ None</td>
+                <td style="padding: 10px 12px; color: #b91c1c;">✖ Disconnects after 5 mins</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--grid);">
+                <td style="padding: 10px 12px; font-weight: 600;">Audio &amp; File Transfer</td>
+                <td style="padding: 10px 12px; color: #15803d; font-weight: 700;">✔ High-Speed Local Wi-Fi</td>
+                <td style="padding: 10px 12px;">⚠️ Limited / Complex Setup</td>
+                <td style="padding: 10px 12px;">⚠️ Throttled cloud pipe</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 3: Step-by-Step 60-Second Setup Guide -->
+      <section id="step-by-step">
+        <h2>Step-by-Step Guide: Connect PC to PC Over Local Wi-Fi</h2>
+
+        <h3 id="step-1">Step 1: Connect Both PCs to the Same Wi-Fi Network</h3>
+        <p>
+          Verify that both computers are connected to the same wireless router network. If you are away from home, camping, or on a train without a router, enable the <strong>Mobile Hotspot</strong> feature on your smartphone or host laptop and connect both PCs to it. No internet connection is required.
+        </p>
+
+        <h3 id="step-2">Step 2: Start PCDeck on the Host Computer</h3>
+        <p>
+          Download and run <a href="/download/windows/">PCDeck.exe</a> on the host computer you wish to control. PCDeck starts as a lightweight, non-intrusive local server on port <code>8000</code>.
+        </p>
+        <p>
+          The status dashboard will immediately display your host PC's local IP address (for example, <code>http://192.168.1.105:8000</code>).
+        </p>
+
+        <h3 id="step-3">Step 3: Open the Client Laptop / Secondary PC Browser</h3>
+        <p>
+          You do <strong>not</strong> need to install any program, extension, or driver on your second computer.
+        </p>
+        <ol>
+          <li>Open <strong>Google Chrome, Microsoft Edge, Mozilla Firefox, or Safari</strong> on your laptop.</li>
+          <li>In the address bar, type the host PC's IP address: <code>http://192.168.1.105:8000</code> and press Enter.</li>
+          <li>The instant PCDeck Web Controller interface loads immediately.</li>
+        </ol>
+
+        <h3 id="step-4">Step 4: Stream Desktop Screen &amp; Remote Control</h3>
+        <p>
+          Once connected, click the <strong>Screen</strong> tab in the navigation dock:
+        </p>
+        <ul>
+          <li><strong>Live 60 FPS Desktop Stream:</strong> View the host computer's monitor session in real-time with sub-30ms local latency.</li>
+          <li><strong>Trackpad &amp; Mouse Interaction:</strong> Click, drag, and double-click using your laptop's trackpad or physical mouse.</li>
+          <li><strong>Keyboard Chords:</strong> Type into remote applications, execute shortcuts (<kbd>Win</kbd>+<kbd>D</kbd>, <kbd>Alt</kbd>+<kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>), and open Task Manager.</li>
+          <li><strong>Stereo Audio Pass-Through:</strong> Listen to PC sound, videos, and games through your laptop speakers or connected headphones.</li>
+        </ul>
+      </section>
+
+      <!-- Section 4: Fast File Transfer Between Two PCs -->
+      <section>
+        <h2>Wireless File Transfer Between Both Computers</h2>
+        <p>
+          Transferring multi-gigabyte files between two Windows PCs usually involves creating network SMB shares, fighting Windows Defender permission prompts, or finding a USB flash drive.
+        </p>
+        <p>
+          With PCDeck active between the two PCs:
+        </p>
+        <ol>
+          <li>Click the <strong>Files</strong> tab on the client laptop's browser.</li>
+          <li>Browse folders on the host PC directly.</li>
+          <li>Drag files from your laptop into the browser window to upload them to the host PC at full Wi-Fi throughput.</li>
+          <li>Click any file on the host PC to download it directly to your laptop's Downloads folder.</li>
+        </ol>
+      </section>
+
+      <!-- Section 5: Troubleshooting & Network Tips -->
+      <section>
+        <h2>Troubleshooting Local Wi-Fi PC-to-PC Connections</h2>
+        <p>
+          If your second laptop or PC cannot reach the host IP address, check these three common network configurations:
+        </p>
+        
+        <h3>1. Windows Firewall Local Access Prompt</h3>
+        <p>
+          When launching PCDeck for the first time, Windows Defender Firewall may display a security popup asking for network permissions. Ensure you check <strong>Private networks (home or work)</strong> and click <em>Allow access</em>.
+        </p>
+
+        <h3>2. Router AP Isolation (Client Isolation)</h3>
+        <p>
+          Some university, hotel, or public Wi-Fi networks enable "AP Isolation", preventing two Wi-Fi devices from talking to each other directly.
+        </p>
+        <div class="callout" style="background: var(--paper); border: 1px solid var(--grid); padding: 16px; border-radius: 4px; font-size: 14px;">
+          <strong>Workaround:</strong> Turn on your mobile phone's <em>Personal Hotspot</em>, connect both PCs to it, and pair instantly. The transfer stays 100% local and will not consume mobile cellular data.
+        </div>
+
+        <h3>3. Finding Your Local LAN IP via Command Line</h3>
+        <p>
+          If you want to manually verify your host PC's IP address, open PowerShell or Command Prompt on the host PC and type:
+        </p>
+        <pre><code>ipconfig</code></pre>
+        <p>
+          Look for the <strong>IPv4 Address</strong> under your active Wi-Fi adapter (e.g., <code>192.168.1.XX</code>).
+        </p>
+      </section>
+
+      <!-- Section 6: FAQ -->
+      <section id="faq">
+        <h2>Frequently Asked Questions</h2>
+        
+        <details class="faq-item">
+          <summary>Does this require an active internet connection?</summary>
+          <div class="faq-ans">
+            <p>No. PCDeck communicates directly over your local Wi-Fi router or hotspot using local TCP and WebSocket protocols. Your internet connection can be completely disconnected, and the remote desktop control, screen mirroring, and file transfers will function uninterrupted.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>Does PCDeck work between Windows 11 Home and Windows 10 Home?</summary>
+          <div class="faq-ans">
+            <p>Yes. PCDeck is completely independent of Microsoft's RDP license limitations. You can connect a Windows 11 Home laptop to a Windows 10 Home desktop without purchasing Windows Pro upgrades.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>Can I control a PC from a MacBook, Chromebook, or iPad?</summary>
+          <div class="faq-ans">
+            <p>Yes! Because the client controller runs entirely in standard HTML5 and WebSockets, you can connect from macOS Safari, Chrome OS, Linux, iPadOS, or Android tablets without installing any client software.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>What is the streaming latency over local Wi-Fi?</summary>
+          <div class="faq-ans">
+            <p>On a modern 5 GHz Wi-Fi 5 or Wi-Fi 6 router, latency is typically between 15ms and 35ms. PCDeck supports 30 FPS and 60 FPS streaming modes with adaptive JPEG compression for buttery-smooth interaction.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>Can I hear sound from the host PC on my laptop?</summary>
+          <div class="faq-ans">
+            <p>Yes. PCDeck captures Windows WASAPI loopback stereo audio and streams it to your client browser, allowing you to hear games, media players, and system alerts through your laptop speakers.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Section 7: Related Guides -->
+      <section>
+        <h2>Related Step-by-Step Guides</h2>
+        <div class="guides-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 14px;">
+          <a href="/browser-pc-remote/" class="guide-card" style="display: block; padding: 16px; background: #fff; border: 1px solid var(--grid); border-radius: 6px; text-decoration: none; color: inherit;">
+            <h4 style="margin: 0 0 6px; color: var(--ink);">Zero-Install Web Remote</h4>
+            <p style="margin: 0; font-size: 13.5px; color: var(--graphite);">Control your PC from any browser without installing an app on your client device.</p>
+          </a>
+          <a href="/use-pc-without-monitor/" class="guide-card" style="display: block; padding: 16px; background: #fff; border: 1px solid var(--grid); border-radius: 6px; text-decoration: none; color: inherit;">
+            <h4 style="margin: 0 0 6px; color: var(--ink);">Use PC Without a Monitor</h4>
+            <p style="margin: 0; font-size: 13.5px; color: var(--graphite);">Emergency guide for navigating and rescuing a PC when the display is broken or dead.</p>
+          </a>
+          <a href="/transfer-files-pc-to-android/" class="guide-card" style="display: block; padding: 16px; background: #fff; border: 1px solid var(--grid); border-radius: 6px; text-decoration: none; color: inherit;">
+            <h4 style="margin: 0 0 6px; color: var(--ink);">Wi-Fi File Transfer</h4>
+            <p style="margin: 0; font-size: 13.5px; color: var(--graphite);">Send large files across local Wi-Fi without cables, cloud drives, or limits.</p>
+          </a>
+          <a href="/stream-pc-audio-to-phone/" class="guide-card" style="display: block; padding: 16px; background: #fff; border: 1px solid var(--grid); border-radius: 6px; text-decoration: none; color: inherit;">
+            <h4 style="margin: 0 0 6px; color: var(--ink);">Stream PC Audio Over Wi-Fi</h4>
+            <p style="margin: 0; font-size: 13.5px; color: var(--graphite);">Route full 48 kHz stereo PC audio to your headphones or remote speakers.</p>
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>© 2026 PCDeck · Runs offline. No account, no telemetry. · <a href="/#community" style="color:var(--signal);font-weight:600;">Suggestions &amp; Complaints</a></p>
+    <p class="foot-guides">
+      <a href="/features/">Features &amp; Controls</a> · 
+      Guides: <a href="/guides/">All Guides Hub</a> · 
+      <a href="/connect-pc-to-pc-wifi/">Connect PC to PC via Wi-Fi</a> · 
+      <a href="/download/">Download</a> · 
+      <a href="/browser-pc-remote/">Zero-Install Web Remote</a> · 
+      <a href="/use-phone-as-mouse/">Phone as mouse</a> · 
+      <a href="/use-phone-as-keyboard/">Phone as keyboard</a> · 
+      <a href="/use-phone-as-second-monitor/">Phone as PC screen</a> · 
+      <a href="/control-windows-from-android/">Windows Remote</a> · 
+      <a href="/use-pc-without-monitor/">Without a monitor</a> · 
+      <a href="/transfer-files-pc-to-android/">Cable-free transfers</a> · 
+      <a href="/security/">Security Architecture</a> · 
+      <a href="/privacy_policy.html">Privacy Policy</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+
+<script>
+// Mobile navigation drawer toggle
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    } else {
+      menu.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menu.addEventListener('click', function (e) {
+    if (e.target === menu) toggleMenu(false);
+  });
+
+  var links = menu.querySelectorAll('a');
+  for (var i = 0; i < links.length; i++) {
+    links[i].addEventListener('click', function () {
+      toggleMenu(false);
+    });
+  }
+})();
+</script>
+</body>
+</html>
