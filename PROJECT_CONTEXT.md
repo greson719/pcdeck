@@ -266,9 +266,10 @@ Before committing or releasing updates:
 2. **Sync Client Assets**: Ensure `static/app.js` and `android_app/assets/app.js` remain bit-for-bit identical.
 3. **Compile & Sign Android APK**: Run `python build_apk.py` to compile Java sources, convert to DEX, align, and sign `PCDeck.apk`.
 4. **Compile MSIX Package**: Run `.\build_msix.bat` to refresh `PCDeck.msix` and `msstore_assets/PCDeck.msix`.
-5. **Regenerate Checksums**: Run `python tools/update_checksums.py` to calculate exact SHA-256 digests and update the download table in `website/index.html`.
-6. **Keep Context Synchronized**: Update `PROJECT_CONTEXT.md` in root and `website/` to reflect every architecture change.
-7. **Commit & Push to GitHub**: Commit verified changes and push to `origin main` on `greson719/pcdeck`.
+5. **Regenerate Checksums**: Run `python tools/update_checksums.py` to calculate exact SHA-256 digests and update the download table in `website/index.html` and `index.html`.
+6. **Verify Website Structure & Integrity**: Run `python tools/verify_website.py` to confirm viewport tags, mobile menu scripts, header/main/footer tag balance, CSS variables, and layout bounds across all 62 website HTML files.
+7. **Keep Context Synchronized**: Update `PROJECT_CONTEXT.md` and `WEBSITE_CONTEXT.md` in root and `website/` to reflect every architecture change.
+8. **Commit & Push to GitHub**: Commit verified changes and push to `origin main` on `greson719/pcdeck`.
 
 ---
 
@@ -343,15 +344,24 @@ Before committing or releasing updates:
 
 ## 16. Web Analytics & SEO Performance
 
-- **Vercel Web Analytics**:
-  - Integrated via official non-blocking tag `<script defer src="/_vercel/insights/script.js"></script>` across all 22 static website HTML documents.
-  - Tracks live visitors, page views, referring countries, and OS/device breakdown without invading user privacy or collecting personal data.
+- **Universal Analytics Injection (`/va.js`)**:
+  - Integrated via deferred script `<script defer src="/va.js"></script>` across all 62 static website HTML documents.
+  - Tracks live visitors, page views, referring countries, and OS/device breakdown with standard Vercel Web Analytics (`/_vercel/insights/script.js`).
+  - **Crawler & Search Bot Preservation**: Standard web traffic and search engine bots (Googlebot, Bingbot, Seobility, etc.) are allowed normal tracking to ensure crawlability signals and indexing metrics remain uninterrupted.
+- **Owner Self-Visit Exclusion System**:
+  - Automatically filters out developer/owner testing traffic so dashboard analytics reflect genuine visitor metrics.
+  - **Exclusion Mechanisms**:
+    1. **10-Year Persistent Cookie**: `pcdeck_analytics_optout=1` (stored with `path=/; max-age=315360000; SameSite=Lax`).
+    2. **LocalStorage Key**: `localStorage.getItem('pcdeck_analytics_optout') === '1'`.
+    3. **Query Parameter Bypass**: Visiting any URL with `?admin=1` immediately sets the opt-out cookie/localStorage and disables tracking.
+    4. **Dedicated Console Page**: `/analytics-console/` allows 1-click toggling between "Tracking Disabled (Excluded)" and "Tracking Enabled".
+    5. **Footer Diagnostic Button**: Live footer button (`#btn-analytics-toggle`) displays real-time status (`🛡️ Analytics: Excluded` or `Active`) and allows instant toggling.
 - **Server File & Active User Tracking**:
   - Download metrics: Monitored in Vercel Dashboard Logs via requests to `/PCDeck.exe` and `/PCDeck.apk`.
   - Daily Active Users (DAU): Monitored via launch update pings to `/version.json`.
 - **Search Console & Organic Ranking**:
-  - High-traffic ranking asset: `/use-pc-without-mouse/` (~500 impressions across 26 countries for queries like "how to use pc without mouse", "how to right click without a mouse").
-  - Schema.org rich results: Configured with `HowTo` structured data for "How to set up PCDeck in 30 seconds" to capture direct search answer cards.
+  - High-traffic ranking assets: `/use-pc-without-mouse/`, `/connect-pc-to-pc-wifi/`, `/browser-pc-remote/`, `/control-linux-pc-from-phone/`, `/guides/`.
+  - Schema.org rich results: Configured with `TechArticle`, `HowTo`, and `FAQPage` structured data with verified hash anchors.
 
 ---
 
@@ -564,6 +574,13 @@ Before committing or releasing updates:
   - **Structured Data Standards**:
     - Include `prefix="og: https://ogp.me/ns#"` on `<html>` across all guide templates.
     - All guide pages must supply fully populated JSON-LD schemas (`TechArticle`, `HowTo`, `BreadcrumbList`) with explicit `image`, `publisher.logo`, `author.logo`, `tool`, and step hash-anchors (`#step-1`..`#step-4`).
+  - **Seobility & Semantic HTML Audit Invariant**:
+    - Strictly forbid empty formatting tags (such as `<b></b>` or `<strong></strong>`) used as visual spacers or structural styling (e.g. monitor stand CSS artwork).
+    - All non-semantic visual shapes must use `<span>` or pseudo-elements (`::before`/`::after`) with CSS classes. Empty bold tags trigger Critical Errors in SEO crawlers (Seobility, Ahrefs, SEMrush).
+  - **Multilingual SEO & Internationalization Standards**:
+    - Primary localized editions deployed: Spanish (`/es/`) and Portuguese (`/pt/`).
+    - Every localized page must provide bidirectional `<link rel="alternate" hreflang="..." href="...">` tags covering `en`, `es`, `pt`, and `x-default`.
+    - Localized pages maintain native FAQPage JSON-LD schemas and localized download CTA buttons targeting the exact same canonical binaries (`/PCDeck.exe`, `/PCDeck.apk`).
   - **Routing & Crawler Directives**:
     - `robots.txt` disallows raw shell scripts (`/*.sh$`) to prevent search engine bots from expecting non-HTML installation scripts in XML sitemaps.
     - `vercel.json` enforces `"trailingSlash": true` to eliminate 308 redirect loops between slash and non-slash canonical URLs.
@@ -725,6 +742,83 @@ Before committing or releasing updates:
   - Increased `.modern-gamepad-deck` padding and pod margins to eliminate bezel-crowding on modern smartphones.
 - **Universal Mode Branding**:
   - Completely purged casual/external site mentions ("Poki"); renamed presets and status to `Universal (Web & PC)` and `UNIVERSAL HYBRID (WEB + PC)`.
+
+---
+
+## 33. Community, Suggestions & Complaints Architecture
+
+- **Direct Creator Support & Community Feedback Channels**:
+  - Direct communication channels integrated into desktop app (`static/index.html`), Android native APK (`android_app/assets/index.html`), and public website (`index.html`, `website/index.html`).
+  - **Official Reddit Feedback Thread**: Direct link to the official feedback thread on Reddit for public bug reports, feature suggestions, and community discussions.
+  - **1-Click Direct Email Copy**:
+    - Email: `dogonews67@gmail.com`.
+    - Primary action writes email to system clipboard via `navigator.clipboard.writeText()` with visual "✔ Copied to Clipboard!" toast confirmation.
+    - Fallback handler for unsupported browsers / sandboxes triggers `mailto:dogonews67@gmail.com?subject=[PCDeck]%20Feedback`.
+    - Direct Web Gmail link (`https://mail.google.com/mail/?view=cm&fs=1&to=dogonews67@gmail.com&su=[PCDeck]%20Suggestions%20%26%20Complaints`) for users without a local desktop mail client.
+- **Website `#community` Section & DOM Invariant**:
+  - The suggestions and complaints section `<section class="feedback-section" id="community">` must **always** reside as a direct child of `<main>`.
+  - **Never** nest `#community` inside fixed overlays or modal backdrops (such as `#emergency-guide-modal` with `position: fixed; inset: 0; opacity: 0; pointer-events: none;`).
+  - Styled with explicit `scroll-margin-top: 74px;` so fixed top navigation bars never obscure the section heading upon arrival.
+- **Smooth-Scroll Navigation Binding (`scrollToTarget`)**:
+  - Top navigation bar link `a[href="#community"]`, footer links, and floating feedback pills are bound to `scrollToTarget()`.
+  - Calculates dynamic element offset: `target.getBoundingClientRect().top + window.pageYOffset - navH - 8` with smooth animation (`behavior: 'smooth'`).
+  - Page-load hash handler automatically scrolls to `#community` if visited directly via `https://pcdeck.vercel.app/#community`.
+- **Android Native Intent Dispatch (`MainActivity.java`)**:
+  - `WebViewClient.shouldOverrideUrlLoading()` intercepts `mailto:` and `https://www.reddit.com/...` links.
+  - Dispatches native Android `Intent.ACTION_VIEW` or `Intent.ACTION_SENDTO` to open external email clients (Gmail, Outlook) or the native Reddit app instead of throwing WebView navigation errors.
+
+---
+
+## 34. Website Download Cards Alignment & Above-The-Fold Conversion Standards
+
+- **Direct Scroll Anchor (`#download-cards`)**:
+  - Hero and top navigation "Download" buttons are bound to `#download-cards` instead of the top of `#download`.
+  - Keeps the primary executable (`PCDeck.exe`) and Android APK (`PCDeck.apk`) action cards directly visible and centered above the fold upon arrival.
+- **Header Padding & Vertical Spacing Invariant**:
+  - Section `#download` header maintains compact vertical padding (`padding: 36px 0 20px` or similar) with tight heading margins (`margin-bottom: 8px`).
+  - Eliminates unnecessary dead space so users on 1080p, 1440p, laptops, tablets, and phones do not have to scroll past multiple screen heights of marketing headers to find download buttons.
+- **Action Parity & Verified Checksums**:
+  - Both cards feature real-time SHA-256 verification links (`#verify`) and verified offline capabilities.
+
+---
+
+## 35. Technical Guides Readability & Anti-Wall-of-Text Standards
+
+- **Visual-First Scannability Invariant**:
+  - In-depth technical guides (e.g., `/browser-pc-remote/`, `/control-linux-pc-from-phone/`, `/connect-pc-to-pc-wifi/`, `/guides/`) must never present unbroken walls of text.
+  - Every technical guide must feature high-resolution interface figures and architecture diagrams:
+    - `hero-suite.png`: Complete PCDeck ecosystem overview.
+    - `qr-pairing.png`: Local Wi-Fi pairing and QR code scan demonstration.
+    - `trackpad-phone.png`: Phone trackpad with multi-touch gestures and buttons.
+    - `screen-stream.png`: Real-time PC screen streaming with floating toolbar.
+    - `file-transfer.png`: High-speed local LAN file transfer interface.
+  - Figures are marked up with semantic `<figure class="guide-figure">`, dark glassmorphic borders, rounded corners (`border-radius: 10px`), and descriptive `<figcaption>`.
+- **30-Second Rapid Connection Checklist**:
+  - Every technical guide must include a prominent, boxed 4-step checklist (`.guide-quickstart-card`) right below the hero or introduction:
+    1. **Download & Launch**: Run `PCDeck.exe` on Windows or 1-line script on Linux.
+    2. **Same Local Wi-Fi**: Confirm both devices share the same router or phone hotspot.
+    3. **Scan QR Code**: Open phone camera or browser to instant pairing URL.
+    4. **Instant Control**: Immediate trackpad, keyboard, and screen streaming access.
+  - Solves emergency user queries in under 30 seconds while retaining deep technical analysis underneath for search engine topical authority.
+
+---
+
+## 36. Universal Analytics, Self-Visit Exclusion & Search Engine Bot Standards (`va.js`)
+
+- **Universal Script Architecture (`/va.js`)**:
+  - Deployed across all 62 website HTML documents via `<script defer src="/va.js"></script>`.
+  - Delegates to Vercel Web Analytics (`/_vercel/insights/script.js`) without external third-party tracking scripts.
+- **Owner Self-Visit Exclusion (Zero Data Pollution)**:
+  - Developer/owner visits during testing and updates are automatically filtered out.
+  - Multi-tier persistent opt-out:
+    1. Cookie: `pcdeck_analytics_optout=1` (10-year lifespan).
+    2. LocalStorage: `pcdeck_analytics_optout = '1'`.
+    3. URL Param: `?admin=1` triggers automatic cookie/localStorage registration.
+    4. Dedicated Console: `/analytics-console/` provides real-time toggle status and reset controls.
+    5. Footer Status Button: Real-time dynamic button `#btn-analytics-toggle` displaying `🛡️ Analytics: Excluded` or `Active`.
+- **Search Engine Crawler Preservation**:
+  - Standard HTTP requests and verified search engine crawlers (Googlebot, Bingbot, IndexNow bots, Seobility auditors) are processed with standard headers.
+  - Preserves site health monitoring, SERP crawlability, and indexing signals.
 
 
 
