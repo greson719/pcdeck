@@ -115,20 +115,6 @@
     isBlocked = true;
   }
 
-  // Automated headless scraper & bot detection (e.g. Vietnam cloud scrapers / headless Chrome)
-  try {
-    if (navigator.webdriver) {
-      isBlocked = true;
-    }
-    var ua = (navigator.userAgent || '').toLowerCase();
-    if (/bot|crawl|spider|slurp|headless|scraper|lighthouse|semrush|ahrefs|bytespider|petalbot|python|curl|wget|urllib/i.test(ua)) {
-      isBlocked = true;
-    }
-    if (window.__nightmare || window._phantom || window.callPhantom) {
-      isBlocked = true;
-    }
-  } catch (e) {}
-
   // 3. Expose global toggle function for 1-click UI button
   window.togglePcdeckAnalytics = function () {
     var currentlyBlocked = false;
