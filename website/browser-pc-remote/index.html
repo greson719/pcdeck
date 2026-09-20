@@ -283,11 +283,15 @@
     <ol class="steps">
       <li id="step-1">
         <b>Launch PCDeck on your computer</b>
-        <p>Run <a href="/#download">PCDeck.exe</a> on Windows or launch PCDeck on Linux. The server window appears displaying your local network IP (e.g., <code>192.168.1.45:8000</code>) and a pairing QR code.</p>
+        <p>Run <a href="/#download">PCDeck.exe</a> on Windows or launch PCDeck on Linux. The server window appears displaying your local network IP (e.g., <code>192.168.1.45:8000</code>) and an instant optical pairing QR code.</p>
+        <figure class="guide-fig">
+          <img src="/screenshots/qr-pairing.png" alt="PCDeck optical pairing QR code on PC screen and phone camera scanner" width="1280" height="720" loading="lazy">
+          <figcaption>Figure 1: Scan the on-screen QR code with your phone camera to pair in 3 seconds.</figcaption>
+        </figure>
       </li>
       <li id="step-2">
         <b>Scan the QR code with your phone camera</b>
-        <p>Open your phone's built-in camera app and point it at the QR code on the PC monitor.</p>
+        <p>Open your phone's built-in camera app (iPhone Safari or Android Chrome) and point it at the QR code on your PC monitor.</p>
       </li>
       <li id="step-3">
         <b>Open Web Remote in browser</b>
@@ -296,8 +300,21 @@
       <li id="step-4">
         <b>Control your computer immediately</b>
         <p>The Web Remote interface loads instantly. Touch the trackpad surface to move the PC cursor, switch tabs to type on the keyboard, view the live desktop screen, or stream audio to your earbuds.</p>
+        <figure class="guide-fig">
+          <img src="/screenshots/trackpad-phone.png" alt="PCDeck multi-touch precision trackpad on mobile phone screen" width="1280" height="720" loading="lazy">
+          <figcaption>Figure 2: Multi-touch trackpad surface with tap clicks and smooth inertia scrolling.</figcaption>
+        </figure>
       </li>
     </ol>
+
+    <div class="checklist-card">
+      <h3>⚡ 30-Second First-Time Connection Checklist</h3>
+      <ul>
+        <li><strong>Same Wi-Fi Network:</strong> Ensure your phone is connected to your local Wi-Fi router (not mobile cellular data 4G/5G).</li>
+        <li><strong>Windows Defender Firewall:</strong> When launching PCDeck for the first time, click <em>Allow access</em> on Private networks so local socket packets can flow.</li>
+        <li><strong>Turn Off Active VPNs:</strong> If either your PC or phone is running an active commercial VPN (NordVPN, ExpressVPN, etc.), pause it temporarily so local subnet traffic isn't routed through external tunnels.</li>
+      </ul>
+    </div>
 
     <h2>How the zero-install web remote works under the hood</h2>
     <p>PCDeck runs a lightweight HTTP and WebSocket server on port 8000. When your phone browser requests the page, the PC delivers the static touch deck assets. Once loaded, the browser establishes a direct WebSocket connection back to the PC over your local Wi-Fi network.</p>

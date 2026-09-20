@@ -273,6 +273,36 @@ kbd{
 .direct-answer p:first-of-type{margin-top:4px}
 .direct-answer p strong{color:var(--signal-ink)}
 
+/* Guide Figures & Visual Screenshots */
+.guide-fig{
+  margin:22px 0 26px;padding:0;max-width:68ch;
+}
+.guide-fig img{
+  width:100%;height:auto;border-radius:8px;
+  border:1px solid var(--grid);
+  box-shadow:0 10px 30px rgba(18,22,28,0.08);
+  display:block;background:#0b0f14;
+}
+.guide-fig figcaption{
+  font-family:var(--mono);font-size:12px;
+  color:var(--muted);margin-top:10px;
+  text-align:center;line-height:1.4;
+}
+
+/* Quick Connection Checklist Box */
+.checklist-card{
+  background:var(--panel);border:1px solid var(--grid);
+  border-left:3px solid #00c9a7;border-radius:var(--r);
+  padding:20px 22px;margin:28px 0;max-width:68ch;
+}
+.checklist-card h3{
+  font-size:17px;margin:0 0 10px;color:var(--ink);
+  display:flex;align-items:center;gap:8px;
+}
+.checklist-card ul{margin:0;padding-left:20px}
+.checklist-card li{margin:7px 0;font-size:15px;color:var(--graphite)}
+.checklist-card li strong{color:var(--ink)}
+
 /* Guides Hub Layout */
 .guides-section{margin:44px 0 0}
 .guides-section:first-of-type{margin-top:24px}

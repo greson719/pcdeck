@@ -351,12 +351,29 @@
       <li>
         <b>Pair your phone via QR code or local IP</b>
         <p>The terminal displays a clean ASCII QR code and your Linux machine's local IP address (e.g. <code>192.168.1.100:8000</code>). Scan the QR code with your phone camera or enter the URL into your browser.</p>
+        <figure class="guide-fig">
+          <img src="/screenshots/qr-pairing.png" alt="Scanning QR code to pair phone with Linux PC" width="1280" height="720" loading="lazy">
+          <figcaption>Figure 1: Scan the on-screen QR code or open http://[linux-ip]:8000 on your phone.</figcaption>
+        </figure>
       </li>
       <li>
         <b>Navigate and control Linux</b>
         <p>Your phone screen becomes an active multi-touch trackpad and keyboard. Move your finger to steer the mouse pointer in GNOME, KDE Plasma, XFCE, or i3.</p>
+        <figure class="guide-fig">
+          <img src="/screenshots/trackpad-phone.png" alt="Phone acting as multi-touch trackpad for Linux desktop" width="1280" height="720" loading="lazy">
+          <figcaption>Figure 2: Touch trackpad surface steering the mouse pointer on Linux desktop.</figcaption>
+        </figure>
       </li>
     </ol>
+
+    <div class="checklist-card">
+      <h3>⚡ Linux &amp; Steam Deck Connection Checklist</h3>
+      <ul>
+        <li><strong>Same Local Network:</strong> Connect your phone to the exact same Wi-Fi router or hotspot as your Linux PC or Steam Deck.</li>
+        <li><strong>Firewall (UFW / firewalld):</strong> If connections time out, permit port 8000: <code>sudo ufw allow 8000/tcp</code>.</li>
+        <li><strong>100% Offline &amp; Private:</strong> All input deltas stay strictly within your local subnet with zero cloud relay.</li>
+      </ul>
+    </div>
 
     <h2>Steam Deck in Desktop Mode: The ultimate couch companion</h2>
     <p>When you switch your Valve Steam Deck to Desktop Mode to install emulators, configure ModOrganizer, or browse files, navigating with the built-in trackpads can feel cramped. Running PCDeck on your Steam Deck gives you a spacious multi-touch trackpad and smartphone keyboard right from your couch—no Bluetooth pairing glitches or bulky USB hubs needed.</p>
