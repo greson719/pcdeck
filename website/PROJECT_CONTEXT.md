@@ -293,16 +293,16 @@ Before committing or releasing updates:
 
 ---
 
-## 13. Production Release v2.7.0 Specifications
+## 13. Production Release v2.7.1 Specifications
 
 | Target Binary | File Size | Version / Build | Verification Status |
 | :--- | :--- | :--- | :--- |
-| `PCDeck.exe` | **41.8 MB** (down from 56.5 MB) | v2.7.0 (2.7.0.0 Win32 meta) | Passed · Standalone PyInstaller Optimized |
-| `PCDeck-Setup.exe` | **44.4 MB** (down from 54.5 MB) | v2.7.0 | Passed · Inno Setup full installer with cyber poster |
-| `PCDeck.apk` | **671 KB** (down from 2.28 MB) | v2.7.0 (Code 270) | Passed · v1/v2/v3 aligned & signed |
-| `PCDeck.aab` | **666 KB** (down from 1.50 MB) | v2.7.0 (Code 270) | Passed · Google Play Bundletool signed |
-| `PCDeck_Package.zip` | **49.7 MB** (down from 61.2 MB) | v2.7.0 | Passed · Offline bundle (EXE + APK) |
-| `PCDeck.msix` | **45.7 MB** | v2.7.0.0 | Passed · Store manifest validated |
+| `PCDeck.exe` | **36.3 MB** | v2.7.1 (2.7.1.0 Win32 meta) | Passed · Standalone PyInstaller with auto-ping & update prompt |
+| `PCDeck-Setup.exe` | **37.68 MB** | v2.7.1 | Passed · Inno Setup full installer with auto-upgrade |
+| `PCDeck.apk` | **690.8 KB** | v2.7.1 (Code 271) | Passed · v1/v2/v3 aligned & signed with OTA update check |
+| `PCDeck.aab` | **666 KB** | v2.7.1 (Code 271) | Passed · Google Play Bundletool signed |
+| `PCDeck_Package.zip` | **49.7 MB** | v2.7.1 | Passed · Offline bundle (EXE + APK) |
+| `PCDeck.msix` | **45.7 MB** | v2.7.1.0 | Passed · Store manifest validated |
 
 - **Version Consistency Invariant**: All components (`pyproject.toml`, `MainActivity.java`, `app.js` `CURRENT_APP_VERSION_NAME`, `version_info.txt`, `version.json`, and website download cards) must strictly reflect the exact same version string and integer code.
 

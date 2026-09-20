@@ -136,6 +136,9 @@ C_SUCCESS = "#3fb950"        # connected / running
 C_WARNING = "#d29922"        # attention
 C_DANGER = "#f85149"         # stop / error
 
+CURRENT_DESKTOP_VERSION_CODE = 271
+CURRENT_DESKTOP_VERSION_NAME = "2.7.1"
+
 # Typography: one family, hierarchy carried by size and weight rather than
 # setting everything to 8px bold.
 F_FAMILY = "Segoe UI"
@@ -547,6 +550,7 @@ class PCDeckProGUI:
         # Wi-Fi Auto-Reconnector Configuration
         self.wifi_config = load_wifi_config()
         self.auto_wifi_var = tk.BooleanVar(value=self.wifi_config.get("auto_reconnect_on_launch", False))
+        self._update_prompt_shown = False
 
         # Pro License State
         self.license_info = load_pc_license()
@@ -608,10 +612,19 @@ class PCDeckProGUI:
             try:
                 req = urllib.request.Request(
                     "https://pcdeck.vercel.app/api/version/",
-                    headers={"User-Agent": "PCDeck-Desktop/2.7.0 (Windows)"}
+                    headers={"User-Agent": f"PCDeck-Desktop/{CURRENT_DESKTOP_VERSION_NAME} (Windows)"}
                 )
                 with urllib.request.urlopen(req, timeout=4.0) as resp:
                     if resp.status == 200:
+                        try:
+                            raw = resp.read().decode("utf-8")
+                            data = json.loads(raw)
+                            remote_code = int(data.get("versionCode", 0))
+                            if remote_code > CURRENT_DESKTOP_VERSION_CODE and not self._update_prompt_shown:
+                                self._update_prompt_shown = True
+                                self.root.after(500, lambda d=data: self._show_update_available_dialog(d))
+                        except Exception:
+                            pass
                         # Successful check; sleep 4 hours before checking again
                         time.sleep(14400)
                         continue
@@ -619,6 +632,131 @@ class PCDeckProGUI:
                 pass
             # If offline / failed, retry quietly after 3 minutes
             time.sleep(180)
+
+    def _show_update_available_dialog(self, data: dict):
+        """Shows a small, clean cyber-styled dialog notifying the user an update is available."""
+        try:
+            remote_name = data.get("versionName", "New Version")
+            download_url = data.get("websiteUrl", "https://pcdeck.vercel.app")
+            if "#download" not in download_url:
+                download_url = download_url.rstrip("/") + "/#download-cards"
+
+            dlg = tk.Toplevel(self.root)
+            dlg.withdraw()
+            dlg.title("PCDeck — Update Available")
+            dlg.resizable(False, False)
+            dlg.configure(bg=C_SURFACE)
+            if not self.start_minimized and self.root.winfo_viewable():
+                dlg.transient(self.root)
+
+            apply_crisp_window_icon(dlg)
+
+            dw = 440
+            dh = 260
+            try:
+                sw = self.root.winfo_screenwidth()
+                sh = self.root.winfo_screenheight()
+                x = max(0, (sw - dw) // 2)
+                y = max(0, (sh - dh) // 2)
+                dlg.geometry(f"{dw}x{dh}+{x}+{y}")
+            except Exception:
+                dlg.geometry(f"{dw}x{dh}")
+
+            pad = tk.Frame(dlg, bg=C_SURFACE, padx=22, pady=18)
+            pad.pack(fill="both", expand=True)
+
+            # Top Badge
+            badge_row = tk.Frame(pad, bg=C_SURFACE)
+            badge_row.pack(fill="x", pady=(0, 6))
+            badge = tk.Label(
+                badge_row,
+                text="  UPDATE AVAILABLE  ",
+                font=(F_FAMILY, 8, "bold"),
+                fg=C_BLACK,
+                bg=C_ACCENT,
+                padx=6,
+                pady=2,
+            )
+            badge.pack(side="left")
+
+            # Title
+            title_lbl = tk.Label(
+                pad,
+                text=f"PCDeck v{remote_name} is Available",
+                font=(F_FAMILY, 13, "bold"),
+                fg=C_TEXT,
+                bg=C_SURFACE,
+                anchor="w",
+            )
+            title_lbl.pack(fill="x", pady=(4, 6))
+
+            # Body description
+            msg_text = f"A newer version of PCDeck (v{remote_name}) is ready for download.\n\nWould you like to visit the download page to update now?"
+            body_lbl = tk.Label(
+                pad,
+                text=msg_text,
+                font=F_BODY,
+                fg=C_TEXT_DIM,
+                bg=C_SURFACE,
+                justify="left",
+                wraplength=390,
+            )
+            body_lbl.pack(fill="x", pady=(0, 16))
+
+            # Buttons Row
+            btn_row = tk.Frame(pad, bg=C_SURFACE)
+            btn_row.pack(fill="x", side="bottom")
+
+            def _on_download():
+                try:
+                    webbrowser.open(download_url)
+                except Exception:
+                    pass
+                dlg.destroy()
+
+            def _on_later():
+                dlg.destroy()
+
+            dl_btn = tk.Button(
+                btn_row,
+                text="Visit Download Page →",
+                font=(F_FAMILY, 9, "bold"),
+                fg="#ffffff",
+                bg="#1b44d8",
+                activeforeground="#ffffff",
+                activebackground="#1436b0",
+                bd=0,
+                padx=16,
+                pady=7,
+                cursor="hand2",
+                command=_on_download,
+            )
+            dl_btn.pack(side="right", padx=(8, 0))
+
+            later_btn = tk.Button(
+                btn_row,
+                text="Later",
+                font=F_BODY,
+                fg=C_TEXT_DIM,
+                bg=C_SURFACE_2,
+                activeforeground=C_TEXT,
+                activebackground=C_SURFACE_3,
+                bd=0,
+                padx=14,
+                pady=7,
+                cursor="hand2",
+                command=_on_later,
+            )
+            later_btn.pack(side="right")
+
+            dlg.deiconify()
+            dlg.lift()
+            dlg.attributes("-topmost", True)
+            dlg.after(200, lambda: dlg.attributes("-topmost", False))
+            dlg.focus_force()
+
+        except Exception as e:
+            log_debug(f"Failed to display update dialog: {e}")
 
     def _build_ui(self):
         # 1. Top Cyber-Neon Header Bar
