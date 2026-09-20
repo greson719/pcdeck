@@ -599,6 +599,21 @@ class PCDeckProGUI:
 
         self.root.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
 
+        # Silent version/active check (daemon thread, zero UI impact, 100% offline-tolerant)
+        threading.Thread(target=self._silent_update_ping, daemon=True, name="PCDeck-UpdatePing").start()
+
+    def _silent_update_ping(self):
+        try:
+            time.sleep(2.0)
+            req = urllib.request.Request(
+                "https://pcdeck.vercel.app/api/version",
+                headers={"User-Agent": "PCDeck-Desktop/2.7.0 (Windows)"}
+            )
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                pass
+        except Exception:
+            pass
+
     def _build_ui(self):
         # 1. Top Cyber-Neon Header Bar
         header = tk.Frame(

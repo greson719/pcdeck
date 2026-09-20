@@ -11055,8 +11055,14 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           localCode = window.AndroidApp.getAppVersionCode();
         }
 
-        // Fetch version.json from website with cache-busting
-        const res = await fetch('https://pcdeck.vercel.app/version.json?_t=' + Date.now(), { cache: 'no-store' });
+        // Fetch version info from API (logs ping) or fallback to static version.json
+        let res;
+        try {
+          res = await fetch('https://pcdeck.vercel.app/api/version?_t=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) throw new Error('API HTTP ' + res.status);
+        } catch (apiErr) {
+          res = await fetch('https://pcdeck.vercel.app/version.json?_t=' + Date.now(), { cache: 'no-store' });
+        }
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
 
