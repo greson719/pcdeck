@@ -293,15 +293,15 @@ Before committing or releasing updates:
 
 ---
 
-## 13. Production Release v2.7.1 Specifications
+## 13. Production Release v2.7.2 Specifications
 
 | Target Binary | File Size | Version / Build | Verification Status |
 | :--- | :--- | :--- | :--- |
-| `PCDeck.exe` | **36.3 MB** | v2.7.1 (2.7.1.0 Win32 meta) | Passed · Standalone PyInstaller with auto-ping & update prompt |
-| `PCDeck-Setup.exe` | **37.68 MB** | v2.7.1 | Passed · Inno Setup full installer with auto-upgrade |
-| `PCDeck.apk` | **690.8 KB** | v2.7.1 (Code 271) | Passed · v1/v2/v3 aligned & signed with OTA update check |
-| `PCDeck.aab` | **666 KB** | v2.7.1 (Code 271) | Passed · Google Play Bundletool signed |
-| `PCDeck.msix` | **45.7 MB** | v2.7.1.0 | Passed · Store manifest validated |
+| `PCDeck.exe` | **36.3 MB** | v2.7.2 (2.7.2.0 Win32 meta) | Passed · Standalone PyInstaller with auto-ping & update prompt |
+| `PCDeck-Setup.exe` | **37.68 MB** | v2.7.2 | Passed · Inno Setup full installer with auto-upgrade |
+| `PCDeck.apk` | **690.8 KB** | v2.7.2 (Code 272) | Passed · v1/v2/v3 aligned & signed with OTA update check |
+| `PCDeck.aab` | **666 KB** | v2.7.2 (Code 272) | Passed · Google Play Bundletool signed |
+| `PCDeck.msix` | **45.7 MB** | v2.7.2.0 | Passed · Store manifest validated |
 
 - **Version Consistency Invariant**: All components (`pyproject.toml`, `MainActivity.java`, `app.js` `CURRENT_APP_VERSION_NAME`, `version_info.txt`, `version.json`, and website download cards) must strictly reflect the exact same version string and integer code.
 - **Deprecation of `PCDeck_Package.zip` & Strict 3-Card Download Layout Invariant**:

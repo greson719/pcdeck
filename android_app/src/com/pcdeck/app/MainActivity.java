@@ -557,7 +557,7 @@ public class MainActivity extends Activity {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
             } catch (Exception e) {
-                return 271;
+                return 272;
             }
         }
 
@@ -566,7 +566,7 @@ public class MainActivity extends Activity {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
             } catch (Exception e) {
-                return "2.7.1";
+                return "2.7.2";
             }
         }
 
@@ -765,7 +765,7 @@ public class MainActivity extends Activity {
                     try {
                         URL url = new URL(apkDownloadUrl);
                         connection = (HttpURLConnection) url.openConnection();
-                        connection.setRequestProperty("User-Agent", "PCDeck-Android-App/2.7.1");
+                        connection.setRequestProperty("User-Agent", "PCDeck-Android-App/2.7.2");
                         connection.setConnectTimeout(15000);
                         connection.setReadTimeout(30000);
                         connection.connect();

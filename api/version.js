@@ -12,8 +12,8 @@ export default function handler(req, res) {
   console.log(`[PCDeck Ping] Client: ${userAgent} | Country: ${country}`);
 
   return res.status(200).json({
-    versionCode: 271,
-    versionName: "2.7.1",
+    versionCode: 272,
+    versionName: "2.7.2",
     exeSize: "36.3 MB",
     apkSize: "691 KB",
     apkUrl: "https://pcdeck.vercel.app/PCDeck.apk",
@@ -21,6 +21,6 @@ export default function handler(req, res) {
     playStoreUrl: "",
     releaseNotes: "• Real-time connection updates & direct community suggestions channels\n• Optimized above-the-fold download layout for Windows and Android\n• 100% Native 1.0x Resolution & fluid 1:1 sub-pixel touch scrolling\n• Full Spanish & Portuguese localized documentation\n• Instant QR-Code Web Controller for iPhone, iPad, Mac & Linux",
     minVersionCode: 1,
-    publishedAt: "2026-09-20"
+    publishedAt: "2026-09-21"
   });
 }

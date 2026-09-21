@@ -136,8 +136,20 @@ C_SUCCESS = "#3fb950"        # connected / running
 C_WARNING = "#d29922"        # attention
 C_DANGER = "#f85149"         # stop / error
 
-CURRENT_DESKTOP_VERSION_CODE = 271
-CURRENT_DESKTOP_VERSION_NAME = "2.7.1"
+CURRENT_DESKTOP_VERSION_CODE = 272
+CURRENT_DESKTOP_VERSION_NAME = "2.7.2"
+
+
+def is_msix_packaged() -> bool:
+    """Detect if running inside an MSIX / Windows Store package identity container."""
+    try:
+        import ctypes
+        from ctypes import wintypes
+        length = wintypes.UINT(0)
+        res = ctypes.windll.kernel32.GetCurrentPackageFullName(ctypes.byref(length), None)
+        return res != 15700  # 15700 = APPMODEL_ERROR_NO_PACKAGE
+    except Exception:
+        return False
 
 # Typography: one family, hierarchy carried by size and weight rather than
 # setting everything to 8px bold.
@@ -607,6 +619,9 @@ class PCDeckProGUI:
         threading.Thread(target=self._silent_update_ping, daemon=True, name="PCDeck-UpdatePing").start()
 
     def _silent_update_ping(self):
+        if is_msix_packaged():
+            # Microsoft Store automatically handles updates for Store packages
+            return
         time.sleep(2.0)  # Let UI initialize completely first
         while True:
             try:
@@ -1382,10 +1397,10 @@ class PCDeckProGUI:
         btn_row = tk.Frame(lic_body, bg=C_SURFACE_2)
         btn_row.pack(fill="x")
 
-        # Side-by-side Button 1: Download APK (Left)
-        self.apk_btn = tk.Button(
+        # Side-by-side Button 1: Connection Guide (Left)
+        self.guide_btn = tk.Button(
             btn_row,
-            text="Download Mobile App",
+            text="How to Connect",
             font=F_SMALL_STRONG,
             fg=C_BG,
             bg=C_ACCENT,
@@ -1393,9 +1408,9 @@ class PCDeckProGUI:
             cursor="hand2",
             padx=10,
             pady=5,
-            command=lambda: webbrowser.open("https://pcdeck.vercel.app/PCDeck.apk"),
+            command=self.open_how_to_connect_dialog,
         )
-        self.apk_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        self.guide_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
 
         # Side-by-side Button 2: Upgrade to Pro (Right)
         self.lic_btn = tk.Button(
@@ -2015,6 +2030,104 @@ class PCDeckProGUI:
 
     def _update_driver_progress_ui(self, driver_name: str, percent: int, stage_text: str, status: str = "running"):
         pass
+
+    def open_how_to_connect_dialog(self):
+        """Displays quick connection steps for iPhone/Android without downloading files."""
+        dlg = tk.Toplevel(self.root)
+        dlg.withdraw()
+        dlg.title("PCDeck — How to Connect")
+        dlg.resizable(False, False)
+        dlg.configure(bg=C_SURFACE)
+        dlg.transient(self.root)
+        apply_crisp_window_icon(dlg)
+
+        dw = 460
+        dh = 310
+        try:
+            sw = self.root.winfo_screenwidth()
+            sh = self.root.winfo_screenheight()
+            x = max(0, (sw - dw) // 2)
+            y = max(0, (sh - dh) // 2)
+            dlg.geometry(f"{dw}x{dh}+{x}+{y}")
+        except Exception:
+            dlg.geometry(f"{dw}x{dh}")
+
+        pad = tk.Frame(dlg, bg=C_SURFACE, padx=22, pady=18)
+        pad.pack(fill="both", expand=True)
+
+        tk.Label(
+            pad,
+            text="HOW TO CONNECT",
+            font=(F_FAMILY, 8, "bold"),
+            fg=C_BLACK,
+            bg=C_ACCENT,
+            padx=6,
+            pady=2,
+        ).pack(anchor="w", pady=(0, 6))
+
+        tk.Label(
+            pad,
+            text="Zero-Install Wireless Connection",
+            font=(F_FAMILY, 13, "bold"),
+            fg=C_TEXT,
+            bg=C_SURFACE,
+            anchor="w",
+        ).pack(fill="x", pady=(2, 10))
+
+        steps = [
+            "1. Connect PC and phone to the same local Wi-Fi or phone hotspot.",
+            "2. Open the camera app on your iPhone, iPad, or Android phone.",
+            "3. Scan the QR code displayed on the left of the PCDeck screen.",
+            "4. Tap the link to control your PC immediately in your browser.",
+        ]
+        for step in steps:
+            tk.Label(
+                pad,
+                text=step,
+                font=F_BODY,
+                fg=C_TEXT_DIM,
+                bg=C_SURFACE,
+                justify="left",
+                anchor="w",
+                wraplength=410,
+            ).pack(fill="x", pady=2)
+
+        btn_row = tk.Frame(pad, bg=C_SURFACE)
+        btn_row.pack(fill="x", side="bottom", pady=(14, 0))
+
+        tk.Button(
+            btn_row,
+            text="Visit Web Guide →",
+            font=(F_FAMILY, 9, "bold"),
+            fg="#ffffff",
+            bg="#1b44d8",
+            activeforeground="#ffffff",
+            activebackground="#1436b0",
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=lambda: webbrowser.open("https://pcdeck.vercel.app/"),
+        ).pack(side="left")
+
+        tk.Button(
+            btn_row,
+            text="Close",
+            font=F_BODY,
+            fg=C_TEXT_DIM,
+            bg=C_SURFACE_2,
+            activeforeground=C_TEXT,
+            activebackground=C_SURFACE_3,
+            bd=0,
+            padx=14,
+            pady=6,
+            cursor="hand2",
+            command=dlg.destroy,
+        ).pack(side="right")
+
+        dlg.deiconify()
+        dlg.lift()
+        dlg.focus_force()
 
     def open_license_dialog(self):
         """Open native license activation and management dialog."""

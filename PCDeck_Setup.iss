@@ -3,7 +3,7 @@
 ; Author: Greshon Parichha
 
 #define MyAppName "PCDeck"
-#define MyAppVersion "2.7.1"
+#define MyAppVersion "2.7.2"
 #define MyAppPublisher "Greshon Parichha"
 #define MyAppURL "https://pcdeck.vercel.app"
 #define MyAppExeName "PCDeck.exe"

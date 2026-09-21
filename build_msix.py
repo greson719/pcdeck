@@ -147,7 +147,7 @@ def main():
     parser.add_argument("--identity-name", default="GresonParichha.PCDeck", help="Package Identity Name from Partner Center")
     parser.add_argument("--publisher", default="CN=EE1A7F1B-8959-4B69-B895-5E5FF21E385E", help="Publisher string from Partner Center")
     parser.add_argument("--publisher-display-name", default="Greson Parichha", help="Publisher Display Name (default: Greson Parichha)")
-    parser.add_argument("--version", default="2.7.1.0", help="App version string (e.g. 2.7.1.0)")
+    parser.add_argument("--version", default="2.7.2.0", help="App version string (e.g. 2.7.2.0)")
     args = parser.parse_args()
 
     sync_exe()
