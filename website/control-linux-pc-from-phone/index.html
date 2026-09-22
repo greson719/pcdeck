@@ -42,11 +42,11 @@
       "@type": "TechArticle",
       "@id": "https://pcdeck.vercel.app/control-linux-pc-from-phone/#article",
       "headline": "How to Control a Linux PC or Steam Deck From Your Phone",
-      "description": "Step-by-step technical guide to controlling Linux systems (Ubuntu, Debian, Fedora, Arch Linux, Raspberry Pi OS, and SteamOS on Steam Deck) using an Android phone or mobile web browser over local Wi-Fi.",
+      "description": "Step-by-step technical guide to controlling Linux systems (Ubuntu 24.04, Debian, Fedora, Arch Linux, Raspberry Pi OS, and SteamOS on Steam Deck) using an Android phone or mobile web browser over local Wi-Fi.",
       "url": "https://pcdeck.vercel.app/control-linux-pc-from-phone/",
       "inLanguage": "en",
       "datePublished": "2026-09-01",
-      "dateModified": "2026-09-01",
+      "dateModified": "2026-09-22",
       "author": {
         "@type": "Organization",
         "name": "PCDeck",
@@ -78,6 +78,18 @@
         {
           "@type": "Thing",
           "name": "Ubuntu phone mouse"
+        },
+        {
+          "@type": "Thing",
+          "name": "Ubuntu 24.04 Wayland remote touch"
+        },
+        {
+          "@type": "Thing",
+          "name": "SteamOS desktop mode phone trackpad"
+        },
+        {
+          "@type": "Thing",
+          "name": "Raspberry Pi headless browser remote"
         }
       ],
       "mainEntityOfPage": {
@@ -207,6 +219,22 @@
             "@type": "Answer",
             "text": "Yes. Start PCDeck as a systemd service or background process. As long as the device is connected to your local Wi-Fi or LAN, you can access the Web Remote from any smartphone browser by navigating to http://[server-ip]:8000."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "Does PCDeck work on Ubuntu 24.04 LTS with Wayland?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. PCDeck interfaces directly with the Linux kernel uinput subsystem (/dev/uinput), generating virtual mouse and keyboard events recognized natively by GNOME 46 on Ubuntu 24.04 LTS, KDE Plasma 6, Sway, and Hyprland without Xwayland overhead."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I control Linux from an iPhone or iPad without installing an app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. PCDeck runs an instant HTTP Web Remote on port 8000. Open Safari on iPhone or iPad, scan the pairing QR code displayed in your Linux terminal, and control your mouse pointer, scrolling, and keyboard directly from the browser with zero App Store downloads."
+          }
         }
       ]
     }
@@ -278,7 +306,7 @@
   <div class="shell lede-block">
     <h1>How to Control a Linux PC or Steam Deck From Your Phone</h1>
     <p class="sub">Whether you're running Ubuntu on a desktop, managing a headless Raspberry Pi home server, or using a Valve Steam Deck in desktop mode, PCDeck turns your phone into an offline wireless trackpad, keyboard, and screen viewer.</p>
-    <p class="updated tag">Updated 1 September 2026 · Ubuntu, Debian, Fedora, Arch Linux, SteamOS & Raspberry Pi · X11 & Wayland</p>
+    <p class="updated tag">Updated 22 September 2026 · Ubuntu 24.04, Debian, Fedora, Arch Linux, SteamOS &amp; Raspberry Pi · X11 &amp; Wayland</p>
   </div>
 
   <div class="shell guide">
@@ -375,8 +403,21 @@
       </ul>
     </div>
 
-    <h2>Steam Deck in Desktop Mode: The ultimate couch companion</h2>
-    <p>When you switch your Valve Steam Deck to Desktop Mode to install emulators, configure ModOrganizer, or browse files, navigating with the built-in trackpads can feel cramped. Running PCDeck on your Steam Deck gives you a spacious multi-touch trackpad and smartphone keyboard right from your couch—no Bluetooth pairing glitches or bulky USB hubs needed.</p>
+    <h2>Steam Deck in Desktop Mode: The Ultimate Couch Companion</h2>
+    <p>When you switch your Valve Steam Deck to Desktop Mode to install emulators with EmuDeck, configure ModOrganizer, or browse in Firefox, navigating with the built-in thumbsticks and tiny trackpads is cramped and slow. Plugging in physical mice and keyboards requires a bulky USB-C dock or Bluetooth pairing that often disconnects.</p>
+    <p>Running PCDeck gives you a full-sized multi-touch trackpad and responsive keyboard on your smartphone screen right from your couch. You can tap to left click, two-finger tap to right click, smoothly scroll long web pages, and paste terminal commands into Konsole with zero latency over local Wi-Fi. No hardware adapters, dongles, or docking stations needed.</p>
+
+    <h2>Ubuntu 24.04 LTS &amp; Modern Wayland Compositors</h2>
+    <p>Ubuntu 24.04 LTS (Noble Numbat), Fedora 40+, and modern Arch Linux installations run Wayland by default under GNOME 46 or KDE Plasma 6. Legacy remote control tools rely on X11 <code>xdotool</code> or <code>XTest</code>, which fail or introduce severe input latency under Wayland security boundaries.</p>
+    <p>PCDeck avoids this limitation by interfacing directly with the Linux kernel's <strong>uinput</strong> subsystem (<code>/dev/uinput</code>). Touch events received from your phone browser generate kernel-level evdev mouse and keyboard events that Wayland compositors recognize natively without requiring root permissions or Xwayland emulation.</p>
+
+    <h2>Headless Raspberry Pi &amp; Linux Home Server (systemd Autostart)</h2>
+    <p>If you run a headless home server, home lab, or media center on a Raspberry Pi 4/5 or Ubuntu Server, PCDeck acts as an instant emergency monitor viewer and touch mouse whenever you need to check on services without connecting an HDMI monitor.</p>
+    <p>To configure PCDeck to start automatically whenever your Linux machine boots, enable it as a lightweight systemd user service:</p>
+    <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 4px; padding: 10px 14px; font-family: var(--mono); font-size: 13px; margin: 8px 0; word-break: break-all;">
+      <code>systemctl --user enable --now pcdeck</code>
+    </div>
+    <p>Once active, bookmark <code>http://[server-ip]:8000</code> in your smartphone browser for instant local LAN access anytime.</p>
 
     <div class="limit">
       <p class="tag">Firewall Note for Linux Users</p>
@@ -389,12 +430,22 @@
       <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 18px;">
         <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
           <h3 style="margin: 0 0 8px; font-size: 16px;">How do I control a Steam Deck in Desktop Mode from my phone?</h3>
-          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Switch your Steam Deck to Desktop Mode (press Steam button &rarr; Power &rarr; Switch to Desktop). Open Konsole, paste <code>curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>, and press Enter. A pairing QR code will appear on screen. Scan it with your phone's camera, and your phone will instantly become a wireless trackpad and keyboard for your Steam Deck.</p>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Switch your Steam Deck to Desktop Mode (press Steam button &rarr; Power &rarr; Switch to Desktop). Open Konsole, paste <code>curl -sSL https://pcdeck.vercel.app/install.sh | bash</code>, and press Enter. A pairing QR code will appear on screen. Scan it with your phone's camera, and your phone will instantly become a wireless trackpad and keyboard for your Steam Deck with zero app installs.</p>
         </div>
 
         <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
           <h3 style="margin: 0 0 8px; font-size: 16px;">Does PCDeck support both Wayland and X11 on Linux?</h3>
           <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. PCDeck detects whether your session is running under X11 or Wayland (GNOME 40+, KDE Plasma 6, Sway, Hyprland) and interfaces with Linux uinput and synthetic input layers so cursor motion, clicks, and typing work seamlessly on any modern desktop environment.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Does PCDeck work on Ubuntu 24.04 LTS with Wayland?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. PCDeck interfaces directly with the Linux kernel uinput subsystem (<code>/dev/uinput</code>), generating virtual mouse and keyboard events recognized natively by GNOME 46 on Ubuntu 24.04 LTS, KDE Plasma 6, Sway, and Hyprland without Xwayland overhead.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Can I control Linux from an iPhone or iPad without installing an app?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. PCDeck runs an instant HTTP Web Remote on port 8000. Open Safari on iPhone or iPad, scan the pairing QR code displayed in your Linux terminal, and control your mouse pointer, scrolling, and keyboard directly from the browser with zero App Store downloads via <a href="/browser-pc-remote/">Web Remote</a>.</p>
         </div>
 
         <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
@@ -404,7 +455,7 @@
 
         <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
           <h3 style="margin: 0 0 8px; font-size: 16px;">Can I control a headless Ubuntu or Raspberry Pi home server without a monitor?</h3>
-          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. Start PCDeck as a background service or systemd unit. As long as your Raspberry Pi or headless machine shares the same local network, open <code>http://[server-ip]:8000</code> in your phone browser to send input or manage files.</p>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. Start PCDeck as a background service or systemd user service. As long as your Raspberry Pi or headless machine shares the same local network, open <code>http://[server-ip]:8000</code> in your phone browser to send input or view screen frames.</p>
         </div>
       </div>
     </section>
@@ -421,8 +472,9 @@
 
     <div class="next">
       <h2>Explore More Guides</h2>
+      <p><a href="/browser-pc-remote/">Zero-install Web Remote (control PC from mobile browser)</a></p>
+      <p><a href="/use-pc-without-mouse/">How to use a PC without a mouse (shortcuts &amp; fast fix)</a></p>
       <p><a href="/linux-install/">PCDeck Linux installation &amp; security architecture</a></p>
-      <p><a href="/browser-pc-remote/">Control PC from mobile browser without app downloads</a></p>
       <p><a href="/use-phone-as-mouse/">How to use phone as mouse</a> · <a href="/use-phone-as-keyboard/">Use phone as keyboard</a></p>
       <p><a href="/use-pc-without-monitor/">Use PC with broken or headless monitor</a> · <a href="/guides/">All Guides Hub</a></p>
     </div>

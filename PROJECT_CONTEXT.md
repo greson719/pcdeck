@@ -824,6 +824,29 @@ Before committing or releasing updates:
   - Standard HTTP requests and verified search engine crawlers (Googlebot, Bingbot, IndexNow bots, Seobility auditors) are processed with standard headers.
   - Preserves site health monitoring, SERP crawlability, and indexing signals.
 
+---
+
+## 37. Microsoft Store Certification Compliance & Security Invariants (v2.7.2)
+
+- **Strict Enforcement of Policy 10.2.10.1 (Zero Executable Downloads from App)**:
+  - **Rejection Root Cause**: Store testers previously flagged `"Download Mobile App"` in `server/gui.py` which invoked `webbrowser.open(".../PCDeck.apk")`. Store policy strictly forbids applications or metadata from initiating downloads of executables (`.apk`, `.exe`, `.msi`, `.bat`).
+  - **Resolution**: Permanently replaced with in-app "How to Connect" guidance modal (`open_how_to_connect_dialog`). Displays 4 simple zero-install steps on-screen (phone camera QR scan) with a single outbound hyperlink to the website root (`https://pcdeck.vercel.app/`). Initiates zero file downloads.
+- **Native Package Identity Detection (`is_msix_packaged()`)**:
+  - In Store installations, `server/gui.py` calls `kernel32.GetCurrentPackageFullName`.
+  - When packaged inside an MSIX container, the function returns `ERROR_SUCCESS (0)` rather than `APPMODEL_ERROR_NO_PACKAGE (15700)`.
+  - Suppresses background auto-update polling threads (`_silent_update_ping`) because updates for Store packages are managed natively by the Microsoft Store client.
+- **Partner Center `runFullTrust` Justification Standard**:
+  - MSIX packaged desktop utilities require explicit justification for the `runFullTrust` restricted capability in Partner Center Submission Options:
+    1. Desktop screen capture via Windows Desktop Duplication API for low-latency display streaming.
+    2. Cursor, scroll, and keyboard simulation via Win32 `SendInput` API.
+    3. Virtual Xbox 360 controller emulation via ViGEmBus driver.
+    4. Desktop audio stream capture via Windows Core Audio / WASAPI loopback capture.
+- **Partner Center Active Lifecycle**:
+  - Product ID: `9P4BK16LBGLS`
+  - Version: `2.7.2.0` (Code `272`, x64)
+  - Submission State: Passed pre-processing, active in certification.
+
+
 
 
 

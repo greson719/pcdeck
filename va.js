@@ -115,6 +115,25 @@
     isBlocked = true;
   }
 
+  // Helper: Automated Bot & Headless Scraper Detection
+  function isBotEnvironment() {
+    try {
+      if (navigator.webdriver) return true;
+      if (window._phantom || window.__nightmare || window.callPhantom) return true;
+      if (window.outerWidth === 0 && window.outerHeight === 0) return true;
+      var ua = (navigator.userAgent || '').toLowerCase();
+      if (/headlesschrome|phantomjs|puppeteer|playwright|selenium|bytespider|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|dataforseo|screaming frog|seobility|crawler|spider/i.test(ua)) {
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  var isBot = isBotEnvironment();
+  if (isBot) {
+    isBlocked = true;
+  }
+
   // 3. Expose global toggle function for 1-click UI button
   window.togglePcdeckAnalytics = function () {
     var currentlyBlocked = false;
@@ -152,14 +171,18 @@
     // Completely disable Vercel Analytics — nullify stub and queue
     window.va = function () {};
     window.vaq = [];
-    console.info('[PCDeck] Vercel Analytics: EXCLUDED (Owner / Dev Visit Restriction Active)');
+    if (isBot) {
+      console.info('[PCDeck] Vercel Analytics: EXCLUDED (Automated Bot / Headless Scraper Detected)');
+    } else {
+      console.info('[PCDeck] Vercel Analytics: EXCLUDED (Owner / Dev Visit Restriction Active)');
+    }
   } else {
     // Initialize Vercel Analytics stub with beforeSend safeguard
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     window.va('beforeSend', function (event) {
       // Final sanity check before dispatch
       try {
-        if (localStorage.getItem(STORAGE_KEY) === '1' || getCookie(STORAGE_KEY) === '1') {
+        if (localStorage.getItem(STORAGE_KEY) === '1' || getCookie(STORAGE_KEY) === '1' || isBotEnvironment()) {
           return null; // Drop event completely
         }
       } catch (e) {}
@@ -170,6 +193,27 @@
     s.defer = true;
     s.src = '/_vercel/insights/script.js';
     document.head.appendChild(s);
+
+    // Automated Custom Event Tracking for Downloads and Guide Navigation
+    document.addEventListener('click', function (e) {
+      if (isBlocked) return;
+      var el = e.target.closest('a, button');
+      if (!el || typeof window.va !== 'function') return;
+      var href = (el.getAttribute('href') || '').toLowerCase();
+      var text = (el.textContent || '').trim().toLowerCase();
+
+      if (href.indexOf('pcdeck.exe') !== -1 || href.indexOf('/download/windows') !== -1 || text.indexOf('download for windows') !== -1 || text.indexOf('download pcdeck.exe') !== -1) {
+        window.va('event', { name: 'download_windows' });
+      } else if (href.indexOf('pcdeck.apk') !== -1 || href.indexOf('/download/android') !== -1 || text.indexOf('download apk') !== -1 || text.indexOf('download pcdeck.apk') !== -1) {
+        window.va('event', { name: 'download_android' });
+      } else if (href.indexOf('run_linux.sh') !== -1 || href.indexOf('/download/linux') !== -1 || href.indexOf('/linux-install') !== -1 || text.indexOf('linux setup') !== -1) {
+        window.va('event', { name: 'download_linux' });
+      } else if (el.classList.contains('guide-card') || el.closest('.guide-card')) {
+        var card = el.closest('.guide-card') || el;
+        var guidePath = card.getAttribute('href') || '';
+        window.va('event', { name: 'guide_click', data: { path: guidePath } });
+      }
+    }, true);
   }
 
   // Helper: Visual Toast Notification
@@ -215,9 +259,10 @@
   }
 
   // Bind to DOM ready for UI button
+  var isOwnerBlocked = isBlocked && !isBot;
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { updateUI(isBlocked); });
+    document.addEventListener('DOMContentLoaded', function () { updateUI(isOwnerBlocked); });
   } else {
-    updateUI(isBlocked);
+    updateUI(isOwnerBlocked);
   }
 })();
