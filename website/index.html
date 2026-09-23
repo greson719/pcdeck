@@ -1438,7 +1438,7 @@ footer{padding:44px 0 56px}
               <span style="background: var(--ink); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">1</span>
               <div>
                 <strong style="display: block; font-size: 13.5px; color: var(--ink);">1. Open on PC</strong>
-                <span style="font-size: 12px; color: var(--muted); line-height: 1.4; display: block;">Download &amp; open PCDeck.exe. No installation wizard.</span>
+                <span style="font-size: 12px; color: var(--muted); line-height: 1.4; display: block;">Install from Microsoft Store or run .exe.</span>
               </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: flex-start;">
@@ -1460,13 +1460,18 @@ footer{padding:44px 0 56px}
 
         <div class="get" id="get" style="margin-top: 0;">
           <div class="get-row" style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
-            <a class="btn" id="hero-exe" href="/download/windows/" style="background: var(--signal); border-color: var(--signal); color: #fff; padding: 14px 24px; font-size: 16px; border-radius: 8px; box-shadow: 0 4px 18px rgba(27,68,216,0.22); display: inline-flex; align-items: center; gap: 14px; text-decoration: none;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex-shrink: 0;"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
-              <div>
-                <span style="display: block; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2;">Download PCDeck for Windows</span>
-                <small style="display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; opacity: 0.9; margin-top: 3px; letter-spacing: .03em;">v2.7.2 · Windows 10 / 11 · 36.3 MB · No Install Needed</small>
-              </div>
-            </a>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+              <a class="btn" id="hero-msstore" href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="background: var(--signal); border-color: var(--signal); color: #fff; padding: 13px 22px; font-size: 15.5px; border-radius: 8px; box-shadow: 0 4px 18px rgba(27,68,216,0.25); display: inline-flex; align-items: center; gap: 12px; text-decoration: none;">
+                <svg width="22" height="22" viewBox="0 0 88 88" fill="none" style="flex-shrink: 0;"><rect width="42" height="42" fill="#f25022"/><rect x="46" width="42" height="42" fill="#7fba00"/><rect y="46" width="42" height="42" fill="#00a4ef"/><rect x="46" y="46" width="42" height="42" fill="#ffb900"/></svg>
+                <div>
+                  <span style="display: block; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2;">Download from Microsoft Store</span>
+                  <small style="display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; opacity: 0.9; margin-top: 2px; letter-spacing: .03em;">Verified 1-Click Install · Windows 10 &amp; 11</small>
+                </div>
+              </a>
+              <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" aria-label="Get PCDeck from Microsoft Store" style="display: inline-block; text-decoration: none;">
+                <img src="/ms-badge.svg" alt="Get it from Microsoft Store" width="161" height="44" style="height: 48px; width: auto; display: block; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12);">
+              </a>
+            </div>
 
             <!-- No Mouse Emergency Keyboard Guide Trigger Badge -->
             <button type="button" id="btn-emergency-guide" class="emergency-guide-btn" aria-haspopup="dialog" aria-controls="emergency-guide-modal" aria-expanded="false">
@@ -1475,12 +1480,12 @@ footer{padding:44px 0 56px}
             </button>
 
             <div class="hero-alt-links" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: var(--graphite); padding: 4px 0 0 2px;">
-              <span>Other options:</span>
-              <a href="#card-apk" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Android APK (687 KB)</a>
+              <span>Other platforms &amp; options:</span>
+              <a href="#card-apk" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Android APK (691 KB)</a>
               <span style="color: var(--grid);">·</span>
               <a href="#card-linux" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Linux 1-Line Install</a>
               <span style="color: var(--grid);">·</span>
-              <a href="#card-zip" style="color: var(--muted); text-decoration: underline; text-underline-offset: 3px;">Offline ZIP (49.7 MB)</a>
+              <a id="hero-exe" href="/download/windows/" style="color: var(--muted); text-decoration: underline; text-underline-offset: 3px;">Standalone Windows .exe (portable) &rarr;</a>
             </div>
           </div>
 
@@ -1877,7 +1882,7 @@ footer{padding:44px 0 56px}
               SmartScreen reporting that the file is new and unsigned — it has no download reputation yet, and
               reputation is earned by volume over time.
             </p>
-            <p><strong>To continue:</strong> click <kbd>More info</kbd>, then <kbd>Run anyway</kbd>.</p>
+            <p><strong>To continue:</strong> click <kbd>More info</kbd>, then <kbd>Run anyway</kbd>. Or install verified directly from the <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="font-weight: 600; text-decoration: underline;">Microsoft Store</a> for zero warnings.</p>
           </div>
         </div>
 
@@ -2016,7 +2021,7 @@ footer{padding:44px 0 56px}
         </details>
         <details>
           <summary>Why does Windows say “Windows protected your PC”?</summary>
-          <p>Because the executable is unsigned and new, not because anything harmful was found. PCDeck is distributed directly instead of through the Microsoft Store, so it has no code-signing certificate and no SmartScreen reputation yet. Click <strong>More info</strong>, then <strong>Run anyway</strong>. Verifying the SHA-256 checksum is a stronger check than the warning itself.</p>
+          <p>Because the direct standalone executable is newly published, not because anything harmful was found. Direct downloads build SmartScreen reputation over time. Click <strong>More info</strong>, then <strong>Run anyway</strong>. Alternatively, install directly from the official <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener">Microsoft Store</a> for verified, warning-free 1-click installation.</p>
         </details>
         <details>
           <summary>Why does Windows Defender or my antivirus flag PCDeck?</summary>
@@ -2078,10 +2083,16 @@ footer{padding:44px 0 56px}
           <p>The main PC app for Windows 10 &amp; 11. Run it, scan the QR code with your phone camera, and control immediately.</p>
           <ul class="spec">
             <li>Windows 10 or 11 (64-bit)</li>
-            <li>Standalone .exe (v2.7.2 · 36.3 MB) · No Python needed</li>
-            <li>Unsigned — SmartScreen prompts once</li>
+            <li>Official Microsoft Store · Verified 1-Click Install</li>
+            <li>Portable standalone .exe · No Python needed</li>
           </ul>
-          <a class="btn" id="dl-exe" href="/download/windows/" style="background: var(--signal); border-color: var(--signal); font-weight: 700;">Download for Windows (v2.7.2 · 36.3 MB)</a>
+          <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="display: flex; justify-content: center; margin: 4px 0 12px; text-decoration: none;">
+            <img src="/ms-badge.svg" alt="Get it from Microsoft Store" width="161" height="44" style="height: 52px; width: auto; display: block; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.15);">
+          </a>
+          <div style="text-align: center; font-size: 12.5px; padding-top: 4px;">
+            <span style="color: var(--muted);">Prefer no store?</span>
+            <a id="dl-exe" href="/download/windows/" style="color: var(--graphite); text-decoration: underline; text-underline-offset: 2px; font-weight: 500; margin-left: 4px;">Download standalone .exe (36.3 MB) &rarr;</a>
+          </div>
         </div>
 
         <div class="card" id="card-apk">

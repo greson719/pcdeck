@@ -19,6 +19,7 @@ export default function handler(req, res) {
     apkUrl: "https://pcdeck.vercel.app/PCDeck.apk",
     websiteUrl: "https://pcdeck.vercel.app",
     playStoreUrl: "",
+    msStoreUrl: "https://apps.microsoft.com/detail/9P4BK16LBGLS",
     releaseNotes: "• Real-time connection updates & direct community suggestions channels\n• Optimized above-the-fold download layout for Windows and Android\n• 100% Native 1.0x Resolution & fluid 1:1 sub-pixel touch scrolling\n• Full Spanish & Portuguese localized documentation\n• Instant QR-Code Web Controller for iPhone, iPad, Mac & Linux",
     minVersionCode: 1,
     publishedAt: "2026-09-21"

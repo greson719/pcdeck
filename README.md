@@ -6,8 +6,16 @@ Turn any smartphone (Android or iOS) into an ultra-low latency **Wireless Touchs
 
 ## 🚀 Quick Start in 3 Easy Steps
 
-### 1. Run the PC Server (`.exe`)
-Double-click [`PCDeck.exe`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/PCDeck.exe) (or run [`run.bat`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/run.bat)) in this folder.
+### 1. Run the PC Server (Windows)
+Choose either:
+- **Option 1 (Recommended — Microsoft Store)**:
+  
+  <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank">
+    <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get PCDeck from Microsoft Store" width="160"/>
+  </a>
+  
+  *Official verified 1-click install, zero SmartScreen prompt, automatic background updates.*
+- **Option 2 (Standalone Portable)**: Double-click [`PCDeck.exe`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/PCDeck.exe) (or run [`run.bat`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/run.bat)) in this folder.
 - A native Cyber-Neon dashboard will open showing your PC's Wi-Fi IP and a **QR Code**.
 - Keep this window running in the background.
 
