@@ -210,7 +210,11 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>Alternative: Download Standalone Windows .exe (36.3 MB) &darr;</span>
           </a>
-          <span style="color: var(--muted); font-size: 12.5px;">Portable · No install wizard</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 2px 7px; border-radius: 4px; font-weight: 600;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>SmartScreen &ldquo;Run anyway&rdquo; required</span>
+          </span>
+          <span style="color: var(--muted); font-size: 12px;">Portable · No install wizard</span>
         </div>
       </div>
 
@@ -234,10 +238,13 @@
         </div>
       </div>
 
-      <!-- SmartScreen Callout -->
+      <!-- SmartScreen Callout for Standalone EXE -->
       <div class="smartscreen-box">
-        <strong style="display: block; margin-bottom: 3px;">Want zero SmartScreen warnings?</strong>
-        Install PCDeck directly from the official <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="color: #92400e; font-weight: 700; text-decoration: underline;">Microsoft Store</a> for verified developer signing and 1-click install. When downloading the standalone <code>.exe</code> directly, click <b>More info</b> &rarr; <b>Run anyway</b> on first launch.
+        <strong style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Standalone .exe SmartScreen Notice:
+        </strong>
+        The official <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="color: #92400e; font-weight: 700; text-decoration: underline;">Microsoft Store Installer</a> is verified with <b>zero security warnings</b>. When downloading the standalone portable <code>.exe</code> directly, Windows Defender SmartScreen will prompt you on first run: click <b>More info</b> &rarr; <b>Run anyway</b>.
       </div>
     </div>
 
