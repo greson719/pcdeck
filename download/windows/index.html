@@ -100,13 +100,12 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
 
 function triggerDownload() {
   var a = document.createElement('a');
-  a.href = '/PCDeck.exe';
-  a.download = 'PCDeck.exe';
+  a.href = 'https://get.microsoft.com/installer/download/9P4BK16LBGLS';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   try {
-    window.va('track', 'Download', { file: 'PCDeck.exe', platform: 'windows' });
+    window.va('track', 'Download', { file: 'PCDeck Installer.exe', platform: 'windows-msstore-direct' });
   } catch (e) {}
 }
 
@@ -163,9 +162,9 @@ window.addEventListener('DOMContentLoaded', function () {
     <div class="dl-status-banner">
       <div class="spinner-pulse"></div>
       <div>
-        <h2 style="font-size: 18px; margin: 0 0 4px; color: var(--signal-ink);">Your PCDeck for Windows download has started!</h2>
+        <h2 style="font-size: 18px; margin: 0 0 4px; color: var(--signal-ink);">Your PCDeck download has started!</h2>
         <p style="margin: 0; font-size: 14px; color: var(--graphite);">
-          If the download didn't begin automatically, <a href="/PCDeck.exe" download="PCDeck.exe" style="font-weight: 700; text-decoration: underline;" onclick="triggerDownload()">click here for manual .exe download &rarr;</a> or <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="font-weight: 700; text-decoration: underline; color: var(--signal-ink);">install verified from Microsoft Store &rarr;</a>
+          If the download didn't begin automatically, <a href="https://get.microsoft.com/installer/download/9P4BK16LBGLS" style="font-weight: 700; text-decoration: underline;" onclick="triggerDownload()">click here for Direct Microsoft Store Installer (815 KB) &rarr;</a>, <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="font-weight: 700; text-decoration: underline; color: var(--signal-ink);">open Microsoft Store page &rarr;</a>, or <a href="/PCDeck.exe" download="PCDeck.exe" style="color: var(--muted); text-decoration: underline;">download standalone .exe (36.3 MB) &rarr;</a>
         </p>
       </div>
     </div>
@@ -174,23 +173,23 @@ window.addEventListener('DOMContentLoaded', function () {
       <span class="tag">Quick Setup Guide</span>
       <h1 style="font-size: 26px; margin: 6px 0 12px;">How to Connect in 30 Seconds</h1>
       <p style="margin: 0 0 20px; font-size: 15.5px; color: var(--graphite);">
-        PCDeck is a standalone portable application. No installation wizard, no admin registry changes, and zero drivers required.
+        PCDeck connects directly over your local Wi-Fi with zero configuration and zero cloud accounts needed.
       </p>
 
       <div class="step-grid">
         <div class="step-card">
           <span class="step-badge">STEP 1</span>
-          <h3 style="font-size: 15px; margin: 0 0 8px;">Open PCDeck</h3>
+          <h3 style="font-size: 15px; margin: 0 0 8px;">Run Installer</h3>
           <p style="font-size: 13.5px; color: var(--graphite); margin: 0;">
-            Launch from Microsoft Store or double-click <code>PCDeck.exe</code> in Downloads. A pairing QR code will appear on your screen.
+            Double-click downloaded <code>PCDeck Installer.exe</code> (Microsoft verified, 815 KB) or run standalone <code>PCDeck.exe</code>.
           </p>
         </div>
 
         <div class="step-card">
           <span class="step-badge">STEP 2</span>
-          <h3 style="font-size: 15px; margin: 0 0 8px;">Windows SmartScreen</h3>
+          <h3 style="font-size: 15px; margin: 0 0 8px;">Zero Warnings</h3>
           <p style="font-size: 13.5px; color: var(--graphite); margin: 0;">
-            If SmartScreen warns "Windows protected your PC", click <strong>More info</strong> &rarr; <strong>Run anyway</strong>. (Or install via <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="font-weight: 600; text-decoration: underline;">Microsoft Store</a> to bypass SmartScreen).
+            Digitally signed by Microsoft Corporation — installs cleanly in 1 click with zero SmartScreen security warnings.
           </p>
         </div>
 
@@ -206,13 +205,16 @@ window.addEventListener('DOMContentLoaded', function () {
       <!-- Microsoft Store Alternative -->
       <div class="ms-store-card" style="background: var(--paper); border: 1px solid var(--grid); border-left: 4px solid #0078d4; border-radius: 8px; padding: 18px 22px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
         <div>
-          <span class="tag" style="background: rgba(0,120,212,0.15); color: #00a4ef; border: 1px solid rgba(0,120,212,0.3);">Official Store Release</span>
-          <h3 style="font-size: 16px; margin: 6px 0 2px; color: var(--ink);">Prefer Verified 1-Click Install?</h3>
-          <p style="font-size: 13.5px; color: var(--graphite); margin: 0;">Get PCDeck directly from the official Microsoft Store — verified developer certificate, zero SmartScreen warnings, and automatic background updates.</p>
+          <span class="tag" style="background: rgba(0,120,212,0.15); color: #00a4ef; border: 1px solid rgba(0,120,212,0.3);">Official Microsoft Web Installer</span>
+          <h3 style="font-size: 16px; margin: 6px 0 2px; color: var(--ink);">Direct 1-Click Install · Zero Warnings</h3>
+          <p style="font-size: 13.5px; color: var(--graphite); margin: 0;">Get the official lightweight installer (815 KB) directly from Microsoft — verified developer certificate, zero SmartScreen warnings, and automatic background updates.</p>
         </div>
-        <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" aria-label="Get PCDeck from Microsoft Store" style="display: inline-block; text-decoration: none;">
-          <img src="/ms-badge.svg" alt="Get it from Microsoft Store" width="161" height="44" style="height: 48px; width: auto; display: block; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12);">
-        </a>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <a class="btn sm" href="https://get.microsoft.com/installer/download/9P4BK16LBGLS" style="background: var(--signal); border-color: var(--signal); color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 6px; text-decoration: none;">Direct Installer (815 KB) &darr;</a>
+          <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" aria-label="Get PCDeck from Microsoft Store" style="display: inline-block; text-decoration: none;">
+            <img src="/ms-badge.svg" alt="Get it from Microsoft Store" width="161" height="44" style="height: 44px; width: auto; display: block; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12);">
+          </a>
+        </div>
       </div>
 
       <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--grid); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">

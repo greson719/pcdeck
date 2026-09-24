@@ -1460,11 +1460,11 @@ footer{padding:44px 0 56px}
 
         <div class="get" id="get" style="margin-top: 0;">
           <div class="get-row" style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start;">
-            <a class="btn" id="hero-msstore" href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="background: var(--signal); border-color: var(--signal); color: #fff; padding: 14px 24px; font-size: 16px; border-radius: 8px; box-shadow: 0 4px 18px rgba(27,68,216,0.25); display: inline-flex; align-items: center; gap: 14px; text-decoration: none;">
+            <a class="btn" id="hero-msstore" href="https://get.microsoft.com/installer/download/9P4BK16LBGLS" style="background: var(--signal); border-color: var(--signal); color: #fff; padding: 14px 24px; font-size: 16px; border-radius: 8px; box-shadow: 0 4px 18px rgba(27,68,216,0.25); display: inline-flex; align-items: center; gap: 14px; text-decoration: none;">
               <svg width="24" height="24" viewBox="0 0 88 88" fill="none" style="flex-shrink: 0;"><rect width="42" height="42" fill="#f25022"/><rect x="46" width="42" height="42" fill="#7fba00"/><rect y="46" width="42" height="42" fill="#00a4ef"/><rect x="46" y="46" width="42" height="42" fill="#ffb900"/></svg>
               <div>
                 <span style="display: block; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2;">Download from Microsoft Store</span>
-                <small style="display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; opacity: 0.9; margin-top: 3px; letter-spacing: .03em;">Verified 1-Click Install · Windows 10 &amp; 11</small>
+                <small style="display: block; font-family: var(--mono); font-size: 11px; font-weight: 500; opacity: 0.9; margin-top: 3px; letter-spacing: .03em;">Direct Web Installer · 815 KB · Zero Warnings · Windows 10 &amp; 11</small>
               </div>
             </a>
 
@@ -1480,7 +1480,9 @@ footer{padding:44px 0 56px}
               <span style="color: var(--grid);">·</span>
               <a href="#card-linux" style="color: var(--signal-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600;">Linux 1-Line Install</a>
               <span style="color: var(--grid);">·</span>
-              <a id="hero-exe" href="/download/windows/" style="color: var(--muted); text-decoration: underline; text-underline-offset: 3px;">Standalone Windows .exe (portable) &rarr;</a>
+              <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="color: var(--graphite); text-decoration: underline; text-underline-offset: 3px;">Store web page</a>
+              <span style="color: var(--grid);">·</span>
+              <a id="hero-exe" href="/download/windows/" style="color: var(--muted); text-decoration: underline; text-underline-offset: 3px;">Standalone .exe (36 MB) &rarr;</a>
             </div>
           </div>
 
@@ -2078,15 +2080,17 @@ footer{padding:44px 0 56px}
           <p>The main PC app for Windows 10 &amp; 11. Run it, scan the QR code with your phone camera, and control immediately.</p>
           <ul class="spec">
             <li>Windows 10 or 11 (64-bit)</li>
-            <li>Official Microsoft Store · Verified 1-Click Install</li>
-            <li>Portable standalone .exe · No Python needed</li>
+            <li>Official Microsoft Web Installer (815 KB)</li>
+            <li>Zero SmartScreen warnings · Verified by Microsoft</li>
           </ul>
-          <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="display: flex; justify-content: center; margin: 4px 0 12px; text-decoration: none;">
-            <img src="/ms-badge.svg" alt="Get it from Microsoft Store" width="161" height="44" style="height: 52px; width: auto; display: block; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.15);">
+          <a class="btn" id="dl-msstore-direct" href="https://get.microsoft.com/installer/download/9P4BK16LBGLS" style="background: var(--signal); border-color: var(--signal); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 10px; text-decoration: none;">
+            <svg width="18" height="18" viewBox="0 0 88 88" fill="none"><rect width="42" height="42" fill="#f25022"/><rect x="46" width="42" height="42" fill="#7fba00"/><rect y="46" width="42" height="42" fill="#00a4ef"/><rect x="46" y="46" width="42" height="42" fill="#ffb900"/></svg>
+            <span>Direct Microsoft Installer (815 KB) &darr;</span>
           </a>
-          <div style="text-align: center; font-size: 12.5px; padding-top: 4px;">
-            <span style="color: var(--muted);">Prefer no store?</span>
-            <a id="dl-exe" href="/download/windows/" style="color: var(--graphite); text-decoration: underline; text-underline-offset: 2px; font-weight: 500; margin-left: 4px;">Download standalone .exe (36.3 MB) &rarr;</a>
+          <div style="display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 12.5px; padding-top: 2px;">
+            <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" target="_blank" rel="noopener" style="color: var(--signal-ink); text-decoration: underline; font-weight: 600;">View in Store &rarr;</a>
+            <span style="color: var(--grid);">·</span>
+            <a id="dl-exe" href="/download/windows/" style="color: var(--muted); text-decoration: underline;">Standalone .exe (36.3 MB) &rarr;</a>
           </div>
         </div>
 
