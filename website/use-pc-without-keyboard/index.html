@@ -43,6 +43,22 @@
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "SoftwareApplication",
+      "@id": "https://pcdeck.vercel.app/use-pc-without-keyboard/#software",
+      "name": "PCDeck",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Windows 10, Windows 11, Linux, Android",
+      "softwareVersion": "2.7.2",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "url": "https://pcdeck.vercel.app/",
+      "downloadUrl": "https://get.microsoft.com/installer/download/9P4BK16LBGLS",
+      "featureList": "Wireless mobile keyboard, zero-install phone typing remote, broken keyboard emergency fix"
+    },
+    {
       "@type": "TechArticle",
       "@id": "https://pcdeck.vercel.app/use-pc-without-keyboard/#article",
       "headline": "How to use a PC without a keyboard",
@@ -88,6 +104,50 @@
         "@id": "https://pcdeck.vercel.app/use-pc-without-keyboard/",
         "@type": "WebPage"
       },
+      "image": "https://pcdeck.vercel.app/og-image.png"
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://pcdeck.vercel.app/use-pc-without-keyboard/#howto-phone-keyboard",
+      "name": "Turn your phone into a wireless PC keyboard",
+      "description": "If your keyboard stopped typing or keys are broken, use your smartphone as a responsive wireless typing pad inside any browser.",
+      "totalTime": "PT1M",
+      "tool": [
+        {
+          "@type": "HowToTool",
+          "name": "PCDeck on host computer"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Smartphone with camera and browser"
+        }
+      ],
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Launch PCDeck on your host PC",
+          "text": "Open PCDeck on your PC (via Microsoft Store or portable .exe). An optical pairing QR code appears on your screen.",
+          "url": "https://pcdeck.vercel.app/use-pc-without-keyboard/#step-phone-kb-1",
+          "image": "https://pcdeck.vercel.app/og-image.png"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Scan the QR Code",
+          "text": "Open your phone camera (iPhone or Android), point it at the QR code on your PC monitor, and tap the link.",
+          "url": "https://pcdeck.vercel.app/use-pc-without-keyboard/#step-phone-kb-2",
+          "image": "https://pcdeck.vercel.app/og-image.png"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Type with Thumbs",
+          "text": "Your mobile browser opens immediately. Tap the keyboard icon and type directly into Windows without blocking your computer monitor.",
+          "url": "https://pcdeck.vercel.app/use-pc-without-keyboard/#step-phone-kb-3",
+          "image": "https://pcdeck.vercel.app/og-image.png"
+        }
+      ],
       "image": "https://pcdeck.vercel.app/og-image.png"
     },
     {
@@ -233,6 +293,44 @@
   </div>
 
   <div class="shell guide">
+
+    <div class="direct-answer" id="direct-answer-use-pc-keyboard">
+      <span class="tag">Direct Answer</span>
+      <p><strong>Yes, Windows 10 and 11 can be fully operated without a physical keyboard.</strong> At the sign-in lock screen, click the <span class="nb">Accessibility</span> icon (lower-right corner) and choose <span class="nb">On-Screen Keyboard</span> to click your password in with your mouse. Once signed in, press <kbd>Win</kbd> + <kbd>Ctrl</kbd> + <kbd>O</kbd> to toggle the on-screen keyboard, or use <kbd>Win</kbd> + <kbd>H</kbd> for voice typing dictation. For fast typing without covering your monitor with a virtual keyboard, launch <a href="#phone-keyboard-solution">PCDeck</a> on your PC and scan the QR code with your phone to use your smartphone's touch keyboard over Wi-Fi with zero app installs.</p>
+    </div>
+
+    <!-- Above-The-Fold Emergency Keyboard Conversion Card -->
+    <div style="background: linear-gradient(135deg, rgba(27,68,216,0.12) 0%, rgba(13,27,75,0.2) 100%); border: 1.5px solid rgba(27,68,216,0.35); border-radius: 12px; padding: 22px 24px; margin: 20px 0 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.06);">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+        <span style="background: #1b44d8; color: #fff; font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; letter-spacing: 0.04em;">EMERGENCY KEYBOARD REPLACEMENT &middot; 3 STEPS</span>
+        <span style="font-size: 12.5px; color: var(--graphite); font-weight: 600;">Zero Phone App Install Required</span>
+      </div>
+      <h3 style="margin: 0 0 10px; font-size: 19px; color: var(--ink);">Turn Your Phone into a Wireless PC Keyboard Right Now</h3>
+      <p style="margin: 0 0 16px; font-size: 14px; color: var(--graphite); line-height: 1.5;">If your keyboard stopped typing or keys are broken, use your smartphone as a responsive wireless typing pad inside any browser:</p>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 18px;">
+        <div id="step-phone-kb-1" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 12px 14px;">
+          <span style="color: #a5c2ff; font-family: var(--mono); font-size: 11px; font-weight: 700; display: block; margin-bottom: 3px;">STEP 1: ON YOUR PC</span>
+          <strong style="color: #fff; font-size: 13.5px; display: block; margin-bottom: 2px;">Launch PCDeck on your host PC</strong>
+          <span style="color: rgba(255,255,255,0.85); font-size: 12.5px; line-height: 1.4; display: block;">Open PCDeck on your PC (via <a href="https://get.microsoft.com/installer/download/9P4BK16LBGLS" style="color: #fff; text-decoration: underline;">Microsoft Store</a> or <a href="/PCDeck.exe" download="PCDeck.exe" style="color: #fff; text-decoration: underline;">portable .exe</a>). An optical pairing QR code appears on your screen.</span>
+        </div>
+        <div id="step-phone-kb-2" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 12px 14px;">
+          <span style="color: #a5c2ff; font-family: var(--mono); font-size: 11px; font-weight: 700; display: block; margin-bottom: 3px;">STEP 2: ON YOUR PHONE</span>
+          <strong style="color: #fff; font-size: 13.5px; display: block; margin-bottom: 2px;">Scan the QR Code</strong>
+          <span style="color: rgba(255,255,255,0.85); font-size: 12.5px; line-height: 1.4; display: block;">Open your phone camera (iPhone or Android), point it at the QR code on your PC monitor, and tap the link.</span>
+        </div>
+        <div id="step-phone-kb-3" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 12px 14px;">
+          <span style="color: #a5c2ff; font-family: var(--mono); font-size: 11px; font-weight: 700; display: block; margin-bottom: 3px;">STEP 3: WIRELESS TYPING</span>
+          <strong style="color: #fff; font-size: 13.5px; display: block; margin-bottom: 2px;">Type with Thumbs</strong>
+          <span style="color: rgba(255,255,255,0.85); font-size: 12.5px; line-height: 1.4; display: block;">Your mobile browser opens immediately. Tap the keyboard icon and type directly into Windows without blocking your computer monitor.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <a href="https://get.microsoft.com/installer/download/9P4BK16LBGLS" class="btn" style="background: #fff; color: #1b44d8; font-weight: 700; font-size: 14px; border-color: #fff; padding: 10px 18px;">Direct MS Store Installer (815 KB) &darr;</a>
+        <a href="/PCDeck.exe" download="PCDeck.exe" class="btn ghost" style="background: rgba(255,255,255,0.15); color: #fff; font-weight: 700; font-size: 13.5px; border-color: rgba(255,255,255,0.4); padding: 9px 16px;">Alternative: Standalone .exe (36 MB) &darr;</a>
+      </div>
+    </div>
 
     <div class="quick-card">
       <p class="tag">Second screen typing</p>

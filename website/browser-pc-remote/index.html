@@ -39,6 +39,22 @@
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "SoftwareApplication",
+      "@id": "https://pcdeck.vercel.app/browser-pc-remote/#software",
+      "name": "PCDeck",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Windows 10, Windows 11, Linux, Android",
+      "softwareVersion": "2.7.2",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "url": "https://pcdeck.vercel.app/",
+      "downloadUrl": "https://get.microsoft.com/installer/download/9P4BK16LBGLS",
+      "featureList": "Zero-install web remote, wireless touch trackpad, virtual keyboard, live screen stream, audio receiver, Wi-Fi file manager"
+    },
+    {
       "@type": "TechArticle",
       "@id": "https://pcdeck.vercel.app/browser-pc-remote/#article",
       "headline": "Control Your PC From Your Phone Browser Without Installing an App",
@@ -47,7 +63,7 @@
       "image": "https://pcdeck.vercel.app/og-image.png",
       "inLanguage": "en",
       "datePublished": "2026-09-01",
-      "dateModified": "2026-09-01",
+      "dateModified": "2026-09-24",
       "author": {
         "@type": "Organization",
         "name": "PCDeck",
@@ -107,8 +123,8 @@
         {
           "@type": "HowToStep",
           "position": 1,
-          "name": "Launch PCDeck on your PC",
-          "text": "Run PCDeck.exe on Windows or launch PCDeck on Linux. The server window opens displaying a pairing QR code and local network IP address.",
+          "name": "Launch PCDeck on your host computer",
+          "text": "Run PCDeck on Windows (via Microsoft Store or portable .exe) or launch PCDeck on Linux to generate your optical pairing QR code.",
           "url": "https://pcdeck.vercel.app/browser-pc-remote/#step-1",
           "image": "https://pcdeck.vercel.app/og-image.png"
         },
@@ -252,6 +268,18 @@
       <p><strong>Yes.</strong> You can control a Windows or Linux PC from any smartphone or tablet browser without downloading an app. When PCDeck runs on your PC, it serves a lightweight HTML5 touch controller over your local Wi-Fi network. Scanning the PC's on-screen QR code instantly opens a responsive multi-touch trackpad, virtual keyboard, live screen viewer, and audio stream in mobile Safari, Chrome, or Firefox.</p>
     </div>
 
+    <!-- Above-The-Fold High-Converting Action CTA -->
+    <div style="background: var(--paper); border: 1.5px solid var(--grid); border-left: 4px solid var(--signal); border-radius: 8px; padding: 14px 18px; margin: 18px 0 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+      <div>
+        <strong style="display: block; font-size: 14.5px; color: var(--ink);">Start Controlling Your PC in 30 Seconds</strong>
+        <span style="font-size: 13px; color: var(--graphite);">Run PCDeck on your computer, scan the QR code with your phone camera, and control immediately.</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <a class="btn sm" href="https://get.microsoft.com/installer/download/9P4BK16LBGLS" style="background: var(--signal); border-color: var(--signal); color: #fff; font-weight: 700; font-size: 13px; padding: 8px 16px; border-radius: 6px; text-decoration: none;">Direct MS Store Installer (815 KB) &darr;</a>
+        <a href="/PCDeck.exe" download="PCDeck.exe" style="color: var(--signal-ink); background: rgba(27,68,216,0.08); border: 1px solid rgba(27,68,216,0.22); padding: 7px 12px; border-radius: 6px; font-weight: 700; font-size: 12.5px; text-decoration: none;">Standalone .exe (36 MB) &darr;</a>
+      </div>
+    </div>
+
     <div class="quick-card">
       <p class="tag">Zero-Install Architecture</p>
       <p><a href="/#download">PCDeck</a> embeds a self-contained local web server. Pointing any modern mobile browser to your PC's local IP address provides full remote control with zero cloud logins, zero tracking, and zero app store downloads.</p>
@@ -282,24 +310,24 @@
     <h2>Step-by-step setup guide</h2>
     <ol class="steps">
       <li id="step-1">
-        <b>Launch PCDeck on your computer</b>
-        <p>Run <a href="/#download">PCDeck.exe</a> on Windows or launch PCDeck on Linux. The server window appears displaying your local network IP (e.g., <code>192.168.1.45:8000</code>) and an instant optical pairing QR code.</p>
+        <b>Launch PCDeck on your host computer</b>
+        <p>Run PCDeck on Windows (via <a href="https://get.microsoft.com/installer/download/9P4BK16LBGLS">Microsoft Store</a> or <a href="/PCDeck.exe" download="PCDeck.exe">portable .exe</a>) or launch PCDeck on Linux to generate your optical pairing QR code.</p>
         <figure class="guide-fig">
           <img src="/screenshots/qr-pairing.png" alt="PCDeck optical pairing QR code on PC screen and phone camera scanner" width="1280" height="720" loading="lazy">
           <figcaption>Figure 1: Scan the on-screen QR code with your phone camera to pair in 3 seconds.</figcaption>
         </figure>
       </li>
       <li id="step-2">
-        <b>Scan the QR code with your phone camera</b>
-        <p>Open your phone's built-in camera app (iPhone Safari or Android Chrome) and point it at the QR code on your PC monitor.</p>
+        <b>Scan QR code with your phone camera</b>
+        <p>Open your phone camera (iPhone, iPad, Android, or tablet) and point it at the QR code on your PC monitor.</p>
       </li>
       <li id="step-3">
         <b>Open Web Remote in browser</b>
-        <p>Tap the prompt to launch the PCDeck Web Remote in Safari, Chrome, or Firefox. No app store install or sign-up needed.</p>
+        <p>Tap the link in your camera app to launch the PCDeck Web Remote in Safari, Chrome, or Firefox. No app store installation or registration is required.</p>
       </li>
       <li id="step-4">
         <b>Control your computer immediately</b>
-        <p>The Web Remote interface loads instantly. Touch the trackpad surface to move the PC cursor, switch tabs to type on the keyboard, view the live desktop screen, or stream audio to your earbuds.</p>
+        <p>Touch the trackpad surface to move the PC cursor, type on the keyboard, view the live desktop screen, or stream audio to your earbuds.</p>
         <figure class="guide-fig">
           <img src="/screenshots/trackpad-phone.png" alt="PCDeck multi-touch precision trackpad on mobile phone screen" width="1280" height="720" loading="lazy">
           <figcaption>Figure 2: Multi-touch trackpad surface with tap clicks and smooth inertia scrolling.</figcaption>
