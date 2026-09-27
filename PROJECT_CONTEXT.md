@@ -13,6 +13,7 @@
 - **Monetization & Pro Plan Model**:
   - The core application is completely free and fully functional.
   - **Pro** is an optional **one-time $3.99 in-app lifetime unlock** inside the main PCDeck app (enables 60/120 FPS high-refresh desktop mirroring, unthrottled gigabit file transfers, neon chroma themes, and the pro keymapper).
+  - **License & IP Classification**: PCDeck is **Proprietary Freemium** software. Never refer to PCDeck as "open source" or "open-source" in any marketing, documentation, or user-facing messaging.
   - **Rule**: Never create or distribute a separate "PCDeck Pro" binary. PCDeck is a single unified app with in-app activation.
 
 ---
@@ -844,10 +845,51 @@ Before committing or releasing updates:
 - **Partner Center Active Lifecycle**:
   - Product ID: `9P4BK16LBGLS`
   - Version: `2.7.2.0` (Code `272`, x64)
-  - Submission State: Passed pre-processing, active in certification.
+  - Submission State: **Approved & Live Globally** in the Microsoft Store.
+  - IARC Certificate: Global Rating ID `38db0842-8646-8777-89a0-3f95036cee7f` (ESRB: Everyone, PEGI 3+).
 
+---
 
+## 38. Microsoft Store Acquisition Analytics & Anti-Bloat Review Invariant
 
+- **Launch Velocity & Acquisition Conversion**:
+  - In its first 72 hours of store publication (Sep 23–25, 2026), PCDeck achieved:
+    - **27 Store Page Views**
+    - **13 Successful Installations** (48.15% conversion rate vs. 5–10% industry standard).
+    - **100% Install Success Rate** (zero MSIX deployment failures).
+    - **5 Immediate First-Time Launches**.
+- **Anti-Bloat In-App Review Policy (CRITICAL)**:
+  - **Zero In-App Rating Popups**: Never inject rating banners, popups, or nag modals into the live app UI (`static/index.html`, `static/app.js`, `android_app/assets/`). The trackpad and screen streaming experience must remain 100% unbloated and distraction-free.
+  - **Download-Triggered Placement Only**: The Microsoft Store review note is strictly displayed in the download confirmation banner on `/download/windows/`:
+    `Find PCDeck useful? A quick rating on the Microsoft Store page helps an indie developer like me a lot.`
+  - **Policy 10.8 Developer Compliance**: The developer must NEVER submit self-reviews using the developer/publisher Microsoft account to prevent automated rating manipulation flags.
 
+---
 
+## 39. Commercial Licensing & Merchant of Record (Lemon Squeezy / Stripe)
 
+- **Monetization Architecture**:
+  - Model: Proprietary freemium utility ($3.99 one-time lifetime license).
+  - High-tier feature gates: 60/120 FPS high-refresh display streaming, 1080p 60 FPS webcam broadcast, and uncapped local Wi-Fi file transfers (>10 MB/s).
+  - License Verification: In-app cryptographic key activation (`PCDK-XXXX-YYYY-ZZZZ`) backed by Lemon Squeezy API (`/v1/licenses/activate`) with full offline caching in `localStorage`.
+- **Identity & Compliance Verification Pipeline**:
+  - Merchant of Record: Lemon Squeezy (Stripe Connect Express backend).
+  - Document Standards for Indian Developers:
+    - Automated Stripe Identity rejects raw digital e-PAN PDF uploads as "digital screenshots".
+    - Official government-issued tax document submitted directly to Merchant of Record support for manual KYC approval.
+  - Direct Store Fallback: Microsoft Store Durable Add-on ($3.99) configured inside Partner Center as an alternative 1-click in-app purchase.
+
+---
+
+## 40. Multi-Platform Inbound Distribution, Mobile Bridge & Search Engine Caching
+
+- **AlternativeTo Directory Listing**:
+  - Live and verified at `https://alternativeto.net/software/pcdeck/`.
+  - Linked to 11 major competitors (Unified Remote, Spacedesk, KDE Connect, DroidCam, Remote Mouse, WiFi Mouse, Audio Share, etc.).
+- **Mobile-to-PC Conversion Bridge**:
+  - Deployed across core landing pages (`index.html`, `download/`, `guides/`) to accommodate the 44% iOS / Mobile Safari audience.
+  - Provides 1-tap `✉️ Email link to PC` (mailto pre-fill) and `📋 Copy PC Link` (with instant clipboard toast).
+- **Search Engine Caching & IndexNow Acceleration**:
+  - `vercel.json` deploys `Cache-Control: public, max-age=31536000, immutable` on static assets for sub-50ms crawler response.
+  - Automated IndexNow script (`tools/submit_indexnow.py`) submits all 29 sitemap URLs to `https://www.bing.com/indexnow` with multi-key fallback (`HTTP 200 OK`).
+  - 100% bit-for-bit parity maintained between root HTML files and `website/` distribution mirror.
