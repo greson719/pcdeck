@@ -2,6 +2,11 @@
 
 Turn any smartphone (Android or iOS) into an ultra-low latency **Wireless Touchscreen Monitor**, **Multi-Touch Trackpad**, **Virtual Webcam/Microphone**, and **Gamepad/Keyboard Controller** for your Windows PC over local Wi-Fi.
 
+[![Website](https://img.shields.io/badge/Official_Website-pcdeck.vercel.app-00f0ff?style=flat&logo=vercel)](https://pcdeck.vercel.app/)
+[![Download](https://img.shields.io/badge/Download_Center-PCDeck-1b44d8?style=flat)](https://pcdeck.vercel.app/download/)
+[![Guides & Docs](https://img.shields.io/badge/Guides_%26_Setup-Docs-10b981?style=flat)](https://pcdeck.vercel.app/guides/)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-PCDeck-0078D4?style=flat&logo=windows)](https://apps.microsoft.com/detail/9P4BK16LBGLS)
+
 ---
 
 ## 🚀 Quick Start in 3 Easy Steps

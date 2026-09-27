@@ -215,6 +215,25 @@
         </div>
       </div>
 
+      <!-- Mobile Bridge Card -->
+      <div class="mobile-bridge-card">
+        <div class="mobile-bridge-info">
+          <span class="mobile-bridge-icon">📱</span>
+          <div class="mobile-bridge-text">
+            <h4>Visiting on your phone? PCDeck runs on your PC.</h4>
+            <p>Send the download link to your email to open on your Windows computer, or copy the link.</p>
+          </div>
+        </div>
+        <div class="mobile-bridge-actions">
+          <a href="mailto:?subject=Download%20PCDeck%20for%20Windows&amp;body=Here%20is%20the%20link%20to%20download%20PCDeck%20on%20your%20PC:%20https://pcdeck.vercel.app/download/" class="btn-bridge btn-bridge-primary">
+            <span>✉️ Email link to PC</span>
+          </a>
+          <button type="button" onclick="navigator.clipboard.writeText('https://pcdeck.vercel.app/download/'); this.innerHTML='&lt;span&gt;✔ Copied!&lt;/span&gt;'; setTimeout(()=>this.innerHTML='&lt;span&gt;📋 Copy PC Link&lt;/span&gt;', 2500)" class="btn-bridge btn-bridge-ghost">
+            <span>📋 Copy PC Link</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Quick 3-Step Visual Setup -->
       <h3 style="font-size: 16px; margin: 24px 0 10px; color: var(--ink);">How It Works in 20 Seconds:</h3>
       <div class="step-row" style="margin: 10px 0 0;">

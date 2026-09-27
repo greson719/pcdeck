@@ -373,3 +373,76 @@ footer{padding:44px 0 56px;margin-top:40px;border-top:1px solid var(--grid)}
 section[id], .sec, [id] {
   scroll-margin-top: 84px;
 }
+
+/* Mobile Bridge: Remind mobile users to download on PC */
+.mobile-bridge-card {
+  margin-top: 20px;
+  background: linear-gradient(135deg, rgba(27,68,216,0.08) 0%, rgba(0,240,255,0.05) 100%);
+  border: 1px solid rgba(27,68,216,0.28);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.mobile-bridge-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mobile-bridge-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.mobile-bridge-text h4 {
+  font-size: 15px;
+  margin: 0 0 2px;
+  color: var(--ink);
+  font-weight: 700;
+}
+.mobile-bridge-text p {
+  font-size: 13px;
+  margin: 0;
+  color: var(--graphite);
+  line-height: 1.4;
+}
+.mobile-bridge-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn-bridge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.btn-bridge-primary {
+  background: var(--signal);
+  color: #fff;
+  border: 1px solid var(--signal);
+}
+.btn-bridge-primary:hover {
+  background: var(--signal-ink);
+  color: #fff;
+  text-decoration: none;
+}
+.btn-bridge-ghost {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--grid);
+}
+.btn-bridge-ghost:hover {
+  border-color: var(--signal);
+  color: var(--signal-ink);
+  text-decoration: none;
+}

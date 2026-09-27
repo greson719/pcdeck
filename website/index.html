@@ -2134,6 +2134,25 @@ footer{padding:44px 0 56px}
         </div>
       </div>
 
+      <!-- Mobile Bridge Card -->
+      <div style="margin-top: 18px; background: linear-gradient(135deg, rgba(27,68,216,0.08) 0%, rgba(0,240,255,0.05) 100%); border: 1px solid rgba(27,68,216,0.28); border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 22px; flex-shrink: 0;">📱</span>
+          <div>
+            <h4 style="font-size: 14.5px; margin: 0 0 2px; color: var(--ink); font-weight: 700;">Browsing on your phone? PCDeck installs on your PC.</h4>
+            <p style="font-size: 13px; margin: 0; color: var(--graphite); line-height: 1.4;">Send the download link to your email to open on your Windows computer, or copy the link.</p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <a href="mailto:?subject=Download%20PCDeck%20for%20Windows&amp;body=Here%20is%20the%20link%20to%20download%20PCDeck%20on%20your%20PC:%20https://pcdeck.vercel.app/download/" class="btn sm" style="background: var(--signal); color: #fff; font-size: 12.5px; padding: 7px 13px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
+            <span>✉️ Email link to PC</span>
+          </a>
+          <button type="button" onclick="navigator.clipboard.writeText('https://pcdeck.vercel.app/download/'); this.innerHTML='&lt;span&gt;✔ Copied!&lt;/span&gt;'; setTimeout(()=>this.innerHTML='&lt;span&gt;📋 Copy PC Link&lt;/span&gt;', 2500)" class="btn sm ghost" style="font-size: 12.5px; padding: 7px 13px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border: 1px solid var(--grid);">
+            <span>📋 Copy PC Link</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Compact Feature & Pro Note Below Cards -->
       <div style="margin-top: 18px; padding: 12px 18px; background: var(--panel); border: 1px solid var(--grid); border-radius: 8px; font-size: 13.5px; color: var(--graphite); line-height: 1.5; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
         <span>All core features are 100% free: mouse trackpad, keyboard, 30 FPS screen mirror, PC audio &amp; file transfer. Pro is an optional <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" rel="noopener" style="color: var(--signal); font-weight: 600;">$3.99 lifetime unlock</a> for 60/120 FPS.</span>

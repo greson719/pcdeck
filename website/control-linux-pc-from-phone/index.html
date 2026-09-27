@@ -325,6 +325,25 @@
       <p style="font-size: 13px; color: var(--muted); margin: 0;">Inspect the script or read full technical documentation: <a href="/linux-install/">Linux Installation &amp; Security Docs &rarr;</a></p>
     </div>
 
+    <!-- Mobile Bridge Card -->
+    <div class="mobile-bridge-card">
+      <div class="mobile-bridge-info">
+        <span class="mobile-bridge-icon">📱</span>
+        <div class="mobile-bridge-text">
+          <h4>Reading on your phone? Run PCDeck on your Linux PC.</h4>
+          <p>Email the 1-line curl command to yourself, or copy it to run in your PC terminal.</p>
+        </div>
+      </div>
+      <div class="mobile-bridge-actions">
+        <a href="mailto:?subject=PCDeck%20Linux%20Command&amp;body=Run%20this%20in%20your%20Linux%20terminal:%20curl%20-sSL%20https://pcdeck.vercel.app/install.sh%20|%20bash%0A%0AGuide:%20https://pcdeck.vercel.app/control-linux-pc-from-phone/" class="btn-bridge btn-bridge-primary">
+          <span>✉️ Email command to PC</span>
+        </a>
+        <button type="button" onclick="navigator.clipboard.writeText('curl -sSL https://pcdeck.vercel.app/install.sh | bash'); this.innerHTML='&lt;span&gt;✔ Copied!&lt;/span&gt;'; setTimeout(()=>this.innerHTML='&lt;span&gt;📋 Copy Command&lt;/span&gt;', 2500)" class="btn-bridge btn-bridge-ghost">
+          <span>📋 Copy Command</span>
+        </button>
+      </div>
+    </div>
+
     <h2>Supported Linux distributions and platforms</h2>
     <p>PCDeck is engineered to run seamlessly across major Linux distributions:</p>
     <ul>
