@@ -20,6 +20,8 @@ Choose either:
   </a>
   
   *Official verified 1-click install, zero SmartScreen prompt, automatic background updates.*
+
+  > **⭐ Find PCDeck useful?** As an indie dev, a quick rating on the [Microsoft Store](https://apps.microsoft.com/detail/9P4BK16LBGLS) helps me a lot and motivates me to keep maintaining it.
 - **Option 2 (Standalone Portable)**: Double-click [`PCDeck.exe`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/PCDeck.exe) (or run [`run.bat`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/run.bat)) in this folder.
 - A native Cyber-Neon dashboard will open showing your PC's Wi-Fi IP and a **QR Code**.
 - Keep this window running in the background.
