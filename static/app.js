@@ -97,24 +97,6 @@
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  window.openStoreReview = function () {
-    var isWindows = navigator.userAgent && navigator.userAgent.indexOf('Windows') !== -1;
-    if (isWindows) {
-      window.location.href = 'ms-windows-store://review/?ProductId=9P4BK16LBGLS';
-    } else {
-      var url = 'https://apps.microsoft.com/detail/9P4BK16LBGLS';
-      if (window.AndroidApp && typeof window.AndroidApp.openExternalUrl === 'function') {
-        try {
-          window.AndroidApp.openExternalUrl(url);
-          return;
-        } catch (e) {
-          console.warn('Native openExternalUrl failed', e);
-        }
-      }
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  };
-
   // Global PCDeck Icon Registry & Helper Function
   const PC_DECK_ICONS = {
     lock: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
