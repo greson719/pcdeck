@@ -1793,10 +1793,20 @@ class PCDeckProGUI:
                 return
             record_review_action("snoozed", days=5)
             self.review_state = load_app_settings()
-            self.show_notification(
-                "A quick rating on the Microsoft Store helps an indie developer like me a lot.",
-                "Enjoying PCDeck?",
+
+            # 1. Native Windows 10/11 interactive toast banner with direct store button
+            toast_sent = self.show_toast_notification(
+                title="Enjoying PCDeck?",
+                message="A quick rating on the Microsoft Store helps an indie developer like me a lot.",
+                action_url="ms-windows-store://review/?ProductId=9P4BK16LBGLS",
+                action_label="Rate on Microsoft Store",
             )
+            # 2. Tray balloon fallback
+            if not toast_sent:
+                self.show_notification(
+                    "A quick rating on the Microsoft Store helps an indie developer like me a lot.",
+                    "Enjoying PCDeck?",
+                )
         except Exception as e:
             log_debug(f"Failed to dispatch review notification: {e}")
 
@@ -3107,6 +3117,45 @@ class PCDeckProGUI:
         d = ImageDraw.Draw(fallback)
         d.rounded_rectangle([8, 8, 56, 56], radius=12, fill=(56, 189, 248, 255))
         return fallback
+
+    def show_toast_notification(self, title: str, message: str, action_url: Optional[str] = None, action_label: Optional[str] = None) -> bool:
+        """Dispatches a native Windows 10/11 interactive toast notification banner with action buttons."""
+        if sys.platform != "win32":
+            return False
+        try:
+            import subprocess
+            action_xml = ""
+            if action_url and action_label:
+                action_xml = f'<actions><action content="{action_label}" arguments="{action_url}" activationType="protocol"/></actions>'
+
+            ps_script = f"""
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+$template = @"
+<toast duration="long">
+    <visual>
+        <binding template="ToastGeneric">
+            <text>{title}</text>
+            <text>{message}</text>
+        </binding>
+    </visual>
+    {action_xml}
+</toast>
+"@
+$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+$xml.LoadXml($template)
+$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
+$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\\WindowsPowerShell\\v1.0\\powershell.exe")
+$notifier.Show($toast)
+"""
+            subprocess.Popen(
+                ["powershell", "-ExecutionPolicy", "Bypass", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps_script],
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+            )
+            return True
+        except Exception as e:
+            log_debug(f"show_toast_notification error: {e}")
+            return False
 
     def show_notification(self, message: str, title: str = "PCDeck"):
         """Displays a desktop notification with the PCDeck custom app icon."""
