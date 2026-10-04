@@ -1647,7 +1647,7 @@ class PCDeckProGUI:
 
             tk.Label(
                 rev_hdr,
-                text="FIND PCDECK USEFUL?",
+                text="ENJOYING PCDECK?",
                 font=F_LABEL,
                 fg="#ffd700",
                 bg=C_SURFACE_2,
@@ -1667,11 +1667,10 @@ class PCDeckProGUI:
             )
             close_btn.pack(side="right")
 
-            # Body description matching download page tone
+            # Body description: professional, authentic product copy
             rev_msg = (
-                "PCDeck is built by an indie developer with zero ads. "
-                "If it's been useful to you over the past few days, a quick rating on the "
-                "Microsoft Store helps keep it free and maintained."
+                "If PCDeck has been useful for your setup, taking a moment to rate it on the "
+                "Microsoft Store helps support ongoing development and new features."
             )
             tk.Label(
                 self.review_card,
@@ -1790,7 +1789,7 @@ class PCDeckProGUI:
             record_review_action("snoozed", days=5)
             self.review_state = load_app_settings()
             self.show_notification(
-                "A quick rating on the Microsoft Store helps an indie developer like me a lot.",
+                "If PCDeck has been useful, a quick rating on the Microsoft Store helps support ongoing development.",
                 "Enjoying PCDeck?",
             )
         except Exception as e:
