@@ -221,6 +221,7 @@ Direct, public client-safe endpoints that require zero private API keys or custo
 
 ## 9. Microsoft Store (MSIX) & Store Distribution Standards
 
+- **Store Status**: **LIVE & PUBLISHED** in Microsoft Store (Product ID: `9P4BK16LBGLS`, Store URL: `https://apps.microsoft.com/detail/9P4BK16LBGLS`). NOT in draft.
 - **Package Identity & Capability Model**:
   - Package Name: `PCDeck`
   - Display Name: `PCDeck: Wireless Trackpad, Screen Mirror & Remote Mouse`

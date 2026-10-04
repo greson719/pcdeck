@@ -1746,7 +1746,11 @@ class PCDeckProGUI:
                 try:
                     os.startfile("ms-windows-store://review/?ProductId=9P4BK16LBGLS")
                 except Exception:
-                    os.system("start ms-windows-store://review/?ProductId=9P4BK16LBGLS")
+                    try:
+                        os.system("start ms-windows-store://review/?ProductId=9P4BK16LBGLS")
+                    except Exception:
+                        import webbrowser
+                        webbrowser.open("https://apps.microsoft.com/detail/9P4BK16LBGLS")
             else:
                 import webbrowser
                 webbrowser.open("https://apps.microsoft.com/detail/9P4BK16LBGLS")
