@@ -145,4 +145,15 @@ def test_polite_review_prompt_logic(monkeypatch):
     st7["review_prompt_status"] = "reviewed"
     assert gui_module.check_should_show_review_prompt(st7, current_time=now + (30 * 86400)) is False
 
+    # 8. Test record_review_action with custom days (e.g. 5-day notification cooldown)
+    saved_state = {}
+    monkeypatch.setattr(gui_module, "load_app_settings", lambda: dict(st4))
+    monkeypatch.setattr(gui_module, "save_app_settings", lambda s: saved_state.update(s))
+    monkeypatch.setattr(gui_module.time, "time", lambda: now)
+
+    gui_module.record_review_action("snoozed", days=5)
+    assert saved_state["review_next_prompt_time"] == now + (5 * 86400)
+    assert gui_module.check_should_show_review_prompt(saved_state, current_time=now) is False
+    assert gui_module.check_should_show_review_prompt(saved_state, current_time=now + (6 * 86400)) is True
+
 

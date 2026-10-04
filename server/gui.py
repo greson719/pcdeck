@@ -233,12 +233,12 @@ def check_should_show_review_prompt(settings: Optional[dict] = None, current_tim
     return True
 
 
-def record_review_action(action: str):
+def record_review_action(action: str, days: Optional[int] = None):
     """
-    Records the user's action on the review card:
+    Records the user's action on the review prompt:
     - 'reviewed': Launches store review and permanently silences prompt.
     - 'dismissed': Permanently silences prompt ('Don't show again').
-    - 'snoozed': Postpones prompt for 7 days.
+    - 'snoozed': Postpones prompt for specified days (default 7 days).
     """
     settings = load_app_settings()
     now = time.time()
@@ -247,7 +247,8 @@ def record_review_action(action: str):
     elif action == "dismissed":
         settings["review_prompt_status"] = "dismissed"
     elif action == "snoozed":
-        settings["review_next_prompt_time"] = now + (7 * 86400)
+        snooze_days = days if days is not None else 7
+        settings["review_next_prompt_time"] = now + (snooze_days * 86400)
     save_app_settings(settings)
 
 
@@ -765,6 +766,9 @@ class PCDeckProGUI:
                 self.root.after(700, self._check_first_run_startup_prompt)
 
         self.root.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
+
+        # Schedule polite Windows review notification check (60s after launch)
+        self.root.after(60000, self._dispatch_scheduled_review_notification)
 
         # Silent version/active check (daemon thread, zero UI impact, 100% offline-tolerant)
         threading.Thread(target=self._silent_update_ping, daemon=True, name="PCDeck-UpdatePing").start()
@@ -1643,7 +1647,7 @@ class PCDeckProGUI:
 
             tk.Label(
                 rev_hdr,
-                text="★ FIND PCDECK USEFUL?",
+                text="FIND PCDECK USEFUL?",
                 font=F_LABEL,
                 fg="#ffd700",
                 bg=C_SURFACE_2,
@@ -1686,7 +1690,7 @@ class PCDeckProGUI:
             # Button 1: Rate on Microsoft Store
             tk.Button(
                 rev_actions,
-                text="★ Rate on Microsoft Store",
+                text="Rate on Microsoft Store",
                 font=F_SMALL_STRONG,
                 fg="#000000",
                 bg="#ffd700",
@@ -1774,6 +1778,23 @@ class PCDeckProGUI:
             except Exception:
                 pass
             self.review_card = None
+
+    def _dispatch_scheduled_review_notification(self):
+        """
+        Dispatches polite desktop notification 60s after launch if review criteria are met.
+        Snoozes for 5 days so the user is not spammed on subsequent launches.
+        """
+        try:
+            if not check_should_show_review_prompt(self.review_state):
+                return
+            record_review_action("snoozed", days=5)
+            self.review_state = load_app_settings()
+            self.show_notification(
+                "A quick rating on the Microsoft Store helps an indie developer like me a lot.",
+                "Enjoying PCDeck?",
+            )
+        except Exception as e:
+            log_debug(f"Failed to dispatch review notification: {e}")
 
 
     def _start_uptime_ticker(self):
@@ -3040,6 +3061,10 @@ class PCDeckProGUI:
                     "Start with Windows",
                     lambda: self.root.after(0, self.toggle_autostart_from_tray),
                     checked=lambda item: bool(getattr(self, "autostart_enabled", False)),
+                ),
+                pystray.MenuItem(
+                    "Rate on Microsoft Store",
+                    lambda: self.root.after(0, self._on_review_rate),
                 ),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(
