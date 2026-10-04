@@ -140,6 +140,118 @@ def mark_first_run_startup_prompt_done():
         pass
 
 
+def load_app_settings() -> dict:
+    """Loads ~/.pcdeck/app_settings.json safely."""
+    try:
+        config_path = os.path.join(os.path.expanduser("~"), ".pcdeck", "app_settings.json")
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def save_app_settings(data: dict):
+    """Saves ~/.pcdeck/app_settings.json safely."""
+    try:
+        cfg_dir = os.path.join(os.path.expanduser("~"), ".pcdeck")
+        os.makedirs(cfg_dir, exist_ok=True)
+        config_path = os.path.join(cfg_dir, "app_settings.json")
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
+
+def get_or_init_review_state(increment_session: bool = False) -> dict:
+    """
+    Retrieves or initializes the 3-day review prompt tracking state.
+    Increments session count if requested (on startup).
+    """
+    settings = load_app_settings()
+    now = time.time()
+    dirty = False
+
+    if "first_run_timestamp" not in settings:
+        settings["first_run_timestamp"] = now
+        dirty = True
+
+    if "session_count" not in settings:
+        settings["session_count"] = 1
+        dirty = True
+    elif increment_session:
+        settings["session_count"] = int(settings.get("session_count", 0)) + 1
+        dirty = True
+
+    if "review_prompt_status" not in settings:
+        settings["review_prompt_status"] = "pending"  # "pending", "reviewed", "dismissed"
+        dirty = True
+
+    if "review_next_prompt_time" not in settings:
+        settings["review_next_prompt_time"] = 0.0
+        dirty = True
+
+    if dirty:
+        save_app_settings(settings)
+
+    return settings
+
+
+def check_should_show_review_prompt(settings: Optional[dict] = None, current_time: Optional[float] = None) -> bool:
+    """
+    Pure evaluation rule for showing the polite 3-day review prompt:
+    1. Must be on Windows.
+    2. Status must be 'pending' (not already reviewed or permanently dismissed).
+    3. Current time must be >= review_next_prompt_time (not currently snoozed).
+    4. At least 72 hours (3 days) elapsed since first_run_timestamp.
+    5. At least 3 active sessions recorded.
+    """
+    if sys.platform != "win32":
+        return False
+
+    if settings is None:
+        settings = load_app_settings()
+
+    if settings.get("review_prompt_status") in ("reviewed", "dismissed"):
+        return False
+
+    now = current_time if current_time is not None else time.time()
+    next_prompt = float(settings.get("review_next_prompt_time", 0.0))
+    if now < next_prompt:
+        return False
+
+    first_run = float(settings.get("first_run_timestamp", now))
+    # 72 hours = 259,200 seconds
+    if (now - first_run) < (3 * 86400):
+        return False
+
+    sessions = int(settings.get("session_count", 0))
+    if sessions < 3:
+        return False
+
+    return True
+
+
+def record_review_action(action: str):
+    """
+    Records the user's action on the review card:
+    - 'reviewed': Launches store review and permanently silences prompt.
+    - 'dismissed': Permanently silences prompt ('Don't show again').
+    - 'snoozed': Postpones prompt for 7 days.
+    """
+    settings = load_app_settings()
+    now = time.time()
+    if action == "reviewed":
+        settings["review_prompt_status"] = "reviewed"
+    elif action == "dismissed":
+        settings["review_prompt_status"] = "dismissed"
+    elif action == "snoozed":
+        settings["review_next_prompt_time"] = now + (7 * 86400)
+    save_app_settings(settings)
+
+
+
 
 # ---------------------------------------------------------------------------
 # Design tokens
@@ -607,6 +719,10 @@ class PCDeckProGUI:
             self.root.title("PCDeck Pro - Wireless PC Touch Deck & Streamer")
         else:
             self.root.title("PCDeck - Wireless PC Touch Deck & Streamer")
+
+        # 3-Day Polite Store Review Tracking
+        self.review_state = get_or_init_review_state(increment_session=True)
+        self.review_card = None
 
         if not is_msix_packaged():
             self._cleanup_legacy_autostart()
@@ -1462,8 +1578,14 @@ class PCDeckProGUI:
         )
         self.lic_btn.pack(side="right", fill="x", expand=True, padx=(4, 0))
 
+        # 4b. POLITE 3-DAY STORE REVIEW CARD (Non-blocking embedded card)
+        self.right_col = right_col
+        if check_should_show_review_prompt(self.review_state):
+            self._build_review_card(right_col)
+
         # 5. SYSTEM POWER BAR (Restart & Stop)
         pwr_bar = tk.Frame(right_col, bg=C_SURFACE)
+        self.pwr_bar = pwr_bar
         pwr_bar.pack(fill="x", padx=14, pady=(6, 8))
 
         tk.Button(
@@ -1494,6 +1616,165 @@ class PCDeckProGUI:
 
         # Start live uptime ticker
         self._start_uptime_ticker()
+
+    def _build_review_card(self, parent: tk.Widget):
+        """Constructs an elegant, non-intrusive review card in the desktop window."""
+        try:
+            if hasattr(self, "review_card") and self.review_card and self.review_card.winfo_exists():
+                return
+
+            self.review_card = tk.Frame(
+                parent,
+                bg=C_SURFACE_2,
+                bd=0,
+                relief="solid",
+                highlightbackground="#ffd700",
+                highlightthickness=1,
+            )
+            # Packed before pwr_bar if pwr_bar exists, or appended
+            if hasattr(self, "pwr_bar") and self.pwr_bar and self.pwr_bar.winfo_exists():
+                self.review_card.pack(fill="x", padx=14, pady=4, before=self.pwr_bar)
+            else:
+                self.review_card.pack(fill="x", padx=14, pady=4)
+
+            # Header row: Title + Close Button
+            rev_hdr = tk.Frame(self.review_card, bg=C_SURFACE_2)
+            rev_hdr.pack(fill="x", padx=10, pady=(6, 2))
+
+            tk.Label(
+                rev_hdr,
+                text="★ FIND PCDECK USEFUL?",
+                font=F_LABEL,
+                fg="#ffd700",
+                bg=C_SURFACE_2,
+            ).pack(side="left")
+
+            close_btn = tk.Button(
+                rev_hdr,
+                text="✕",
+                font=(F_FAMILY, 9),
+                fg=C_TEXT_DIM,
+                bg=C_SURFACE_2,
+                activeforeground=C_TEXT,
+                activebackground=C_SURFACE_2,
+                bd=0,
+                cursor="hand2",
+                command=self._on_review_dismiss,
+            )
+            close_btn.pack(side="right")
+
+            # Body description matching download page tone
+            rev_msg = (
+                "PCDeck is built by an indie developer with zero ads. "
+                "If it's been useful to you over the past few days, a quick rating on the "
+                "Microsoft Store helps keep it free and maintained."
+            )
+            tk.Label(
+                self.review_card,
+                text=rev_msg,
+                font=F_SMALL,
+                fg=C_TEXT,
+                bg=C_SURFACE_2,
+                justify="left",
+                wraplength=480,
+            ).pack(anchor="w", padx=10, pady=(0, 6))
+
+            # Action button row
+            rev_actions = tk.Frame(self.review_card, bg=C_SURFACE_2)
+            rev_actions.pack(fill="x", padx=10, pady=(0, 8))
+
+            # Button 1: Rate on Microsoft Store
+            tk.Button(
+                rev_actions,
+                text="★ Rate on Microsoft Store",
+                font=F_SMALL_STRONG,
+                fg="#000000",
+                bg="#ffd700",
+                activebackground="#facc15",
+                bd=0,
+                cursor="hand2",
+                padx=10,
+                pady=4,
+                command=self._on_review_rate,
+            ).pack(side="left", padx=(0, 6))
+
+            # Button 2: Remind in 7 days
+            tk.Button(
+                rev_actions,
+                text="Remind in 7 days",
+                font=F_SMALL,
+                fg=C_TEXT_DIM,
+                bg=C_SURFACE_3,
+                activeforeground=C_TEXT,
+                activebackground=C_BORDER,
+                bd=0,
+                cursor="hand2",
+                padx=8,
+                pady=4,
+                command=self._on_review_snooze,
+            ).pack(side="left", padx=(0, 6))
+
+            # Button 3: Don't show again
+            tk.Button(
+                rev_actions,
+                text="Don't show again",
+                font=F_SMALL,
+                fg=C_TEXT_DIM,
+                bg=C_SURFACE_2,
+                activeforeground=C_TEXT,
+                activebackground=C_SURFACE_2,
+                bd=0,
+                cursor="hand2",
+                padx=6,
+                pady=4,
+                command=self._on_review_dismiss,
+            ).pack(side="left")
+
+        except Exception as e:
+            log_debug(f"Error creating review card: {e}")
+
+    def _on_review_rate(self):
+        """User clicked Rate on Microsoft Store."""
+        record_review_action("reviewed")
+        try:
+            if sys.platform == "win32":
+                import os
+                try:
+                    os.startfile("ms-windows-store://review/?ProductId=9P4BK16LBGLS")
+                except Exception:
+                    os.system("start ms-windows-store://review/?ProductId=9P4BK16LBGLS")
+            else:
+                import webbrowser
+                webbrowser.open("https://apps.microsoft.com/detail/9P4BK16LBGLS")
+        except Exception:
+            pass
+        if hasattr(self, "review_card") and self.review_card:
+            try:
+                self.review_card.destroy()
+            except Exception:
+                pass
+            self.review_card = None
+
+    def _on_review_snooze(self):
+        """User clicked Remind in 7 days."""
+        record_review_action("snoozed")
+        if hasattr(self, "review_card") and self.review_card:
+            try:
+                self.review_card.destroy()
+            except Exception:
+                pass
+            self.review_card = None
+
+    def _on_review_dismiss(self):
+        """User clicked Don't show again or closed the card."""
+        record_review_action("dismissed")
+        if hasattr(self, "review_card") and self.review_card:
+            try:
+                self.review_card.destroy()
+            except Exception:
+                pass
+            self.review_card = None
+
 
     def _start_uptime_ticker(self):
         self._update_uptime_tick()

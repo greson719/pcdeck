@@ -864,12 +864,12 @@ Before committing or releasing updates:
 - **Partner Center Active Lifecycle**:
   - Product ID: `9P4BK16LBGLS`
   - Version: `2.7.3.0` (Code `273`, x64)
-  - Submission State: **v2.7.3.0 Ready for Partner Center Submission** (SHA256: `7681C0D5F99A060373C3493D89DE96A17DE9F395D3E18EFD7F89D2E43F3AD820`).
+  - Submission State: **v2.7.3.0 Ready for Partner Center Submission** (SHA256: `C0A4AE20E5A5F6C4AFCDA5CD8440110BD953CA5DACE72ABA353419290846B490`).
   - IARC Certificate: Global Rating ID `38db0842-8646-8777-89a0-3f95036cee7f` (ESRB: Everyone, PEGI 3+).
 
 ---
 
-## 38. Microsoft Store Acquisition Analytics & Anti-Bloat Review Invariant
+## 38. Microsoft Store Acquisition Analytics & Anti-Bloat Desktop Review Architecture
 
 - **Launch Velocity & Acquisition Conversion**:
   - In its first 72 hours of store publication (Sep 23–25, 2026), PCDeck achieved:
@@ -877,11 +877,20 @@ Before committing or releasing updates:
     - **13 Successful Installations** (48.15% conversion rate vs. 5–10% industry standard).
     - **100% Install Success Rate** (zero MSIX deployment failures).
     - **5 Immediate First-Time Launches**.
-- **Anti-Bloat In-App Review Policy (CRITICAL)**:
-  - **Zero In-App Rating Popups**: Never inject rating banners, popups, or nag modals into the live app UI (`static/index.html`, `static/app.js`, `android_app/assets/`). The trackpad and screen streaming experience must remain 100% unbloated and distraction-free.
-  - **Download-Triggered Placement Only**: The Microsoft Store review note is strictly displayed in the download confirmation banner on `/download/windows/`:
-    `Find PCDeck useful? A quick rating on the Microsoft Store page helps an indie developer like me a lot.`
-  - **Policy 10.8 Developer Compliance**: The developer must NEVER submit self-reviews using the developer/publisher Microsoft account to prevent automated rating manipulation flags.
+- **Desktop 3-3-1 Polite Review Architecture (Policy 10.8 Compliant)**:
+  - **Zero Mobile Interruption Invariant**: The mobile and browser trackpad controller is strictly forbidden from displaying any rating popups, modals, or banners during active mouse/keyboard/gamepad touch interactions.
+  - **The 3-3-1 Desktop Rule**:
+    1. *3 Days Elapsed*: Minimum 72 hours since initial installation (`first_run_timestamp` in `~/.pcdeck/app_settings.json`).
+    2. *3+ Active Sessions*: Minimum 3 connection/launch sessions (`session_count >= 3`). Filters exclusively for retained, satisfied users.
+    3. *1 Calm Desktop Card*: Embedded quietly inside the PCDeck desktop window (`server/gui.py`), never stealing focus or blocking inputs.
+  - **Copywriting Standard (Indie Tone)**:
+    `Find PCDeck useful? PCDeck is built by an indie developer with zero ads. If it's been useful to you over the past few days, a quick rating on the Microsoft Store helps keep it free and maintained.`
+  - **Action Controls & Lifecycle**:
+    - `★ Rate on Microsoft Store`: Launches `ms-windows-store://review/?ProductId=9P4BK16LBGLS`. Permanently saves `review_prompt_status: "reviewed"`. Never shows again.
+    - `Remind in 7 days`: Snoozes prompt by setting `review_next_prompt_time: now + 7 days`.
+    - `Don't show again`: Permanently saves `review_prompt_status: "dismissed"`. Never shows again.
+  - **Download-Triggered Placement**: Re-stated subtly in download confirmation banner on `/download/windows/`.
+  - **Policy 10.8 Developer Compliance**: The developer must NEVER submit self-reviews using developer credentials.
 
 ---
 

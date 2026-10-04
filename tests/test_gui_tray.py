@@ -83,3 +83,66 @@ def test_msix_safeguards(monkeypatch, tmp_path):
     assert not bad_lnk1.exists()
     assert not bad_lnk2.exists()
 
+
+def test_polite_review_prompt_logic(monkeypatch):
+    """Verify polite review prompt 3-day (72h) and 3-session rule, snooze, and dismissal."""
+    import server.gui as gui_module
+
+    monkeypatch.setattr(gui_module.sys, "platform", "win32")
+
+    now = 1000000.0
+
+    # 1. New install: 0 days elapsed, 1 session -> False
+    st1 = {
+        "first_run_timestamp": now,
+        "session_count": 1,
+        "review_prompt_status": "pending",
+        "review_next_prompt_time": 0.0,
+    }
+    assert gui_module.check_should_show_review_prompt(st1, current_time=now) is False
+
+    # 2. 1 day elapsed (86400s), 5 sessions -> False (< 3 days)
+    st2 = {
+        "first_run_timestamp": now - 86400,
+        "session_count": 5,
+        "review_prompt_status": "pending",
+        "review_next_prompt_time": 0.0,
+    }
+    assert gui_module.check_should_show_review_prompt(st2, current_time=now) is False
+
+    # 3. 4 days elapsed (4 * 86400s), only 2 sessions -> False (< 3 sessions)
+    st3 = {
+        "first_run_timestamp": now - (4 * 86400),
+        "session_count": 2,
+        "review_prompt_status": "pending",
+        "review_next_prompt_time": 0.0,
+    }
+    assert gui_module.check_should_show_review_prompt(st3, current_time=now) is False
+
+    # 4. 4 days elapsed, 4 sessions, status pending -> True!
+    st4 = {
+        "first_run_timestamp": now - (4 * 86400),
+        "session_count": 4,
+        "review_prompt_status": "pending",
+        "review_next_prompt_time": 0.0,
+    }
+    assert gui_module.check_should_show_review_prompt(st4, current_time=now) is True
+
+    # 5. User snoozed ("Remind in 7 days") -> False while now < next_prompt_time
+    st5 = dict(st4)
+    st5["review_next_prompt_time"] = now + (7 * 86400)
+    assert gui_module.check_should_show_review_prompt(st5, current_time=now) is False
+    # But fires again after 7 days (now + 8 days)
+    assert gui_module.check_should_show_review_prompt(st5, current_time=now + (8 * 86400)) is True
+
+    # 6. User clicked "Don't show again" ("dismissed") -> Permanently False
+    st6 = dict(st4)
+    st6["review_prompt_status"] = "dismissed"
+    assert gui_module.check_should_show_review_prompt(st6, current_time=now + (30 * 86400)) is False
+
+    # 7. User clicked "Rate on Microsoft Store" ("reviewed") -> Permanently False
+    st7 = dict(st4)
+    st7["review_prompt_status"] = "reviewed"
+    assert gui_module.check_should_show_review_prompt(st7, current_time=now + (30 * 86400)) is False
+
+

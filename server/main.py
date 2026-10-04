@@ -1300,26 +1300,6 @@ async def open_transfers_folder_on_pc():
         return JSONResponse(status_code=400, content={"error": str(e)})
 
 
-@app.api_route("/api/store-review", methods=["GET", "POST", "OPTIONS"])
-@app.api_route("/api/store-review/", methods=["GET", "POST", "OPTIONS"])
-async def open_store_review_api():
-    """Directly open the official Microsoft Store review prompt on the PC screen."""
-    try:
-        if sys.platform == "win32":
-            import os
-            try:
-                os.startfile("ms-windows-store://review/?ProductId=9P4BK16LBGLS")
-            except Exception:
-                os.system("start ms-windows-store://review/?ProductId=9P4BK16LBGLS")
-        else:
-            import webbrowser
-            webbrowser.open("https://apps.microsoft.com/detail/9P4BK16LBGLS")
-        return {"status": "ok"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-
 def _parse_range(range_header: Optional[str], file_size: int):
     """Parse a single-range HTTP Range header.
 
@@ -2548,20 +2528,6 @@ async def websocket_endpoint(websocket: WebSocket):
             elif data.startswith("cam_flip,"):
                 val = data.split(",")[1] == "1"
                 camera_streamer.set_flip_horizontal(val)
-            elif data == "open_store_review":
-                try:
-                    if sys.platform == "win32":
-                        import os
-                        try:
-                            os.startfile("ms-windows-store://review/?ProductId=9P4BK16LBGLS")
-                        except Exception:
-                            os.system("start ms-windows-store://review/?ProductId=9P4BK16LBGLS")
-                    else:
-                        import webbrowser
-                        webbrowser.open("https://apps.microsoft.com/detail/9P4BK16LBGLS")
-                    await websocket.send_text("store_review_opened,1")
-                except Exception as ex:
-                    print(f"[WebSocket] Error opening store review: {ex}")
             else:
                 try:
                     dispatch_command(data)

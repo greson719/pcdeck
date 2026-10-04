@@ -97,68 +97,6 @@
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  window.triggerPcStoreReview = function () {
-    var statusEl = document.getElementById('pc-review-status');
-    var isWindows = navigator.userAgent && navigator.userAgent.indexOf('Windows') !== -1;
-    var sentToPc = false;
-
-    // 1. Send via active WebSocket connection if available
-    if (typeof mainWs !== 'undefined' && mainWs && mainWs.readyState === WebSocket.OPEN) {
-      try {
-        mainWs.send('open_store_review');
-        sentToPc = true;
-      } catch (e) {}
-    }
-
-    // 2. Also send via HTTP API on PC host
-    var host = (typeof state !== 'undefined' && state.serverHost) ? state.serverHost : window.location.hostname;
-    var port = (typeof state !== 'undefined' && state.serverPort) ? state.serverPort : (window.location.port || '8000');
-    var proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
-    var apiUrl = proto + '//' + (host || '127.0.0.1') + ':' + port + '/api/store-review';
-
-    fetch(apiUrl, { method: 'POST' })
-      .then(function (res) { return res.json(); })
-      .then(function () {
-        if (statusEl) {
-          statusEl.style.display = 'block';
-          statusEl.style.color = 'var(--neo-lime)';
-          statusEl.textContent = 'Store rating prompt opened on your PC monitor.';
-        }
-        if (typeof showToast === 'function') {
-          showToast('Store rating dialog opened on PC screen.', 'success');
-        } else if (typeof window.showDeckToast === 'function') {
-          window.showDeckToast('Store rating dialog opened on PC screen.');
-        }
-      })
-      .catch(function () {
-        if (sentToPc) {
-          if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.style.color = 'var(--neo-lime)';
-            statusEl.textContent = 'Store rating prompt sent to PC.';
-          }
-          if (typeof showToast === 'function') {
-            showToast('Store rating prompt sent to PC.', 'success');
-          }
-        } else if (isWindows) {
-          window.location.href = 'ms-windows-store://review/?ProductId=9P4BK16LBGLS';
-        } else {
-          if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.style.color = 'var(--neo-pink)';
-            statusEl.textContent = 'Connect to PC first to launch the rating prompt on your monitor.';
-          }
-          if (typeof showToast === 'function') {
-            showToast('Connect to PC first to open rating on monitor.', 'info');
-          }
-        }
-      });
-
-    if (sentToPc && statusEl) {
-      statusEl.style.display = 'block';
-      statusEl.style.color = 'var(--neo-cyan)';
-      statusEl.textContent = 'Opening rating prompt on PC monitor...';
-    }
   };
 
   // Global PCDeck Icon Registry & Helper Function
@@ -2311,16 +2249,6 @@
     }
 
     // --- Legacy Driver Message Sink (Pure Driverless Architecture) ---
-    if (data.startsWith('store_review_opened')) {
-      var revEl = document.getElementById('pc-review-status');
-      if (revEl) {
-        revEl.style.display = 'block';
-        revEl.style.color = 'var(--neo-lime)';
-        revEl.textContent = 'Store rating prompt opened on your PC monitor.';
-      }
-      showToast('Store rating dialog opened on PC screen.', 'success');
-      return;
-    }
     if (data.startsWith('gamepad_driver_') || data.startsWith('driver_') || data.startsWith('cam_driver_') || data.startsWith('mic_driver_')) {
       state.gamepadDriverInstalled = true;
       return;
