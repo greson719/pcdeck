@@ -150,3 +150,27 @@ def test_screen_streamer_sleep_and_wake_lifecycle():
     assert streamer._wake_event.is_set()
 
 
+def test_store_review_api_endpoint(client, monkeypatch):
+    """Verify /api/store-review handles GET, POST, and OPTIONS with mocked launcher."""
+    import os
+    import webbrowser
+
+    monkeypatch.setattr(os, "startfile", lambda uri: None, raising=False)
+    monkeypatch.setattr(os, "system", lambda cmd: 0, raising=False)
+    monkeypatch.setattr(webbrowser, "open", lambda url: True, raising=False)
+
+    # Test POST
+    resp_post = client.post("/api/store-review")
+    assert resp_post.status_code == 200
+    assert resp_post.json() == {"status": "ok"}
+
+    # Test GET
+    resp_get = client.get("/api/store-review")
+    assert resp_get.status_code == 200
+    assert resp_get.json() == {"status": "ok"}
+
+    # Test OPTIONS
+    resp_opt = client.options("/api/store-review")
+    assert resp_opt.status_code == 200
+
+
