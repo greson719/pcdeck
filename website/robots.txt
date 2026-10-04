@@ -1,39 +1,55 @@
 # robots.txt - https://pcdeck.vercel.app/
 # PCDeck: wireless trackpad, desktop screen streaming and file transfer for Windows + Android.
 
-# ---------------------------------------------------------------------------
-# Classic search engines
-# ---------------------------------------------------------------------------
+# Universal rules for all web crawlers
+User-agent: *
+Allow: /
+Disallow: /website/
+Disallow: /*.exe$
+Disallow: /*.apk$
+Disallow: /*.zip$
+Disallow: /*.sh$
+Disallow: /admin/
+Disallow: /ignore-my-visit/
+
+# Search engine crawlers
 User-agent: Googlebot
 Allow: /
+Disallow: /website/
+Disallow: /*.exe$
+Disallow: /*.apk$
+Disallow: /*.zip$
+Disallow: /*.sh$
+Disallow: /admin/
+Disallow: /ignore-my-visit/
 
 User-agent: GoogleOther
 Allow: /
+Disallow: /website/
+Disallow: /*.exe$
+Disallow: /*.apk$
+Disallow: /*.zip$
+Disallow: /*.sh$
 
 User-agent: Bingbot
 Allow: /
+Disallow: /website/
+Disallow: /*.exe$
+Disallow: /*.apk$
+Disallow: /*.zip$
+Disallow: /*.sh$
+Disallow: /admin/
+Disallow: /ignore-my-visit/
 
 User-agent: DuckDuckBot
 Allow: /
+Disallow: /website/
+Disallow: /*.exe$
+Disallow: /*.apk$
+Disallow: /*.zip$
+Disallow: /*.sh$
 
-User-agent: Slurp
-Allow: /
-
-User-agent: YandexBot
-Allow: /
-
-User-agent: Baiduspider
-Allow: /
-
-# ---------------------------------------------------------------------------
-# AI answer engines and assistants.
-#
-# These are listed explicitly and allowed on purpose. PCDeck is a small
-# independent tool that is not on the Microsoft Store or Google Play, so being
-# quotable by an assistant is a primary discovery channel: people describe the
-# problem ("my laptop screen is broken, can I use my phone as the display")
-# rather than searching a brand name they have never heard of.
-# ---------------------------------------------------------------------------
+# AI answer engines and discovery assistants
 User-agent: PerplexityBot
 Allow: /
 
@@ -66,41 +82,5 @@ Allow: /
 
 User-agent: Applebot-Extended
 Allow: /
-
-User-agent: meta-externalagent
-Allow: /
-
-User-agent: Amazonbot
-Allow: /
-
-User-agent: Bytespider
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: cohere-ai
-Allow: /
-
-User-agent: MistralAI-User
-Allow: /
-
-User-agent: YouBot
-Allow: /
-
-# ---------------------------------------------------------------------------
-# Everything else
-# ---------------------------------------------------------------------------
-User-agent: *
-Allow: /
-
-# Prevent duplicate indexing of repository subdirectory mirror
-Disallow: /website/
-
-# Binaries and scripts; there is nothing to index inside them.
-Disallow: /*.exe$
-Disallow: /*.apk$
-Disallow: /*.zip$
-Disallow: /*.sh$
 
 Sitemap: https://pcdeck.vercel.app/sitemap.xml

@@ -28,7 +28,7 @@ ROOT = os.path.normpath(os.path.join(HERE, ".."))
 SITE = os.path.join(ROOT, "website")
 PAGE = os.path.join(SITE, "index.html")
 
-TARGETS = ["PCDeck.apk", "PCDeck.aab", "PCDeck.exe", "PCDeck-Setup.exe"]
+TARGETS = ["PCDeck.apk", "PCDeck.aab", "PCDeck.exe"]
 
 BEGIN = "<!-- CHECKSUMS:BEGIN"
 END = "<!-- CHECKSUMS:END -->"

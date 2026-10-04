@@ -294,17 +294,25 @@ Before committing or releasing updates:
 
 ---
 
-## 13. Production Release v2.7.2 Specifications
+## 13. Production Release v2.7.3 Specifications
 
 | Target Binary | File Size | Version / Build | Verification Status |
 | :--- | :--- | :--- | :--- |
-| `PCDeck.exe` | **36.3 MB** | v2.7.2 (2.7.2.0 Win32 meta) | Passed · Standalone PyInstaller with auto-ping & update prompt |
-| `PCDeck-Setup.exe` | **37.68 MB** | v2.7.2 | Passed · Inno Setup full installer with auto-upgrade |
-| `PCDeck.apk` | **690.8 KB** | v2.7.2 (Code 272) | Passed · v1/v2/v3 aligned & signed with OTA update check |
-| `PCDeck.aab` | **666 KB** | v2.7.2 (Code 272) | Passed · Google Play Bundletool signed |
-| `PCDeck.msix` | **45.7 MB** | v2.7.2.0 | Passed · Store manifest validated |
+| `PCDeck.exe` | **36.3 MB** | v2.7.3 (2.7.3.0 Win32 meta) | Passed · Standalone Portable PyInstaller binary with auto-ping & update prompt |
+| `PCDeck.msix` | **38.27 MB** | v2.7.3.0 (Code 273) | Passed · Store manifest validated, signed package for Microsoft Partner Center |
+| `PCDeck.apk` | **690.8 KB** | v2.7.3 (Code 273) | Passed · v1/v2/v3 aligned & signed with OTA update check |
+| `PCDeck.aab` | **666 KB** | v2.7.3 (Code 273) | Passed · Google Play Bundletool signed |
 
 - **Version Consistency Invariant**: All components (`pyproject.toml`, `MainActivity.java`, `app.js` `CURRENT_APP_VERSION_NAME`, `version_info.txt`, `version.json`, and website download cards) must strictly reflect the exact same version string and integer code.
+- **Permanent Discontinuation of `PCDeck-Setup.exe` & Strict 2-Option Windows Distribution Model**:
+  - `PCDeck-Setup.exe` (Inno Setup installer pipeline) is permanently discontinued and retired from all releases, build scripts, and download cards.
+  - **Rationale**:
+    1. *Eliminates Redundant Installer Bloat*: MSIX is a modern, containerized installer natively handling desktop/Start Menu registration, background auto-updates, and clean 1-click uninstalls. Maintaining an Inno Setup installer alongside MSIX creates duplicate distribution channels without adding user value.
+    2. *Bypasses SmartScreen Warning Friction*: `PCDeck-Setup.exe` triggers Windows SmartScreen warnings on direct browser downloads unless signed with an expensive commercial EV certificate. Microsoft Store MSIX / Store Web Installer installs with verified publisher trust and zero warnings.
+    3. *Streamlined Build Pipeline*: Removes the Inno Setup (`ISCC.exe` / `PCDeck_Setup.iss`) dependency, cuts host build time in half, and simplifies download landing pages.
+  - **Optimal 2-Option Strategy**:
+    1. *Microsoft Store (`PCDeck.msix` / Store Direct Web Installer `9P4BK16LBGLS`)*: For mainstream users seeking an auto-updating, SmartScreen-free experience with publisher trust.
+    2. *Standalone Portable (`PCDeck.exe`)*: For power users seeking a portable, zero-install binary that runs immediately from anywhere.
 - **Deprecation of `PCDeck_Package.zip` & Strict 3-Card Download Layout Invariant**:
   - `PCDeck.exe` bundles `PCDeck.apk` directly inside its PyInstaller asset payload and automatically serves it over the local Wi-Fi network at `GET /PCDeck.apk`.
   - Phone users scan the QR code and download `http://{LOCAL_IP}:8000/PCDeck.apk` directly from the PC host with zero internet needed.
@@ -827,8 +835,19 @@ Before committing or releasing updates:
 
 ---
 
-## 37. Microsoft Store Certification Compliance & Security Invariants (v2.7.2)
+## 37. Microsoft Store Certification Compliance, Crash Resolution & Security Invariants (v2.7.3)
 
+- **MSIX Rogue Shortcut Crash Loop & UI Hang Resolution (Partner Center Health Patch)**:
+  - **Crash Spike Root Cause**: The Microsoft Partner Center Health dashboard reported 44 crashes and 4 hangs under product `9P4BK16LBGLS` (version `2.7.2.0`). Investigation revealed:
+    1. `_ensure_start_menu_shortcut()` was executing a PowerShell script inside the MSIX container to write a legacy `.lnk` shortcut into `%APPDATA%\Microsoft\Windows\Start Menu\Programs\PCDeck.lnk` targeting `C:\Program Files\WindowsApps\...\PCDeck.exe`. When users launch packaged apps via raw `.lnk` outside the package execution alias, Windows triggers an immediate `MoAppCrash` / Uncategorized termination loop.
+    2. `os.chdir(os.path.dirname(sys.executable))` into `C:\Program Files\WindowsApps\...` caused fatal `PermissionError`.
+    3. A synchronous `schtasks.exe /delete` call on the GUI main thread in `__init__` caused UI message loop hangs.
+    4. PyInstaller windowed mode (no console) caused stream write crashes when unbuffered `print(..., flush=True)` ran without redirection.
+  - **Hardened Resolution**:
+    1. **MSIX Shortcut Suppression**: Wrapped all shortcut and startup creation methods (`_ensure_start_menu_shortcut()`, `set_startup()`, etc.) in `if is_msix_packaged(): return`. Windows Store natively handles Start Menu and taskbar registration.
+    2. **Rogue Shortcut Auto-Purge**: Added `_cleanup_msix_rogue_shortcuts()` which executes during startup in MSIX mode to detect and silently delete broken `.lnk` shortcuts in Start Menu and Startup folders created by v2.7.2.
+    3. **Crash-Proof Streams & Exception Trapping**: Redirected `sys.stdout` and `sys.stderr` to `io.StringIO` fallbacks when streams are `None`, and installed `threading.excepthook` to prevent background worker crashes from terminating the host process.
+    4. **Safe Directory Switching**: Guarded `os.chdir()` with `try...except OSError` to ensure read-only `WindowsApps` paths never crash the application.
 - **Strict Enforcement of Policy 10.2.10.1 (Zero Executable Downloads from App)**:
   - **Rejection Root Cause**: Store testers previously flagged `"Download Mobile App"` in `server/gui.py` which invoked `webbrowser.open(".../PCDeck.apk")`. Store policy strictly forbids applications or metadata from initiating downloads of executables (`.apk`, `.exe`, `.msi`, `.bat`).
   - **Resolution**: Permanently replaced with in-app "How to Connect" guidance modal (`open_how_to_connect_dialog`). Displays 4 simple zero-install steps on-screen (phone camera QR scan) with a single outbound hyperlink to the website root (`https://pcdeck.vercel.app/`). Initiates zero file downloads.
@@ -844,8 +863,8 @@ Before committing or releasing updates:
     4. Desktop audio stream capture via Windows Core Audio / WASAPI loopback capture.
 - **Partner Center Active Lifecycle**:
   - Product ID: `9P4BK16LBGLS`
-  - Version: `2.7.2.0` (Code `272`, x64)
-  - Submission State: **Approved & Live Globally** in the Microsoft Store.
+  - Version: `2.7.3.0` (Code `273`, x64)
+  - Submission State: **v2.7.3.0 Ready for Partner Center Submission** (SHA256: `7681C0D5F99A060373C3493D89DE96A17DE9F395D3E18EFD7F89D2E43F3AD820`).
   - IARC Certificate: Global Rating ID `38db0842-8646-8777-89a0-3f95036cee7f` (ESRB: Everyone, PEGI 3+).
 
 ---

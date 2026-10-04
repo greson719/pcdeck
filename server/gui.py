@@ -29,6 +29,19 @@ try:
 except ImportError:
     winreg = None
 
+# Ensure sys.stdout and sys.stderr exist for windowed / noconsole PyInstaller executables
+if sys.stdout is None:
+    sys.stdout = io.StringIO()
+if sys.stderr is None:
+    sys.stderr = io.StringIO()
+
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # Ensure root directory is in sys.path so 'server.*' packages resolve
 _ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT_DIR not in sys.path:
@@ -58,8 +71,23 @@ from server.license_manager import verify_license, activate_license_online, save
 def load_pc_license() -> dict:
     return verify_license()
 
+def is_msix_packaged() -> bool:
+    """Detect if running inside an MSIX / Windows Store package identity container."""
+    if sys.platform != "win32":
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+        length = wintypes.UINT(0)
+        res = ctypes.windll.kernel32.GetCurrentPackageFullName(ctypes.byref(length), None)
+        return res != 15700  # 15700 = APPMODEL_ERROR_NO_PACKAGE
+    except Exception:
+        return False
+
 def is_first_run_startup_prompt_done() -> bool:
     """Checks whether the first-run 'Start with Windows' prompt has already been shown."""
+    if is_msix_packaged():
+        return True
     if sys.platform == "win32":
         try:
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\PCDeck", 0, winreg.KEY_READ)
@@ -84,6 +112,8 @@ def is_first_run_startup_prompt_done() -> bool:
 
 def mark_first_run_startup_prompt_done():
     """Marks the first-run 'Start with Windows' prompt as completed so it does not reappear."""
+    if is_msix_packaged():
+        return
     if sys.platform == "win32":
         try:
             key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\PCDeck")
@@ -136,20 +166,8 @@ C_SUCCESS = "#3fb950"        # connected / running
 C_WARNING = "#d29922"        # attention
 C_DANGER = "#f85149"         # stop / error
 
-CURRENT_DESKTOP_VERSION_CODE = 272
-CURRENT_DESKTOP_VERSION_NAME = "2.7.2"
-
-
-def is_msix_packaged() -> bool:
-    """Detect if running inside an MSIX / Windows Store package identity container."""
-    try:
-        import ctypes
-        from ctypes import wintypes
-        length = wintypes.UINT(0)
-        res = ctypes.windll.kernel32.GetCurrentPackageFullName(ctypes.byref(length), None)
-        return res != 15700  # 15700 = APPMODEL_ERROR_NO_PACKAGE
-    except Exception:
-        return False
+CURRENT_DESKTOP_VERSION_CODE = 273
+CURRENT_DESKTOP_VERSION_NAME = "2.7.3"
 
 # Typography: one family, hierarchy carried by size and weight rather than
 # setting everything to 8px bold.
@@ -181,6 +199,15 @@ def global_excepthook(exc_type, exc_value, exc_tb):
 
 sys.excepthook = global_excepthook
 
+def thread_excepthook(args):
+    try:
+        global_excepthook(args.exc_type, args.exc_value, args.exc_traceback)
+    except Exception:
+        pass
+
+if hasattr(threading, "excepthook"):
+    threading.excepthook = thread_excepthook
+
 # Windows High-DPI Awareness & Taskbar AppID Registration (Must be called BEFORE any Tk window is created)
 if sys.platform == "win32":
     try:
@@ -198,7 +225,11 @@ if sys.platform == "win32":
 
 # Ensure search paths and working directory
 if getattr(sys, "frozen", False):
-    os.chdir(os.path.dirname(sys.executable))
+    try:
+        if not is_msix_packaged():
+            os.chdir(os.path.dirname(sys.executable))
+    except Exception:
+        pass
     current_dir = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
 else:
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -577,7 +608,10 @@ class PCDeckProGUI:
         else:
             self.root.title("PCDeck - Wireless PC Touch Deck & Streamer")
 
-        self._cleanup_legacy_autostart()
+        if not is_msix_packaged():
+            self._cleanup_legacy_autostart()
+        else:
+            self._cleanup_msix_rogue_shortcuts()
         self._build_ui()
         self.start_server()
         self._init_wifi_reconnector()
@@ -596,8 +630,8 @@ class PCDeckProGUI:
         self.tray_icon = None
         self._init_tray_icon()
 
-        # Ensure elevated autostart task is registered and synced if enabled
-        if self.autostart_enabled:
+        # Ensure elevated autostart task is registered and synced if enabled (Win32 standalone only)
+        if self.autostart_enabled and not is_msix_packaged():
             threading.Thread(target=self._ensure_autostart_task_scheduler, daemon=True).start()
 
         if self.start_minimized:
@@ -610,8 +644,9 @@ class PCDeckProGUI:
             except Exception:
                 pass
         else:
-            # First-run onboarding: Prompt user to enable Start with Windows
-            self.root.after(700, self._check_first_run_startup_prompt)
+            # First-run onboarding: Prompt user to enable Start with Windows (Win32 standalone only)
+            if not is_msix_packaged():
+                self.root.after(700, self._check_first_run_startup_prompt)
 
         self.root.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
 
@@ -1654,9 +1689,35 @@ class PCDeckProGUI:
         except Exception:
             pass
 
+    def _cleanup_msix_rogue_shortcuts(self):
+        r"""
+        In MSIX package installations, Windows manages the Start Menu and autostart natively.
+        Purges any broken raw Win32 .lnk files in Start Menu / Startup created by previous versions
+        that point directly into C:\Program Files\WindowsApps (which causes Windows to abort/crash on launch).
+        """
+        if sys.platform != "win32":
+            return
+        try:
+            appdata = os.environ.get("APPDATA", "")
+            if not appdata:
+                return
+            for folder in [
+                os.path.join(appdata, r"Microsoft\Windows\Start Menu\Programs"),
+                os.path.join(appdata, r"Microsoft\Windows\Start Menu\Programs\Startup"),
+            ]:
+                lnk_file = os.path.join(folder, "PCDeck.lnk")
+                if os.path.exists(lnk_file):
+                    try:
+                        os.remove(lnk_file)
+                        log_debug(f"[MSIX Cleanup] Removed conflicting shortcut: {lnk_file}")
+                    except Exception as e:
+                        log_debug(f"[MSIX Cleanup] Error removing {lnk_file}: {e}")
+        except Exception as e:
+            log_debug(f"[MSIX Cleanup] Exception: {e}")
+
     def _ensure_start_menu_shortcut(self):
         """Ensures a valid Start Menu shortcut exists with AppUserModelID and icon for Windows 10/11 Action Center."""
-        if sys.platform != "win32":
+        if sys.platform != "win32" or is_msix_packaged():
             return
         try:
             exe_path = self._get_autostart_exe_path()
@@ -1691,7 +1752,7 @@ class PCDeckProGUI:
 
     def _cleanup_legacy_autostart(self):
         """Purges any obsolete Run registry entries and scheduled tasks from previous versions."""
-        if sys.platform != "win32":
+        if sys.platform != "win32" or is_msix_packaged():
             return
         # 1. Clean legacy registry Run keys (HKCU & HKLM)
         try:
@@ -1743,7 +1804,7 @@ class PCDeckProGUI:
         Windows Startup Folder Shortcut (%APPDATA%\\...\\Startup\\PCDeck.lnk).
         Prevents triple-launching, UAC blocks, and UIPI privilege isolation issues.
         """
-        if sys.platform != "win32":
+        if sys.platform != "win32" or is_msix_packaged():
             return
         startup_dir = os.path.join(os.environ.get("APPDATA", ""), r"Microsoft\Windows\Start Menu\Programs\Startup")
         startup_shortcut = os.path.join(startup_dir, "PCDeck.lnk") if startup_dir else ""
@@ -1790,7 +1851,7 @@ class PCDeckProGUI:
 
     def _ensure_autostart_task_scheduler(self):
         """Verifies and ensures the authoritative startup shortcut is in sync on launch."""
-        if sys.platform != "win32":
+        if sys.platform != "win32" or is_msix_packaged():
             return
         try:
             self._ensure_start_menu_shortcut()
@@ -1807,7 +1868,7 @@ class PCDeckProGUI:
         Primary source of truth: Windows Startup folder shortcut.
         Migrates legacy Run registry entries or scheduled tasks if found.
         """
-        if sys.platform != "win32":
+        if sys.platform != "win32" or is_msix_packaged():
             return False
 
         # 1. Authoritative check: Windows Startup Folder Shortcut

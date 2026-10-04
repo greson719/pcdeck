@@ -110,18 +110,5 @@ def build():
         except Exception:
             pass
 
-    # Build Setup Installer (PCDeck-Setup.exe)
-    iss_file = ROOT / "PCDeck_Setup.iss"
-    if iss_file.exists():
-        print("\n=======================================================")
-        print("       [+] BUILDING PCDECK SETUP INSTALLER             ")
-        print("=======================================================")
-        try:
-            sys.path.insert(0, str(ROOT / "tools"))
-            import build_installer
-            build_installer.build_installer()
-        except Exception as e:
-            print(f"[-] Note: Setup installer build skipped: {e}")
-
 if __name__ == "__main__":
     build()

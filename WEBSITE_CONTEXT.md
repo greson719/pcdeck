@@ -80,6 +80,11 @@
   - **Absolute Prohibition on 4th Offline ZIP Bundle (`PCDeck_Package.zip`)**:
     - `PCDeck.exe` already embeds `PCDeck.apk` directly and serves it to mobile devices over local LAN at `GET /PCDeck.apk` upon scanning the pairing QR code.
     - Never add `PCDeck_Package.zip` back to `#download-cards` or subpages. It caused confusion, layout clutter, and release bloat.
+  - **Windows 2-Option Distribution Model & Prohibition on Setup Installers**:
+    - Windows distribution is strictly governed by a 2-option model:
+      1. **Microsoft Store (`PCDeck.msix` / Store Direct Web Installer)**: Default for installed usage. Auto-updating, signed with verified Microsoft publisher trust, and zero SmartScreen friction.
+      2. **Standalone Portable (`PCDeck.exe`)**: For users seeking a zero-install binary that runs immediately from anywhere.
+    - **Permanent Discontinuation of `PCDeck-Setup.exe`**: Inno Setup (`ISCC.exe` / `PCDeck_Setup.iss`) is permanently retired. Never add `PCDeck-Setup.exe` or traditional Win32 installer downloads back to the website.
 
 ---
 

@@ -97,6 +97,70 @@
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  window.triggerPcStoreReview = function () {
+    var statusEl = document.getElementById('pc-review-status');
+    var isWindows = navigator.userAgent && navigator.userAgent.indexOf('Windows') !== -1;
+    var sentToPc = false;
+
+    // 1. Send via active WebSocket connection if available
+    if (typeof mainWs !== 'undefined' && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try {
+        mainWs.send('open_store_review');
+        sentToPc = true;
+      } catch (e) {}
+    }
+
+    // 2. Also send via HTTP API on PC host
+    var host = (typeof state !== 'undefined' && state.serverHost) ? state.serverHost : window.location.hostname;
+    var port = (typeof state !== 'undefined' && state.serverPort) ? state.serverPort : (window.location.port || '8000');
+    var proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    var apiUrl = proto + '//' + (host || '127.0.0.1') + ':' + port + '/api/store-review';
+
+    fetch(apiUrl, { method: 'POST' })
+      .then(function (res) { return res.json(); })
+      .then(function () {
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.style.color = 'var(--neo-lime)';
+          statusEl.textContent = 'Store rating prompt opened on your PC monitor.';
+        }
+        if (typeof showToast === 'function') {
+          showToast('Store rating dialog opened on PC screen.', 'success');
+        } else if (typeof window.showDeckToast === 'function') {
+          window.showDeckToast('Store rating dialog opened on PC screen.');
+        }
+      })
+      .catch(function () {
+        if (sentToPc) {
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.style.color = 'var(--neo-lime)';
+            statusEl.textContent = 'Store rating prompt sent to PC.';
+          }
+          if (typeof showToast === 'function') {
+            showToast('Store rating prompt sent to PC.', 'success');
+          }
+        } else if (isWindows) {
+          window.location.href = 'ms-windows-store://review/?ProductId=9P4BK16LBGLS';
+        } else {
+          if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.style.color = 'var(--neo-pink)';
+            statusEl.textContent = 'Connect to PC first to launch the rating prompt on your monitor.';
+          }
+          if (typeof showToast === 'function') {
+            showToast('Connect to PC first to open rating on monitor.', 'info');
+          }
+        }
+      });
+
+    if (sentToPc && statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--neo-cyan)';
+      statusEl.textContent = 'Opening rating prompt on PC monitor...';
+    }
+  };
+
   // Global PCDeck Icon Registry & Helper Function
   const PC_DECK_ICONS = {
     lock: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
@@ -2129,6 +2193,11 @@
     clearAutoReconnect();
     saveAllSettings(false);
 
+    try {
+      var sc = parseInt(localStorage.getItem('pcdeck_sess_count') || '0', 10) + 1;
+      localStorage.setItem('pcdeck_sess_count', sc.toString());
+    } catch (e) {}
+
     // Engage native Android low-latency Wi-Fi performance lock immediately upon connection
     if (window.AndroidApp && typeof window.AndroidApp.setLowLatencyWifiEnabled === 'function') {
       try { window.AndroidApp.setLowLatencyWifiEnabled(true); } catch (e) {}
@@ -2242,6 +2311,16 @@
     }
 
     // --- Legacy Driver Message Sink (Pure Driverless Architecture) ---
+    if (data.startsWith('store_review_opened')) {
+      var revEl = document.getElementById('pc-review-status');
+      if (revEl) {
+        revEl.style.display = 'block';
+        revEl.style.color = 'var(--neo-lime)';
+        revEl.textContent = 'Store rating prompt opened on your PC monitor.';
+      }
+      showToast('Store rating dialog opened on PC screen.', 'success');
+      return;
+    }
     if (data.startsWith('gamepad_driver_') || data.startsWith('driver_') || data.startsWith('cam_driver_') || data.startsWith('mic_driver_')) {
       state.gamepadDriverInstalled = true;
       return;

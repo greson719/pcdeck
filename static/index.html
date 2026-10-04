@@ -618,11 +618,6 @@
       </div>
 
       <div class="nav-actions">
-        <!-- Direct Suggestion / Complaint Button for Page & Screen Viewer -->
-        <button type="button" class="neo-header-btn" id="btn-viewer-feedback" onclick="window.sendFeedbackMail()" title="Suggestions &amp; Complaints" style="color: var(--neo-pink); display: flex; align-items: center; justify-content: center;">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </button>
-
         <!-- Radio-style Segmented FPS Toggle in Title Bar (Screen Streaming) -->
         <div class="titlebar-fps-group" id="titlebar-fps-group" title="Screen Streaming Refresh Rate">
           <button type="button" class="fps-radio-btn active" id="btn-fps-30">30 FPS</button>
@@ -2594,10 +2589,27 @@
           <div class="card-header-clean">
             <div class="card-title-wrap">
               <span class="card-dot dot-cyan"></span>
-              <span class="card-title-text">Suggestions, Complaints &amp; Feedback</span>
+              <span class="card-title-text">Developer Direct &amp; Store Rating</span>
             </div>
-            <span class="mini-status-chip" style="color: var(--neo-lime); border-color: var(--neo-lime);">DEVELOPER DIRECT</span>
+            <span class="mini-status-chip" style="color: var(--neo-lime); border-color: var(--neo-lime);">SOLO INDIE DEV</span>
           </div>
+
+          <!-- Direct 1-Click Store Review on PC -->
+          <div style="background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.22); border-radius: 6px; padding: 11px 12px; margin: 10px 0 12px;">
+            <div style="font-size: 0.76rem; font-weight: 800; color: #fff; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+              <span>Rate on Microsoft Store</span>
+              <span style="font-size: 0.62rem; color: var(--neo-lime); font-weight: 700; letter-spacing: 0.5px;">1-CLICK ON PC</span>
+            </div>
+            <p style="font-size: 0.69rem; color: var(--text-muted); margin: 0 0 10px; line-height: 1.45;">
+              PCDeck is built independently with zero advertisements. Tapping below opens the official Store rating prompt directly on your PC monitor, where you are already signed in.
+            </p>
+            <button type="button" id="btn-trigger-pc-review" onclick="window.triggerPcStoreReview()" class="neo-btn" style="width: 100%; background: rgba(0, 240, 255, 0.12); color: var(--neo-cyan); border: 1px solid rgba(0, 240, 255, 0.4); font-weight: 800; font-size: 0.74rem; padding: 9px 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>Open Rating Dialog on PC Screen</span>
+            </button>
+            <div id="pc-review-status" style="display: none; font-size: 0.68rem; color: var(--neo-lime); margin-top: 6px; text-align: center; font-weight: 600;"></div>
+          </div>
+
           <p style="font-size: 0.72rem; color: var(--text-muted); margin: 6px 0 12px; line-height: 1.45;">
             Have a suggestion, performance complaint, or bug to report? Talk directly with the creator — every message gets a personal reply.
           </p>

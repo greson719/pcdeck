@@ -25,6 +25,10 @@ Lazy about the solution — never lazy about reading the existing code first.
 ## 3. Project Invariants
 - Follow all architectural rules defined in `PROJECT_CONTEXT.md` and `WEBSITE_CONTEXT.md`.
 - **PCDeck_Package.zip Deprecation**: NEVER build, package, or re-add `PCDeck_Package.zip` to releases, download cards, or websites. `PCDeck.exe` already embeds `PCDeck.apk` and serves it locally over Wi-Fi at `GET /PCDeck.apk`. Keep download cards strictly to 3: Windows (`.exe`), Android (`.apk`), Linux (`.sh`).
+- **PCDeck-Setup.exe Discontinuation (Strict 2-Option Windows Model)**: NEVER build, package, or re-add `PCDeck-Setup.exe` (Inno Setup installer). Windows distribution is strictly a 2-option model:
+  1. **Microsoft Store (`.msix` / Store Web Installer)**: For regular users desiring an installed, auto-updating app with verified publisher trust and zero SmartScreen friction.
+  2. **Standalone Portable (`PCDeck.exe`)**: For users wanting a portable, zero-install binary that runs immediately from anywhere.
+  The Inno Setup (`ISCC.exe` / `PCDeck_Setup.iss`) pipeline is permanently retired.
 - Never use `cd` in PowerShell; use absolute paths or `Cwd`.
 - Sync assets (`static/` <-> `android_app/assets/`) and rebuild binaries when UI/core code changes.
 - Run `python build_apk.py` after any HTML/JS/CSS/Java changes.
