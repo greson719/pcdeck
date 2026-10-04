@@ -1667,10 +1667,11 @@ class PCDeckProGUI:
             )
             close_btn.pack(side="right")
 
-            # Body description: professional, authentic product copy
+            # Body description: indie developer sympathetic review
             rev_msg = (
-                "If PCDeck has been useful for your setup, taking a moment to rate it on the "
-                "Microsoft Store helps support ongoing development and new features."
+                "PCDeck is built by an indie developer. If the app has been useful to you "
+                "over the past few days, a quick rating on the Microsoft Store helps an "
+                "indie developer like me a lot."
             )
             tk.Label(
                 self.review_card,
@@ -1789,7 +1790,7 @@ class PCDeckProGUI:
             record_review_action("snoozed", days=5)
             self.review_state = load_app_settings()
             self.show_notification(
-                "If PCDeck has been useful, a quick rating on the Microsoft Store helps support ongoing development.",
+                "A quick rating on the Microsoft Store helps an indie developer like me a lot.",
                 "Enjoying PCDeck?",
             )
         except Exception as e:
