@@ -2548,7 +2548,7 @@ class PCDeckProGUI:
 
         tk.Label(
             pad,
-            text="Enables 60/120 FPS screen streaming, uncapped local file transfer speeds, and custom themes across all connected devices.",
+            text="Pay once: $3.99 — No subscriptions, no ads, free updates forever.\nEnables 60/120 FPS screen streaming, 1080p 60fps webcam, uncapped LAN transfers, and custom themes across all devices.",
             font=F_SMALL,
             fg=C_TEXT_DIM,
             bg=C_SURFACE,
@@ -2604,7 +2604,7 @@ class PCDeckProGUI:
 
         tk.Button(
             btn_row,
-            text="Buy License ($3.99)",
+            text="Get Pro ($3.99)",
             font=F_BODY_STRONG,
             fg=C_TEXT,
             bg=C_SURFACE_3,

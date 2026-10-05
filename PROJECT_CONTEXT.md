@@ -159,18 +159,15 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 
 ---
 
-## 7. Lemon Squeezy Pro Licensing & Anti-Tamper Security Architecture
+## 7. Pro Licensing, Payment Architecture & Anti-Tamper Security
 
-### Live Store & Checkout Details
-- **Store Domain**: `pcdeck.lemonsqueezy.com`
+### Payment Gateway Architecture: Dodo Payments (dodopayments.com)
+- **Status**: Migrating from Lemon Squeezy to Dodo Payments for frictionless Aadhaar + e-PAN individual developer KYC, global MoR tax handling, direct INR payouts, and native Apple Pay / Google Pay / Cards / UPI.
 - **Product Name**: `PCDeck Pro — Lifetime License` ($3.99 one-time)
-- **Live Checkout URL**: `https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3`
-
-### Official Lemon Squeezy License API Endpoints
-Direct, public client-safe endpoints that require zero private API keys or custom cloud infrastructure:
-- **Activation**: `POST https://api.lemonsqueezy.com/v1/licenses/activate` (`license_key`, `instance_name`).
-- **Validation**: `POST https://api.lemonsqueezy.com/v1/licenses/validate` (`license_key`, `instance_id`).
-- **Deactivation**: `POST https://api.lemonsqueezy.com/v1/licenses/deactivate` (`license_key`, `instance_id`).
+- **Business Profile**: `PCDeck` / Developer: `Greson Parichha`
+- **Product URL / Website**: `https://pcdeck.vercel.app`
+- **Pricing Strategy**: Flat transparent $3.99 lifetime ownership (no fake discounts, no subscriptions, no ads, lifetime updates).
+- **License System**: Built-in Dodo Payments License Keys / offline HMAC-SHA256 hardware binding.
 
 ### Cryptographic Hardware Binding & Anti-Tamper Engine (`server/license_manager.py`)
 - **Hardware Fingerprint (HWID)**:
@@ -181,7 +178,7 @@ Direct, public client-safe endpoints that require zero private API keys or custo
   - Payload signature: `sig = HMAC_SHA256(machine_hwid + license_key + instance_id + salt)`.
   - If a user edits `license.dat` or copies it to another machine, the HMAC verification fails instantly and the client reverts to the Free edition.
 - **Zero Cloud Server Requirement**:
-  - PCDeck relies entirely on Lemon Squeezy's hosted licensing API for activation, and internal HMAC cryptography for offline persistence. No external servers or monthly hosting costs required.
+  - PCDeck relies entirely on hosted licensing API for activation, and internal HMAC cryptography for offline persistence. No external servers or monthly hosting costs required.
 
 ### Zero-Trust Local Server Enforcement (`server/main.py`)
 - **Command Verification**: Replaced arbitrary `pro_status` client booleans with `pro_auth,{license_key},{instance_id}`.
