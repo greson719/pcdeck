@@ -80,6 +80,9 @@ received, and optionally upload the file to VirusTotal.
 - **Linux Installation & Security Documentation** — https://pcdeck.vercel.app/linux-install/
   Complete technical breakdown of the 1-line install.sh script, package dependencies, user permissions, and clean uninstall commands.
 
+- **How to Use iPhone as an HD Webcam for Windows (No App Required)** — https://pcdeck.vercel.app/use-iphone-as-webcam-windows/
+  Turn iPhone or iPad into an ultra-sharp 1080p/4K wireless webcam for Windows 10 & 11 over local Wi-Fi. Zero iOS apps required (runs via mobile Safari QR scan). Streams into Zoom, Google Meet, Teams, Discord, OBS Studio, and multimodal AI/LLM computer vision pipelines.
+
 
 - **How to use an Android phone as a mouse for PC** — https://pcdeck.vercel.app/use-phone-as-mouse/
   Turns your phone into a multi-touch trackpad over local Wi-Fi. Supports
