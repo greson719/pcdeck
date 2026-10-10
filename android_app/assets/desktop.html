@@ -532,8 +532,15 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             <span>DOWNLOAD APK</span>
           </a>
-          <a href="https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="padding: 0 10px; font-size: 0.8rem;">
+          <a href="https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://pcdeck.vercel.app" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="padding: 0 10px; font-size: 0.8rem;">
             <span>UPGRADE PRO ⚡</span>
+          </a>
+        </div>
+
+        <!-- Optional Regional PPP Local Price for Desktop Web Launcher -->
+        <div id="desktop-local-price-wrap" style="display: none; text-align: center; margin-top: 6px;">
+          <a href="https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://pcdeck.vercel.app" target="_blank" style="color: var(--neo-cyan); font-size: 0.74rem; font-weight: 700; text-decoration: underline;">
+            Check your local price at checkout (PPP enabled) &rarr;
           </a>
         </div>
 
@@ -851,6 +858,25 @@
         }
       });
     }
+
+    // Regional PPP banner check
+    try {
+      const tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+      const westernPrefixes = [
+        'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+        'America/Phoenix', 'America/Anchorage', 'America/Honolulu', 'America/Detroit',
+        'America/Indiana', 'America/Boise', 'America/Toronto', 'America/Vancouver',
+        'America/Montreal', 'America/Edmonton', 'America/Winnipeg', 'America/Halifax',
+        'Europe/London', 'Europe/Dublin', 'Europe/Berlin', 'Europe/Paris',
+        'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Madrid', 'Europe/Rome',
+        'Europe/Vienna', 'Europe/Zurich', 'Europe/Stockholm', 'Europe/Oslo',
+        'Europe/Copenhagen', 'Europe/Helsinki', 'Europe/Lisbon', 'Europe/Luxembourg',
+        'Australia/', 'Pacific/Auckland', 'Asia/Tokyo'
+      ];
+      const isWestern = westernPrefixes.some(p => tz.startsWith(p));
+      const pppWrap = document.getElementById('desktop-local-price-wrap');
+      if (pppWrap) pppWrap.style.display = isWestern ? 'none' : 'block';
+    } catch (e) {}
 
     fetchInfo();
     setInterval(fetchInfo, 2500);

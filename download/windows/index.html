@@ -105,7 +105,8 @@ function triggerDownload() {
   a.click();
   document.body.removeChild(a);
   try {
-    window.va('track', 'Download', { file: 'PCDeck Installer.exe', platform: 'windows-msstore-direct' });
+    window.va('event', { name: 'download_windows_msstore', data: { file: 'PCDeck Installer.exe', platform: 'windows-msstore-direct' } });
+    window.va('event', { name: 'download_windows' });
   } catch (e) {}
 }
 

@@ -194,7 +194,7 @@
     s.src = '/_vercel/insights/script.js';
     document.head.appendChild(s);
 
-    // Automated Custom Event Tracking for Downloads and Guide Navigation
+    // Automated Custom Event Tracking for Downloads, Mobile Bridge, and Guide Navigation
     document.addEventListener('click', function (e) {
       if (isBlocked) return;
       var el = e.target.closest('a, button');
@@ -202,12 +202,47 @@
       var href = (el.getAttribute('href') || '').toLowerCase();
       var text = (el.textContent || '').trim().toLowerCase();
 
-      if (href.indexOf('pcdeck.exe') !== -1 || href.indexOf('/download/windows') !== -1 || text.indexOf('download for windows') !== -1 || text.indexOf('download pcdeck.exe') !== -1) {
+      // Microsoft Store & MSIX Direct Web Installer (Primary Windows Channel)
+      if (href.indexOf('get.microsoft.com') !== -1 || 
+          href.indexOf('apps.microsoft.com') !== -1 || 
+          href.indexOf('9p4bk16lbgls') !== -1 || 
+          href.indexOf('ms-windows-store:') !== -1 || 
+          text.indexOf('ms store') !== -1 || 
+          text.indexOf('microsoft store') !== -1) {
+        window.va('event', { name: 'download_windows_msstore' });
         window.va('event', { name: 'download_windows' });
-      } else if (href.indexOf('pcdeck.apk') !== -1 || href.indexOf('/download/android') !== -1 || text.indexOf('download apk') !== -1 || text.indexOf('download pcdeck.apk') !== -1) {
+      // Standalone Portable .exe (Secondary Windows Channel)
+      } else if (href.indexOf('pcdeck.exe') !== -1 || 
+                 href.indexOf('/download/windows') !== -1 || 
+                 text.indexOf('download for windows') !== -1 || 
+                 text.indexOf('download pcdeck.exe') !== -1 || 
+                 text.indexOf('standalone .exe') !== -1) {
+        window.va('event', { name: 'download_windows_exe' });
+        window.va('event', { name: 'download_windows' });
+      // Android APK Direct Download
+      } else if (href.indexOf('pcdeck.apk') !== -1 || 
+                 href.indexOf('/download/android') !== -1 || 
+                 text.indexOf('download apk') !== -1 || 
+                 text.indexOf('download pcdeck.apk') !== -1) {
         window.va('event', { name: 'download_android' });
-      } else if (href.indexOf('run_linux.sh') !== -1 || href.indexOf('/download/linux') !== -1 || href.indexOf('/linux-install') !== -1 || text.indexOf('linux setup') !== -1) {
+      // Linux 1-Line Installer / Script
+      } else if (href.indexOf('run_linux.sh') !== -1 || 
+                 href.indexOf('install.sh') !== -1 || 
+                 href.indexOf('/download/linux') !== -1 || 
+                 href.indexOf('/linux-install') !== -1 || 
+                 text.indexOf('linux setup') !== -1) {
         window.va('event', { name: 'download_linux' });
+      // Web Remote / Zero-Install Browser Launch
+      } else if (href.indexOf('/connect') !== -1 || 
+                 href.indexOf('/browser-pc-remote') !== -1 || 
+                 text.indexOf('web remote') !== -1) {
+        window.va('event', { name: 'open_web_remote' });
+      // Mobile Bridge: Email Link to PC or Copy Link
+      } else if (href.indexOf('mailto:') !== -1 && (href.indexOf('pcdeck') !== -1 || href.indexOf('download') !== -1)) {
+        window.va('event', { name: 'mobile_bridge_email' });
+      } else if (text.indexOf('copy link') !== -1 || text.indexOf('copied') !== -1) {
+        window.va('event', { name: 'mobile_bridge_copy' });
+      // Guide Documentation Reading
       } else if (el.classList.contains('guide-card') || el.closest('.guide-card')) {
         var card = el.closest('.guide-card') || el;
         var guidePath = card.getAttribute('href') || '';

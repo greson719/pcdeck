@@ -557,7 +557,7 @@ public class MainActivity extends Activity {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
             } catch (Exception e) {
-                return 272;
+                return 274;
             }
         }
 
@@ -566,7 +566,7 @@ public class MainActivity extends Activity {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
             } catch (Exception e) {
-                return "2.7.2";
+                return "2.7.4";
             }
         }
 
@@ -765,7 +765,7 @@ public class MainActivity extends Activity {
                     try {
                         URL url = new URL(apkDownloadUrl);
                         connection = (HttpURLConnection) url.openConnection();
-                        connection.setRequestProperty("User-Agent", "PCDeck-Android-App/2.7.2");
+                        connection.setRequestProperty("User-Agent", "PCDeck-Android-App/2.7.4");
                         connection.setConnectTimeout(15000);
                         connection.setReadTimeout(30000);
                         connection.connect();
@@ -1671,6 +1671,9 @@ public class MainActivity extends Activity {
                         if (filePath.startsWith("content://")) {
                             Uri uri = Uri.parse(filePath);
                             try {
+                                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            } catch (Exception ignored) {}
+                            try {
                                 inputStream = getContentResolver().openInputStream(uri);
                                 ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
                                 if (pfd != null) {
@@ -1691,8 +1694,29 @@ public class MainActivity extends Activity {
                             finally {
                                 if (cursor != null) cursor.close();
                             }
+                            if (fileName == null || fileName.isEmpty() || !fileName.contains(".")) {
+                                try {
+                                    String mime = getContentResolver().getType(uri);
+                                    if (mime != null) {
+                                        String ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);
+                                        if (ext != null && !ext.isEmpty()) {
+                                            if (fileName == null || fileName.isEmpty()) {
+                                                fileName = "shared_" + System.currentTimeMillis() + "." + ext;
+                                            } else if (!fileName.contains(".")) {
+                                                fileName = fileName + "." + ext;
+                                            }
+                                        }
+                                    }
+                                } catch (Exception ignored) {}
+                            }
                         } else {
-                            File file = new File(filePath);
+                            String actualPath = filePath;
+                            if (actualPath.startsWith("file://")) {
+                                try {
+                                    actualPath = Uri.parse(actualPath).getPath();
+                                } catch (Exception ignored) {}
+                            }
+                            File file = new File(actualPath != null ? actualPath : filePath);
                             if (file.exists() && file.isFile()) {
                                 try {
                                     inputStream = new FileInputStream(file);
@@ -1994,6 +2018,23 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String getPendingSharedFiles() {
+            synchronized (mPendingSharedUris) {
+                if (mPendingSharedUris.isEmpty()) return "[]";
+                JSONArray arr = new JSONArray(mPendingSharedUris);
+                mPendingSharedUris.clear();
+                return arr.toString();
+            }
+        }
+
+        @JavascriptInterface
+        public void clearPendingSharedFiles() {
+            synchronized (mPendingSharedUris) {
+                mPendingSharedUris.clear();
+            }
+        }
+
+        @JavascriptInterface
         public void setStreamingMode(final boolean active) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -2151,6 +2192,15 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+        }
+
+        @JavascriptInterface
+        public String getDeviceCountry() {
+            try {
+                return java.util.Locale.getDefault().getCountry();
+            } catch (Exception e) {
+                return "";
+            }
         }
 
         private AudioRecord mAudioRecord = null;
@@ -2534,6 +2584,9 @@ public class MainActivity extends Activity {
 
         // Load local bundled web assets with full UI
         webView.loadUrl(initialUrl);
+
+        // Handle incoming system share intents (Share sheet -> PCDeck)
+        handleShareIntent(getIntent());
     }
 
     @Override
@@ -2556,6 +2609,79 @@ public class MainActivity extends Activity {
                     public void run() {
                         if (webView != null) {
                             webView.evaluateJavascript("if (window.parseQrAndConnect) { window.parseQrAndConnect('" + cleanIp + "'); }", null);
+                        }
+                    }
+                });
+            }
+        }
+        handleShareIntent(intent);
+    }
+
+    private final List<String> mPendingSharedUris = new ArrayList<String>();
+
+    private void handleShareIntent(Intent intent) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        if (Intent.ACTION_SEND.equals(action) || Intent.ACTION_SEND_MULTIPLE.equals(action)) {
+            final List<String> uris = new ArrayList<String>();
+
+            if (Intent.ACTION_SEND.equals(action)) {
+                Uri streamUri = null;
+                try {
+                    streamUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                } catch (Exception ignored) {}
+
+                if (streamUri != null) {
+                    uris.add(streamUri.toString());
+                } else if (intent.getClipData() != null && intent.getClipData().getItemCount() > 0) {
+                    Uri clipUri = intent.getClipData().getItemAt(0).getUri();
+                    if (clipUri != null) uris.add(clipUri.toString());
+                } else if (intent.hasExtra(Intent.EXTRA_TEXT)) {
+                    final String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+                    if (text != null && !text.trim().isEmpty()) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (webView != null) {
+                                    webView.evaluateJavascript("if (typeof window.handleSharedText === 'function') { window.handleSharedText(" + JSONObject.quote(text) + "); }", null);
+                                }
+                            }
+                        });
+                        return;
+                    }
+                }
+            } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
+                ArrayList<Uri> extraUris = null;
+                try {
+                    extraUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+                } catch (Exception ignored) {}
+
+                if (extraUris != null && !extraUris.isEmpty()) {
+                    for (Uri u : extraUris) {
+                        if (u != null) uris.add(u.toString());
+                    }
+                } else if (intent.getClipData() != null) {
+                    int count = intent.getClipData().getItemCount();
+                    for (int i = 0; i < count; i++) {
+                        Uri clipUri = intent.getClipData().getItemAt(i).getUri();
+                        if (clipUri != null) uris.add(clipUri.toString());
+                    }
+                }
+            }
+
+            if (!uris.isEmpty()) {
+                synchronized (mPendingSharedUris) {
+                    mPendingSharedUris.clear();
+                    mPendingSharedUris.addAll(uris);
+                }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "PCDeck: Sending " + uris.size() + " shared file(s) to PC...", Toast.LENGTH_SHORT).show();
+                        JSONArray jsonArr = new JSONArray(uris);
+                        if (webView != null) {
+                            webView.evaluateJavascript("if (typeof window.handleSharedFiles === 'function') { window.handleSharedFiles(" + jsonArr.toString() + "); }", null);
                         }
                     }
                 });
@@ -2608,6 +2734,25 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(webAppInterface, "AndroidApp");
         webView.addJavascriptInterface(webAppInterface, "AndroidBridge");
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                synchronized (mPendingSharedUris) {
+                    if (!mPendingSharedUris.isEmpty()) {
+                        final JSONArray arr = new JSONArray(mPendingSharedUris);
+                        mPendingSharedUris.clear();
+                        view.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (webView != null) {
+                                    webView.evaluateJavascript("if (typeof window.handleSharedFiles === 'function') { window.handleSharedFiles(" + arr.toString() + "); }", null);
+                                }
+                            }
+                        }, 500);
+                    }
+                }
+            }
+
             @SuppressWarnings("deprecation")
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {

@@ -75,14 +75,23 @@ def is_msix_packaged() -> bool:
     """Detect if running inside an MSIX / Windows Store package identity container."""
     if sys.platform != "win32":
         return False
+    # Check 1: Infallible filesystem path check. Packaged apps always execute from WindowsApps directory
+    exe = (sys.executable or "").lower()
+    if "windowsapps" in exe or "gresonparichha.pcdeck" in exe:
+        return True
+    # Check 2: Win32 Package Identity API with allocated buffer
     try:
         import ctypes
         from ctypes import wintypes
-        length = wintypes.UINT(0)
-        res = ctypes.windll.kernel32.GetCurrentPackageFullName(ctypes.byref(length), None)
-        return res != 15700  # 15700 = APPMODEL_ERROR_NO_PACKAGE
-    except Exception:
-        return False
+        kernel32 = ctypes.windll.kernel32
+        buf_len = wintypes.UINT(256)
+        buf = ctypes.create_unicode_buffer(256)
+        rc = kernel32.GetCurrentPackageFullName(ctypes.byref(buf_len), buf)
+        if rc == 0 or (rc != 15700 and len(buf.value) > 0):
+            return True
+    except (Exception, OSError):
+        pass
+    return False
 
 def is_first_run_startup_prompt_done() -> bool:
     """Checks whether the first-run 'Start with Windows' prompt has already been shown."""
@@ -138,6 +147,31 @@ def mark_first_run_startup_prompt_done():
             json.dump(data, f, indent=2)
     except Exception:
         pass
+
+
+def open_url_in_browser(url: str):
+    """Reliably open a URL in the user's default browser on Windows."""
+    try:
+        os.startfile(url)
+        return True
+    except Exception:
+        pass
+    try:
+        import webbrowser
+        if webbrowser.open(url, new=2):
+            return True
+    except Exception:
+        pass
+    try:
+        import subprocess
+        subprocess.Popen(["cmd", "/c", "start", "", url], shell=True)
+        return True
+    except Exception:
+        pass
+    return False
+
+
+DODO_CHECKOUT_URL = "https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://pcdeck.vercel.app"
 
 
 def load_app_settings() -> dict:
@@ -279,8 +313,8 @@ C_SUCCESS = "#3fb950"        # connected / running
 C_WARNING = "#d29922"        # attention
 C_DANGER = "#f85149"         # stop / error
 
-CURRENT_DESKTOP_VERSION_CODE = 273
-CURRENT_DESKTOP_VERSION_NAME = "2.7.3"
+CURRENT_DESKTOP_VERSION_CODE = 274
+CURRENT_DESKTOP_VERSION_NAME = "2.7.4"
 
 # Typography: one family, hierarchy carried by size and weight rather than
 # setting everything to 8px bold.
@@ -295,20 +329,30 @@ F_SUBHEAD = (F_FAMILY, 10, "bold")
 F_SMALL = (F_FAMILY, 8)
 F_SMALL_STRONG = (F_FAMILY, 8, "bold")
 
+CRASH_LOG_FILE = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "PCDeck", "crash.log")
+try:
+    os.makedirs(os.path.dirname(CRASH_LOG_FILE), exist_ok=True)
+except Exception:
+    pass
+
 def log_debug(msg: str):
-    try:
-        with open(LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-    except Exception:
-        pass
+    line = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n"
+    for p in (LOG_FILE, CRASH_LOG_FILE):
+        try:
+            with open(p, "a", encoding="utf-8") as f:
+                f.write(line)
+        except Exception:
+            pass
 
 def global_excepthook(exc_type, exc_value, exc_tb):
-    try:
-        with open(LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] UNCAUGHT EXCEPTION:\n")
-            traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
-    except Exception:
-        pass
+    header = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] UNCAUGHT EXCEPTION:\n"
+    for p in (LOG_FILE, CRASH_LOG_FILE):
+        try:
+            with open(p, "a", encoding="utf-8") as f:
+                f.write(header)
+                traceback.print_exception(exc_type, exc_value, exc_tb, file=f)
+        except Exception:
+            pass
 
 sys.excepthook = global_excepthook
 
@@ -332,17 +376,30 @@ if sys.platform == "win32":
                 ctypes.windll.user32.SetProcessDPIAware()
             except Exception:
                 pass
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.DesktopClient.Pro.v2026")
+        # In MSIX, OS assigns AUMID automatically from AppxManifest. Calling this inside MSIX can trigger MoAppCrash!
+        if not is_msix_packaged():
+            try:
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.DesktopClient.Pro.v2026")
+            except Exception:
+                pass
     except Exception:
         pass
 
 # Ensure search paths and working directory
 if getattr(sys, "frozen", False):
-    try:
-        if not is_msix_packaged():
+    if not is_msix_packaged():
+        try:
             os.chdir(os.path.dirname(sys.executable))
-    except Exception:
-        pass
+        except Exception:
+            pass
+    else:
+        # MSIX Centennial sandbox: switch to user-writable directory to prevent PermissionError
+        safe_dir = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "PCDeck")
+        try:
+            os.makedirs(safe_dir, exist_ok=True)
+            os.chdir(safe_dir)
+        except Exception:
+            pass
     current_dir = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
 else:
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -2017,17 +2074,30 @@ class PCDeckProGUI:
             appdata = os.environ.get("APPDATA", "")
             if not appdata:
                 return
+            target_shortcuts = [
+                "PCDeck.lnk",
+                "PCDeck Pro.lnk",
+                "PCDeck_Pro.lnk",
+                "PCDeckPro.lnk",
+                "NeonTrack.lnk",
+            ]
+            import stat
             for folder in [
                 os.path.join(appdata, r"Microsoft\Windows\Start Menu\Programs"),
                 os.path.join(appdata, r"Microsoft\Windows\Start Menu\Programs\Startup"),
             ]:
-                lnk_file = os.path.join(folder, "PCDeck.lnk")
-                if os.path.exists(lnk_file):
-                    try:
-                        os.remove(lnk_file)
-                        log_debug(f"[MSIX Cleanup] Removed conflicting shortcut: {lnk_file}")
-                    except Exception as e:
-                        log_debug(f"[MSIX Cleanup] Error removing {lnk_file}: {e}")
+                for s_name in target_shortcuts:
+                    lnk_file = os.path.join(folder, s_name)
+                    if os.path.exists(lnk_file):
+                        try:
+                            try:
+                                os.chmod(lnk_file, stat.S_IWRITE)
+                            except Exception:
+                                pass
+                            os.remove(lnk_file)
+                            log_debug(f"[MSIX Cleanup] Removed conflicting shortcut: {lnk_file}")
+                        except Exception as e:
+                            log_debug(f"[MSIX Cleanup] Error removing {lnk_file}: {e}")
         except Exception as e:
             log_debug(f"[MSIX Cleanup] Exception: {e}")
 
@@ -2508,6 +2578,9 @@ class PCDeckProGUI:
 
     def open_license_dialog(self):
         """Open native license activation and management dialog."""
+        self.license_info = load_pc_license()
+        self.is_pc_pro = self.license_info.get("pro_active", False)
+
         dlg = tk.Toplevel(self.root)
         dlg.withdraw()  # Prevent top-left flash
         dlg.title("PCDeck Pro - License Activation")
@@ -2612,8 +2685,40 @@ class PCDeckProGUI:
             cursor="hand2",
             padx=12,
             pady=6,
-            command=lambda: webbrowser.open("https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3"),
+            command=lambda: open_url_in_browser(DODO_CHECKOUT_URL),
         ).pack(side="right", padx=(6, 0))
+
+        # Regional PPP check for developing / non-Western markets
+        show_ppp = True
+        try:
+            if sys.platform == "win32":
+                import ctypes
+                geo = ctypes.windll.kernel32.GetUserGeoID(16)
+                buf = ctypes.create_unicode_buffer(10)
+                ctypes.windll.kernel32.GetGeoInfoW(geo, 4, buf, 10, 0)
+                code = buf.value.strip().upper()
+                western_countries = {"US", "CA", "GB", "AU", "NZ", "DE", "FR", "IT", "ES", "NL", "SE", "NO", "DK", "FI", "CH", "AT", "BE", "IE", "LU", "JP"}
+                if code in western_countries:
+                    show_ppp = False
+                elif not code:
+                    import time
+                    tz_offset_hours = -time.timezone / 3600
+                    if -10 <= tz_offset_hours <= 2 and any(z in time.tzname[0].upper() for z in ("EST", "EDT", "CST", "CDT", "MST", "MDT", "PST", "PDT", "GMT", "BST", "CET", "CEST", "WET")):
+                        show_ppp = False
+        except Exception:
+            pass
+
+        if show_ppp:
+            ppp_lbl = tk.Label(
+                pad,
+                text="Check your local price at checkout (PPP enabled) →",
+                font=(F_BODY, 8, "underline"),
+                fg=C_ACCENT,
+                bg=C_SURFACE,
+                cursor="hand2"
+            )
+            ppp_lbl.pack(pady=(8, 0))
+            ppp_lbl.bind("<Button-1>", lambda e: open_url_in_browser(DODO_CHECKOUT_URL))
 
         dlg.update_idletasks()
         dlg.deiconify()
@@ -2635,7 +2740,7 @@ class PCDeckProGUI:
 
         if hasattr(self, "lic_btn") and self.lic_btn.winfo_exists():
             self.lic_btn.config(
-                text="★ Manage Pro",
+                text="Manage Pro",
                 fg="#ffd700",
                 bg=C_SURFACE_3,
             )
@@ -2888,14 +2993,23 @@ class PCDeckProGUI:
                     self.client_badge.config(text=f"{count} Client{'s' if count != 1 else ''}")
 
                 # Pro License Badge sync
+                self.is_pc_pro = load_pc_license().get("pro_active", False)
                 try:
                     try:
-                        from server.main import is_pro_client
+                        from server.main import is_pro_client, set_pro_client
                     except ImportError:
-                        from main import is_pro_client
+                        from main import is_pro_client, set_pro_client
                     pro_active = is_pro_client()
+                    if not self.is_pc_pro and pro_active:
+                        set_pro_client(False)
+                        pro_active = False
                 except Exception:
                     pro_active = False
+
+                if hasattr(self, "root") and self.root.winfo_exists():
+                    target_title = "PCDeck Pro - Wireless PC Touch Deck & Streamer" if (self.is_pc_pro or pro_active) else "PCDeck - Wireless PC Touch Deck & Streamer"
+                    if self.root.title() != target_title:
+                        self.root.title(target_title)
 
                 if hasattr(self, "pro_badge") and self.pro_badge.winfo_exists():
                     if (self.is_pc_pro or pro_active) and count > 0:
@@ -2912,6 +3026,23 @@ class PCDeckProGUI:
                     else:
                         if not self.is_pc_pro and self.title_pro_badge.winfo_ismapped():
                             self.title_pro_badge.pack_forget()
+
+                # Dynamic Pro license button & label update
+                is_currently_pro = self.is_pc_pro or pro_active
+                if is_currently_pro:
+                    if hasattr(self, "lic_status_lbl") and self.lic_status_lbl.winfo_exists():
+                        if self.lic_status_lbl.cget("text") != "PRO ACTIVE":
+                            self.lic_status_lbl.config(text="PRO ACTIVE", fg="#ffd700")
+                    if hasattr(self, "lic_btn") and self.lic_btn.winfo_exists():
+                        if self.lic_btn.cget("text") != "Manage Pro":
+                            self.lic_btn.config(text="Manage Pro", fg="#ffd700", bg=C_SURFACE_3)
+                else:
+                    if hasattr(self, "lic_status_lbl") and self.lic_status_lbl.winfo_exists():
+                        if self.lic_status_lbl.cget("text") != "FREE EDITION":
+                            self.lic_status_lbl.config(text="FREE EDITION", fg=C_TEXT_DIM)
+                    if hasattr(self, "lic_btn") and self.lic_btn.winfo_exists():
+                        if self.lic_btn.cget("text") != "Upgrade to Pro ($3.99)":
+                            self.lic_btn.config(text="Upgrade to Pro ($3.99)", fg="#000000", bg="#eab308")
 
 
                 # 2. Dynamic Hotspot / Wi-Fi IP auto-detection
@@ -4717,20 +4848,23 @@ def acquire_single_instance_lock(is_tray_launch: bool = False) -> bool:
             kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
             kernel32.CreateMutexW.restype = wintypes.HANDLE
 
+            # Session-local mutex first (always accessible to medium integrity / packaged apps)
             mutex_names = [
-                r"Global\PCDeck_SingleInstance_Mutex_Pro",
-                r"Local\PCDeck_SingleInstance_Mutex_Pro"
+                r"Local\PCDeck_SingleInstance_Mutex_Pro",
+                r"Global\PCDeck_SingleInstance_Mutex_Pro"
             ]
             for mutex_name in mutex_names:
                 h_mutex = kernel32.CreateMutexW(None, True, mutex_name)
                 last_error = kernel32.GetLastError()
-                if last_error == ERROR_ALREADY_EXISTS or (h_mutex == 0 and last_error == ERROR_ACCESS_DENIED):
+                # If a valid handle was returned and ERROR_ALREADY_EXISTS, an instance is genuinely running
+                if h_mutex and last_error == ERROR_ALREADY_EXISTS:
                     log_debug(f"PCDeck instance already running (detected via {mutex_name}).")
                     if not is_tray_launch:
                         signal_existing_instance_to_show()
                     return False
 
-                if h_mutex != 0:
+                # If mutex was successfully created and owned without collision
+                if h_mutex and last_error == 0:
                     _SINGLE_INSTANCE_MUTEX_HANDLE = h_mutex
                     break
         except Exception as e:
@@ -4944,6 +5078,7 @@ def main():
     try:
         log_debug(f"Starting PCDeck Pro GUI Application... (start_minimized={start_minimized}, admin={is_admin()})")
         root = tk.Tk()
+        root.report_callback_exception = lambda exc, val, tb: global_excepthook(exc, val, tb)
         root.withdraw()  # Prevent top-left flashing while GUI builds and calculates centered position
         app_gui = PCDeckProGUI(root, start_minimized=start_minimized)
         start_single_instance_ipc_server(root, app_gui.open_dashboard)

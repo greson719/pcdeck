@@ -111,11 +111,16 @@ def run_makeappx():
     
     size_mb = OUTPUT_MSIX.stat().st_size / (1024 * 1024)
     sha256 = compute_sha256(OUTPUT_MSIX)
+    
+    # Create guaranteed unsigned copy for Microsoft Partner Center submission
+    store_msix = DIST_DIR / "PCDeck_Store_Upload.msix"
+    shutil.copy2(OUTPUT_MSIX, store_msix)
+
     print(f"\n==================================================")
     print(f" SUCCESS: MSIX Package Generated")
-    print(f" Path:   {OUTPUT_MSIX}")
-    print(f" Size:   {size_mb:.2f} MB ({OUTPUT_MSIX.stat().st_size:,} bytes)")
-    print(f" SHA256: {sha256}")
+    print(f" Local Test MSIX:     {OUTPUT_MSIX} ({size_mb:.2f} MB)")
+    print(f" Store Upload (Unsigned): {store_msix} ({store_msix.stat().st_size / (1024 * 1024):.2f} MB)")
+    print(f" SHA256:              {sha256}")
     print(f"==================================================\n")
 
 SDK_SIGNTOOL = ROOT_DIR / "build_tools" / "msix_sdk" / "signtool.exe"
@@ -147,7 +152,8 @@ def main():
     parser.add_argument("--identity-name", default="GresonParichha.PCDeck", help="Package Identity Name from Partner Center")
     parser.add_argument("--publisher", default="CN=EE1A7F1B-8959-4B69-B895-5E5FF21E385E", help="Publisher string from Partner Center")
     parser.add_argument("--publisher-display-name", default="Greson Parichha", help="Publisher Display Name (default: Greson Parichha)")
-    parser.add_argument("--version", default="2.7.3.0", help="App version string (e.g. 2.7.3.0)")
+    parser.add_argument("--version", default="2.7.4.0", help="App version string (e.g. 2.7.4.0)")
+    parser.add_argument("--unsigned", action="store_true", help="Do not sign PCDeck.msix (keep unsigned for Partner Center)")
     args = parser.parse_args()
 
     sync_exe()
@@ -158,7 +164,10 @@ def main():
         version=args.version
     )
     run_makeappx()
-    sign_msix()
+    if not args.unsigned:
+        sign_msix()
+    else:
+        print("[*] Skipped local signing (--unsigned). Package is purely unsigned for Microsoft Store ingestion.")
 
 if __name__ == "__main__":
     main()

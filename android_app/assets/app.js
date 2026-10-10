@@ -97,8 +97,6 @@
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  };
-
   // Global PCDeck Icon Registry & Helper Function
   const PC_DECK_ICONS = {
     lock: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
@@ -1574,6 +1572,16 @@
             .then(data => {
               clearTimeout(timer);
               if (data && data.status === 'ok' && (data.app === 'PCDeck' || data.name)) {
+                if (data.pro_active !== undefined) {
+                  const isUnlocked = !!data.pro_active;
+                  window.serverProActive = isUnlocked;
+                  if (isUnlocked) {
+                    try { localStorage.setItem('pcdeck_pro_active', 'true'); } catch (e) {}
+                  } else if (!localStorage.getItem('pcdeck_pro_license')) {
+                    try { localStorage.removeItem('pcdeck_pro_active'); } catch (e) {}
+                  }
+                  if (typeof updateProUI === 'function') updateProUI(false);
+                }
                 if (data.token) {
                   try { localStorage.setItem('pcdeck_token', data.token.trim()); } catch (e) {}
                 }
@@ -1628,6 +1636,16 @@
               .then(data => {
                 clearTimeout(timer);
                 if (data && data.status === 'ok' && (data.app === 'PCDeck' || data.name)) {
+                  if (data.pro_active !== undefined) {
+                    const isUnlocked = !!data.pro_active;
+                    window.serverProActive = isUnlocked;
+                    if (isUnlocked) {
+                      try { localStorage.setItem('pcdeck_pro_active', 'true'); } catch (e) {}
+                    } else if (!localStorage.getItem('pcdeck_pro_license')) {
+                      try { localStorage.removeItem('pcdeck_pro_active'); } catch (e) {}
+                    }
+                    if (typeof updateProUI === 'function') updateProUI(false);
+                  }
                   if (data.token) {
                     try { localStorage.setItem('pcdeck_token', data.token.trim()); } catch (e) {}
                   }
@@ -1690,12 +1708,22 @@
         try { localStorage.setItem('pcdeck_token', storedToken); } catch (e) {}
       }
     }
-    if (!storedToken && host) {
+    if (host) {
       const pingProto = window.location.protocol.startsWith('http') ? window.location.protocol : 'http:';
       fetch(`${pingProto}//${host}:${port}/api/ping`, { cache: 'no-store' })
         .then(res => res.json())
         .then(pingData => {
-          if (pingData && pingData.token) {
+          if (pingData && pingData.pro_active !== undefined) {
+            const isUnlocked = !!pingData.pro_active;
+            window.serverProActive = isUnlocked;
+            if (isUnlocked) {
+              try { localStorage.setItem('pcdeck_pro_active', 'true'); } catch (e) {}
+            } else if (!localStorage.getItem('pcdeck_pro_license')) {
+              try { localStorage.removeItem('pcdeck_pro_active'); } catch (e) {}
+            }
+            if (typeof updateProUI === 'function') updateProUI(false);
+          }
+          if (!storedToken && pingData && pingData.token) {
             const tok = pingData.token.trim();
             try { localStorage.setItem('pcdeck_token', tok); } catch (e) {}
             if (mainWs && mainWs.readyState === WebSocket.OPEN) {
@@ -2140,6 +2168,15 @@
     if (window.AndroidApp && typeof window.AndroidApp.setLowLatencyWifiEnabled === 'function') {
       try { window.AndroidApp.setLowLatencyWifiEnabled(true); } catch (e) {}
     }
+
+    // Flush any pending shared files from system share sheet
+    if (pendingSharedFilesQueue && pendingSharedFilesQueue.length > 0) {
+      const q = pendingSharedFilesQueue.slice();
+      pendingSharedFilesQueue = [];
+      setTimeout(() => {
+        uploadMarkedPhoneFilesToPc(q);
+      }, 500);
+    }
     // Transmit pairing token if stored locally, or request it from PC server
     let storedToken = localStorage.getItem('pcdeck_token');
     if (!storedToken && typeof document !== 'undefined' && document.cookie) {
@@ -2174,7 +2211,7 @@
     // Send Pro status to PC Server
     const isProActive = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
     if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-      mainWs.send(`pro_status,${isProActive ? '1' : '0'}`);
+      mainWs.send(isProActive ? 'pro_status,1' : 'pro_check');
     }
 
     // Auto-enable PC audio streaming if enabled in preferences.
@@ -2203,6 +2240,17 @@
     }
 
     const data = event.data;
+    if (typeof data === 'string' && data.startsWith('pro_unlocked,')) {
+      const isUnlocked = data.split(',')[1] === '1';
+      window.serverProActive = isUnlocked;
+      if (isUnlocked) {
+        try { localStorage.setItem('pcdeck_pro_active', 'true'); } catch (e) {}
+      } else if (!localStorage.getItem('pcdeck_pro_license')) {
+        try { localStorage.removeItem('pcdeck_pro_active'); } catch (e) {}
+      }
+      if (typeof updateProUI === 'function') updateProUI(false);
+      return;
+    }
     if (typeof data === 'string' && data.startsWith('token,')) {
       const serverToken = data.substring(6).trim();
       if (serverToken) {
@@ -4860,6 +4908,35 @@
     }
   };
 
+  let pendingSharedFilesQueue = [];
+
+  window.handleSharedFiles = function(files) {
+    if (!files || !files.length) return;
+    if (state.connected && state.serverHost) {
+      showToast(`Sending ${files.length} shared file(s) to PC...`, 'info');
+      uploadMarkedPhoneFilesToPc(files);
+    } else {
+      pendingSharedFilesQueue = (pendingSharedFilesQueue || []).concat(files);
+      showToast(`Connecting to PC to send ${files.length} shared file(s)...`, 'info');
+      if (window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
+        try { window.AndroidApp.discoverServer(); } catch (e) {}
+      }
+      connect();
+    }
+  };
+
+  window.handleSharedText = function(text) {
+    if (!text || !text.trim()) return;
+    if (state.connected && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try {
+        mainWs.send(`type,${encodeURIComponent(text)}`);
+        showToast('Sent shared text to PC', 'success');
+      } catch (e) {}
+    } else {
+      showToast('PC not connected yet', 'warn');
+    }
+  };
+
   function uploadMarkedPhoneFilesToPc(paths) {
     if (!paths || paths.length === 0) return;
     if (window.AndroidApp && typeof window.AndroidApp.uploadPhoneFileToPc === 'function') {
@@ -6974,9 +7051,70 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     return localStorage.getItem('pcdeck_pro_active') === 'true' || window.serverProActive === true;
   };
 
+  function isWesternTier1User() {
+    try {
+      // 1. Android native device country
+      if (window.AndroidApp && typeof window.AndroidApp.getDeviceCountry === 'function') {
+        const country = (window.AndroidApp.getDeviceCountry() || '').trim().toUpperCase();
+        if (country) {
+          const westernCountries = ['US', 'CA', 'GB', 'AU', 'NZ', 'DE', 'FR', 'IT', 'ES', 'NL', 'SE', 'NO', 'DK', 'FI', 'CH', 'AT', 'BE', 'IE', 'LU', 'JP'];
+          return westernCountries.includes(country);
+        }
+      }
+
+      // 2. Timezone identification
+      const tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+      const westernPrefixes = [
+        'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+        'America/Phoenix', 'America/Anchorage', 'America/Honolulu', 'America/Detroit',
+        'America/Indiana', 'America/Boise', 'America/Toronto', 'America/Vancouver',
+        'America/Montreal', 'America/Edmonton', 'America/Winnipeg', 'America/Halifax',
+        'Europe/London', 'Europe/Dublin', 'Europe/Berlin', 'Europe/Paris',
+        'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Madrid', 'Europe/Rome',
+        'Europe/Vienna', 'Europe/Zurich', 'Europe/Stockholm', 'Europe/Oslo',
+        'Europe/Copenhagen', 'Europe/Helsinki', 'Europe/Lisbon', 'Europe/Luxembourg',
+        'Australia/', 'Pacific/Auckland', 'Asia/Tokyo'
+      ];
+      if (westernPrefixes.some(prefix => tz.startsWith(prefix))) {
+        return true;
+      }
+
+      // 3. Fallback: Browser language + timezone offset check
+      const lang = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+      const westernLocales = ['en-US', 'en-CA', 'en-GB', 'en-AU', 'en-NZ', 'de-DE', 'fr-FR', 'it-IT', 'es-ES', 'nl-NL'];
+      const offsetMinutes = new Date().getTimezoneOffset();
+      if (westernLocales.includes(lang) && offsetMinutes >= -120 && offsetMinutes <= 600) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function updatePppBanner() {
+    try {
+      const proLocalPriceWrap = document.getElementById('pro-local-price-wrap');
+      const buyBtnText = document.getElementById('modal-btn-buy-pro-text');
+
+      if (buyBtnText) buyBtnText.textContent = 'Unlock Lifetime Pro — $3.99';
+
+      const isWestern = isWesternTier1User();
+
+      if (proLocalPriceWrap) {
+        // Show "Check your local price" option for ALL non-Western / PPP eligible regions
+        proLocalPriceWrap.style.display = isWestern ? 'none' : 'block';
+      }
+    } catch (e) {
+      console.warn('[PPP] Locale check:', e);
+    }
+  }
+
   window.openProUpgradeModal = function() {
     const modal = document.getElementById('pro-upgrade-modal');
     if (modal) {
+      updatePppBanner();
       modal.style.display = 'flex';
       vibrate(20);
     }
@@ -6998,10 +7136,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
   }
 
-  function updateProUI() {
+  function updateProUI(notifyServer) {
     const isPro = window.isProUnlocked();
     if (window.AndroidApp && typeof window.AndroidApp.setProStatus === 'function') {
-      window.AndroidApp.setProStatus(isPro);
+      try { window.AndroidApp.setProStatus(isPro); } catch (e) {}
     }
     const statusTitle = document.getElementById('settings-pro-status-title');
     const statusDesc = document.getElementById('settings-pro-status-desc');
@@ -7018,7 +7156,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       statusTitle.style.color = isPro ? '#ffd700' : '#fff';
     }
     if (statusDesc) {
-      statusDesc.textContent = isPro ? '60/120 FPS High-Refresh Streaming, Uncapped Bandwidth & OLED Themes Active' : 'Standard 30 FPS screen streaming & 10 MB/s file sharing';
+      statusDesc.textContent = isPro ? '60/120 FPS High-Refresh Streaming, Custom HUD Mapper, Uncapped Bandwidth & OLED Themes Active' : 'Standard 30 FPS screen streaming, default controls & 10 MB/s file sharing';
     }
     if (btnUpgrade) {
       btnUpgrade.style.display = isPro ? 'none' : 'block';
@@ -7026,7 +7164,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     if (keyRow) {
       keyRow.style.display = isPro ? 'none' : 'flex';
     }
-    if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+    if (notifyServer !== false && mainWs && mainWs.readyState === WebSocket.OPEN) {
       const authKey = localStorage.getItem('pcdeck_pro_license') || '';
       const authInst = localStorage.getItem('pcdeck_pro_instance_id') || '';
       if (authKey && authInst) {
@@ -7049,15 +7187,15 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       showToast('Please enter your license key', 'warn');
       return false;
     }
-    const cleanKey = keyStr.trim();
+    const cleanKey = keyStr.trim().toUpperCase();
 
-    showToast('Activating with Lemon Squeezy...', 'info');
+    showToast('Activating PCDeck Pro license...', 'info');
     try {
       const instanceName = (navigator.userAgent && navigator.userAgent.includes('Android')) 
         ? 'PCDeck Android Device' 
-        : 'PCDeck Windows Client';
+        : 'PCDeck Client';
 
-      const response = await fetch('https://api.lemonsqueezy.com/v1/licenses/activate', {
+      const response = await fetch('https://live.dodopayments.com/licenses/activate', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -7065,33 +7203,33 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         },
         body: JSON.stringify({
           license_key: cleanKey,
-          instance_name: instanceName
+          name: instanceName
         })
       });
 
       const data = await response.json().catch(() => null);
 
-      if (data && data.activated) {
+      if (response.ok && data) {
+        const instanceId = data.id || data.instance_id || ('inst_' + Date.now());
         localStorage.setItem('pcdeck_pro_active', 'true');
-        localStorage.setItem('pcdeck_pro_license', (data.license_key && data.license_key.key) ? data.license_key.key : cleanKey);
-        if (data.instance && data.instance.id) {
-          localStorage.setItem('pcdeck_pro_instance_id', data.instance.id);
-        }
-        if (data.meta) {
-          localStorage.setItem('pcdeck_pro_meta', JSON.stringify(data.meta));
-        }
+        localStorage.setItem('pcdeck_pro_license', cleanKey);
+        localStorage.setItem('pcdeck_pro_instance_id', instanceId);
+        localStorage.setItem('pcdeck_pro_meta', JSON.stringify(data));
         updateProUI();
         window.closeProUpgradeModal();
         showCelebrationModal();
         showToast('PCDeck Pro Activated Successfully!', 'success');
         return true;
-      } else if (data && data.error) {
-        vibrate([40, 40, 40]);
-        showToast(`Activation failed: ${data.error}`, 'error');
-        return false;
       } else {
         vibrate([40, 40, 40]);
-        showToast('Invalid license key. Please check your purchase email.', 'error');
+        let err = (data && (data.message || data.error || data.detail)) || '';
+        if (!err) {
+          if (response.status === 404) err = 'License key not found. Please check your purchase receipt.';
+          else if (response.status === 422) err = 'License activation limit reached for this key.';
+          else if (response.status === 403) err = 'License key is inactive or revoked.';
+          else err = 'Invalid license key. Please check your purchase receipt.';
+        }
+        showToast(`Activation failed: ${err}`, 'error');
         return false;
       }
     } catch (netErr) {
@@ -7141,11 +7279,14 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     };
 
     window.openProWebsite = function() {
-      const checkoutUrl = 'https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3';
+      const checkoutUrl = 'https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://pcdeck.vercel.app';
       if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
         window.AndroidApp.openUrl(checkoutUrl);
       } else {
-        window.open(checkoutUrl, '_blank');
+        const w = window.open(checkoutUrl, '_blank');
+        if (!w || w.closed || typeof w.closed === 'undefined') {
+          window.location.href = checkoutUrl;
+        }
       }
     };
 
@@ -7159,6 +7300,11 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const btnBuyPro = document.getElementById('modal-btn-buy-pro');
     if (btnBuyPro) {
       btnBuyPro.onclick = window.openProWebsite;
+    }
+
+    const btnCheckLocalPrice = document.getElementById('btn-check-local-price');
+    if (btnCheckLocalPrice) {
+      btnCheckLocalPrice.onclick = window.openProWebsite;
     }
 
     const btnCloseCelebration = document.getElementById('btn-close-celebration');
@@ -7412,13 +7558,25 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const selTheme = document.getElementById('setting-theme-picker');
     if (selTheme) {
       selTheme.onchange = () => {
-        if (selTheme.value !== 'default' && !window.isProUnlocked()) {
+        const val = selTheme.value;
+        if (val !== 'default' && !window.isProUnlocked()) {
           selTheme.value = 'default';
           applyChromaTheme('default');
           window.showProCornerCard();
-          showToast('Custom Accent Themes require PCDeck Pro', 'info');
+          showToast('Custom Aesthetic Themes require PCDeck Pro', 'info');
         } else {
-          applyChromaTheme(selTheme.value);
+          applyChromaTheme(val);
+          const themeNames = {
+            'default': 'Cyber Cyan',
+            'aero': 'Frutiger Aero',
+            'y2k': 'Y2K Chrome',
+            'crt': 'CRT Phosphor',
+            'purple': 'Synthwave',
+            'gold': 'Solar Gold',
+            'lime': 'Matrix Lime',
+            'oled': 'OLED Pure Dark'
+          };
+          showToast(`Applied Theme: ${themeNames[val] || val}`, 'success');
         }
       };
     }
@@ -8035,6 +8193,16 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
 
     function setGamepadEditMode(editing) {
+      if (editing && (!window.isProUnlocked || !window.isProUnlocked())) {
+        vibrate(25);
+        if (typeof window.openProUpgradeModal === 'function') {
+          window.openProUpgradeModal();
+        }
+        if (typeof showToast === 'function') {
+          showToast('Custom Gamepad Layout Designer requires PCDeck Pro', 'warn');
+        }
+        return;
+      }
       isGpLayoutEditing = editing;
       document.body.classList.toggle('gp-layout-editing', editing);
       const toolbar = document.getElementById('gp-editor-toolbar');
@@ -8053,6 +8221,16 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     if (btnEditLayout) {
       btnEditLayout.onclick = () => {
         closeGpConsoleMenu();
+        if (!window.isProUnlocked || !window.isProUnlocked()) {
+          vibrate(25);
+          if (typeof window.openProUpgradeModal === 'function') {
+            window.openProUpgradeModal();
+          }
+          if (typeof showToast === 'function') {
+            showToast('Custom Gamepad Layout Designer requires PCDeck Pro', 'warn');
+          }
+          return;
+        }
         setGamepadEditMode(!isGpLayoutEditing);
       };
     }
@@ -9699,6 +9877,16 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     // Layout Customizer Mode (PUBG / CoD Style)
     function enterEditMode() {
+      if (!window.isProUnlocked || !window.isProUnlocked()) {
+        vibrate(25);
+        if (typeof window.openProUpgradeModal === 'function') {
+          window.openProUpgradeModal();
+        }
+        if (typeof showToast === 'function') {
+          showToast('Custom HUD Key Mapping & Designer requires PCDeck Pro', 'warn');
+        }
+        return;
+      }
       isEditing = true;
       state.gamepadHudEditing = true;
       hudContainer.classList.add('hud-editing');
@@ -9727,8 +9915,20 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     if (btnEditLayout) {
       btnEditLayout.onclick = () => {
         vibrate(15);
-        if (isEditing) exitEditMode();
-        else enterEditMode();
+        if (isEditing) {
+          exitEditMode();
+        } else {
+          if (!window.isProUnlocked || !window.isProUnlocked()) {
+            if (typeof window.openProUpgradeModal === 'function') {
+              window.openProUpgradeModal();
+            }
+            if (typeof showToast === 'function') {
+              showToast('Custom HUD Key Mapping & Designer requires PCDeck Pro', 'warn');
+            }
+            return;
+          }
+          enterEditMode();
+        }
       };
     }
 
@@ -9920,6 +10120,15 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     if (btnAddBtn && addBtnModal) {
       btnAddBtn.onclick = () => {
         vibrate(15);
+        if (!window.isProUnlocked || !window.isProUnlocked()) {
+          if (typeof window.openProUpgradeModal === 'function') {
+            window.openProUpgradeModal();
+          }
+          if (typeof showToast === 'function') {
+            showToast('Custom Key Mapping requires PCDeck Pro', 'warn');
+          }
+          return;
+        }
         chosenPresetBtn = null;
         if (customKeyInput) customKeyInput.value = '';
         keyPickBtns.forEach(b => b.classList.remove('selected'));
@@ -10974,6 +11183,18 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       if (el.connectModal) el.connectModal.classList.add('show');
     }
 
+    if (window.AndroidApp && typeof window.AndroidApp.getPendingSharedFiles === 'function') {
+      try {
+        const rawPending = window.AndroidApp.getPendingSharedFiles();
+        if (rawPending && rawPending !== '[]') {
+          const parsed = JSON.parse(rawPending);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            window.handleSharedFiles(parsed);
+          }
+        }
+      } catch (e) {}
+    }
+
     document.addEventListener('fullscreenchange', updateQuickToolsUi);
     document.addEventListener('webkitfullscreenchange', updateQuickToolsUi);
     window.addEventListener('resize', updateQuickToolsUi);
@@ -11010,8 +11231,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
   // ==========================================
   // IN-APP OTA AUTO-UPDATER SYSTEM
   // ==========================================
-  const CURRENT_APP_VERSION_CODE = 272;
-  const CURRENT_APP_VERSION_NAME = '2.7.2';
+  const CURRENT_APP_VERSION_CODE = 274;
+  const CURRENT_APP_VERSION_NAME = '2.7.4';
   let updateDownloadApkUrl = 'https://pcdeck.vercel.app/PCDeck.apk';
 
   function initAppUpdater() {

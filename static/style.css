@@ -4430,36 +4430,240 @@ nav.floating-dock {
    PCDeck Chroma Themes & Pro Monetization Layer
    ========================================================================== */
 
-/* Theme 1: Neon Matrix Lime */
-body[data-theme="lime"] {
-  --neo-cyan: #00ff66;
-  --neo-yellow: #a6ff00;
-  --neo-pink: #00e676;
+/* ==========================================================================
+   PCDeck Chroma Themes & Aesthetic Monetization Engine
+   ========================================================================== */
+
+/* --- Theme 1: 🫧 Frutiger Aero (Glossy Glass, Sky & Water Vista Aesthetics) --- */
+body[data-theme="aero"] {
+  --bg-main: #062038;
+  --bg-surface: rgba(255, 255, 255, 0.15);
+  --bg-surface-elevated: rgba(255, 255, 255, 0.24);
+  --bg-input: rgba(10, 40, 75, 0.55);
+
+  --neo-cyan: #38bdf8;
+  --neo-yellow: #34d399;
+  --neo-pink: #f472b6;
+  --neo-lime: #4ade80;
+  --neo-violet: #60a5fa;
+  --neo-border: rgba(255, 255, 255, 0.38);
+  --neo-border-light: rgba(255, 255, 255, 0.22);
+
+  --shadow-sm: 0 2px 8px rgba(0, 40, 80, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 40, 80, 0.45);
+  --shadow-lg: 0 16px 36px rgba(0, 30, 70, 0.55);
+
+  background: radial-gradient(circle at 50% 0%, #1e5799 0%, #133e6b 40%, #061e38 100%) fixed !important;
 }
 
-/* Theme 2: Solar Gold */
+body[data-theme="aero"] .neo-card,
+body[data-theme="aero"] .cyber-dock,
+body[data-theme="aero"] .app-header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.08) 100%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 45, 95, 0.37), inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+  border-radius: 16px !important;
+}
+
+body[data-theme="aero"] .neo-btn,
+body[data-theme="aero"] .trackpad-btn,
+body[data-theme="aero"] .key-btn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 49%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.15) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(0, 30, 60, 0.3) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 20, 50, 0.8);
+  border-radius: 12px !important;
+}
+
+body[data-theme="aero"] #trackpad-surface {
+  background: radial-gradient(ellipse at 50% 30%, rgba(56, 189, 248, 0.15) 0%, rgba(14, 50, 85, 0.7) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: inset 0 0 40px rgba(56, 189, 248, 0.15), 0 8px 30px rgba(0, 20, 50, 0.4) !important;
+}
+
+/* --- Theme 2: 💿 Y2K Cybercore (Liquid Chrome, Brushed Steel & Hot Rave Pink) --- */
+body[data-theme="y2k"] {
+  --bg-main: #0c0e14;
+  --bg-surface: #181d26;
+  --bg-surface-elevated: #232a36;
+  --bg-input: #12151c;
+
+  --neo-cyan: #e2e8f0;
+  --neo-yellow: #ccff00;
+  --neo-pink: #ff007f;
+  --neo-lime: #00f0ff;
+  --neo-violet: #a855f7;
+  --neo-border: #94a3b8;
+  --neo-border-light: #475569;
+
+  --shadow-sm: 2px 2px 0px #000, inset 0 1px 0px rgba(255,255,255,0.4);
+  --shadow-md: 4px 4px 0px #000, 0 0 12px rgba(255, 0, 127, 0.3);
+  --shadow-lg: 6px 6px 0px #000, 0 0 24px rgba(255, 0, 127, 0.4);
+
+  background: linear-gradient(135deg, #090b10 0%, #151922 50%, #090b10 100%) fixed !important;
+}
+
+body[data-theme="y2k"] .neo-card,
+body[data-theme="y2k"] .cyber-dock {
+  background: linear-gradient(160deg, #242b38 0%, #171c24 60%, #11141a 100%) !important;
+  border: 2px solid transparent !important;
+  border-image: linear-gradient(135deg, #ffffff 0%, #94a3b8 40%, #ff007f 80%, #ffffff 100%) 1 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+body[data-theme="y2k"] .neo-btn,
+body[data-theme="y2k"] .trackpad-btn,
+body[data-theme="y2k"] .key-btn {
+  background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 45%, #64748b 55%, #334155 100%) !important;
+  border: 2px solid #000 !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 1px 0 #ffffff, 3px 3px 0 #000 !important;
+}
+
+body[data-theme="y2k"] .neo-btn:active,
+body[data-theme="y2k"] .trackpad-btn:active,
+body[data-theme="y2k"] .key-btn:active {
+  background: linear-gradient(180deg, #ff007f 0%, #cc0066 100%) !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  box-shadow: 1px 1px 0 #000 !important;
+}
+
+body[data-theme="y2k"] #trackpad-surface {
+  background: radial-gradient(ellipse at 50% 50%, #1c222e 0%, #0e1117 100%) !important;
+  border: 2px solid #94a3b8 !important;
+  box-shadow: inset 0 0 20px rgba(255, 0, 127, 0.15) !important;
+}
+
+/* --- Theme 3: 📟 Retro CRT Terminal (Phosphor Green, Scanlines & Cathode Glow) --- */
+body[data-theme="crt"] {
+  --bg-main: #030804;
+  --bg-surface: #071509;
+  --bg-surface-elevated: #0d2210;
+  --bg-input: #040d05;
+
+  --neo-cyan: #00ff66;
+  --neo-yellow: #ffb000;
+  --neo-pink: #ff3344;
+  --neo-lime: #33ff77;
+  --neo-violet: #00cc55;
+  --neo-border: #00ff66;
+  --neo-border-light: rgba(0, 255, 102, 0.35);
+
+  --text-main: #00ff66;
+  --text-muted: #009933;
+
+  --shadow-sm: 0 0 4px rgba(0, 255, 102, 0.4);
+  --shadow-md: 0 0 10px rgba(0, 255, 102, 0.45);
+  --shadow-lg: 0 0 20px rgba(0, 255, 102, 0.5);
+
+  background: #030804 !important;
+}
+
+body[data-theme="crt"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.65;
+}
+
+body[data-theme="crt"] .neo-card,
+body[data-theme="crt"] .cyber-dock {
+  background: rgba(7, 21, 9, 0.95) !important;
+  border: 1.5px solid #00ff66 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 102, 0.25), inset 0 0 8px rgba(0, 255, 102, 0.1) !important;
+}
+
+body[data-theme="crt"] .neo-btn,
+body[data-theme="crt"] .trackpad-btn,
+body[data-theme="crt"] .key-btn {
+  background: #071509 !important;
+  border: 1.5px solid #00ff66 !important;
+  color: #00ff66 !important;
+  text-shadow: 0 0 8px #00ff66;
+  box-shadow: 0 0 6px rgba(0, 255, 102, 0.3) !important;
+}
+
+body[data-theme="crt"] #trackpad-surface {
+  background: #051006 !important;
+  border: 1.5px solid #00ff66 !important;
+  box-shadow: inset 0 0 30px rgba(0, 255, 102, 0.15), 0 0 10px rgba(0, 255, 102, 0.2) !important;
+}
+
+/* --- Theme 4: 🌆 Synthwave 80s Sunset --- */
+body[data-theme="purple"] {
+  --bg-main: #0e0720;
+  --bg-surface: #170c36;
+  --bg-surface-elevated: #241452;
+  --bg-input: #12092b;
+
+  --neo-cyan: #06b6d4;
+  --neo-yellow: #f43f5e;
+  --neo-pink: #d946ef;
+  --neo-lime: #10b981;
+  --neo-violet: #8b5cf6;
+  --neo-border: #d946ef;
+  --neo-border-light: rgba(217, 70, 239, 0.35);
+
+  --shadow-sm: 2px 2px 0px #000, 0 0 8px rgba(217, 70, 239, 0.3);
+  --shadow-md: 4px 4px 0px #000, 0 0 16px rgba(217, 70, 239, 0.4);
+  --shadow-lg: 6px 6px 0px #000, 0 0 28px rgba(217, 70, 239, 0.5);
+
+  background: linear-gradient(180deg, #180938 0%, #0d041f 100%) fixed !important;
+}
+
+body[data-theme="purple"] .neo-card,
+body[data-theme="purple"] .cyber-dock {
+  border: 1.5px solid rgba(217, 70, 239, 0.6) !important;
+  box-shadow: 0 4px 20px rgba(217, 70, 239, 0.2) !important;
+}
+
+/* --- Theme 5: ⚡ Solar Gold --- */
 body[data-theme="gold"] {
   --neo-cyan: #ffd700;
   --neo-yellow: #ff9100;
   --neo-pink: #ff3d00;
+  --neo-border: #ffd700;
+  --neo-border-light: rgba(255, 215, 0, 0.4);
 }
 
-/* Theme 3: Synthwave Purple */
-body[data-theme="purple"] {
-  --neo-cyan: #b388ff;
-  --neo-yellow: #ea80fc;
-  --neo-pink: #ff4081;
+/* --- Theme 6: 🟢 Neon Matrix Lime --- */
+body[data-theme="lime"] {
+  --neo-cyan: #00ff66;
+  --neo-yellow: #a6ff00;
+  --neo-pink: #00e676;
+  --neo-border: #00ff66;
+  --neo-border-light: rgba(0, 255, 102, 0.4);
 }
 
-/* Theme 4: OLED Pure Stealth Dark */
+/* --- Theme 7: 🖤 OLED Pure Stealth Dark --- */
 body[data-theme="oled"] {
   --bg-main: #000000;
-  --bg-surface: #0a0a0a;
-  --bg-surface-elevated: #141414;
+  --bg-surface: #080808;
+  --bg-surface-elevated: #101010;
   --bg-input: #000000;
   --neo-cyan: #ffffff;
-  --neo-yellow: #e2e8f0;
+  --neo-yellow: #cbd5e1;
   --neo-pink: #94a3b8;
+  --neo-border: rgba(255, 255, 255, 0.25);
+  --neo-border-light: rgba(255, 255, 255, 0.12);
+  --shadow-sm: 0 0 0 transparent;
+  --shadow-md: 0 0 0 transparent;
+  --shadow-lg: 0 0 0 transparent;
 }
 
 /* Radio-style Segmented FPS Toggle in Title Bar */

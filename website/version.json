@@ -1,12 +1,12 @@
 {
-  "versionCode": 273,
-  "versionName": "2.7.3",
+  "versionCode": 274,
+  "versionName": "2.7.4",
   "exeSize": "36.3 MB",
   "apkSize": "691 KB",
   "apkUrl": "https://pcdeck.vercel.app/PCDeck.apk",
   "websiteUrl": "https://pcdeck.vercel.app",
   "playStoreUrl": "",
-  "releaseNotes": "• Critical stability update: Resolved MSIX container startup and shortcut crashes\n• Added threading exception safety and stdout/stderr stream isolation\n• Smooth 1:1 sub-pixel touch scrolling and low-latency screen streaming\n• Complete offline Wi-Fi control and zero cloud telemetry",
+  "releaseNotes": "• Android Share Sheet: Share files & photos directly from mobile apps to PC over Wi-Fi\n• Critical stability patch: Resolved MSIX container startup and shortcut loops\n• Hardened session-local mutex single-instance engine and crash telemetry\n• Smooth 1:1 sub-pixel touch scrolling and low-latency screen streaming",
   "minVersionCode": 1,
-  "publishedAt": "2026-10-04"
+  "publishedAt": "2026-10-10"
 }

@@ -58,4 +58,6 @@ def test_websocket_pairing_with_token(client):
     with client.websocket_connect(f"/ws?token={token}") as ws:
         ws.send_text("p,100")
         resp = ws.receive_text()
+        if resp.startswith("pro_unlocked,"):
+            resp = ws.receive_text()
         assert resp == "pong,100"

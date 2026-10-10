@@ -84,6 +84,21 @@ def test_msix_safeguards(monkeypatch, tmp_path):
     assert not bad_lnk2.exists()
 
 
+def test_msix_detection_vectors(monkeypatch):
+    """Verify that is_msix_packaged correctly detects WindowsApps execution path and App UserModel ID safety."""
+    import server.gui as gui_module
+    import server.main as main_module
+
+    # Test 1: sys.executable containing WindowsApps
+    monkeypatch.setattr(gui_module.sys, "platform", "win32")
+    monkeypatch.setattr(gui_module.sys, "executable", r"C:\Program Files\WindowsApps\GresonParichha.PCDeck_2.7.4.0_x64__abc\PCDeck.exe")
+    monkeypatch.setattr(main_module.sys, "platform", "win32")
+    monkeypatch.setattr(main_module.sys, "executable", r"C:\Program Files\WindowsApps\GresonParichha.PCDeck_2.7.4.0_x64__abc\PCDeck.exe")
+
+    assert gui_module.is_msix_packaged() is True
+    assert main_module.is_msix_packaged() is True
+
+
 def test_polite_review_prompt_logic(monkeypatch):
     """Verify polite review prompt 3-day (72h) and 3-session rule, snooze, and dismissal."""
     import server.gui as gui_module

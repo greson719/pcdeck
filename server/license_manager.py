@@ -165,7 +165,7 @@ def save_license(key: str, instance_id: str, meta: Dict[str, Any] = None) -> boo
 
 def activate_license_online(key_str: str) -> Tuple[bool, str, Dict[str, Any]]:
     """
-    Activate license key directly with official Lemon Squeezy API.
+    Activate license key directly with official Dodo Payments API.
     Binds the generated instance to this machine's HWID.
     """
     clean_key = (key_str or "").strip().upper()
@@ -175,14 +175,21 @@ def activate_license_online(key_str: str) -> Tuple[bool, str, Dict[str, Any]]:
     hwid = get_machine_hwid()
     instance_name = f"PCDeck Windows Host ({hwid[:8]})"
 
+    # Developer test key (safe local hardware binding ONLY active in non-frozen dev environment with explicit flag)
+    if (clean_key == "PCDECK-DEV-TEST" or clean_key.startswith("PCDECK-LOCALDEV")) and os.environ.get("PCDECK_DEV_PRO") == "1" and not getattr(sys, "frozen", False):
+        instance_id = f"dev_{hwid[:12]}"
+        saved = save_license(clean_key, instance_id, {"tier": "developer_test", "mode": "local_test"})
+        if saved:
+            return True, "PCDeck Pro activated in developer test mode!", {"id": instance_id}
+
     try:
         req_data = json.dumps({
             "license_key": clean_key,
-            "instance_name": instance_name
+            "name": instance_name
         }).encode("utf-8")
 
         req = urllib.request.Request(
-            "https://api.lemonsqueezy.com/v1/licenses/activate",
+            "https://live.dodopayments.com/licenses/activate",
             data=req_data,
             headers={
                 "Accept": "application/json",
@@ -194,33 +201,37 @@ def activate_license_online(key_str: str) -> Tuple[bool, str, Dict[str, Any]]:
         with urllib.request.urlopen(req, timeout=12) as resp:
             res_json = json.loads(resp.read().decode("utf-8"))
 
-            if res_json.get("activated"):
-                instance = res_json.get("instance", {})
-                instance_id = instance.get("id") or f"inst_{hwid[:12]}"
-                meta = res_json.get("meta", {})
-
-                saved = save_license(clean_key, instance_id, meta)
-                if saved:
-                    return True, "PCDeck Pro activated successfully!", res_json
-                else:
-                    return False, "Failed to securely save license file.", {}
+            instance_id = res_json.get("id") or res_json.get("instance_id") or f"inst_{hwid[:12]}"
+            saved = save_license(clean_key, instance_id, res_json)
+            if saved:
+                return True, "PCDeck Pro activated successfully!", res_json
             else:
-                err_msg = res_json.get("error", "Invalid or expired license key.")
-                return False, f"Activation failed: {err_msg}", {}
+                return False, "Failed to securely save license file.", {}
 
     except urllib.error.HTTPError as e:
+        err_msg = ""
         try:
             body = json.loads(e.read().decode("utf-8"))
-            err_msg = body.get("error") or str(e)
+            err_msg = body.get("message") or body.get("error") or body.get("detail") or ""
         except Exception:
-            err_msg = str(e)
-        return False, f"Lemon Squeezy error: {err_msg}", {}
+            pass
+
+        if not err_msg:
+            if e.code == 404:
+                err_msg = "License key not found. Please check your purchase receipt."
+            elif e.code == 422:
+                err_msg = "License activation limit reached for this key."
+            elif e.code == 403:
+                err_msg = "License key is inactive or revoked."
+            else:
+                err_msg = f"HTTP Error {e.code}"
+        return False, f"Activation failed: {err_msg}", {}
     except Exception as ex:
         return False, f"Could not connect to license server: {ex}", {}
 
 
 def validate_license_online() -> Tuple[bool, str]:
-    """Periodically or manually re-validate active license against Lemon Squeezy."""
+    """Periodically or manually re-validate active license against Dodo Payments."""
     info = verify_license()
     if not info.get("pro_active"):
         return False, "No active license found."
@@ -232,12 +243,11 @@ def validate_license_online() -> Tuple[bool, str]:
 
     try:
         req_data = json.dumps({
-            "license_key": key,
-            "instance_id": instance_id
+            "license_key": key
         }).encode("utf-8")
 
         req = urllib.request.Request(
-            "https://api.lemonsqueezy.com/v1/licenses/validate",
+            "https://live.dodopayments.com/licenses/validate",
             data=req_data,
             headers={
                 "Accept": "application/json",
@@ -248,18 +258,41 @@ def validate_license_online() -> Tuple[bool, str]:
 
         with urllib.request.urlopen(req, timeout=10) as resp:
             res_json = json.loads(resp.read().decode("utf-8"))
-            if res_json.get("valid"):
+            if res_json.get("valid") is True:
                 return True, "License is active and valid."
             else:
-                return False, res_json.get("error", "License is no longer valid.")
+                return False, res_json.get("message") or res_json.get("error") or "License is no longer valid."
     except Exception as ex:
         # If offline, fall back to valid cryptographic local signature
         return True, f"Offline validation preserved: {ex}"
 
 
 def deactivate_license() -> Tuple[bool, str]:
-    """Remove local license and return success status."""
+    """Remove local license and deactivate with Dodo Payments if online."""
     try:
+        info = verify_license()
+        key = info.get("key")
+        instance_id = info.get("instance_id")
+        if key and instance_id:
+            try:
+                req_data = json.dumps({
+                    "license_key": key,
+                    "license_key_instance_id": instance_id
+                }).encode("utf-8")
+                req = urllib.request.Request(
+                    "https://live.dodopayments.com/licenses/deactivate",
+                    data=req_data,
+                    headers={
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        "User-Agent": "PCDeck-Windows-Client/2.7.0"
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=8):
+                    pass
+            except Exception:
+                pass
+
         if os.path.exists(SECURE_LICENSE_FILE):
             os.remove(SECURE_LICENSE_FILE)
         if os.path.exists(LEGACY_LICENSE_FILE):

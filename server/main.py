@@ -32,11 +32,35 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
+def is_msix_packaged() -> bool:
+    """Detect if running inside an MSIX / Windows Store package identity container."""
+    if sys.platform != "win32":
+        return False
+    exe = (sys.executable or "").lower()
+    if "windowsapps" in exe or "gresonparichha.pcdeck" in exe:
+        return True
+    try:
+        import ctypes
+        from ctypes import wintypes
+        kernel32 = ctypes.windll.kernel32
+        buf_len = wintypes.UINT(256)
+        buf = ctypes.create_unicode_buffer(256)
+        rc = kernel32.GetCurrentPackageFullName(ctypes.byref(buf_len), buf)
+        if rc == 0 or (rc != 15700 and len(buf.value) > 0):
+            return True
+    except (Exception, OSError):
+        pass
+    return False
+
 # Windows High-DPI Awareness & Taskbar AppID Registration
 if sys.platform == "win32":
     try:
         import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.DesktopClient.Pro.v2026")
+        if not is_msix_packaged():
+            try:
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.DesktopClient.Pro.v2026")
+            except Exception:
+                pass
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
         except Exception:
@@ -485,7 +509,7 @@ def start_udp_discovery_daemon():
                 current_ip = get_local_ip()
                 hostname = socket.gethostname()
                 tok = get_pairing_token()
-                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.7.0:{tok}".encode("utf-8")
+                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.7.4:{tok}".encode("utf-8")
                 for bcast in _get_subnet_broadcasts():
                     try:
                         sock.sendto(beacon_msg, (bcast, DISCOVERY_UDP_PORT))
@@ -501,7 +525,7 @@ def start_udp_discovery_daemon():
                     current_ip = get_local_ip()
                     hostname = socket.gethostname()
                     tok = get_pairing_token()
-                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.7.0:{tok}".encode("utf-8")
+                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.7.4:{tok}".encode("utf-8")
                     sock.sendto(reply, addr)
             except socket.timeout:
                 continue
@@ -532,8 +556,17 @@ TRANSFER_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "PCDeck_Transf
 try:
     os.makedirs(TRANSFER_DIR, exist_ok=True)
 except Exception:
-    TRANSFER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transfers")
-    os.makedirs(TRANSFER_DIR, exist_ok=True)
+    safe_local = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "PCDeck", "transfers")
+    try:
+        os.makedirs(safe_local, exist_ok=True)
+        TRANSFER_DIR = safe_local
+    except Exception:
+        import tempfile
+        TRANSFER_DIR = os.path.join(tempfile.gettempdir(), "PCDeck_Transfers")
+        try:
+            os.makedirs(TRANSFER_DIR, exist_ok=True)
+        except Exception:
+            pass
 
 
 def format_bytes(bytes_num: int) -> str:
@@ -690,17 +723,44 @@ client_is_pro = False
 
 def is_pro_client() -> bool:
     global client_is_pro
-    if client_is_pro:
-        return True
     try:
         from server.license_manager import verify_license
-        return verify_license().get("pro_active", False)
+        if verify_license().get("pro_active", False):
+            return True
     except Exception:
-        return False
+        pass
+    return client_is_pro
+
+_server_event_loop: Optional[asyncio.AbstractEventLoop] = None
+
+
+def broadcast_pro_status(active: bool):
+    """Notify all connected mobile/web WebSocket clients about PC Pro unlock status."""
+    global _server_event_loop
+    if not active_connections:
+        return
+    msg = f"pro_unlocked,{1 if active else 0}"
+    try:
+        loop = _server_event_loop
+        if loop and loop.is_running():
+            async def _send_all():
+                dead = []
+                for ws in list(active_connections):
+                    try:
+                        await ws.send_text(msg)
+                    except Exception:
+                        dead.append(ws)
+                for ws in dead:
+                    active_connections.discard(ws)
+            asyncio.run_coroutine_threadsafe(_send_all(), loop)
+    except Exception:
+        pass
+
 
 def set_pro_client(active: bool):
     global client_is_pro
     client_is_pro = active
+    broadcast_pro_status(active)
 
 
 @app.get("/api/ping")
@@ -716,8 +776,9 @@ async def get_ping(request: Request):
         "name": socket.gethostname(),
         "ip": live_ip,
         "port": SERVER_PORT,
-        "version": "2.7.0",
+        "version": "2.7.4",
         "token": get_pairing_token(),
+        "pro_active": is_pro_client(),
     }
 
 
@@ -736,7 +797,7 @@ async def get_info():
         "token": get_pairing_token(),
         "transfer_dir": TRANSFER_DIR,
         "clients_connected": max(len(active_connections), len(screen_connections)),
-        "pro_active": client_is_pro,
+        "pro_active": is_pro_client(),
         "network": net_health,
         "screen": {
             "width": mon["width"],
@@ -1829,15 +1890,15 @@ def dispatch_command(data: str):
                     pass
 
         elif cmd == "pro_auth" and len(parts) >= 2:
-            from server.license_manager import verify_license
+            from server.license_manager import verify_license, activate_license_online
             # If server host itself has a cryptographically verified license, enable Pro
             if verify_license().get("pro_active", False):
                 client_is_pro = True
-            elif len(parts) >= 3:
-                # Client passed key & instance_id from Lemon Squeezy
+            elif len(parts) >= 2 and len(parts[1].strip()) >= 5:
+                # Client passed license key - validate cryptographically against license engine
                 k = parts[1].strip()
-                inst = parts[2].strip()
-                client_is_pro = len(k) >= 10 and len(inst) >= 5
+                ok, _, _ = activate_license_online(k)
+                client_is_pro = ok
             else:
                 client_is_pro = False
 
@@ -2500,17 +2561,36 @@ async def websocket_endpoint(websocket: WebSocket):
                             streamer.fps_limit = prof.target_fps
                     except Exception:
                         pass
-            elif data.startswith("pro_auth,"):
-                parts = data.split(",")
+            elif data == "pro_check" or data.startswith("pro_status,"):
                 from server.license_manager import verify_license
-                host_pro = verify_license().get("pro_active", False)
-                if host_pro or (len(parts) >= 3 and len(parts[1].strip()) >= 10 and len(parts[2].strip()) >= 5):
+                host_pro = is_pro_client() or verify_license().get("pro_active", False)
+                if host_pro:
                     set_pro_client(True)
                     await websocket.send_text("pro_unlocked,1")
                 else:
-                    if not host_pro:
+                    set_pro_client(False)
+                    await websocket.send_text("pro_unlocked,0")
+                continue
+            elif data.startswith("pro_auth,"):
+                parts = data.split(",")
+                from server.license_manager import verify_license, activate_license_online
+                host_pro = verify_license().get("pro_active", False)
+                if host_pro:
+                    set_pro_client(True)
+                    await websocket.send_text("pro_unlocked,1")
+                elif len(parts) >= 2 and len(parts[1].strip()) >= 5:
+                    client_key = parts[1].strip()
+                    ok, _, _ = activate_license_online(client_key)
+                    if ok:
+                        set_pro_client(True)
+                        await websocket.send_text("pro_unlocked,1")
+                    else:
                         set_pro_client(False)
                         await websocket.send_text("pro_unlocked,0")
+                else:
+                    set_pro_client(False)
+                    await websocket.send_text("pro_unlocked,0")
+                continue
             elif data in ("driver_check", "gamepad_driver_check"):
                 await websocket.send_text("driver_status,installed,driverless")
                 await websocket.send_text("gamepad_driver_status,installed,driverless")
@@ -2615,6 +2695,11 @@ async def mic_stream_post(request: Request):
 
 @app.on_event("startup")
 async def startup_event():
+    global _server_event_loop
+    try:
+        _server_event_loop = asyncio.get_running_loop()
+    except Exception:
+        pass
     # Configure custom asyncio exception handler to suppress WinError 10054 noise on abrupt mobile client disconnect
     try:
         loop = asyncio.get_running_loop()

@@ -17,7 +17,7 @@
   
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="PCDeck_Master_Logo.png">
-  <link rel="stylesheet" href="style.css?v=2.7.0">
+  <link rel="stylesheet" href="style.css?v=2.7.4">
 </head>
 <body class="on-screen-tab">
   <!-- ==========================================================================
@@ -670,7 +670,7 @@
             </div>
 
             <div class="hud-actions-group">
-              <button type="button" id="btn-hud-edit-layout" class="hud-chip-btn btn-hud-edit" title="Customize & Drag Layout (PUBG Style)">Edit Layout</button>
+              <button type="button" id="btn-hud-edit-layout" class="hud-chip-btn btn-hud-edit" title="Customize & Drag Layout (PUBG Style)">Edit Layout <span style="background: #eab308; color: #000; font-size: 0.52rem; font-weight: 800; padding: 1px 4px; border-radius: 3px; margin-left: 2px;">PRO</span></button>
               <button type="button" id="btn-hud-close" class="hud-chip-btn btn-hud-exit" title="Exit Gaming HUD"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             </div>
           </div>
@@ -1160,7 +1160,7 @@
                 <button type="button" id="btn-gp-haptic-toggle" class="gp-mini-chip active" style="padding: 6px 12px; font-size: 0.75rem;" title="Vibration Feedback">Haptics: ON</button>
                 <button type="button" id="btn-gp-edit-layout" class="gp-mini-chip" style="background: rgba(0, 240, 255, 0.18); border-color: var(--neo-cyan); color: #fff; padding: 6px 12px; font-size: 0.75rem;" title="Customize & Edit Gamepad Layout">
                   <svg class="deck-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  <span>Edit Layout</span>
+                  <span>Edit Layout</span> <span style="background: #eab308; color: #000; font-size: 0.52rem; font-weight: 800; padding: 1px 4px; border-radius: 3px; margin-left: 3px;">PRO</span>
                 </button>
                 <button type="button" id="gp-driver-badge" class="gp-driver-status-chip" style="display: none;">
                   <span id="gp-driver-text">Active</span>
@@ -2468,6 +2468,34 @@
           </div>
         </div>
 
+        <!-- ================= CARD: APPEARANCE & THEMES ================= -->
+        <div class="neo-card" style="border-color: rgba(179, 136, 255, 0.4); box-shadow: none;">
+          <div class="card-header-clean">
+            <div class="card-title-wrap">
+              <span class="card-dot" style="background: #b388ff; box-shadow: 0 0 8px #b388ff;"></span>
+              <span class="card-title-text">Appearance &amp; Themes</span>
+            </div>
+            <span class="mini-status-chip" style="color: #b388ff; border-color: rgba(179, 136, 255, 0.4);">CHROMA</span>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="item-title">UI Theme Palette</div>
+              <div class="item-desc">Custom cyber accent colors for trackpad, keys &amp; deck</div>
+            </div>
+            <select id="setting-theme-picker" class="cyber-input" style="width: auto; padding: 6px 10px; font-size: 0.8rem; font-weight: 700;">
+              <option value="default">Cyber Cyan (Default)</option>
+              <option value="aero">Frutiger Aero (Pro)</option>
+              <option value="y2k">Y2K Chrome (Pro)</option>
+              <option value="crt">CRT Phosphor (Pro)</option>
+              <option value="purple">Synthwave (Pro)</option>
+              <option value="gold">Solar Gold (Pro)</option>
+              <option value="lime">Matrix Lime (Pro)</option>
+              <option value="oled">OLED Pure Dark (Pro)</option>
+            </select>
+          </div>
+        </div>
+
         <!-- ================= CARD 4: PERFORMANCE & QUALITY ================= -->
         <div class="neo-card" style="border-color: rgba(255, 230, 0, 0.4); box-shadow: none;">
           <div class="card-header-clean">
@@ -2512,20 +2540,6 @@
             <select id="setting-transfer-speed" class="cyber-input" style="width: auto; padding: 6px 10px; font-size: 0.8rem; font-weight: 700;">
               <option value="standard">Standard Speed</option>
               <option value="turbo">Turbo Multi-Stream (Pro)</option>
-            </select>
-          </div>
-
-          <div class="setting-item">
-            <div>
-              <div class="item-title">Workspace Theme</div>
-              <div class="item-desc">UI color palette</div>
-            </div>
-            <select id="setting-theme-picker" class="cyber-input" style="width: auto; padding: 6px 10px; font-size: 0.8rem; font-weight: 700;">
-              <option value="default">Cyber Cyan</option>
-              <option value="lime">Matrix Lime (Pro)</option>
-              <option value="gold">Solar Gold (Pro)</option>
-              <option value="purple">Synthwave (Pro)</option>
-              <option value="oled">Pure Dark (Pro)</option>
             </select>
           </div>
         </div>
@@ -2685,6 +2699,13 @@
 
         <div class="pro-benefit-row">
           <div class="pro-benefit-text">
+            <strong>Custom Gaming HUD &amp; Key Mapper</strong>
+            <span>Unlock layout designer, custom touch button mapping, and macro keys.</span>
+          </div>
+        </div>
+
+        <div class="pro-benefit-row">
+          <div class="pro-benefit-text">
             <strong>OLED &amp; Accent Themes</strong>
             <span>Access to OLED Black and custom interface color themes.</span>
           </div>
@@ -2700,8 +2721,15 @@
 
       <!-- Action Button -->
       <button id="modal-btn-buy-pro" class="pro-action-btn-main" style="margin-top: 16px;">
-        <span>Unlock Lifetime Pro — $3.99</span>
+        <span id="modal-btn-buy-pro-text">Unlock Lifetime Pro — $3.99</span>
       </button>
+
+      <!-- Optional Check Local Price for Non-Western / PPP users -->
+      <div id="pro-local-price-wrap" style="display: none; text-align: center; margin-top: 8px;">
+        <button type="button" id="btn-check-local-price" style="background: none; border: none; color: var(--neo-cyan); font-size: 0.74rem; font-weight: 700; cursor: pointer; text-decoration: underline; padding: 2px 6px;">
+          Check your local price at checkout (PPP enabled) &rarr;
+        </button>
+      </div>
 
       <!-- License Key Entry Box -->
       <div style="margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 12px;">
@@ -2943,6 +2971,6 @@
   </div>
 
   <script src="jsqr.js" defer></script>
-  <script src="app.js?v=2.7.2"></script>
+  <script src="app.js?v=2.7.4"></script>
 </body>
 </html>

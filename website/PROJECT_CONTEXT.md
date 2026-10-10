@@ -157,20 +157,29 @@ The server runs on FastAPI / Uvicorn (default port `8000`) with dedicated WebSoc
 2. **Cyber-Neon Glassmorphism Design Aesthetic**:
    - Deep obsidian background (`#0a0e17`), elevated surfaces (`#131926`), typography (`Outfit`, `JetBrains Mono`, `Archivo`), vibrant cyan (`#00f0ff`), lime (`#00ff66`), and yellow (`#ffe600`) accents with micro-animations and tactile haptics.
 
+3. **Aesthetic UI Themes Engine (Pro)**:
+   - Dedicated "Appearance & Themes" setting card in the main settings drawer (`#setting-theme-picker`).
+   - Built 100% with pure CSS/SVG glassmorphism, metallic gradients, and pseudo-elements (strictly NO AI images, clipart, or emojis):
+     - `default` — **Cyber Cyan**: Default deep obsidian canvas with electric cyan trackpad accents.
+     - `aero` — **Frutiger Aero**: Radial aquatic sky gradients (`#1e5799` to `#061e38`), `backdrop-filter: blur(20px)`, 1.5px glass highlight borders, and glossy skeumorphic button reflections.
+     - `y2k` — **Y2K Chrome**: Brushed dark steel surfaces (`#181d26`), metallic borders via `border-image`, beveled tactile buttons, and hot rave pink active highlights.
+     - `crt` — **CRT Phosphor**: True cathode ray tube black (`#030804`), hardware scanlines overlay via CSS repeating linear gradient pseudo-element, and phosphor green phosphor glow.
+     - `purple` — **Synthwave**: 80s dusk violet/magenta gradients (`#180938`), neon wireframe borders, and retro cyberpunk accents.
+     - `gold` — **Solar Gold**: Warm solar amber/gold metallic borders and buttons.
+     - `lime` — **Matrix Lime**: Terminal green phosphor monochrome aesthetic.
+     - `oled` — **OLED Pure Dark**: True 0-nit pitch black (`#000000`) for maximum power savings on OLED/AMOLED mobile panels, with zero glow and hairline borders.
+
 ---
 
-## 7. Lemon Squeezy Pro Licensing & Anti-Tamper Security Architecture
+## 7. Pro Licensing, Payment Architecture & Anti-Tamper Security
 
-### Live Store & Checkout Details
-- **Store Domain**: `pcdeck.lemonsqueezy.com`
+### Payment Gateway Architecture: Dodo Payments (dodopayments.com)
+- **Status**: Migrating from Lemon Squeezy to Dodo Payments for frictionless Aadhaar + e-PAN individual developer KYC, global MoR tax handling, direct INR payouts, and native Apple Pay / Google Pay / Cards / UPI.
 - **Product Name**: `PCDeck Pro — Lifetime License` ($3.99 one-time)
-- **Live Checkout URL**: `https://pcdeck.lemonsqueezy.com/checkout/buy/5231b162-7c25-44f2-bcc3-f384839344c3`
-
-### Official Lemon Squeezy License API Endpoints
-Direct, public client-safe endpoints that require zero private API keys or custom cloud infrastructure:
-- **Activation**: `POST https://api.lemonsqueezy.com/v1/licenses/activate` (`license_key`, `instance_name`).
-- **Validation**: `POST https://api.lemonsqueezy.com/v1/licenses/validate` (`license_key`, `instance_id`).
-- **Deactivation**: `POST https://api.lemonsqueezy.com/v1/licenses/deactivate` (`license_key`, `instance_id`).
+- **Business Profile**: `PCDeck` / Developer: `Greson Parichha`
+- **Product URL / Website**: `https://pcdeck.vercel.app`
+- **Pricing Strategy**: Flat transparent $3.99 lifetime ownership (no fake discounts, no subscriptions, no ads, lifetime updates).
+- **License System**: Built-in Dodo Payments License Keys / offline HMAC-SHA256 hardware binding.
 
 ### Cryptographic Hardware Binding & Anti-Tamper Engine (`server/license_manager.py`)
 - **Hardware Fingerprint (HWID)**:
@@ -181,7 +190,7 @@ Direct, public client-safe endpoints that require zero private API keys or custo
   - Payload signature: `sig = HMAC_SHA256(machine_hwid + license_key + instance_id + salt)`.
   - If a user edits `license.dat` or copies it to another machine, the HMAC verification fails instantly and the client reverts to the Free edition.
 - **Zero Cloud Server Requirement**:
-  - PCDeck relies entirely on Lemon Squeezy's hosted licensing API for activation, and internal HMAC cryptography for offline persistence. No external servers or monthly hosting costs required.
+  - PCDeck relies entirely on hosted licensing API for activation, and internal HMAC cryptography for offline persistence. No external servers or monthly hosting costs required.
 
 ### Zero-Trust Local Server Enforcement (`server/main.py`)
 - **Command Verification**: Replaced arbitrary `pro_status` client booleans with `pro_auth,{license_key},{instance_id}`.
@@ -199,13 +208,48 @@ Direct, public client-safe endpoints that require zero private API keys or custo
 - Integrated into the Android build pipeline via `python build_apk.py --obfuscate`.
 - Keeps clean, readable source in `android_app/assets/app.js` while generating hardened, scrambled code inside distribution APKs.
 
-### Developer Pro Testing Workflow (Zero Backdoors Standard)
-- **Standard**: Hardcoded backdoor keys (e.g. `PCDECK-DEV-TEST-KEY-2026`) are strictly forbidden in production code.
-- **Developer Commands**:
-  - Generate HWID-bound local dev license: `python server/license_manager.py --activate-local-dev`
-  - Check current license status: `python server/license_manager.py --status`
-  - Revert to Free tier for testing: `python server/license_manager.py --deactivate`
-  - Source-code run flag (dev only): `$env:PCDECK_DEV_PRO="1"` (strictly disabled in compiled `.exe`).
+### Regional Purchasing Power Parity (PPP) Engine (`server/gui.py`)
+- **Native Win32 GeoID Detection**: Uses `ctypes.windll.kernel32.GetUserGeoID(16)` and `GetGeoInfoW(geo, 4, buf, 10, 0)` to detect the host machine's country code in 0ms without external IP lookup services.
+- **Market Categorization**:
+  - Excludes high-income Western economies (`US`, `CA`, `GB`, `AU`, `NZ`, `DE`, `FR`, `IT`, `ES`, `NL`, `SE`, `NO`, `DK`, `FI`, `CH`, `AT`, `BE`, `IE`, `LU`, `JP`) from discount banners to preserve baseline $3.99 ARPU.
+  - Automatically displays localized PPP pricing prompts for users in developing economies at checkout.
+- **Timezone Fallback**: Analyzes `time.timezone` and timezone abbreviation names if Windows GeoID is unavailable.
+
+### Developer Pro Testing & 100% Discount Testing Protocols
+To test Pro tier features and verification flows on local devices without hardcoding security vulnerabilities:
+
+1. **Protocol A: Instant Local Device HWID Activation (100% Free Offline)**
+   - **Purpose**: Test all Pro functionality (60 FPS screen mirror, aesthetic themes, gigabit transfers) locally on this machine without internet or credit card.
+   - **Command**:
+     ```powershell
+     python server/license_manager.py --activate-local-dev
+     ```
+   - **How it works**: Computes the exact Windows MachineGuid HMAC-SHA256 signature for this machine's HWID and writes a legitimate encrypted `license.dat` to `~/.pcdeck/license.dat`.
+   - **Verification**:
+     ```powershell
+     python server/license_manager.py --status
+     ```
+   - **Revert to Free**:
+     ```powershell
+     python server/license_manager.py --deactivate
+     ```
+
+2. **Protocol B: Dodo Payments 100% Discount Coupon (Full Cloud Activation Flow)**
+   - **Purpose**: Test end-to-end customer checkout, webhook delivery, license issuance, and Dodo API validation.
+   - **Dodo Dashboard Setup**:
+     - Navigate to **Dodo Payments Dashboard** (`dashboard.dodopayments.com`) -> **Discounts / Coupons**.
+     - Create a coupon:
+       - Discount Type: `Percentage`
+       - Amount: `100%`
+       - Code: e.g. `PCDECK100` or `TESTDEV100`
+       - Product: `PCDeck Pro — Lifetime License`
+   - **App Activation Test**:
+     - Launch `PCDeck.exe` or run `python server/main.py`.
+     - In the Pro activation modal, click **Get Pro Lifetime** to open the Dodo checkout URL.
+     - Enter promo code `PCDECK100` at checkout; total becomes **$0.00**.
+     - Complete checkout; Dodo generates an authentic live license key (`DODO-XXXX-XXXX`).
+     - Enter this key into the PCDeck Pro activation box and click **Activate**.
+     - Server contacts `https://live.dodopayments.com/licenses/activate`, validates the key, binds it to the device's HWID, and saves `license.dat`.
 
 ---
 
@@ -221,13 +265,17 @@ Direct, public client-safe endpoints that require zero private API keys or custo
 
 ## 9. Microsoft Store (MSIX) & Store Distribution Standards
 
+- **Store Status**: **LIVE & PUBLISHED** in Microsoft Store (Product ID: `9P4BK16LBGLS`, Store URL: `https://apps.microsoft.com/detail/9P4BK16LBGLS`). NOT in draft.
 - **Package Identity & Capability Model**:
   - Package Name: `PCDeck`
   - Display Name: `PCDeck: Wireless Trackpad, Screen Mirror & Remote Mouse`
   - Restricted Capability: `runFullTrust` declared in `AppxManifest.xml` for Win32 input simulation (`user32.dll`), WASAPI loopback audio capture, and local WebSocket server binding.
-- **Packaging Pipeline**:
-  - Automated Terminal Packager: `build_msix.bat` executing `tools/build_msix.py` (assembles layout, high-DPI assets, and invokes Windows SDK `makeappx` or zip container).
-  - GUI Fallback Route: Fully compatible with the official Microsoft Store **MSIX Packaging Tool** using `PCDeck.exe` as the source executable.
+- **Packaging Pipeline & Signing Standard**:
+  - Automated Terminal Packager: `python build_msix.py` (executes `makeappx.exe` from `build_tools/msix_sdk/` and handles manifest validation).
+  - **Store Ingestion Standard (Unsigned Required)**: Microsoft Partner Center signs packages with Microsoft's official store certificate during certification. Uploading packages signed with self-signed test certificates triggers validation errors.
+    - Store Submission Binary: `dist/PCDeck_Store_Upload.msix` (pure unsigned binary generated directly from `makeappx`).
+    - Local Testing Binary: `dist/PCDeck.msix` (locally signed with `build_tools/PCDeckTest.pfx` for direct developer double-click testing on Windows).
+  - Version Target: `2.7.4.0` (incremented from `2.7.3.0`).
 - **Visual Assets & Store Artwork**:
   - 1:1 App Logo: `msstore_assets/StoreLogo_300x300.png`
   - Spotlight Hero (2:1): `msstore_assets/StoreHero_2400x1200.png`
@@ -294,14 +342,15 @@ Before committing or releasing updates:
 
 ---
 
-## 13. Production Release v2.7.3 Specifications
+## 13. Production Release v2.7.4 Specifications
 
 | Target Binary | File Size | Version / Build | Verification Status |
 | :--- | :--- | :--- | :--- |
-| `PCDeck.exe` | **36.3 MB** | v2.7.3 (2.7.3.0 Win32 meta) | Passed · Standalone Portable PyInstaller binary with auto-ping & update prompt |
-| `PCDeck.msix` | **38.27 MB** | v2.7.3.0 (Code 273) | Passed · Store manifest validated, signed package for Microsoft Partner Center |
-| `PCDeck.apk` | **690.8 KB** | v2.7.3 (Code 273) | Passed · v1/v2/v3 aligned & signed with OTA update check |
-| `PCDeck.aab` | **666 KB** | v2.7.3 (Code 273) | Passed · Google Play Bundletool signed |
+| `PCDeck.exe` | **36.3 MB** | v2.7.4 (2.7.4.0 Win32 meta) | Passed · Standalone Portable PyInstaller binary with auto-ping & update prompt |
+| `PCDeck.msix` | **38.29 MB** | v2.7.4.0 (Code 274) | Passed · Store manifest validated, locally signed package for testing |
+| `PCDeck_Store_Upload.msix` | **38.29 MB** | v2.7.4.0 (Code 274) | Passed · Store upload unsigned package for Microsoft Partner Center (SHA256: `50FC6125A1FF47D8D6C249366EC331D6F06C108FF9A173148EA2B0924182D064`) |
+| `PCDeck.apk` | **694.8 KB** | v2.7.4 (Code 274) | Passed · v1/v2/v3 aligned & signed with OTA update check |
+| `PCDeck.aab` | **666 KB** | v2.7.4 (Code 274) | Passed · Google Play Bundletool signed |
 
 - **Version Consistency Invariant**: All components (`pyproject.toml`, `MainActivity.java`, `app.js` `CURRENT_APP_VERSION_NAME`, `version_info.txt`, `version.json`, and website download cards) must strictly reflect the exact same version string and integer code.
 - **Permanent Discontinuation of `PCDeck-Setup.exe` & Strict 2-Option Windows Distribution Model**:
@@ -835,48 +884,64 @@ Before committing or releasing updates:
 
 ---
 
-## 37. Microsoft Store Certification Compliance, Crash Resolution & Security Invariants (v2.7.3)
+## 37. Microsoft Store Certification Compliance, Crash Resolution & Security Invariants (v2.7.4)
 
-- **MSIX Rogue Shortcut Crash Loop & UI Hang Resolution (Partner Center Health Patch)**:
-  - **Crash Spike Root Cause**: The Microsoft Partner Center Health dashboard reported 44 crashes and 4 hangs under product `9P4BK16LBGLS` (version `2.7.2.0`). Investigation revealed:
-    1. `_ensure_start_menu_shortcut()` was executing a PowerShell script inside the MSIX container to write a legacy `.lnk` shortcut into `%APPDATA%\Microsoft\Windows\Start Menu\Programs\PCDeck.lnk` targeting `C:\Program Files\WindowsApps\...\PCDeck.exe`. When users launch packaged apps via raw `.lnk` outside the package execution alias, Windows triggers an immediate `MoAppCrash` / Uncategorized termination loop.
-    2. `os.chdir(os.path.dirname(sys.executable))` into `C:\Program Files\WindowsApps\...` caused fatal `PermissionError`.
-    3. A synchronous `schtasks.exe /delete` call on the GUI main thread in `__init__` caused UI message loop hangs.
-    4. PyInstaller windowed mode (no console) caused stream write crashes when unbuffered `print(..., flush=True)` ran without redirection.
-  - **Hardened Resolution**:
-    1. **MSIX Shortcut Suppression**: Wrapped all shortcut and startup creation methods (`_ensure_start_menu_shortcut()`, `set_startup()`, etc.) in `if is_msix_packaged(): return`. Windows Store natively handles Start Menu and taskbar registration.
-    2. **Rogue Shortcut Auto-Purge**: Added `_cleanup_msix_rogue_shortcuts()` which executes during startup in MSIX mode to detect and silently delete broken `.lnk` shortcuts in Start Menu and Startup folders created by v2.7.2.
-    3. **Crash-Proof Streams & Exception Trapping**: Redirected `sys.stdout` and `sys.stderr` to `io.StringIO` fallbacks when streams are `None`, and installed `threading.excepthook` to prevent background worker crashes from terminating the host process.
-    4. **Safe Directory Switching**: Guarded `os.chdir()` with `try...except OSError` to ensure read-only `WindowsApps` paths never crash the application.
-- **Strict Enforcement of Policy 10.2.10.1 (Zero Executable Downloads from App)**:
-  - **Rejection Root Cause**: Store testers previously flagged `"Download Mobile App"` in `server/gui.py` which invoked `webbrowser.open(".../PCDeck.apk")`. Store policy strictly forbids applications or metadata from initiating downloads of executables (`.apk`, `.exe`, `.msi`, `.bat`).
-  - **Resolution**: Permanently replaced with in-app "How to Connect" guidance modal (`open_how_to_connect_dialog`). Displays 4 simple zero-install steps on-screen (phone camera QR scan) with a single outbound hyperlink to the website root (`https://pcdeck.vercel.app/`). Initiates zero file downloads.
-- **Native Package Identity Detection (`is_msix_packaged()`)**:
-  - In Store installations, `server/gui.py` calls `kernel32.GetCurrentPackageFullName`.
-  - When packaged inside an MSIX container, the function returns `ERROR_SUCCESS (0)` rather than `APPMODEL_ERROR_NO_PACKAGE (15700)`.
-  - Suppresses background auto-update polling threads (`_silent_update_ping`) because updates for Store packages are managed natively by the Microsoft Store client.
-- **Partner Center `runFullTrust` Justification Standard**:
-  - MSIX packaged desktop utilities require explicit justification for the `runFullTrust` restricted capability in Partner Center Submission Options:
-    1. Desktop screen capture via Windows Desktop Duplication API for low-latency display streaming.
-    2. Cursor, scroll, and keyboard simulation via Win32 `SendInput` API.
-    3. Virtual Xbox 360 controller emulation via ViGEmBus driver.
-    4. Desktop audio stream capture via Windows Core Audio / WASAPI loopback capture.
+- **Telemetry Root Cause Analysis (v2.7.3.0 Partner Center Spike)**:
+  - **Telemetry Data**:
+    - `v2.7.2.0`: 122 crashes across 5 devices.
+    - `v2.7.3.0`: **60 crashes across 2 devices** (Spike recorded on Oct 8, 2026; 100% Uncategorized).
+  - **Diagnostic Finding**: Exactly 60 crashes on 2 devices (~30 crashes per device) represents an automated **startup / restart loop** on two specific user machines following update from `2.7.2.0` to `2.7.3.0`.
+  - **Root Causes Identified**:
+    1. **MSIX Process Identity & AppUserModelID Violation**: `server/gui.py` and `server/main.py` invoked `ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PCDeckPro.DesktopClient.Pro.v2026")` unconditionally before UI initialization. In MSIX packaged containers, the OS strictly assigns the AUMID (`GresonParichha.PCDeck...`). Manually overriding or modifying the process AUMID inside Centennial/MSIX triggers a shell failure or immediate `MoAppCrash` on specific Windows 10/11 builds.
+    2. **Single-Instance Mutex Privilege Trap**: `acquire_single_instance_lock` tested `Global\PCDeck_SingleInstance_Mutex_Pro` first. When standard users without `SeCreateGlobalPrivilege` launched the app, `CreateMutexW` returned `h_mutex = 0` with `GetLastError() = ERROR_ACCESS_DENIED (5)`. The legacy logic treated `ERROR_ACCESS_DENIED` as "instance already running", terminating with `sys.exit(0)` on startup.
+    3. **MSIX Detection Fragility & Direct Shortcut Launching**: `is_msix_packaged()` previously relied solely on `GetCurrentPackageFullName(ctypes.byref(length), None)`. If an MSIX app was launched via an orphaned `.lnk` shortcut pointing to `C:\Program Files\WindowsApps\...` rather than its package execution alias, package identity was absent or ctypes threw an unhandled buffer exception, returning `False`. This triggered `os.chdir()` into read-only `WindowsApps` and re-created broken Win32 shortcuts.
+    4. **Uncaught Tkinter Callback Exceptions**: Tkinter event loops route unhandled exceptions to `root.report_callback_exception` (which prints to `sys.stderr`) rather than `sys.excepthook`. Any widget event exception could crash the host process without telemetry.
+    5. **Read-Only Relative Fallbacks**: `TRANSFER_DIR` fell back to `os.path.dirname(__file__)` ("transfers") if `Downloads` was unavailable, causing fatal `PermissionError` inside read-only `WindowsApps`.
+
+- **Multi-Vector Hardened Resolution (v2.7.4.0)**:
+  1. **Dual-Vector Infallible Package Detection (`is_msix_packaged()`)**:
+     - Check 1 (Filesystem Path): Evaluates `sys.executable` for `windowsapps` or `gresonparichha.pcdeck`. Since standard processes cannot run from `C:\Program Files\WindowsApps`, this path check is 100% infallible, requires zero ctypes, and cannot fail.
+     - Check 2 (Win32 API Buffer): Uses `GetCurrentPackageFullName` with a pre-allocated 256-character Unicode buffer, catching `OSError` and access violations safely.
+  2. **Strict AppUserModelID MSIX Guard**:
+     - Wrapped `SetCurrentProcessExplicitAppUserModelID` inside `if not is_msix_packaged():` in both `server/gui.py` and `server/main.py`. Allows the Windows Shell to manage the package identity natively.
+  3. **Session-Local Mutex Prioritization**:
+     - `acquire_single_instance_lock` checks `Local\PCDeck_SingleInstance_Mutex_Pro` first. Standard users never encounter global namespace permission errors. Only marks collision when `h_mutex != 0` AND `last_error == ERROR_ALREADY_EXISTS (183)`.
+  4. **MSIX Safe Working Directory**:
+     - In frozen MSIX execution, automatically sets `os.chdir` to `%LOCALAPPDATA%\PCDeck\`, guaranteeing all subsequent relative filesystem writes succeed.
+  5. **Comprehensive Rogue Shortcut Purge**:
+     - `_cleanup_msix_rogue_shortcuts()` scans all legacy naming variants (`PCDeck.lnk`, `PCDeck Pro.lnk`, `PCDeck_Pro.lnk`, `PCDeckPro.lnk`, `NeonTrack.lnk`) across both `Start Menu\Programs` and `Startup`, unsets read-only file attributes, and safely deletes them.
+  6. **Tkinter & Dual-Path Crash Logging**:
+     - Hooks `root.report_callback_exception = lambda exc, val, tb: global_excepthook(exc, val, tb)` to trap any GUI callback errors.
+     - Logs crashes simultaneously to `~/pcdeck_pro_debug.log` and `%LOCALAPPDATA%\PCDeck\crash.log`.
+  7. **Safe Sandbox `TRANSFER_DIR` Fallback**:
+     - Replaced `__file__` relative fallback with `%LOCALAPPDATA%\PCDeck\transfers` and `tempfile.gettempdir()`.
+
 - **Partner Center Active Lifecycle**:
   - Product ID: `9P4BK16LBGLS`
-  - Version: `2.7.3.0` (Code `273`, x64)
-  - Submission State: **v2.7.3.0 Ready for Partner Center Submission** (SHA256: `C0A4AE20E5A5F6C4AFCDA5CD8440110BD953CA5DACE72ABA353419290846B490`).
+  - Version: `2.7.4.0` (Code `274`, x64)
+  - Submission Package: `dist/PCDeck_Store_Upload.msix`
+  - Package Size: **38.29 MB** (40,151,167 bytes)
+  - SHA256: `50FC6125A1FF47D8D6C249366EC331D6F06C108FF9A173148EA2B0924182D064`
+  - Local Test Binary: `dist/PCDeck.msix` (Locally signed with test certificate for instant developer validation)
   - IARC Certificate: Global Rating ID `38db0842-8646-8777-89a0-3f95036cee7f` (ESRB: Everyone, PEGI 3+).
 
 ---
 
 ## 38. Microsoft Store Acquisition Analytics & Anti-Bloat Desktop Review Architecture
 
-- **Launch Velocity & Acquisition Conversion**:
-  - In its first 72 hours of store publication (Sep 23–25, 2026), PCDeck achieved:
-    - **27 Store Page Views**
-    - **13 Successful Installations** (48.15% conversion rate vs. 5–10% industry standard).
-    - **100% Install Success Rate** (zero MSIX deployment failures).
-    - **5 Immediate First-Time Launches**.
+- **Store Launch Velocity & Benchmarks (First 16 Days: Sep 23 – Oct 08, 2026)**:
+  - **Store Publication Date**: September 23, 2026.
+  - **Lifetime Acquisitions**: **86 total verified installations** in 16 days (15 complete telemetry days, ~5.73/day average, recent velocity **6.8–7.0 installs/day**).
+  - **Total Store Page Views**: **205 views**.
+  - **Conversion Rate (Installs / Page Views)**: **41.95%** (elite-tier vs. 15–20% desktop utility industry benchmark).
+  - **Install Success Rate**: **100.0%** (zero package deployment failures across all 86 installs).
+  - **Monthly Active Devices (MAD - Opt-in)**: **50 active devices** (Windows optional telemetry sample; estimated ~70–75 actual active devices).
+  - **Sessions (Opt-in)**: **77 active sessions** (~1.54 sessions per active device, confirming rapid repeat utility).
+  - **User-Initiated Uninstalls**: **Only 2 uninstalls** across all 86 deployments (**97.7% retention rate** vs. 25–40% industry churn benchmark).
+  - **Stickiness (DAD / MAD)**: **16.69%** (exceeds 8–12% standard desktop utility benchmark).
+  - **Average Foreground Engagement Duration**: **1.61 min** (ideal system tray background utility signature: launch, QR scan/pair, minimize to tray).
+  - **Combined PC Reach (All-Time)**: **~120–130 total Windows PC users** (86 Microsoft Store + ~35–45 direct standalone `PCDeck.exe` downloads).
+  - **Top Geographic Distribution**: India (19 active devices, 38%), France (7, 14%), United States (4, 8%), Japan (2, 4%), Sierra Leone (3), Qatar (1), Dominican Republic (2).
 - **Desktop 3-3-1 Polite Review Architecture (Policy 10.8 Compliant)**:
   - **Zero Mobile Interruption Invariant**: The mobile and browser trackpad controller is strictly forbidden from displaying any rating popups, modals, or banners during active mouse/keyboard/gamepad touch interactions.
   - **The 3-3-1 Desktop Rule**:
@@ -914,10 +979,82 @@ Before committing or releasing updates:
 - **AlternativeTo Directory Listing**:
   - Live and verified at `https://alternativeto.net/software/pcdeck/`.
   - Linked to 11 major competitors (Unified Remote, Spacedesk, KDE Connect, DroidCam, Remote Mouse, WiFi Mouse, Audio Share, etc.).
+- **Verified Organic Search Engine Ground-Truth (October 2026)**:
+  - **Google Search Console**:
+    - Graduated from sandbox: daily ranking improved from Page 6 (Pos 55–63) in August to consistent **Page 1 (Pos 5.5–10)** starting mid-September.
+    - Mobile ranking super-weapon: Mobile devices rank on Page 1 at **Position 6.98 with 7.46% CTR**.
+    - Top organic magnet: `/browser-pc-remote/` (20 clicks, 164 impressions, 12.2% CTR, Position 8.18).
+    - Top long-tail keyword cluster: Over 100+ "no mouse / broken mouse" queries (`/use-pc-without-mouse/` with 707 impressions).
+  - **Bing Webmaster Tools (Windows Edge / Taskbar Search)**:
+    - Sustained **50 to 71 impressions/day** with steady daily clicks (up to 10% CTR).
+    - 100% desktop Windows user intent, driving direct conversions to the primary Microsoft Store installer.
 - **Mobile-to-PC Conversion Bridge**:
-  - Deployed across core landing pages (`index.html`, `download/`, `guides/`) to accommodate the 44% iOS / Mobile Safari audience.
+  - Deployed across core landing pages (`index.html`, `download/`, `guides/`, `/use-pc-without-mouse/`, `/browser-pc-remote/`) to accommodate the ~40% mobile audience discovering PCDeck via Page-1 Google search results.
   - Provides 1-tap `✉️ Email link to PC` (mailto pre-fill) and `📋 Copy PC Link` (with instant clipboard toast).
+- **Vercel Analytics Conversion Event Pipeline (`va.js`)**:
+  - Automated click tracking dispatches custom events via `window.va('event', { name: ... })`:
+    - `download_windows_msstore`: Primary Windows installer (`get.microsoft.com`, `apps.microsoft.com`, `9p4bk16lbgls`, etc.).
+    - `download_windows_exe`: Secondary standalone `.exe` (`pcdeck.exe`, `/download/windows/`).
+    - `download_windows`: Aggregate event for any Windows download action.
+    - `download_android`: Android APK download (`pcdeck.apk`).
+    - `download_linux`: Linux 1-line script (`run_linux.sh`, `install.sh`).
+    - `open_web_remote`: Zero-install browser client launch (`/connect/`, `/browser-pc-remote/`).
+    - `mobile_bridge_email` & `mobile_bridge_copy`: Mobile handoff actions to prevent mobile bounce drop-offs.
+    - `guide_click`: Technical guide navigation.
 - **Search Engine Caching & IndexNow Acceleration**:
   - `vercel.json` deploys `Cache-Control: public, max-age=31536000, immutable` on static assets for sub-50ms crawler response.
   - Automated IndexNow script (`tools/submit_indexnow.py`) submits all 29 sitemap URLs to `https://www.bing.com/indexnow` with multi-key fallback (`HTTP 200 OK`).
   - 100% bit-for-bit parity maintained between root HTML files and `website/` distribution mirror.
+
+---
+
+## 41. Strategic Marketing Roadmap, Custom Domain Protocol & Video Funnel Invariants
+
+- **Domain-First Inbound Marketing Protocol (CRITICAL SEO INVARIANT)**:
+  - **Invariant**: Secure and attach the permanent custom domain (e.g. `pcdeck.app`, `usepcdeck.com`, or `pcdeck.net`) **BEFORE** initiating mass software directory submissions or launching YouTube/social promotion campaigns.
+  - **Rationale**:
+    1. *Avoids 301 Re-indexing Dips*: Pointing viral or backlink traffic to `pcdeck.vercel.app` and subsequently migrating to a custom domain triggers a 2-to-4 week Google ranking fluctuation and temporary traffic drop during URL re-crawl.
+    2. *Permanent Backlink Equity*: Directory listings (Softpedia, Uptodown, Softonic) permanently register the developer website URL; securing the custom domain first guarantees 100% of high-DA backlink juice directly strengthens the owned domain asset.
+    3. *Professional Brand Authority*: A custom domain eliminates "free hobbyist" perception across both users and software review editors.
+- **High-DA Software Directory Submission Pipeline (Post-Domain Priority)**:
+  - **Softpedia (DA 85)**: Fast manual editorial evaluation, verified malware scanning, and provides the authoritative "100% CLEAN / No Malware" security badge for the website.
+  - **Uptodown (DA 88)**: High-traffic global catalog (strong LATAM/Europe developer presence), zero-cost developer portal, hosts both Windows `.exe` and Android `.apk`.
+  - **Softonic (DA 92)**: Massive search presence and high-authority editorial backlink to boost Google Page 1 ranking.
+  - **FileHorse / MajorGeeks (DA 75–80)**: Power-user IT and utility enthusiast exposure.
+- **YouTube Shorts & Mobile-First Video Funnel Standard**:
+  - **Zero Raw Store Links on Mobile**: Never place raw Microsoft Store deep links (`ms-windows-store:...` or `apps.microsoft.com/...`) as the sole link in mobile video descriptions or pinned comments (90%+ of Shorts viewers are on smartphones where Windows Store links trigger OS incompatibility errors and instant drop-offs).
+  - **Frictionless Bridge Routing**: Video links must route to `https://pcdeck.vercel.app/` (or future custom domain `/download/`), leveraging the native Mobile-to-PC Bridge:
+    - *Mobile Viewers*: Immediately access the Android APK or instant browser remote (`/browser-pc-remote/`) plus 1-tap "Email link to PC" / "Copy PC link" for when they reach their desktop.
+    - *Desktop Viewers*: Automatically served the official Microsoft Store Direct Web Installer button above the fold.
+  - **High-Converting Video Formats**:
+    - *Problem/Solution Short (30–45s)*: "Mouse broke mid-game / mid-work &rarr; turned phone into 0-lag PC trackpad over Wi-Fi (zero ads, 100% offline)."
+    - *Evergreen Search Guide (2–3m)*: "How to stream PC audio to phone headphones over Wi-Fi without Bluetooth or cables."
+- **Monetization Milestones & Financial Projections**:
+  - Target: $200 first milestone (~50 gross sales at $3.99 lifetime).
+  - Current run-rate: ~250–270 monthly PC downloads (86 Store + ~40 standalone web).
+  - Projected timeline to $200: **2.5 to 3.5 months** as `v2.7.3.0` 3-3-1 in-app ratings roll out and organic Store search ranking scales.
+
+---
+
+## 42. Android Share Sheet Target, Port 8000 Resiliency & v2.7.4.0 Release Standards
+
+- **Android System Share Sheet Target ("Share to PCDeck")**:
+  - **Intent Filters**: Declared in `android_app/AndroidManifest.xml` with `android.intent.action.SEND` (single file/text) and `android.intent.action.SEND_MULTIPLE` (multiple files) under `<data android:mimeType="*/*" />`.
+  - **SingleTop Launch Mode**: `android:launchMode="singleTop"` on `MainActivity` routes incoming shares into `onNewIntent` without destroying the activity or dropping the active WebSocket connection.
+  - **Memory-Safe Native Stream Bridge**: `MainActivity.java` exposes `readSharedFileChunk(uriString, offset, chunkSize)` so content URIs can be read in small 64KB/1MB slices, completely eliminating `OutOfMemoryError` on 4K videos or multi-gigabyte files.
+  - **Client Queue & Instant Upload**: Handled in `static/app.js` and `android_app/assets/app.js` via `window.handleSharedFiles(files)` and `window.handleSharedText(text)`.
+    - If connected: files stream immediately to PC host via `POST /api/fs/upload-stream` with real-time transfer progress bars.
+    - If disconnected: files are safely queued in memory and uploaded automatically the moment Wi-Fi pairing is established.
+    - Shared text is automatically copied to the Windows clipboard via `/ws` key typing or clipboard synchronization.
+- **Port 8000 Zombie / Stale PyInstaller Process Trap**:
+  - **Incident & Root Cause**: During iterative PyInstaller recompilations, if an existing `PCDeck.exe` background process is lingering in the Windows system tray on port 8000, PyInstaller's cleanup phase removes/replaces extracted runtime assets in the temp directory (`_MEI...`). The running Uvicorn server loses access to its static files, resulting in HTTP 500 "Internal Server Error" on pairing endpoints (`/connect`, `/?tab=screen`, `/PCDeck.apk`).
+  - **Resolution Protocol**: Terminate all lingering `PCDeck.exe` instances (`Stop-Process -Name PCDeck -Force`) before restarting the newly built binary. Verified 200 OK across all LAN endpoints (`/connect`, `/?tab=screen`, `/api/ping`, `/PCDeck.apk`).
+- **Microsoft Store Update Package Specifications (v2.7.4.0)**:
+  - Product ID: `9P4BK16LBGLS`
+  - Version: `2.7.4.0` (Code `274`, Architecture `x64`)
+  - Target MSIX: `dist/PCDeck_Store_Upload.msix`
+  - File Size: `38.29 MB` (40,151,167 bytes)
+  - SHA256: `50FC6125A1FF47D8D6C249366EC331D6F06C108FF9A173148EA2B0924182D064`
+  - Package Identity: Name `GresonParichha.PCDeck`, Publisher `CN=EE1A7F1B-8959-4B69-B895-5E5FF21E385E`
+
+

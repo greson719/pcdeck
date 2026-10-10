@@ -94,7 +94,7 @@ function triggerDownload() {
   a.click();
   document.body.removeChild(a);
   try {
-    window.va('track', 'Download', { file: 'PCDeck.apk', platform: 'android' });
+    window.va('event', { name: 'download_android', data: { file: 'PCDeck.apk', platform: 'android' } });
   } catch (e) {}
 }
 
