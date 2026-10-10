@@ -2173,6 +2173,9 @@
     if (pendingSharedFilesQueue && pendingSharedFilesQueue.length > 0) {
       const q = pendingSharedFilesQueue.slice();
       pendingSharedFilesQueue = [];
+      if (typeof switchTab === 'function') {
+        try { switchTab('tab-files'); } catch (e) {}
+      }
       setTimeout(() => {
         uploadMarkedPhoneFilesToPc(q);
       }, 500);
@@ -4839,9 +4842,12 @@
     phoneUploadStartTime = 0;
     vibrate(20);
 
-    const isBatch = activeBatchTransfer.active && activeBatchTransfer.total > 1;
-    if (isBatch && activeBatchTransfer.current < activeBatchTransfer.total) {
+    if (activeBatchTransfer && activeBatchTransfer.active) {
       activeBatchTransfer.successCount++;
+    }
+
+    const isBatch = activeBatchTransfer && activeBatchTransfer.active && activeBatchTransfer.total > 1;
+    if (isBatch && activeBatchTransfer.current < activeBatchTransfer.total) {
       showTransferProgress({
         badge: `[${activeBatchTransfer.current}/${activeBatchTransfer.total}]`,
         badgeClass: 'badge-download',
@@ -4851,22 +4857,6 @@
         speed: 'Saved to PC',
         isDownload: false
       });
-    } else {
-      const totalUploaded = isBatch ? activeBatchTransfer.total : 1;
-      showToast(`"${filename}" uploaded to PC! ${verified ? ' Verified' : ''}`, 'success');
-      showTransferProgress({
-        badge: verified ? 'ALL SAVED' : 'UPLOADED',
-        badgeClass: 'badge-download',
-        filename: isBatch ? `${totalUploaded} file(s)` : filename,
-        percent: 100,
-        status: verified ? `100% Verified! Saved ${totalUploaded} file(s) intact on PC` : `Saved ${totalUploaded} file(s) on PC`,
-        speed: 'Saved to PC',
-        showOpenPc: true,
-        onOpenPc: () => openLocationOnPc(state.currentFsPath),
-        isDownload: false
-      });
-      hideTransferProgress(15000);
-      activeBatchTransfer.active = false;
     }
 
     if (state.currentFsPath !== undefined) {
@@ -4883,23 +4873,20 @@
   window.onPhoneUploadError = function(filename, error) {
     phoneUploadStartTime = 0;
     showToast(`Upload error: ${error}`, 'error');
-    const isBatch = activeBatchTransfer.active && activeBatchTransfer.total > 1;
-    if (isBatch) activeBatchTransfer.failCount++;
+    if (activeBatchTransfer && activeBatchTransfer.active) {
+      activeBatchTransfer.failCount++;
+    }
+    const isBatch = activeBatchTransfer && activeBatchTransfer.active && activeBatchTransfer.total > 1;
 
     showTransferProgress({
       badge: 'ERROR',
       badgeClass: 'badge-upload',
       filename: filename,
       percent: 0,
-      status: `Error: ${error}`,
+      status: `Error on ${filename}: ${error}`,
       speed: 'Failed',
       isDownload: false
     });
-
-    if (!isBatch || activeBatchTransfer.current >= activeBatchTransfer.total) {
-      hideTransferProgress(8000);
-      activeBatchTransfer.active = false;
-    }
 
     if (typeof onPhoneUploadQueueDone === 'function') {
       const cb = onPhoneUploadQueueDone;
@@ -4912,6 +4899,10 @@
 
   window.handleSharedFiles = function(files) {
     if (!files || !files.length) return;
+    // Always open File Manager section immediately upon receiving shared files
+    if (typeof switchTab === 'function') {
+      try { switchTab('tab-files'); } catch (e) {}
+    }
     if (state.connected && state.serverHost) {
       showToast(`Sending ${files.length} shared file(s) to PC...`, 'info');
       uploadMarkedPhoneFilesToPc(files);
@@ -4957,10 +4948,12 @@
       function uploadNext() {
         if (currentIndex >= totalCount) {
           vibrate(30);
-          activeBatchTransfer.active = false;
-          const anySuccess = activeBatchTransfer.successCount > 0;
-          if (!anySuccess) {
-            showToast(`Upload failed. Check storage access.`, 'error');
+          const totalSuccess = activeBatchTransfer ? activeBatchTransfer.successCount : 0;
+          const totalFailed = activeBatchTransfer ? activeBatchTransfer.failCount : 0;
+          if (activeBatchTransfer) activeBatchTransfer.active = false;
+
+          if (totalSuccess === 0) {
+            showToast(`Upload failed. Check connection or storage permissions.`, 'error');
             showTransferProgress({
               badge: 'UPLOAD FAILED',
               badgeClass: 'badge-upload',
@@ -4971,14 +4964,14 @@
               isDownload: false
             });
             hideTransferProgress(8000);
-          } else if (errorOccurred) {
-            showToast(`Uploaded with some errors (${activeBatchTransfer.successCount}/${totalCount})`, 'warn', '️');
+          } else if (totalFailed > 0 || errorOccurred) {
+            showToast(`Uploaded with some errors (${totalSuccess}/${totalCount})`, 'warn', '⚠️');
             showTransferProgress({
               badge: 'PARTIAL SUCCESS',
               badgeClass: 'badge-download',
-              filename: `${activeBatchTransfer.successCount}/${totalCount} file(s)`,
+              filename: `${totalSuccess}/${totalCount} file(s)`,
               percent: 100,
-              status: `Saved ${activeBatchTransfer.successCount} of ${totalCount} files to PCDeck_Transfers`,
+              status: `Saved ${totalSuccess} of ${totalCount} files to PCDeck_Transfers`,
               speed: 'Saved to PC',
               showOpenPc: true,
               onOpenPc: () => openLocationOnPc(''),
@@ -4986,7 +4979,7 @@
             });
             hideTransferProgress(15000);
           } else {
-            showToast(` Uploaded ${totalCount} file(s) to PC!`, 'success');
+            showToast(`✅ Uploaded ${totalCount} file(s) to PC!`, 'success');
             showTransferProgress({
               badge: 'ALL UPLOADED',
               badgeClass: 'badge-download',

@@ -1671,10 +1671,15 @@ public class MainActivity extends Activity {
                         if (filePath.startsWith("content://")) {
                             Uri uri = Uri.parse(filePath);
                             try {
-                                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                Intent curIntent = getIntent();
+                                if (curIntent != null && (curIntent.getFlags() & Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION) != 0) {
+                                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                }
                             } catch (Exception ignored) {}
                             try {
                                 inputStream = getContentResolver().openInputStream(uri);
+                            } catch (Exception ignored) {}
+                            try {
                                 ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
                                 if (pfd != null) {
                                     totalBytes = pfd.getStatSize();
@@ -2681,7 +2686,7 @@ public class MainActivity extends Activity {
                         Toast.makeText(MainActivity.this, "PCDeck: Sending " + uris.size() + " shared file(s) to PC...", Toast.LENGTH_SHORT).show();
                         JSONArray jsonArr = new JSONArray(uris);
                         if (webView != null) {
-                            webView.evaluateJavascript("if (typeof window.handleSharedFiles === 'function') { window.handleSharedFiles(" + jsonArr.toString() + "); }", null);
+                            webView.evaluateJavascript("if (typeof switchTab === 'function') { try { switchTab('tab-files'); } catch(e){} } if (typeof window.handleSharedFiles === 'function') { window.handleSharedFiles(" + jsonArr.toString() + "); }", null);
                         }
                     }
                 });
@@ -2745,7 +2750,7 @@ public class MainActivity extends Activity {
                             @Override
                             public void run() {
                                 if (webView != null) {
-                                    webView.evaluateJavascript("if (typeof window.handleSharedFiles === 'function') { window.handleSharedFiles(" + arr.toString() + "); }", null);
+                                    webView.evaluateJavascript("if (typeof switchTab === 'function') { try { switchTab('tab-files'); } catch(e){} } if (typeof window.handleSharedFiles === 'function') { window.handleSharedFiles(" + arr.toString() + "); }", null);
                                 }
                             }
                         }, 500);
