@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.pcdeck.app"
-    android:versionCode="274"
-    android:versionName="2.7.4">
+    android:versionCode="276"
+    android:versionName="2.7.6">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
@@ -55,6 +55,9 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="getpcdeck.com" android:pathPrefix="/connect" />
+                <data android:scheme="http" android:host="getpcdeck.com" android:pathPrefix="/connect" />
+                <data android:scheme="https" android:host="www.getpcdeck.com" android:pathPrefix="/connect" />
                 <data android:scheme="https" android:host="pcdeck.vercel.app" android:pathPrefix="/connect" />
                 <data android:scheme="http" android:host="pcdeck.vercel.app" android:pathPrefix="/connect" />
                 <data android:scheme="pcdeck" android:host="connect" />

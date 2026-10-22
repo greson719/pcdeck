@@ -74,7 +74,7 @@ KEY FEATURES:
 
 
 QUICK 3-STEP SETUP:
-1. Download and launch the free PCDeck Windows companion app on your PC (from https://pcdeck.vercel.app or GitHub).
+1. Download and launch the free PCDeck Windows companion app on your PC (from https://getpcdeck.com or GitHub).
 2. Ensure your phone and PC are connected to the same Wi-Fi network or Mobile Hotspot.
 3. Open PCDeck on Android and scan the on-screen pairing QR code or enter your local PC IP.
 

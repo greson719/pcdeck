@@ -28,7 +28,7 @@ PCDeck is an independent Windows + Linux utility with an instant browser-based m
 
 - **Windows**: Windows 10 or Windows 11 (64-bit) via standalone portable executable (`PCDeck.exe`).
 - **Linux**: Ubuntu, Debian, Fedora, Arch, SteamOS (Steam Deck), Raspberry Pi via universal 1-line command:
-  `curl -sSL https://pcdeck.vercel.app/install.sh | bash`
+  `curl -sSL https://getpcdeck.com/install.sh | bash`
 - **Mobile (Native)**: Android 5.0 Lollipop through Android 16+ via direct APK (`PCDeck.apk`).
 - **Mobile (Browser Zero-Install)**: iOS, iPadOS, macOS, Linux, Android via Safari / Chrome / Firefox QR code scan.
 - Both devices on the same Wi-Fi network, or connected to the phone's hotspot. No internet access required after download.
@@ -68,41 +68,41 @@ received, and optionally upload the file to VirusTotal.
 
 ## Feature Pages & Landing Guides
 
-- **Guides Hub** — https://pcdeck.vercel.app/guides/
+- **Guides Hub** — https://getpcdeck.com/guides/
   Central knowledge base and tutorials for PCDeck remote control, emergency display, audio, and file transfer.
 
-- **Control PC From Phone Browser (Zero-Install)** — https://pcdeck.vercel.app/browser-pc-remote/
+- **Control PC From Phone Browser (Zero-Install)** — https://getpcdeck.com/browser-pc-remote/
   Instant zero-install web remote: control Windows and Linux from Safari, Chrome, or Firefox on iOS, iPadOS, macOS, Android, and Linux via QR code scan.
 
-- **How to Control a Linux PC or Steam Deck From Phone** — https://pcdeck.vercel.app/control-linux-pc-from-phone/
+- **How to Control a Linux PC or Steam Deck From Phone** — https://getpcdeck.com/control-linux-pc-from-phone/
   Step-by-step guide for Ubuntu, Debian, Fedora, Arch Linux, and SteamOS (Steam Deck in Desktop Mode) remote control over local Wi-Fi.
 
-- **Linux Installation & Security Documentation** — https://pcdeck.vercel.app/linux-install/
+- **Linux Installation & Security Documentation** — https://getpcdeck.com/linux-install/
   Complete technical breakdown of the 1-line install.sh script, package dependencies, user permissions, and clean uninstall commands.
 
-- **How to Use iPhone as an HD Webcam for Windows (No App Required)** — https://pcdeck.vercel.app/use-iphone-as-webcam-windows/
+- **How to Use iPhone as an HD Webcam for Windows (No App Required)** — https://getpcdeck.com/use-iphone-as-webcam-windows/
   Turn iPhone or iPad into an ultra-sharp 1080p/4K wireless webcam for Windows 10 & 11 over local Wi-Fi. Zero iOS apps required (runs via mobile Safari QR scan). Streams into Zoom, Google Meet, Teams, Discord, OBS Studio, and multimodal AI/LLM computer vision pipelines.
 
 
-- **How to use an Android phone as a mouse for PC** — https://pcdeck.vercel.app/use-phone-as-mouse/
+- **How to use an Android phone as a mouse for PC** — https://getpcdeck.com/use-phone-as-mouse/
   Turns your phone into a multi-touch trackpad over local Wi-Fi. Supports
   tap to click, two-finger scrolling, right-click, double-tap drag, and middle click.
 
-- **How to use an Android phone as a keyboard for PC** — https://pcdeck.vercel.app/use-phone-as-keyboard/
+- **How to use an Android phone as a keyboard for PC** — https://getpcdeck.com/use-phone-as-keyboard/
   Full virtual QWERTY keyboard, dedicated numeric keypad (numpad), Windows modifier shortcuts
   (Ctrl, Alt, Shift, Win key), function row (F1-F12), and mobile voice dictation to Windows.
 
-- **How to use an Android phone as a screen for PC** — https://pcdeck.vercel.app/use-phone-as-second-monitor/
+- **How to use an Android phone as a screen for PC** — https://getpcdeck.com/use-phone-as-second-monitor/
   Real-time Windows desktop streaming to Android over local Wi-Fi with direct touch-to-click
   interaction. Ideal for emergency screen recovery, broken laptop displays, and headless PCs.
 
-- **How to control a Windows PC from Android** — https://pcdeck.vercel.app/control-windows-from-android/
+- **How to control a Windows PC from Android** — https://getpcdeck.com/control-windows-from-android/
   Comprehensive guide to unified PC control from Android: wireless mouse, keyboard, live screen,
   PC audio streaming, and high-speed local file manager in one connection.
 
 ## Problem-Solving Emergency Guides
 
-- **How to use a PC without a mouse** — https://pcdeck.vercel.app/use-pc-without-mouse/
+- **How to use a PC without a mouse** — https://getpcdeck.com/use-pc-without-mouse/
   Keyboard-only control of Windows: Tab/Shift+Tab and arrow keys to move focus,
   Enter and Space to act, F6 to cycle window regions; Win then type then Enter to
   launch anything; Alt+Tab, Win+Tab, Win+D, Win+E, Win+R, Win+X, Win+I, Alt+F4,
@@ -110,44 +110,44 @@ received, and optionally upload the file to VirusTotal.
   File Explorer with no pointer: type-ahead selection, F2, Ctrl+A, Shift+arrows,
   Ctrl+C/X/V instead of dragging, Alt+Up, Alt+Left, Ctrl+L. Then **Mouse Keys** (Left Alt + Left Shift + Num Lock).
 
-- **How to use a PC without a keyboard** — https://pcdeck.vercel.app/use-pc-without-keyboard/
+- **How to use a PC without a keyboard** — https://getpcdeck.com/use-pc-without-keyboard/
   Sign-in screen accessibility On-Screen Keyboard, Win+Ctrl+O inside Windows, voice typing
   (Win+H), symbol panel (Win+.), and virtual phone keyboard alternatives.
 
-- **How to use a PC without a monitor** — https://pcdeck.vercel.app/use-pc-without-monitor/
+- **How to use a PC without a monitor** — https://getpcdeck.com/use-pc-without-monitor/
   Emergency troubleshooting when a laptop display or monitor is black/cracked:
   Win+P to cycle projection, Win+Ctrl+Shift+B to restart graphics drivers,
   Win+Ctrl+Enter for Narrator blind audio cues, and streaming the desktop live to
   an Android phone over Wi-Fi using PCDeck.
 
-- **How to stream PC audio to phone headphones** — https://pcdeck.vercel.app/stream-pc-audio-to-phone/
+- **How to stream PC audio to phone headphones** — https://getpcdeck.com/stream-pc-audio-to-phone/
   Wirelessly route Windows PC audio to phone headphones over local Wi-Fi with
   48 kHz stereo streaming. Solves broken headphone jacks and missing desktop Bluetooth.
 
-- **How to transfer files between PC and Android without cable** — https://pcdeck.vercel.app/transfer-files-pc-to-android/
+- **How to transfer files between PC and Android without cable** — https://getpcdeck.com/transfer-files-pc-to-android/
   Offline high-speed two-way file sharing over local Wi-Fi with auto-resume. No USB
   cable MTP disconnects, no Bluetooth slowness, and no cloud upload bandwidth limits.
 
-- **How to control a Windows PC without internet** — https://pcdeck.vercel.app/use-pc-without-internet/
+- **How to control a Windows PC without internet** — https://getpcdeck.com/use-pc-without-internet/
   Step-by-step instructions for remote-controlling Windows from an Android phone
   over offline local Wi-Fi or phone mobile hotspot with zero internet access or router.
 
-- **Security & Privacy Architecture** — https://pcdeck.vercel.app/security/
+- **Security & Privacy Architecture** — https://getpcdeck.com/security/
   Detailed technical teardown of local network isolation, direct socket binding,
   zero telemetry data minimization, and independent SHA-256 binary verification.
 
 ## Competitor Alternatives & Comparisons
 
-- **Best Free Remote Mouse Alternative (Ad-Free, No Phone App Required)** — https://pcdeck.vercel.app/remote-mouse-alternative/
+- **Best Free Remote Mouse Alternative (Ad-Free, No Phone App Required)** — https://getpcdeck.com/remote-mouse-alternative/
   The #1 ad-free alternative to Remote Mouse. Zero unskippable 30-second video ads, zero $14.99/year subscription paywalls, and zero mobile app downloads. Operates directly in Safari or Chrome via QR code with free PC audio streaming.
 
-- **Best Lightweight Unified Remote Alternative (Zero-Install Web Remote)** — https://pcdeck.vercel.app/unified-remote-alternative/
+- **Best Lightweight Unified Remote Alternative (Zero-Install Web Remote)** — https://getpcdeck.com/unified-remote-alternative/
   Clean, lightweight alternative to Unified Remote. Eliminates persistent 24/7 background Windows services, complex firewall rules, and paid license paywalls.
 
-- **Best Free WiFi Mouse Alternative (Ad-Free, No Connection Drops)** — https://pcdeck.vercel.app/wifi-mouse-alternative/
+- **Best Free WiFi Mouse Alternative (Ad-Free, No Connection Drops)** — https://getpcdeck.com/wifi-mouse-alternative/
   Ad-free alternative to WiFi Mouse. Eliminates full-screen popup interruptions and 5GHz Wi-Fi disconnect issues with rock-solid local WebSockets.
 
-- **Best Lightweight Monect PC Remote Alternative (Zero Drivers)** — https://pcdeck.vercel.app/monect-alternative/
+- **Best Lightweight Monect PC Remote Alternative (Zero Drivers)** — https://getpcdeck.com/monect-alternative/
   Productivity-focused alternative to Monect PC Remote without virtual joystick drivers (ViGEmBus), administrator UAC prompts, or required PC reboots.
 
 ## Key Verified Properties
@@ -160,27 +160,30 @@ received, and optionally upload the file to VirusTotal.
 
 ## Links
 
-- Homepage and download: https://pcdeck.vercel.app/
-- Complete Features & Controls documentation: https://pcdeck.vercel.app/features/
-- Guides Hub: https://pcdeck.vercel.app/guides/
-- Control Linux & Steam Deck: https://pcdeck.vercel.app/control-linux-pc-from-phone/
-- Features summary: https://pcdeck.vercel.app/#features
-- Real-world use cases: https://pcdeck.vercel.app/#scenarios
-- Setup guide: https://pcdeck.vercel.app/#setup
-- Security & architecture: https://pcdeck.vercel.app/security/
-- FAQ: https://pcdeck.vercel.app/#faq
-- Feature - use phone as mouse: https://pcdeck.vercel.app/use-phone-as-mouse/
-- Feature - use phone as keyboard: https://pcdeck.vercel.app/use-phone-as-keyboard/
-- Feature - use phone as screen: https://pcdeck.vercel.app/use-phone-as-second-monitor/
-- Feature - control Windows from Android: https://pcdeck.vercel.app/control-windows-from-android/
-- Guide - use a PC without a mouse: https://pcdeck.vercel.app/use-pc-without-mouse/
-- Guide - use a PC without a keyboard: https://pcdeck.vercel.app/use-pc-without-keyboard/
-- Guide - use a PC without a monitor: https://pcdeck.vercel.app/use-pc-without-monitor/
-- Guide - control a PC without internet: https://pcdeck.vercel.app/use-pc-without-internet/
-- Guide - stream PC audio to phone: https://pcdeck.vercel.app/stream-pc-audio-to-phone/
-- Guide - transfer files without cable: https://pcdeck.vercel.app/transfer-files-pc-to-android/
-- Download page: https://pcdeck.vercel.app/download/
-- Alternative - Remote Mouse alternative: https://pcdeck.vercel.app/remote-mouse-alternative/
-- Alternative - Unified Remote alternative: https://pcdeck.vercel.app/unified-remote-alternative/
-- Alternative - WiFi Mouse alternative: https://pcdeck.vercel.app/wifi-mouse-alternative/
-- Alternative - Monect alternative: https://pcdeck.vercel.app/monect-alternative/
+- Homepage and download: https://getpcdeck.com/
+- Complete Features & Controls documentation: https://getpcdeck.com/features/
+- Guides Hub: https://getpcdeck.com/guides/
+- Control Linux & Steam Deck: https://getpcdeck.com/control-linux-pc-from-phone/
+- Features summary: https://getpcdeck.com/#features
+- Real-world use cases: https://getpcdeck.com/#scenarios
+- Setup guide: https://getpcdeck.com/#setup
+- Security & architecture: https://getpcdeck.com/security/
+- FAQ: https://getpcdeck.com/#faq
+- Feature - use phone as mouse: https://getpcdeck.com/use-phone-as-mouse/
+- Feature - use phone as keyboard: https://getpcdeck.com/use-phone-as-keyboard/
+- Feature - use phone as screen: https://getpcdeck.com/use-phone-as-second-monitor/
+- Feature - control Windows from Android: https://getpcdeck.com/control-windows-from-android/
+- Guide - use a PC without a mouse: https://getpcdeck.com/use-pc-without-mouse/
+- Guide - use a PC without a keyboard: https://getpcdeck.com/use-pc-without-keyboard/
+- Guide - use a PC without a monitor: https://getpcdeck.com/use-pc-without-monitor/
+- Guide - control a PC without internet: https://getpcdeck.com/use-pc-without-internet/
+- Guide - stream PC audio to phone: https://getpcdeck.com/stream-pc-audio-to-phone/
+- Guide - transfer files without cable: https://getpcdeck.com/transfer-files-pc-to-android/
+- Download page: https://getpcdeck.com/download/
+- Spanish landing page: https://getpcdeck.com/es/
+- Portuguese landing page: https://getpcdeck.com/pt/
+- German landing page: https://getpcdeck.com/de/
+- Alternative - Remote Mouse alternative: https://getpcdeck.com/remote-mouse-alternative/
+- Alternative - Unified Remote alternative: https://getpcdeck.com/unified-remote-alternative/
+- Alternative - WiFi Mouse alternative: https://getpcdeck.com/wifi-mouse-alternative/
+- Alternative - Monect alternative: https://getpcdeck.com/monect-alternative/

@@ -60,7 +60,9 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
+import android.view.ViewGroup;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -98,6 +100,8 @@ public class MainActivity extends Activity {
     private String mPendingMicHost = null;
     private int mPendingMicPort = 8002;
     private WebAppInterface webAppInterface = null;
+    private View mCustomView = null;
+    private WebChromeClient.CustomViewCallback mCustomViewCallback = null;
 
     private static final String NOTIF_CHANNEL_ID = "pcdeck_transfers_channel";
     private static final int TRANSFER_NOTIF_ID = 2026;
@@ -546,7 +550,7 @@ public class MainActivity extends Activity {
 
     public class WebAppInterface {
         Context mContext;
-        private boolean isProActive = false;
+        private boolean isProActive = true;
 
         WebAppInterface(Context c) {
             mContext = c;
@@ -576,6 +580,25 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void saveLastTab(final String tabId) {
+            if (tabId == null || tabId.trim().isEmpty()) return;
+            try {
+                android.content.SharedPreferences prefs = mContext.getSharedPreferences("pcdeck_settings", Context.MODE_PRIVATE);
+                prefs.edit().putString("last_active_tab", tabId.trim()).apply();
+            } catch (Exception ignored) {}
+        }
+
+        @JavascriptInterface
+        public String getLastTab() {
+            try {
+                android.content.SharedPreferences prefs = mContext.getSharedPreferences("pcdeck_settings", Context.MODE_PRIVATE);
+                return prefs.getString("last_active_tab", "");
+            } catch (Exception ignored) {
+                return "";
+            }
+        }
+
+        @JavascriptInterface
         public void openExternalUrl(final String url) {
             if (url == null || url.trim().isEmpty()) return;
             runOnUiThread(new Runnable() {
@@ -593,11 +616,32 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void playMediaInExternalPlayer(final String streamUrl, final String mimeType) {
+            if (streamUrl == null || streamUrl.trim().isEmpty()) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        Uri uri = Uri.parse(streamUrl.trim());
+                        String type = (mimeType != null && !mimeType.trim().isEmpty()) ? mimeType.trim() : "video/*";
+                        intent.setDataAndType(uri, type);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        mContext.startActivity(Intent.createChooser(intent, "Play in External Player (VLC / MX Player)"));
+                    } catch (Exception e) {
+                        Log.e("PCDeck-App", "Error launching external player for: " + streamUrl, e);
+                        Toast.makeText(mContext, "No external video player found", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void sendEmail(final String to, final String subject, final String body) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    String targetEmail = (to != null && !to.trim().isEmpty()) ? to.trim() : "dogonews67@gmail.com";
+                    String targetEmail = (to != null && !to.trim().isEmpty()) ? to.trim() : "gresonparichha719@gmail.com";
                     try {
                         Intent intent = new Intent(Intent.ACTION_SENDTO);
                         intent.setData(Uri.parse("mailto:" + Uri.encode(targetEmail)));
@@ -910,15 +954,7 @@ public class MainActivity extends Activity {
         }
 
         public boolean isProUser() {
-            // Anti-Tamper check: if the APK was re-signed by an external cracking tool, refuse Pro
-            if (!verifyApkIntegrity()) {
-                return false;
-            }
-            try {
-                return isProActive || getSharedPreferences("pcdeck_prefs", Context.MODE_PRIVATE).getBoolean("is_pro", false);
-            } catch (Exception e) {
-                return isProActive;
-            }
+            return true; // Pro Unlocked for testing & evaluation
         }
 
         @JavascriptInterface
@@ -2568,7 +2604,7 @@ public class MainActivity extends Activity {
         setupWebView();
 
         // Check if launched via Universal Connect deep link (e.g. https://pcdeck.vercel.app/connect?ip=... or http://10.189.70.215:8000/connect)
-        String initialUrl = "file:///android_asset/index.html?t=" + System.currentTimeMillis();
+        String initialUrl = "file:///android_asset/index.html";
         Uri intentData = getIntent() != null ? getIntent().getData() : null;
         if (intentData != null) {
             String ipParam = intentData.getQueryParameter("ip");
@@ -2580,7 +2616,7 @@ public class MainActivity extends Activity {
                 }
             }
             if (ipParam != null && !ipParam.isEmpty()) {
-                initialUrl += "&ip=" + Uri.encode(ipParam);
+                initialUrl += "?ip=" + Uri.encode(ipParam);
             }
         }
 
@@ -2805,6 +2841,37 @@ public class MainActivity extends Activity {
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                if (mCustomView != null) {
+                    onHideCustomView();
+                    return;
+                }
+                mCustomView = view;
+                mCustomViewCallback = callback;
+                if (webView != null) webView.setVisibility(View.GONE);
+                FrameLayout decor = (FrameLayout) getWindow().getDecorView();
+                decor.addView(mCustomView, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                applyImmersiveFullscreen();
+            }
+
+            @Override
+            public void onHideCustomView() {
+                if (mCustomView == null) return;
+                FrameLayout decor = (FrameLayout) getWindow().getDecorView();
+                decor.removeView(mCustomView);
+                mCustomView = null;
+                if (webView != null) webView.setVisibility(View.VISIBLE);
+                if (mCustomViewCallback != null) {
+                    try { mCustomViewCallback.onCustomViewHidden(); } catch (Exception ignored) {}
+                    mCustomViewCallback = null;
+                }
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                applyImmersiveFullscreen();
+            }
+
             @Override
             public boolean onConsoleMessage(android.webkit.ConsoleMessage consoleMessage) {
                 android.util.Log.d("PCDeck-JS", "[" + consoleMessage.messageLevel() + "] " + consoleMessage.message() + " (" + consoleMessage.sourceId() + ":" + consoleMessage.lineNumber() + ")");
@@ -3117,10 +3184,40 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
+        if (mCustomView != null) {
+            FrameLayout decor = (FrameLayout) getWindow().getDecorView();
+            decor.removeView(mCustomView);
+            mCustomView = null;
+            if (webView != null) webView.setVisibility(View.VISIBLE);
+            if (mCustomViewCallback != null) {
+                try { mCustomViewCallback.onCustomViewHidden(); } catch (Exception ignored) {}
+                mCustomViewCallback = null;
+            }
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+            applyImmersiveFullscreen();
+            return;
         }
+        if (webView != null) {
+            webView.evaluateJavascript("try { (typeof window.handleAndroidBackPressed === 'function' && window.handleAndroidBackPressed()) ? 'handled' : 'default'; } catch(e) { 'default'; }", new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String value) {
+                    if ("\"handled\"".equals(value)) {
+                        return;
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (webView != null && webView.canGoBack()) {
+                                webView.goBack();
+                            } else {
+                                MainActivity.super.onBackPressed();
+                            }
+                        }
+                    });
+                }
+            });
+            return;
+        }
+        super.onBackPressed();
     }
 }

@@ -3,47 +3,54 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
   <url>
-    <loc>https://pcdeck.vercel.app/</loc>
+    <loc>https://getpcdeck.com/</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://pcdeck.vercel.app/og-image.png</image:loc>
+      <image:loc>https://getpcdeck.com/og-image.png</image:loc>
       <image:title>PCDeck - Use Phone as Mouse &amp; Keyboard for PC</image:title>
       <image:caption>Turn your phone into an instant PC trackpad, remote keyboard, and controller over local Wi-Fi when your mouse or keyboard is broken.</image:caption>
     </image:image>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/es/</loc>
+    <loc>https://getpcdeck.com/es/</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/pt/</loc>
+    <loc>https://getpcdeck.com/pt/</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/download/</loc>
+    <loc>https://getpcdeck.com/de/</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <url>
+    <loc>https://getpcdeck.com/download/</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/download/windows/</loc>
+    <loc>https://getpcdeck.com/download/windows/</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/download/android/</loc>
+    <loc>https://getpcdeck.com/download/android/</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -51,7 +58,7 @@
 
   <!-- Features & Controls Hub -->
   <url>
-    <loc>https://pcdeck.vercel.app/features/</loc>
+    <loc>https://getpcdeck.com/features/</loc>
     <lastmod>2026-09-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
@@ -59,7 +66,7 @@
 
   <!-- Central Guides Hub -->
   <url>
-    <loc>https://pcdeck.vercel.app/guides/</loc>
+    <loc>https://getpcdeck.com/guides/</loc>
     <lastmod>2026-09-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -67,50 +74,50 @@
 
   <!-- Zero-Install & Cross-Platform Pages -->
   <url>
-    <loc>https://pcdeck.vercel.app/connect-pc-to-pc-wifi/</loc>
+    <loc>https://getpcdeck.com/connect-pc-to-pc-wifi/</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/browser-pc-remote/</loc>
-    <lastmod>2026-09-29</lastmod>
+    <loc>https://getpcdeck.com/browser-pc-remote/</loc>
+    <lastmod>2026-10-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/control-linux-pc-from-phone/</loc>
-    <lastmod>2026-09-14</lastmod>
+    <loc>https://getpcdeck.com/control-linux-pc-from-phone/</loc>
+    <lastmod>2026-10-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Feature Landing Pages -->
   <url>
-    <loc>https://pcdeck.vercel.app/use-phone-as-mouse/</loc>
+    <loc>https://getpcdeck.com/use-phone-as-mouse/</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/use-phone-as-keyboard/</loc>
+    <loc>https://getpcdeck.com/use-phone-as-keyboard/</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/use-phone-as-second-monitor/</loc>
+    <loc>https://getpcdeck.com/use-phone-as-second-monitor/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/control-windows-from-android/</loc>
+    <loc>https://getpcdeck.com/control-windows-from-android/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
@@ -118,49 +125,49 @@
 
   <!-- Problem-Solving Emergency & Feature Guides -->
   <url>
-    <loc>https://pcdeck.vercel.app/use-pc-without-monitor/</loc>
+    <loc>https://getpcdeck.com/use-pc-without-monitor/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/use-pc-without-mouse/</loc>
+    <loc>https://getpcdeck.com/use-pc-without-mouse/</loc>
+    <lastmod>2026-10-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://getpcdeck.com/use-pc-without-keyboard/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/use-pc-without-keyboard/</loc>
+    <loc>https://getpcdeck.com/use-pc-without-internet/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/use-pc-without-internet/</loc>
+    <loc>https://getpcdeck.com/stream-pc-audio-to-phone/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/stream-pc-audio-to-phone/</loc>
+    <loc>https://getpcdeck.com/transfer-files-pc-to-android/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/transfer-files-pc-to-android/</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://pcdeck.vercel.app/use-iphone-as-webcam-windows/</loc>
+    <loc>https://getpcdeck.com/use-iphone-as-webcam-windows/</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
@@ -168,14 +175,14 @@
 
   <!-- Security & Architecture -->
   <url>
-    <loc>https://pcdeck.vercel.app/security/</loc>
+    <loc>https://getpcdeck.com/security/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/linux-install/</loc>
+    <loc>https://getpcdeck.com/linux-install/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -184,40 +191,40 @@
 
   <!-- Competitor Alternatives & Comparisons -->
   <url>
-    <loc>https://pcdeck.vercel.app/remote-mouse-alternative/</loc>
+    <loc>https://getpcdeck.com/remote-mouse-alternative/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/unified-remote-alternative/</loc>
+    <loc>https://getpcdeck.com/unified-remote-alternative/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://pcdeck.vercel.app/wifi-mouse-alternative/</loc>
+    <loc>https://getpcdeck.com/wifi-mouse-alternative/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/monect-alternative/</loc>
+    <loc>https://getpcdeck.com/monect-alternative/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://pcdeck.vercel.app/connect/</loc>
+    <loc>https://getpcdeck.com/connect/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://pcdeck.vercel.app/privacy_policy.html</loc>
+    <loc>https://getpcdeck.com/privacy_policy.html</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

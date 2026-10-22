@@ -164,12 +164,17 @@ class AudioStreamer:
 
             while self.is_running:
                 now = time.time()
-                # Only inject a gentle silence keepalive when Windows audio has been genuinely
-                # idle for >250ms. Never inject false silence blocks into active gameplay/music!
-                if now - self._last_audio_time >= 0.250:
+                # If WASAPI callback has stalled or Windows output is silent,
+                # pace silence chunks at the exact chunk_duration rate so the client buffer never starves!
+                if now - self._last_audio_time >= chunk_duration:
                     self._broadcast_chunk(silence_chunk)
-                    self._last_audio_time = now
-                time.sleep(0.050)
+                    self._last_audio_time += chunk_duration
+                    if now - self._last_audio_time > 0.100:
+                        self._last_audio_time = now
+                    sleep_time = max(0.001, chunk_duration - (time.time() - now))
+                    time.sleep(sleep_time)
+                else:
+                    time.sleep(max(0.001, chunk_duration / 2))
 
         except Exception:
             pass
@@ -271,6 +276,17 @@ class AudioStreamer:
 
         self._tcp_server_thread = threading.Thread(target=_tcp_listener, name="AudioStreamer-TCPListener", daemon=True)
         self._tcp_server_thread.start()
+
+    def stop_tcp_server(self):
+        """Stops the TCP server and closes all connected clients cleanly."""
+        if hasattr(self, "_tcp_stop") and self._tcp_stop:
+            self._tcp_stop.set()
+        with self._tcp_lock:
+            for client in list(self._tcp_clients):
+                try: client.close()
+                except Exception: pass
+            self._tcp_clients.clear()
+        print("[AudioStreamer] TCP server stopped.", flush=True)
 
     def register_subscriber(self, loop: Optional[asyncio.AbstractEventLoop] = None) -> asyncio.Queue:
         """Registers a new WebSocket subscriber queue with its event loop."""

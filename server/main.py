@@ -9,6 +9,7 @@ import email.utils
 import io
 import ipaddress
 import math
+import mimetypes
 import os
 import re
 import secrets
@@ -17,6 +18,7 @@ import sys
 import shutil
 import threading
 import time
+from contextlib import asynccontextmanager
 from typing import Optional, Set, List, Dict, Any, Tuple
 
 # Ensure sys.stdout and sys.stderr exist for windowed / noconsole PyInstaller executables
@@ -198,7 +200,7 @@ class SmartGZipMiddleware:
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             path = (scope.get("path") or "").lower()
-            if any(path.endswith(ext) for ext in self.binary_exts) or path.startswith(("/api/fs/download", "/api/fs/upload", "/api/screen/shot", "/api/apk", "/api/zip", "/api/exe")):
+            if any(path.endswith(ext) for ext in self.binary_exts) or path.startswith(("/api/fs/download", "/api/fs/stream", "/api/fs/subtitles", "/api/fs/upload", "/api/screen/shot", "/api/apk", "/api/zip", "/api/exe")):
                 await self.app(scope, receive, send)
                 return
         await self.gzip_app(scope, receive, send)
@@ -206,7 +208,81 @@ class SmartGZipMiddleware:
 
 colorama.init(autoreset=True)
 
-app = FastAPI(title="PCDeck Pro Server", version="2.1.0")
+_server_event_loop: Optional[asyncio.AbstractEventLoop] = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _server_event_loop
+    try:
+        _server_event_loop = asyncio.get_running_loop()
+    except Exception:
+        pass
+    # Configure custom asyncio exception handler to suppress WinError 10054 noise on abrupt mobile client disconnect
+    try:
+        loop = asyncio.get_running_loop()
+        def _loop_exc_handler(l, context):
+            exc = context.get("exception")
+            if isinstance(exc, (ConnectionResetError, ConnectionAbortedError)):
+                return
+            if isinstance(exc, OSError) and getattr(exc, "winerror", None) in (10054, 10053, 10038, 10058):
+                return
+            l.default_exception_handler(context)
+        loop.set_exception_handler(_loop_exc_handler)
+    except Exception:
+        pass
+
+    # Auto-heal: Ensure Windows WLAN autoconfig is enabled on startup
+    if sys.platform == "win32":
+        try:
+            if wifi_latency_manager and hasattr(wifi_latency_manager, "startup_auto_heal"):
+                wifi_latency_manager.startup_auto_heal()
+        except Exception:
+            pass
+
+    is_test_env = "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST") is not None
+
+    if not is_test_env:
+        try:
+            from server.audio_streamer import mic_sink, audio_streamer
+            mic_sink.start_dual_receiver(8002)
+            audio_streamer.start_tcp_server(8003)
+        except Exception as e:
+            print(f"[Startup] Audio engines init error: {e}")
+
+        if sys.platform == "win32":
+            try:
+                from server.camera_streamer import is_webcam_driver_installed, camera_streamer
+                if is_webcam_driver_installed():
+                    camera_streamer.start_camera(width=1280, height=720, fps=30)
+                    camera_streamer.stop_camera()
+            except Exception:
+                pass
+
+    yield
+
+    if sys.platform == "win32":
+        try:
+            if wifi_latency_manager:
+                wifi_latency_manager.release_all_streaming_modes()
+                wifi_latency_manager._cleanup_on_exit()
+        except Exception:
+            pass
+        if not is_test_env:
+            try:
+                from server.audio_streamer import audio_streamer, mic_sink
+                audio_streamer.stop()
+                audio_streamer.stop_tcp_server()
+            except Exception:
+                pass
+            try:
+                from server.audio_streamer import mic_sink
+                mic_sink.stop()
+            except Exception:
+                pass
+
+
+app = FastAPI(title="PCDeck Pro Server", version="2.1.0", lifespan=lifespan)
 app.add_middleware(SmartGZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
@@ -228,6 +304,16 @@ def ensure_windows_firewall_rule():
     if sys.platform == "win32":
         def _add_rules():
             try:
+                # Check if port 8000 rule already exists to avoid redundant subprocess execution and rule duplication
+                check = subprocess.run(
+                    ["netsh", "advfirewall", "firewall", "show", "rule", "name=PCDeck Pro Port 8000"],
+                    capture_output=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    timeout=3,
+                )
+                if check.returncode == 0 and b"PCDeck Pro Port 8000" in check.stdout:
+                    return
+
                 subprocess.run(
                     [
                         "netsh", "advfirewall", "firewall", "add", "rule",
@@ -426,9 +512,34 @@ async def track_client_and_set_token(request: Request, call_next):
     client_ip = request.client.host if request.client else ""
     if client_ip:
         _authenticated_ips.add(client_ip)
-    if request.url.path.startswith(("/api/fs/download", "/api/fs/upload", "/api/screen/shot", "/api/apk", "/api/zip", "/api/exe")):
+
+    path_lower = request.url.path.lower()
+    is_stream_or_download = (
+        path_lower.endswith((".apk", ".zip", ".exe", ".msix", ".wav", ".tar", ".gz", ".7z", ".bin"))
+        or path_lower.startswith((
+            "/api/fs/download",
+            "/api/fs/stream",
+            "/api/fs/subtitles",
+            "/api/fs/upload",
+            "/api/screen/shot",
+            "/api/apk",
+            "/api/zip",
+            "/api/exe",
+            "/api/client-package",
+            "/pcdeck",
+            "/neontrack",
+            "/audio",
+        ))
+    )
+    if is_stream_or_download:
         return await call_next(request)
+
     response = await call_next(request)
+
+    # Invariant: Never mutate headers or inject cookies on StreamingResponse, attachments, or partial content
+    if isinstance(response, StreamingResponse) or response.status_code == 206 or "content-disposition" in response.headers:
+        return response
+
     try:
         tok = get_pairing_token()
         if tok and "pcdeck_token" not in request.cookies:
@@ -471,12 +582,23 @@ def is_client_authorized(client_ip: Optional[str], token: Optional[str]) -> bool
         return True
     if client_ip:
         try:
-            ip_obj = ipaddress.ip_address(client_ip)
+            ip_obj = ipaddress.ip_address(client_ip.split("%")[0])
             if hasattr(ip_obj, "ipv4_mapped") and ip_obj.ipv4_mapped:
                 ip_obj = ip_obj.ipv4_mapped
             if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or (ip_obj.version == 4 and ip_obj in CGNAT_NET):
                 _authenticated_ips.add(client_ip)
                 return True
+            # For IPv6, check if client belongs to host's local /64 router subnet
+            if ip_obj.version == 6:
+                try:
+                    client_net = ipaddress.ip_network(f"{ip_obj}/64", strict=False)
+                    for iface in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET6):
+                        host_ip = ipaddress.ip_address(iface[4][0].split("%")[0])
+                        if host_ip in client_net:
+                            _authenticated_ips.add(client_ip)
+                            return True
+                except Exception:
+                    pass
         except Exception:
             pass
     return False
@@ -509,7 +631,7 @@ def start_udp_discovery_daemon():
                 current_ip = get_local_ip()
                 hostname = socket.gethostname()
                 tok = get_pairing_token()
-                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.7.4:{tok}".encode("utf-8")
+                beacon_msg = f"PCDECK_BEACON:{SERVER_PORT}:{hostname}:{current_ip}:2.7.6:{tok}".encode("utf-8")
                 for bcast in _get_subnet_broadcasts():
                     try:
                         sock.sendto(beacon_msg, (bcast, DISCOVERY_UDP_PORT))
@@ -525,7 +647,7 @@ def start_udp_discovery_daemon():
                     current_ip = get_local_ip()
                     hostname = socket.gethostname()
                     tok = get_pairing_token()
-                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.7.4:{tok}".encode("utf-8")
+                    reply = f"PCDECK_SERVER:{SERVER_PORT}:{hostname}:{current_ip}:2.7.6:{tok}".encode("utf-8")
                     sock.sendto(reply, addr)
             except socket.timeout:
                 continue
@@ -731,8 +853,6 @@ def is_pro_client() -> bool:
         pass
     return client_is_pro
 
-_server_event_loop: Optional[asyncio.AbstractEventLoop] = None
-
 
 def broadcast_pro_status(active: bool):
     """Notify all connected mobile/web WebSocket clients about PC Pro unlock status."""
@@ -776,7 +896,7 @@ async def get_ping(request: Request):
         "name": socket.gethostname(),
         "ip": live_ip,
         "port": SERVER_PORT,
-        "version": "2.7.4",
+        "version": "2.7.6",
         "token": get_pairing_token(),
         "pro_active": is_pro_client(),
     }
@@ -791,6 +911,7 @@ async def get_info():
     net_health = wifi_latency_manager.get_network_health() if wifi_latency_manager else {"active": False, "status": "Standby"}
     return {
         "status": "online",
+        "name": socket.gethostname(),
         "ip": live_ip,
         "port": SERVER_PORT,
         "url": f"http://{live_ip}:{SERVER_PORT}",
@@ -1174,6 +1295,123 @@ async def download_any_file(
         )
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
+
+
+@app.api_route("/api/fs/stream", methods=["GET", "POST", "OPTIONS", "HEAD"])
+@app.api_route("/api/fs/stream/", methods=["GET", "POST", "OPTIONS", "HEAD"])
+async def stream_media_file(
+    request: Request,
+    path: Optional[str] = None,
+):
+    """In-Place Instant Media Streaming: streams video/audio directly from PC disk to phone/browser with HTTP 206 Partial Content (Byte-Range)."""
+    if request.method == "OPTIONS":
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD",
+                "Access-Control-Allow-Headers": "Range, Accept-Ranges, Content-Range, Content-Type, Origin, Accept",
+                "Access-Control-Expose-Headers": "Content-Range, Content-Length, Accept-Ranges",
+                "Accept-Ranges": "bytes",
+                "Allow": "GET, POST, OPTIONS, HEAD",
+            },
+        )
+
+    raw_path = path or request.query_params.get("path") or ""
+    if not raw_path:
+        return JSONResponse(status_code=404, content={"error": "File not found"})
+
+    try:
+        target_path = os.path.abspath(urllib.parse.unquote_plus(raw_path))
+    except Exception:
+        target_path = os.path.abspath(raw_path)
+
+    if not os.path.exists(target_path) or not os.path.isfile(target_path):
+        return JSONResponse(status_code=404, content={"error": "File not found"})
+
+    # Guess MIME type
+    media_type, _ = mimetypes.guess_type(target_path)
+    if not media_type:
+        ext = os.path.splitext(target_path)[1].lower()
+        ext_map = {
+            ".mp4": "video/mp4",
+            ".mkv": "video/x-matroska",
+            ".webm": "video/webm",
+            ".avi": "video/x-msvideo",
+            ".mov": "video/quicktime",
+            ".mp3": "audio/mpeg",
+            ".wav": "audio/wav",
+            ".flac": "audio/flac",
+            ".ogg": "audio/ogg",
+            ".m4a": "audio/mp4",
+            ".aac": "audio/aac",
+            ".opus": "audio/opus",
+        }
+        media_type = ext_map.get(ext, "application/octet-stream")
+
+    try:
+        clean_filename = os.path.basename(target_path)
+        return FileResponse(
+            path=target_path,
+            filename=clean_filename,
+            media_type=media_type,
+            content_disposition_type="inline",
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD",
+                "Access-Control-Allow-Headers": "Range, Accept-Ranges, Content-Range, Content-Type, Origin, Accept",
+                "Access-Control-Expose-Headers": "Content-Range, Content-Length, Accept-Ranges",
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+
+
+@app.api_route("/api/fs/subtitles", methods=["GET", "POST", "OPTIONS"])
+@app.api_route("/api/fs/subtitles/", methods=["GET", "POST", "OPTIONS"])
+async def get_sidecar_subtitles(
+    request: Request,
+    path: Optional[str] = None,
+):
+    """Finds and serves matching sidecar subtitle files (.srt or .vtt) in WebVTT format for browser video playback."""
+    cors_sub_headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Range, Accept-Ranges, Content-Type, Origin, Accept",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+    }
+    if request.method == "OPTIONS":
+        return Response(status_code=200, headers=cors_sub_headers)
+
+    raw_path = path or request.query_params.get("path") or ""
+    if not raw_path:
+        return Response(content="WEBVTT\n\n", media_type="text/vtt", headers=cors_sub_headers)
+
+    try:
+        target_path = os.path.abspath(urllib.parse.unquote_plus(raw_path))
+    except Exception:
+        target_path = os.path.abspath(raw_path)
+
+    base, _ = os.path.splitext(target_path)
+    vtt_path = base + ".vtt"
+    srt_path = base + ".srt"
+
+    if os.path.exists(vtt_path) and os.path.isfile(vtt_path):
+        return FileResponse(vtt_path, media_type="text/vtt", headers=cors_sub_headers)
+
+    if os.path.exists(srt_path) and os.path.isfile(srt_path):
+        try:
+            with open(srt_path, "r", encoding="utf-8", errors="ignore") as f:
+                srt_content = f.read()
+            vtt_content = "WEBVTT\n\n" + re.sub(r"(\d{2}:\d{2}:\d{2}),(\d{3})", r"\1.\2", srt_content)
+            return Response(content=vtt_content, media_type="text/vtt", headers=cors_sub_headers)
+        except Exception:
+            pass
+
+    return Response(content="WEBVTT\n\n", media_type="text/vtt", headers=cors_sub_headers)
 
 
 @app.api_route("/api/fs/download-batch", methods=["GET", "POST", "OPTIONS"])
@@ -1736,12 +1974,15 @@ async def get_desktop():
 async def get_connect_gateway(request: Request):
     """Serve the pairing gateway (Download APK vs Launch Web Remote)."""
     client_ip = request.client.host if request.client else ""
+    token = request.query_params.get("token") or request.query_params.get("t")
     if client_ip:
         _authenticated_ips.add(client_ip)
     connect_file = os.path.join(STATIC_DIR, "connect.html")
-    if os.path.exists(connect_file):
-        return FileResponse(connect_file)
-    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+    response = FileResponse(connect_file) if os.path.exists(connect_file) else FileResponse(os.path.join(STATIC_DIR, "index.html"))
+    tok = token or get_pairing_token()
+    if tok:
+        response.set_cookie(key="pcdeck_token", value=tok, max_age=86400 * 30, path="/", samesite="lax")
+    return response
 
 
 
@@ -2478,7 +2719,7 @@ def notify_driver_progress(driver_name: str, percent: int, stage_text: str, stat
 async def websocket_endpoint(websocket: WebSocket):
     """Main Trackpad, Gamepad and control WebSocket endpoint."""
     client_ip = websocket.client.host if websocket.client else ""
-    token = websocket.query_params.get("token")
+    token = websocket.query_params.get("token") or websocket.cookies.get("pcdeck_token")
     is_authed = is_client_authorized(client_ip, token)
 
     await websocket.accept()
@@ -2538,7 +2779,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     parts = data.split(",")
                     await websocket.send_text(f"pong,{parts[1]}")
                     continue
-                elif data.startswith("pro_status,") or "driver" in data:
+                elif data.startswith("pro_status,") or data == "pro_check" or "driver" in data:
                     continue
                 else:
                     await websocket.send_text("auth_required")
@@ -2546,6 +2787,17 @@ async def websocket_endpoint(websocket: WebSocket):
 
             if data == "get_token":
                 await websocket.send_text(f"token,{get_pairing_token()}")
+                continue
+            elif data.startswith("pair,"):
+                parts = data.split(",")
+                cand_token = parts[1].strip() if len(parts) >= 2 else ""
+                if is_client_authorized(client_ip, cand_token):
+                    is_authed = True
+                    await websocket.send_text("pair_ok,1")
+                else:
+                    await websocket.send_text("pair_error,unauthorized")
+                    await websocket.close(code=4003, reason="Unauthorized")
+                    break
                 continue
             elif data.startswith("p,"):
                 parts = data.split(",")
@@ -2643,7 +2895,7 @@ async def websocket_mic_endpoint(websocket: WebSocket):
     them to the host's virtual audio cable device.
     """
     client_ip = websocket.client.host if websocket.client else ""
-    token = websocket.query_params.get("token")
+    token = websocket.query_params.get("token") or websocket.cookies.get("pcdeck_token")
     if not is_client_authorized(client_ip, token):
         await websocket.close(code=4003, reason="Unauthorized")
         return
@@ -2672,7 +2924,7 @@ async def websocket_mic_endpoint(websocket: WebSocket):
 async def mic_stream_post(request: Request):
     """High-speed chunked HTTP POST endpoint for phone microphone streaming (100% firewall-safe)."""
     client_ip = request.client.host if request.client else ""
-    token = request.query_params.get("token") or request.headers.get("x-pcdeck-token")
+    token = request.query_params.get("token") or request.headers.get("x-pcdeck-token") or request.cookies.get("pcdeck_token")
     if not is_client_authorized(client_ip, token):
         return JSONResponse(status_code=403, content={"error": "Unauthorized"})
 
@@ -2693,63 +2945,6 @@ async def mic_stream_post(request: Request):
     return {"status": "ok"}
 
 
-@app.on_event("startup")
-async def startup_event():
-    global _server_event_loop
-    try:
-        _server_event_loop = asyncio.get_running_loop()
-    except Exception:
-        pass
-    # Configure custom asyncio exception handler to suppress WinError 10054 noise on abrupt mobile client disconnect
-    try:
-        loop = asyncio.get_running_loop()
-        def _loop_exc_handler(l, context):
-            exc = context.get("exception")
-            if isinstance(exc, (ConnectionResetError, ConnectionAbortedError)):
-                return
-            if isinstance(exc, OSError) and getattr(exc, "winerror", None) in (10054, 10053, 10038, 10058):
-                return
-            l.default_exception_handler(context)
-        loop.set_exception_handler(_loop_exc_handler)
-    except Exception:
-        pass
-
-    # Auto-heal: Ensure Windows WLAN autoconfig is enabled on startup
-    if sys.platform == "win32":
-        try:
-            if wifi_latency_manager and hasattr(wifi_latency_manager, "startup_auto_heal"):
-                wifi_latency_manager.startup_auto_heal()
-        except Exception:
-            pass
-
-    try:
-        from server.audio_streamer import mic_sink, audio_streamer
-        mic_sink.start_dual_receiver(8002)
-        audio_streamer.start_tcp_server(8003)
-    except Exception as e:
-        print(f"[Startup] Audio engines init error: {e}")
-
-    if sys.platform == "win32":
-        try:
-            from server.camera_streamer import is_webcam_driver_installed, camera_streamer
-            if is_webcam_driver_installed():
-                camera_streamer.start_camera(width=1280, height=720, fps=30)
-                camera_streamer.stop_camera()
-        except Exception:
-            pass
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    if sys.platform == "win32":
-        try:
-            if wifi_latency_manager:
-                wifi_latency_manager.release_all_streaming_modes()
-                wifi_latency_manager._cleanup_on_exit()
-        except Exception:
-            pass
-
-
 @app.websocket("/ws/cam")
 async def websocket_cam_endpoint(websocket: WebSocket):
     """
@@ -2758,7 +2953,7 @@ async def websocket_cam_endpoint(websocket: WebSocket):
     them to the virtual webcam DirectShow device via pyvirtualcam.
     """
     client_ip = websocket.client.host if websocket.client else ""
-    token = websocket.query_params.get("token")
+    token = websocket.query_params.get("token") or websocket.cookies.get("pcdeck_token")
     if not is_client_authorized(client_ip, token):
         await websocket.close(code=4003, reason="Unauthorized")
         return
@@ -2797,7 +2992,7 @@ async def websocket_cam_endpoint(websocket: WebSocket):
 async def websocket_screen_endpoint(websocket: WebSocket):
     """Zero-Lag adaptive binary screen streaming & interactive touch display endpoint."""
     client_ip = websocket.client.host if websocket.client else ""
-    token = websocket.query_params.get("token")
+    token = websocket.query_params.get("token") or websocket.cookies.get("pcdeck_token")
     if not is_client_authorized(client_ip, token):
         await websocket.close(code=4003, reason="Unauthorized")
         return
@@ -2832,6 +3027,13 @@ async def websocket_screen_endpoint(websocket: WebSocket):
         except Exception:
             pass
 
+    # Prevent system sleep / display idle timeout while streaming screen to mobile
+    try:
+        if sys.platform == "win32":
+            ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001 | 0x00000002)
+    except Exception:
+        pass
+
     # Instantly deliver the latest frame so the client renders in <10ms without a black/loading screen
     initial_jpeg, initial_id = streamer.get_latest_frame()
     if not initial_jpeg:
@@ -2841,6 +3043,16 @@ async def websocket_screen_endpoint(websocket: WebSocket):
             pass
     if initial_jpeg:
         await safe_send_bytes(initial_jpeg)
+
+    # Inform client of connected physical monitors and initialize controller coordinate bounds
+    try:
+        summary = streamer.get_monitors_summary()
+        await safe_send_text(f"monitors,{summary['count']},{summary['active_idx']}")
+        if hasattr(controller, "set_active_monitor_bounds") and summary.get("monitors"):
+            active_mon = next((m for m in summary["monitors"] if m["index"] == summary["active_idx"]), summary["monitors"][0])
+            controller.set_active_monitor_bounds(active_mon["left"], active_mon["top"], active_mon["width"], active_mon["height"])
+    except Exception:
+        pass
 
     # In-flight frame flow control to completely eliminate TCP bufferbloat
     client_ready_event = asyncio.Event()
@@ -3000,6 +3212,28 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                 elif data.startswith("p,"):
                     parts = data.split(",")
                     await safe_send_text(f"pong,{parts[1]}")
+                elif data.startswith("switch_monitor") or data.startswith("set_monitor,"):
+                    try:
+                        parts = data.split(",")
+                        summary = streamer.get_monitors_summary()
+                        count = summary["count"]
+                        if count > 1:
+                            if len(parts) >= 2 and parts[1].strip().isdigit():
+                                next_idx = int(parts[1].strip())
+                            else:
+                                next_idx = 1 if streamer._monitor_idx >= count else streamer._monitor_idx + 1
+                            new_mon = streamer.set_monitor_index(next_idx)
+                            if hasattr(controller, "set_active_monitor_bounds"):
+                                controller.set_active_monitor_bounds(new_mon["left"], new_mon["top"], new_mon["width"], new_mon["height"])
+                            await safe_send_text(f"monitors,{count},{streamer._monitor_idx}")
+                            try:
+                                f_jpeg, _, _ = streamer.grab_single_frame(quality=streamer.quality, scale=streamer.scale)
+                                if f_jpeg:
+                                    await safe_send_bytes(f_jpeg)
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        print(f"[ScreenStreamer] Monitor switch error: {e}", flush=True)
                 else:
                     dispatch_command(data)
         except (asyncio.CancelledError, WebSocketDisconnect, Exception):
@@ -3023,6 +3257,12 @@ async def websocket_screen_endpoint(websocket: WebSocket):
         streamer.release(client_key)
         if wifi_latency_manager:
             wifi_latency_manager.release_streaming_mode(ws_client_id)
+        if len(screen_connections) == 0:
+            try:
+                if sys.platform == "win32":
+                    ctypes.windll.kernel32.SetThreadExecutionState(0x80000000)
+            except Exception:
+                pass
         try:
             await websocket.close()
         except Exception:
@@ -3033,7 +3273,7 @@ async def websocket_screen_endpoint(websocket: WebSocket):
 async def websocket_audio_endpoint(websocket: WebSocket):
     """Ultra-low-latency real-time PCM audio streaming endpoint for mobile phone."""
     client_ip = websocket.client.host if websocket.client else ""
-    token = websocket.query_params.get("token")
+    token = websocket.query_params.get("token") or websocket.cookies.get("pcdeck_token")
     if not is_client_authorized(client_ip, token):
         await websocket.close(code=4003, reason="Unauthorized")
         return

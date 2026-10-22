@@ -171,7 +171,7 @@ def open_url_in_browser(url: str):
     return False
 
 
-DODO_CHECKOUT_URL = "https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://pcdeck.vercel.app"
+DODO_CHECKOUT_URL = "https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://getpcdeck.com"
 
 
 def load_app_settings() -> dict:
@@ -313,8 +313,8 @@ C_SUCCESS = "#3fb950"        # connected / running
 C_WARNING = "#d29922"        # attention
 C_DANGER = "#f85149"         # stop / error
 
-CURRENT_DESKTOP_VERSION_CODE = 274
-CURRENT_DESKTOP_VERSION_NAME = "2.7.4"
+CURRENT_DESKTOP_VERSION_CODE = 276
+CURRENT_DESKTOP_VERSION_NAME = "2.7.6"
 
 # Typography: one family, hierarchy carried by size and weight rather than
 # setting everything to 8px bold.
@@ -777,6 +777,15 @@ class PCDeckProGUI:
             self.root.title("PCDeck Pro - Wireless PC Touch Deck & Streamer")
         else:
             self.root.title("PCDeck - Wireless PC Touch Deck & Streamer")
+            # If inactive but a stored license exists on disk, attempt silent recovery in background
+            def _async_license_heal():
+                try:
+                    from server.license_manager import try_silent_license_recovery
+                    if try_silent_license_recovery():
+                        self.root.after(0, self._apply_pro_state)
+                except Exception:
+                    pass
+            threading.Thread(target=_async_license_heal, daemon=True).start()
 
         # 3-Day Polite Store Review Tracking
         self.review_state = get_or_init_review_state(increment_session=True)
@@ -838,7 +847,7 @@ class PCDeckProGUI:
         while True:
             try:
                 req = urllib.request.Request(
-                    "https://pcdeck.vercel.app/api/version/",
+                    "https://getpcdeck.com/api/version/",
                     headers={"User-Agent": f"PCDeck-Desktop/{CURRENT_DESKTOP_VERSION_NAME} (Windows)"}
                 )
                 with urllib.request.urlopen(req, timeout=4.0) as resp:
@@ -864,7 +873,7 @@ class PCDeckProGUI:
         """Shows a small, clean cyber-styled dialog notifying the user an update is available."""
         try:
             remote_name = data.get("versionName", "New Version")
-            download_url = data.get("websiteUrl", "https://pcdeck.vercel.app")
+            download_url = data.get("websiteUrl", "https://getpcdeck.com")
             if "#download" not in download_url:
                 download_url = download_url.rstrip("/") + "/#download-cards"
 
@@ -1350,7 +1359,24 @@ class PCDeckProGUI:
             bg=C_SURFACE_3,
             anchor="w",
         )
-        self.screen_lbl.pack(fill="x", padx=8, pady=(0, 4))
+        self.screen_lbl.pack(fill="x", padx=8, pady=(0, 2))
+
+        self.btn_help_conn = tk.Button(
+            diag_box,
+            text="Troubleshoot & Allow in Firewall",
+            font=(F_FAMILY, 8, "bold"),
+            fg=C_ACCENT,
+            bg=C_SURFACE_3,
+            activeforeground=C_TEXT,
+            activebackground=C_SURFACE_3,
+            bd=0,
+            cursor="hand2",
+            anchor="w",
+            padx=8,
+            pady=2,
+            command=self.open_how_to_connect_dialog,
+        )
+        self.btn_help_conn.pack(fill="x", padx=0, pady=(0, 2))
 
         # ---------------- RIGHT PANEL: Actions & Power Center (Expand=True) ----------------
         right_col = tk.Frame(
@@ -1675,6 +1701,19 @@ class PCDeckProGUI:
             padx=12,
         ).pack(side="right", fill="x", expand=True, padx=(4, 0))
 
+        # 6. FOOTER BAR (App Version on bottom right)
+        footer_bar = tk.Frame(right_col, bg=C_SURFACE)
+        footer_bar.pack(fill="x", padx=14, pady=(0, 6))
+
+        self.version_lbl = tk.Label(
+            footer_bar,
+            text=f"v{CURRENT_DESKTOP_VERSION_NAME}",
+            font=F_SMALL,
+            fg=C_TEXT_DIM,
+            bg=C_SURFACE,
+        )
+        self.version_lbl.pack(side="right")
+
         # Start live uptime ticker
         self._start_uptime_ticker()
 
@@ -1844,9 +1883,16 @@ class PCDeckProGUI:
         """
         Dispatches polite desktop notification 60s after launch if review criteria are met.
         Snoozes for 5 days so the user is not spammed on subsequent launches.
+        Re-schedules periodically (every 1 hour) if criteria are not yet met.
         """
         try:
+            self.review_state = load_app_settings()
             if not check_should_show_review_prompt(self.review_state):
+                # Re-check in 1 hour if status is still pending (handles long-running sessions)
+                status = self.review_state.get("review_prompt_status", "pending")
+                if status not in ("reviewed", "dismissed"):
+                    if hasattr(self, "root") and self.root:
+                        self.root.after(3600000, self._dispatch_scheduled_review_notification)
                 return
             record_review_action("snoozed", days=5)
             self.review_state = load_app_settings()
@@ -1963,10 +2009,15 @@ class PCDeckProGUI:
     def copy_ip(self):
         url = getattr(self, "server_url", SERVER_URL)
         clean_ip = url.replace("http://", "").replace("https://", "").rstrip("/")
-        clean_url = f"http://{clean_ip}"
+        try:
+            tok = get_pairing_token()
+            compact_tok = tok[:12] if len(tok) >= 12 else tok
+            clean_url = f"http://{clean_ip}/?tab=screen&t={compact_tok}"
+        except Exception:
+            clean_url = f"http://{clean_ip}/?tab=screen"
         self.root.clipboard_clear()
         self.root.clipboard_append(clean_url)
-        messagebox.showinfo("PCDeck", f"Copied server address to clipboard:\n{clean_url}")
+        messagebox.showinfo("PCDeck", f"Copied Web Remote address to clipboard:\n{clean_url}")
 
     def refresh_network_ip(self):
         """Manually force detect local Wi-Fi, USB Tethering, or Hotspot IP address."""
@@ -2479,17 +2530,17 @@ class PCDeckProGUI:
         pass
 
     def open_how_to_connect_dialog(self):
-        """Displays quick connection steps for iPhone/Android without downloading files."""
+        """Displays quick connection steps for iPhone/Android and 1-click Windows Firewall authorization."""
         dlg = tk.Toplevel(self.root)
         dlg.withdraw()
-        dlg.title("PCDeck — How to Connect")
+        dlg.title("PCDeck — How to Connect & Troubleshoot")
         dlg.resizable(False, False)
         dlg.configure(bg=C_SURFACE)
         dlg.transient(self.root)
         apply_crisp_window_icon(dlg)
 
-        dw = 460
-        dh = 310
+        dw = 500
+        dh = 410
         try:
             sw = self.root.winfo_screenwidth()
             sh = self.root.winfo_screenheight()
@@ -2499,7 +2550,7 @@ class PCDeckProGUI:
         except Exception:
             dlg.geometry(f"{dw}x{dh}")
 
-        pad = tk.Frame(dlg, bg=C_SURFACE, padx=22, pady=18)
+        pad = tk.Frame(dlg, bg=C_SURFACE, padx=20, pady=16)
         pad.pack(fill="both", expand=True)
 
         tk.Label(
@@ -2519,13 +2570,13 @@ class PCDeckProGUI:
             fg=C_TEXT,
             bg=C_SURFACE,
             anchor="w",
-        ).pack(fill="x", pady=(2, 10))
+        ).pack(fill="x", pady=(2, 6))
 
         steps = [
-            "1. Connect PC and phone to the same local Wi-Fi or phone hotspot.",
-            "2. Open the camera app on your iPhone, iPad, or Android phone.",
-            "3. Scan the QR code displayed on the left of the PCDeck screen.",
-            "4. Tap the link to control your PC immediately in your browser.",
+            "1. Same Wi-Fi: Connect PC and phone to the same Wi-Fi router (or phone hotspot).",
+            "2. Turn off PC VPN: If using NordVPN, ExpressVPN or work VPN, pause it or allow LAN traffic.",
+            "3. iPhone, iPad & Android: Open phone Camera, scan QR code, and tap 'Launch Web Remote'.",
+            "4. Instant Control: Trackpad, keyboard, and screen mirror load in browser (no app needed).",
         ]
         for step in steps:
             tk.Label(
@@ -2536,11 +2587,59 @@ class PCDeckProGUI:
                 bg=C_SURFACE,
                 justify="left",
                 anchor="w",
-                wraplength=410,
-            ).pack(fill="x", pady=2)
+                wraplength=450,
+            ).pack(fill="x", pady=1)
+
+        # Troubleshooting / Firewall Box
+        fw_box = tk.Frame(pad, bg=C_SURFACE_2, bd=1, relief="solid", padx=12, pady=8)
+        fw_box.pack(fill="x", pady=(10, 0))
+
+        tk.Label(
+            fw_box,
+            text="CANNOT CONNECT / CONNECTION TIMEOUT?",
+            font=(F_FAMILY, 8, "bold"),
+            fg=C_WARNING,
+            bg=C_SURFACE_2,
+            anchor="w",
+        ).pack(fill="x", pady=(0, 2))
+
+        tk.Label(
+            fw_box,
+            text="If your network profile is set to Public or connection times out, Windows Firewall may be blocking Port 8000.",
+            font=(F_FAMILY, 8),
+            fg=C_TEXT_DIM,
+            bg=C_SURFACE_2,
+            justify="left",
+            anchor="w",
+            wraplength=440,
+        ).pack(fill="x", pady=(0, 6))
+
+        def _elevate_firewall():
+            try:
+                import ctypes
+                cmd = 'netsh advfirewall firewall add rule name="PCDeck Pro Port 8000" dir=in action=allow protocol=TCP localport=8000 profile=any & netsh advfirewall firewall add rule name="PCDeck Pro UDP Discovery" dir=in action=allow protocol=UDP localport=8001 profile=any'
+                ctypes.windll.shell32.ShellExecuteW(None, "runas", "cmd.exe", f"/c {cmd}", None, 0)
+                self.show_toast("Windows Firewall rule requested (Check UAC prompt)", "info")
+            except Exception as ex:
+                self.show_toast(f"Firewall error: {ex}", "error")
+
+        tk.Button(
+            fw_box,
+            text="Allow PCDeck in Windows Firewall (Port 8000)",
+            font=(F_FAMILY, 8, "bold"),
+            fg=C_BG,
+            bg=C_ACCENT,
+            activeforeground=C_BG,
+            activebackground=C_ACCENT_HOVER,
+            bd=0,
+            padx=10,
+            pady=4,
+            cursor="hand2",
+            command=_elevate_firewall,
+        ).pack(anchor="w")
 
         btn_row = tk.Frame(pad, bg=C_SURFACE)
-        btn_row.pack(fill="x", side="bottom", pady=(14, 0))
+        btn_row.pack(fill="x", side="bottom", pady=(12, 0))
 
         tk.Button(
             btn_row,
@@ -2554,7 +2653,7 @@ class PCDeckProGUI:
             padx=14,
             pady=6,
             cursor="hand2",
-            command=lambda: webbrowser.open("https://pcdeck.vercel.app/"),
+            command=lambda: webbrowser.open("https://getpcdeck.com/"),
         ).pack(side="left")
 
         tk.Button(
@@ -2640,8 +2739,19 @@ class PCDeckProGUI:
             relief="solid",
         )
         key_entry.pack(fill="x", pady=(4, 12), ipady=4)
+        initial_key = ""
         if self.is_pc_pro and self.license_info.get("key"):
-            key_entry.insert(0, self.license_info["key"])
+            initial_key = self.license_info["key"]
+        if not initial_key:
+            try:
+                from server.license_manager import get_stored_license_record
+                stored = get_stored_license_record()
+                if stored.get("key"):
+                    initial_key = stored["key"]
+            except Exception:
+                pass
+        if initial_key:
+            key_entry.insert(0, initial_key)
 
         btn_row = tk.Frame(pad, bg=C_SURFACE)
         btn_row.pack(fill="x", pady=(4, 0))
@@ -2725,6 +2835,8 @@ class PCDeckProGUI:
         dlg.grab_set()
 
     def _apply_pro_state(self):
+        self.is_pc_pro = True
+        self.license_info = load_pc_license()
         try:
             from server.main import set_pro_client
             set_pro_client(True)
@@ -3080,10 +3192,12 @@ class PCDeckProGUI:
                             fg=C_SUCCESS,
                         )
 
-                # 4. Periodic Wi-Fi Status Check (throttled to every 15s to keep USB dongles rock-solid)
+                # 4. Periodic Wi-Fi Status Check (Passive check; only queries netsh when IP changes or every 60s)
                 self._metrics_tick = getattr(self, "_metrics_tick", 0) + 1
-                if self._metrics_tick % 5 == 0:
-                    st = get_current_wifi_status()
+                ip_changed = latest_ip != getattr(self, "_last_checked_wifi_ip", "")
+                if ip_changed or (self._metrics_tick % 20 == 0):
+                    self._last_checked_wifi_ip = latest_ip
+                    st = get_current_wifi_status(force=ip_changed)
                     if hasattr(self, "wifi_status_badge") and self.wifi_status_badge.winfo_exists():
                         current_badge = self.wifi_status_badge.cget("text")
                         if "Connecting" not in current_badge and "Scanning" not in current_badge:
@@ -3356,6 +3470,12 @@ $notifier.Show($toast)
             self.root.attributes("-topmost", True)
             self.root.after(250, lambda: self.root.attributes("-topmost", False))
             self.root.focus_force()
+
+            # Dynamically build review card if eligible and not already shown
+            if hasattr(self, "right_col") and (not hasattr(self, "review_card") or self.review_card is None):
+                self.review_state = load_app_settings()
+                if check_should_show_review_prompt(self.review_state):
+                    self._build_review_card(self.right_col)
         except Exception as e:
             log_debug(f"open_dashboard error: {e}")
 
@@ -4980,10 +5100,51 @@ def start_single_instance_ipc_server(root: tk.Tk, on_show_callback, event_names=
         ]
         user32.DefWindowProcW.restype = ctypes.c_int64
 
+        WM_CLOSE = 0x0010
+        WM_QUERYENDSESSION = 0x0011
+        WM_ENDSESSION = 0x0016
+        WM_POWERBROADCAST = 0x0218
+        PBT_APMSUSPEND = 0x0004
+        PBT_APMRESUMEAUTOMATIC = 0x0012
+
         def py_wndproc(hwnd, msg, wparam, lparam):
             if msg == wm_show:
                 debounced_trigger()
                 return 0
+            elif msg == WM_QUERYENDSESSION:
+                # Windows Restart Manager / OS Quiesce requesting permission to shut down
+                log_debug("Win32 WM_QUERYENDSESSION received: returning 1 (quiesce approved)")
+                return 1
+            elif msg == WM_ENDSESSION:
+                # OS session is ending or Store AppX update is terminating the process
+                log_debug(f"Win32 WM_ENDSESSION received (wparam={wparam}). Shutting down cleanly.")
+                if wparam:
+                    try:
+                        app_instance = getattr(on_activate_callback, "__self__", None)
+                        if app_instance and hasattr(app_instance, "quit_application"):
+                            app_instance.quit_application()
+                    except Exception as e:
+                        log_debug(f"WM_ENDSESSION quit error: {e}")
+                    import os
+                    os._exit(0)
+                return 0
+            elif msg == WM_CLOSE:
+                # Windows Restart Manager sent WM_CLOSE to process window to service app
+                log_debug("Win32 WM_CLOSE received on IPC window. Performing clean quiesce.")
+                try:
+                    app_instance = getattr(on_activate_callback, "__self__", None)
+                    if app_instance and hasattr(app_instance, "quit_application"):
+                        app_instance.quit_application()
+                except Exception as e:
+                    log_debug(f"WM_CLOSE quit error: {e}")
+                import os
+                os._exit(0)
+            elif msg == WM_POWERBROADCAST:
+                if wparam == PBT_APMSUSPEND:
+                    log_debug("Windows Modern Standby / Sleep detected (PBT_APMSUSPEND).")
+                elif wparam == PBT_APMRESUMEAUTOMATIC:
+                    log_debug("Windows resumed from Standby (PBT_APMRESUMEAUTOMATIC).")
+                return 1
             return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
 
         global _IPC_WNDPROC_REF
@@ -5094,12 +5255,17 @@ def main():
                 pass
         log_debug("Entering root.mainloop()...")
         root.mainloop()
+        log_debug("root.mainloop() exited. Terminating process cleanly.")
+        import os
+        os._exit(0)
     except Exception as e:
         log_debug(f"Fatal error in main(): {traceback.format_exc()}")
         try:
             messagebox.showerror("PCDeck Pro Error", f"Fatal error: {e}")
         except Exception:
             pass
+        import os
+        os._exit(1)
 
 
 if __name__ == "__main__":

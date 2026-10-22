@@ -467,9 +467,10 @@ class WiFiLatencyManager:
         """
         should_restore = False
         reason = ""
-        target_iface = ""
+        is_disabled = False
         with self._lock:
-            if self._wlan_autoconfig_disabled:
+            is_disabled = self._wlan_autoconfig_disabled
+            if is_disabled:
                 target_iface = self._target_wlan_interface
                 inactive = (time.time() - self._last_activity_time) > 15.0
                 no_streamers = len(self._active_streamers) == 0 or not self._streaming_mode_active
@@ -479,8 +480,8 @@ class WiFiLatencyManager:
                     self._wlan_autoconfig_disabled = False
                     self._streaming_mode_active = False
 
-        # Check for link-drop if autoconfig is currently disabled
-        if not should_restore and target_iface:
+        # Check for link-drop ONLY if autoconfig is currently disabled
+        if not should_restore and is_disabled and target_iface:
             try:
                 health = wifi_manager.get_link_health() if (wifi_manager and hasattr(wifi_manager, "get_link_health")) else {}
                 status = health.get("status", "")

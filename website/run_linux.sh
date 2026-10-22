@@ -5,7 +5,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "🐧 Starting PCDeck v2.7.0 on Linux..."
+echo "🐧 Starting PCDeck v2.7.4 on Linux..."
 
 # Check for Python 3
 if ! command -v python3 &>/dev/null; then

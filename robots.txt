@@ -1,4 +1,4 @@
-# robots.txt - https://pcdeck.vercel.app/
+# robots.txt - https://getpcdeck.com/
 # PCDeck: wireless trackpad, desktop screen streaming and file transfer for Windows + Android.
 
 # Universal rules for all web crawlers
@@ -100,6 +100,6 @@ Allow: /
 
 # LLM Context & Agent Knowledge Base
 # Full AI-readable markdown documentation for LLMs, ChatGPT Search, Perplexity & Claude:
-# https://pcdeck.vercel.app/llms.txt
+# https://getpcdeck.com/llms.txt
 
-Sitemap: https://pcdeck.vercel.app/sitemap.xml
+Sitemap: https://getpcdeck.com/sitemap.xml

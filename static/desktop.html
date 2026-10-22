@@ -532,14 +532,14 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             <span>DOWNLOAD APK</span>
           </a>
-          <a href="https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://pcdeck.vercel.app" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="padding: 0 10px; font-size: 0.8rem;">
+          <a href="https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://getpcdeck.com" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="padding: 0 10px; font-size: 0.8rem;">
             <span>UPGRADE PRO ⚡</span>
           </a>
         </div>
 
         <!-- Optional Regional PPP Local Price for Desktop Web Launcher -->
         <div id="desktop-local-price-wrap" style="display: none; text-align: center; margin-top: 6px;">
-          <a href="https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://pcdeck.vercel.app" target="_blank" style="color: var(--neo-cyan); font-size: 0.74rem; font-weight: 700; text-decoration: underline;">
+          <a href="https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://getpcdeck.com" target="_blank" style="color: var(--neo-cyan); font-size: 0.74rem; font-weight: 700; text-decoration: underline;">
             Check your local price at checkout (PPP enabled) &rarr;
           </a>
         </div>
@@ -719,9 +719,9 @@
         </a>
         <button type="button" id="btn-copy-hub-email" class="neo-btn" style="background: rgba(0, 240, 255, 0.12); border: 1.5px solid var(--neo-cyan); color: var(--neo-cyan); font-size: 0.78rem; font-weight: 800; padding: 8px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          <span id="label-hub-email">Copy Email (dogonews67@gmail.com)</span>
+          <span id="label-hub-email">Copy Email (gresonparichha719@gmail.com)</span>
         </button>
-        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=dogonews67@gmail.com&su=%5BPCDeck%5D%20Suggestion%20%2F%20Complaint" target="_blank" rel="noopener" class="neo-btn btn-yellow" style="font-size: 0.78rem; font-weight: 800; padding: 8px 16px; text-decoration: none;">
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=gresonparichha719@gmail.com&su=%5BPCDeck%5D%20Suggestion%20%2F%20Complaint" target="_blank" rel="noopener" class="neo-btn btn-yellow" style="font-size: 0.78rem; font-weight: 800; padding: 8px 16px; text-decoration: none;">
           Open Web Gmail &rarr;
         </a>
       </div>
@@ -730,8 +730,49 @@
     <!-- Footer -->
     <footer class="hub-footer">
       <div>🔒 100% Peer-to-Peer • End-to-End Encrypted over your Private Local Wi-Fi</div>
-      <div>PCDeck Pro &copy; 2026 • <a href="https://pcdeck.vercel.app" target="_blank">Official Website</a></div>
+      <div>PCDeck Pro &copy; 2026 • <a href="https://getpcdeck.com" target="_blank">Official Website</a></div>
     </footer>
+  </div>
+
+  <!-- In-Place Instant Media Player Modal -->
+  <div id="media-player-modal" class="modal-backdrop" style="display: none; z-index: 10005;">
+    <div class="media-player-card" style="width: min(94vw, 760px); max-height: 90vh; background: #0b1120; border: 2px solid var(--neo-cyan); border-radius: 16px; padding: 16px; box-shadow: 0 0 35px rgba(6,182,212,0.3); display: flex; flex-direction: column; gap: 12px; position: relative;">
+      
+      <!-- Top Title Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+          <span class="mini-status-chip online" style="background: var(--neo-cyan); color: #000; font-weight: 900; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px;">STREAM</span>
+          <span id="media-player-title" style="font-weight: 800; font-size: 0.92rem; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50vw;">Now Playing</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" id="btn-media-audio-boost" class="neo-btn btn-dark" style="font-size: 0.72rem; padding: 4px 8px; height: 30px; font-weight: 800;" title="Audio Boost (200%)">BOOST 100%</button>
+          <button type="button" id="btn-media-pip" class="neo-btn btn-dark" style="font-size: 0.72rem; padding: 4px 8px; height: 30px;" title="Picture in Picture">PiP</button>
+          <button type="button" id="btn-close-media-player" class="onboarding-skip-btn" style="position: static; font-size: 1.1rem; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">&times;</button>
+        </div>
+      </div>
+
+      <!-- Video / Audio Element -->
+      <div style="position: relative; width: 100%; background: #020617; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 220px; max-height: 56vh;">
+        <video id="media-stream-video" playsinline controls preload="metadata" style="width: 100%; height: 100%; max-height: 56vh; object-fit: contain; outline: none;">
+          <track id="media-stream-track" kind="subtitles" srclang="en" label="Subtitles" default>
+        </video>
+      </div>
+
+      <!-- Quick Action / Speed / Quality bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); padding-top: 4px;">
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <span style="color: var(--neo-yellow); font-weight: 800;">Speed:</span>
+          <button type="button" class="neo-btn btn-dark media-speed-btn active" data-speed="1.0" style="padding: 2px 7px; height: 26px; font-size: 0.72rem;">1.0x</button>
+          <button type="button" class="neo-btn btn-dark media-speed-btn" data-speed="1.25" style="padding: 2px 7px; height: 26px; font-size: 0.72rem;">1.25x</button>
+          <button type="button" class="neo-btn btn-dark media-speed-btn" data-speed="1.5" style="padding: 2px 7px; height: 26px; font-size: 0.72rem;">1.5x</button>
+          <button type="button" class="neo-btn btn-dark media-speed-btn" data-speed="2.0" style="padding: 2px 7px; height: 26px; font-size: 0.72rem;">2.0x</button>
+        </div>
+        <div style="font-size: 0.72rem; color: var(--text-muted);">
+          <span id="media-stream-codec-info">Local Wi-Fi Direct</span>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <script>
@@ -803,7 +844,7 @@
     const btnCopyHubEmail = document.getElementById('btn-copy-hub-email');
     if (btnCopyHubEmail) {
       btnCopyHubEmail.onclick = () => {
-        navigator.clipboard.writeText('dogonews67@gmail.com').then(() => {
+        navigator.clipboard.writeText('gresonparichha719@gmail.com').then(() => {
           const lbl = document.getElementById('label-hub-email');
           if (lbl) {
             const orig = lbl.textContent;

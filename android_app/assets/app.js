@@ -44,7 +44,7 @@
   };
 
   window.sendFeedbackMail = function () {
-    var email = 'dogonews67@gmail.com';
+    var email = 'gresonparichha719@gmail.com';
     var subject = '[PCDeck] Feedback & Suggestion';
     var body = 'Hi Greson,\n\nHere is my feedback / bug report:\n';
 
@@ -86,6 +86,19 @@
 
   window.openRedditFeedback = function () {
     var url = 'https://www.reddit.com/user/Old_Boysenberry_4008/comments/1wkh5v0/pcdeck_official_feedback_bug_reports_feature/';
+    if (window.AndroidApp && typeof window.AndroidApp.openExternalUrl === 'function') {
+      try {
+        window.AndroidApp.openExternalUrl(url);
+        return;
+      } catch (e) {
+        console.warn('Native openExternalUrl failed', e);
+      }
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  window.openMsStoreReview = function () {
+    var url = 'https://apps.microsoft.com/detail/9P4BK16LBGLS';
     if (window.AndroidApp && typeof window.AndroidApp.openExternalUrl === 'function') {
       try {
         window.AndroidApp.openExternalUrl(url);
@@ -201,6 +214,18 @@
     }
   };
 
+  window.renderRecentPCs = function() {
+    if (typeof renderRecentPCs === 'function') {
+      renderRecentPCs();
+    }
+  };
+
+  window.switchToPC = function(host, port) {
+    if (typeof switchToPC === 'function') {
+      switchToPC(host, port);
+    }
+  };
+
   // --- Configuration & Default State ---
   const state = {
     serverHost: (window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '',
@@ -258,12 +283,15 @@
     // In-Built PC File Manager State
     currentFsPath: '',
     fsParentPath: null,
+    isFsRoot: false,
+    fsHistory: [],
     fsFolders: [],
     fsFiles: [],
     fsFilterText: '',
     markedFsPaths: new Set(),
     fsSelectMode: false,       // true = long-press selection mode active (PC files)
     // In-Built Phone File Manager State
+    phoneFsHistory: [],
     phoneFs: {
       currentPath: 'default',
       parentPath: '',
@@ -1005,7 +1033,7 @@
             sendBinaryTouchDown(curNorm.x, curNorm.y, 'left');
             spawnTouchRipple(lastX, lastY, 'tap');
             vibrate(40);
-            showToast('Drag to Move', 'info', '✋');
+            showToast('Drag to Move', 'info');
           }
         }
       }, 350);
@@ -1159,7 +1187,7 @@
           sendBinaryClick('right');
           spawnTouchRipple(twoFingerMidX, twoFingerMidY, 'right');
           vibrate(isDoubleTap ? 35 : 25);
-          showToast(isDoubleTap ? '2-Finger Double Tap (Right Click)' : 'Right Click', 'success', '🖱️');
+          showToast(isDoubleTap ? '2-Finger Double Tap (Right Click)' : 'Right Click', 'success');
         }
         twoFingerActive = false;
         state.isPinching = false;
@@ -1287,7 +1315,7 @@
           sendBinaryMoveAbs(norm.x, norm.y);
           sendBinaryClick('double');
           vibrate(28);
-          showToast('Double Click', 'success', '⚡');
+          showToast('Double Click', 'success');
         } else {
           // 1-Finger Single Tap -> Left Click at exact touch position!
           lastTapTime = touchEndTime;
@@ -1675,6 +1703,314 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Multi-PC Recent Connections Manager
+  // ---------------------------------------------------------------------------
+  function getRecentPCs() {
+    try {
+      const raw = localStorage.getItem('pcdeck_recent_pcs');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function recordRecentPC(host, port, name) {
+    if (!host || host === '127.0.0.1' || host === 'localhost') return;
+    try {
+      let list = getRecentPCs();
+      const portStr = String(port || '8000');
+      let computerName = (name || host).trim();
+      const targetKey = `${host}:${portStr}`;
+
+      const existing = list.find(item => `${item.host}:${item.port}` === targetKey);
+      if (existing && existing.name && existing.name !== host && (computerName === host || !computerName)) {
+        computerName = existing.name;
+      }
+
+      list = list.filter(item => `${item.host}:${item.port}` !== targetKey);
+      list.unshift({
+        host: host,
+        port: portStr,
+        name: computerName,
+        lastSeen: Date.now()
+      });
+
+      if (list.length > 100) list = list.slice(0, 100);
+      localStorage.setItem('pcdeck_recent_pcs', JSON.stringify(list));
+      renderRecentPCs();
+    } catch (e) {}
+  }
+
+  function switchToPC(targetHost, targetPort) {
+    if (!targetHost) return;
+    state.serverHost = targetHost;
+    state.serverPort = targetPort || '8000';
+    try {
+      localStorage.setItem('pcdeck_server_host', targetHost);
+      localStorage.setItem('pcdeck_server_port', targetPort || '8000');
+    } catch (e) {}
+
+    const modalIp = document.getElementById('modal-ip-input');
+    if (modalIp) modalIp.value = `${targetHost}:${state.serverPort}`;
+    const settingsIp = document.getElementById('settings-ip-input');
+    if (settingsIp) settingsIp.value = `${targetHost}:${state.serverPort}`;
+
+    if (el.connectModal) el.connectModal.classList.remove('show');
+
+    connect(true);
+    showToast(`Connecting to ${targetHost}...`, 'info');
+  }
+
+  let recentPCDropdownInitialized = false;
+
+  function closeRecentPCDropdown() {
+    const dropdownMenu = document.getElementById('recent-pcs-dropdown-menu');
+    const dropdownBtn = document.getElementById('recent-pcs-dropdown-btn');
+    if (dropdownMenu) {
+      dropdownMenu.style.display = 'none';
+      const searchInput = dropdownMenu.querySelector('#recent-pcs-search-input');
+      if (searchInput && searchInput.value) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+      }
+    }
+    if (dropdownBtn) dropdownBtn.classList.remove('open');
+  }
+
+  function openRecentPCDropdown() {
+    const dropdownMenu = document.getElementById('recent-pcs-dropdown-menu');
+    const dropdownBtn = document.getElementById('recent-pcs-dropdown-btn');
+    if (dropdownMenu) dropdownMenu.style.display = 'block';
+    if (dropdownBtn) dropdownBtn.classList.add('open');
+  }
+
+  function updateRecentPCDropdownStatus(status) {
+    const currentStatusEl = document.getElementById('recent-pcs-current-status');
+    if (!currentStatusEl) return;
+    if (status === 'connected') {
+      currentStatusEl.className = 'recent-pc-status-pill connected';
+      currentStatusEl.textContent = 'CONNECTED';
+    } else if (status === 'connecting') {
+      currentStatusEl.className = 'recent-pc-status-pill connecting';
+      currentStatusEl.textContent = 'CONNECTING...';
+    } else {
+      currentStatusEl.className = 'recent-pc-status-pill offline';
+      currentStatusEl.textContent = 'STANDBY';
+    }
+  }
+
+  function renderRecentPCs() {
+    const list = getRecentPCs();
+    const settingsSection = document.getElementById('settings-recent-pcs-section');
+    const dropdownBtn = document.getElementById('recent-pcs-dropdown-btn');
+    const dropdownMenu = document.getElementById('recent-pcs-dropdown-menu');
+    const currentNameEl = document.getElementById('recent-pcs-current-name');
+    const currentIpEl = document.getElementById('recent-pcs-current-ip');
+    const currentStatusEl = document.getElementById('recent-pcs-current-status');
+    const clearBtn = document.getElementById('btn-clear-recent-pcs');
+
+    if (list.length < 2) {
+      if (settingsSection) settingsSection.style.display = 'none';
+      return;
+    }
+
+    if (settingsSection) settingsSection.style.display = 'block';
+
+    let savedHost = '';
+    let savedPort = '8000';
+    try {
+      savedHost = localStorage.getItem('pcdeck_server_host') || (localStorage.getItem('pcdeck_ip') || '').split(':')[0] || '';
+      savedPort = localStorage.getItem('pcdeck_server_port') || (localStorage.getItem('pcdeck_ip') || '').split(':')[1] || '8000';
+    } catch (e) {}
+
+    const curHost = state.serverHost || savedHost || list[0].host;
+    const curPort = state.serverPort || savedPort || list[0].port;
+    const currentKey = `${curHost}:${curPort}`;
+    const activeItem = list.find(item => `${item.host}:${item.port}` === currentKey) || list[0];
+    const activeKey = `${activeItem.host}:${activeItem.port}`;
+
+    if (currentNameEl) {
+      currentNameEl.textContent = activeItem.name || activeItem.host;
+    }
+    if (currentIpEl) {
+      currentIpEl.textContent = `${activeItem.host}:${activeItem.port}`;
+    }
+    if (currentStatusEl) {
+      if (state.connected) {
+        currentStatusEl.className = 'recent-pc-status-pill connected';
+        currentStatusEl.textContent = 'CONNECTED';
+      } else {
+        currentStatusEl.className = 'recent-pc-status-pill offline';
+        currentStatusEl.textContent = 'STANDBY';
+      }
+    }
+
+    // Filter to ONLY the other computers to switch to - NO REDUNDANCY / DUPLICATION!
+    const otherPCs = list.filter(item => `${item.host}:${item.port}` !== activeKey);
+
+    if (dropdownMenu) {
+      if (otherPCs.length === 0) {
+        dropdownMenu.innerHTML = `
+          <div class="cyber-dropdown-item-empty" style="padding: 10px 14px; font-size: 0.72rem; color: var(--text-muted); text-align: center;">
+            No other recent computers saved
+          </div>
+        `;
+      } else {
+        const showSearch = otherPCs.length >= 6;
+        const searchBarHtml = showSearch ? `
+          <div class="cyber-dropdown-search-wrap">
+            <div class="cyber-dropdown-search-box">
+              <svg class="deck-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="recent-pcs-search-input" class="cyber-dropdown-search-input" placeholder="Search computers..." autocomplete="off" spellcheck="false">
+              <button type="button" id="recent-pcs-search-clear" class="cyber-dropdown-search-clear" style="display: none;">✕</button>
+            </div>
+          </div>
+        ` : '';
+
+        const itemsHtml = otherPCs.map(item => {
+          const safeName = String(item.name || item.host)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+          return `
+            <div class="cyber-dropdown-item" data-host="${item.host}" data-port="${item.port}" data-name="${safeName}">
+              <div class="dropdown-item-left">
+                <div class="dropdown-item-icon-box">
+                  <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                </div>
+                <div class="dropdown-item-info">
+                  <span class="dropdown-item-name">${safeName}</span>
+                  <span class="dropdown-item-ip">${item.host}:${item.port}</span>
+                </div>
+              </div>
+              <span class="recent-pc-status-pill switch">CONNECT</span>
+            </div>
+          `;
+        }).join('');
+
+        dropdownMenu.innerHTML = `
+          ${searchBarHtml}
+          <div id="recent-pcs-items-container">
+            ${itemsHtml}
+          </div>
+          <div id="recent-pcs-no-match" class="cyber-dropdown-item-empty" style="display: none; padding: 12px 14px; font-size: 0.72rem; color: var(--text-muted); text-align: center;">
+            No matching computers found
+          </div>
+        `;
+
+        const searchInput = dropdownMenu.querySelector('#recent-pcs-search-input');
+        const searchClear = dropdownMenu.querySelector('#recent-pcs-search-clear');
+        const noMatchEl = dropdownMenu.querySelector('#recent-pcs-no-match');
+
+        if (searchInput) {
+          searchInput.onclick = (e) => e.stopPropagation();
+          searchInput.onkeydown = (e) => e.stopPropagation();
+          searchInput.oninput = (e) => {
+            e.stopPropagation();
+            const query = searchInput.value.trim().toLowerCase();
+            if (searchClear) searchClear.style.display = query ? 'inline-block' : 'none';
+            let matchCount = 0;
+            dropdownMenu.querySelectorAll('.cyber-dropdown-item').forEach(item => {
+              const name = (item.getAttribute('data-name') || '').toLowerCase();
+              const host = (item.getAttribute('data-host') || '').toLowerCase();
+              const port = (item.getAttribute('data-port') || '').toLowerCase();
+              const isMatch = !query || name.includes(query) || host.includes(query) || `${host}:${port}`.includes(query);
+              item.style.display = isMatch ? 'flex' : 'none';
+              if (isMatch) matchCount++;
+            });
+            if (noMatchEl) noMatchEl.style.display = matchCount === 0 ? 'block' : 'none';
+          };
+        }
+
+        if (searchClear) {
+          searchClear.onclick = (e) => {
+            e.stopPropagation();
+            if (searchInput) {
+              searchInput.value = '';
+              searchInput.dispatchEvent(new Event('input'));
+              searchInput.focus();
+            }
+          };
+        }
+
+        dropdownMenu.querySelectorAll('.cyber-dropdown-item').forEach(elem => {
+          elem.onclick = (e) => {
+            e.stopPropagation();
+            const targetHost = elem.getAttribute('data-host');
+            const targetPort = elem.getAttribute('data-port');
+            const targetName = elem.getAttribute('data-name');
+
+            closeRecentPCDropdown();
+
+            // Promote target computer to TOP of the recent list immediately
+            recordRecentPC(targetHost, targetPort, targetName);
+
+            // Update header button immediately to show target
+            if (currentNameEl) currentNameEl.textContent = targetName || targetHost;
+            if (currentIpEl) currentIpEl.textContent = `${targetHost}:${targetPort}`;
+            if (currentStatusEl) {
+              currentStatusEl.className = 'recent-pc-status-pill connecting';
+              currentStatusEl.textContent = 'CONNECTING...';
+            }
+
+            switchToPC(targetHost, targetPort);
+          };
+        });
+      }
+    }
+
+    if (!recentPCDropdownInitialized) {
+      recentPCDropdownInitialized = true;
+
+      if (dropdownBtn) {
+        dropdownBtn.onclick = (e) => {
+          e.stopPropagation();
+          const isOpen = dropdownMenu && dropdownMenu.style.display === 'block';
+          if (isOpen) {
+            closeRecentPCDropdown();
+          } else {
+            openRecentPCDropdown();
+          }
+        };
+      }
+
+      document.addEventListener('click', (e) => {
+        const dd = document.getElementById('recent-pcs-dropdown');
+        if (dd && !dd.contains(e.target)) {
+          closeRecentPCDropdown();
+        }
+      });
+
+      if (clearBtn) {
+        clearBtn.onclick = (e) => {
+          e.stopPropagation();
+          try {
+            localStorage.removeItem('pcdeck_recent_pcs');
+          } catch (err) {}
+          if (settingsSection) settingsSection.style.display = 'none';
+          showToast('Saved computers cleared', 'info');
+        };
+      }
+    }
+  }
+
+  function openConnectModal() {
+    if (el.connectModal) {
+      el.connectModal.classList.add('show');
+    }
+  }
+
   function clearAutoReconnect() {
     if (state.autoReconnectTimer) {
       clearTimeout(state.autoReconnectTimer);
@@ -1713,6 +2049,10 @@
       fetch(`${pingProto}//${host}:${port}/api/ping`, { cache: 'no-store' })
         .then(res => res.json())
         .then(pingData => {
+          if (pingData && (pingData.name || pingData.ip)) {
+            window.currentPcHostname = pingData.name || pingData.ip;
+            recordRecentPC(host, port, pingData.name || pingData.ip);
+          }
           if (pingData && pingData.pro_active !== undefined) {
             const isUnlocked = !!pingData.pro_active;
             window.serverProActive = isUnlocked;
@@ -1731,8 +2071,8 @@
             }
             const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             state.screenWsUrl = `${proto}//${host}:${port}/ws/screen?token=${encodeURIComponent(tok)}`;
-            if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
-              connectScreenWs();
+            if (state.activeTab === 'tab-screen') {
+              connectScreenWs(true);
             }
           }
         })
@@ -1747,7 +2087,9 @@
     // If socket is already OPEN and connecting to the same target, avoid redundant reconnect and maintain solid status
     if (!force && mainWs && mainWs.readyState === WebSocket.OPEN && state.connected && state.wsUrl === targetWsUrl) {
       updateStatus('connected', 'Connected');
-      connectScreenWs();
+      if (state.activeTab === 'tab-screen') {
+        connectScreenWs();
+      }
       return;
     }
 
@@ -2124,6 +2466,8 @@
             // Instant frame ACK back to server so server knows this frame cleared the network pipe!
             try { ws.send('a'); } catch (e) {}
             renderScreenFrame(event.data);
+          } else {
+            handleScreenTextMessage(event.data);
           }
         }
       };
@@ -2147,6 +2491,48 @@
     }
   }
 
+  // --- Aero Multi-Monitor Switcher Controller ---
+  let currentMonitorCount = 1;
+  let currentActiveMonitor = 1;
+
+  function handleScreenTextMessage(msg) {
+    if (!msg || typeof msg !== 'string') return;
+    if (msg.startsWith('monitors,')) {
+      const parts = msg.split(',');
+      const count = parseInt(parts[1] || '1', 10);
+      const activeIdx = parseInt(parts[2] || '1', 10);
+      currentMonitorCount = count;
+      currentActiveMonitor = activeIdx;
+      updateScreenMonitorButton();
+    }
+  }
+
+  function updateScreenMonitorButton() {
+    const btn = document.getElementById('btn-screen-monitor-switch');
+    const badge = document.getElementById('screen-monitor-num');
+    if (!btn) return;
+    if (currentMonitorCount >= 2) {
+      btn.style.display = 'flex';
+      if (badge) badge.textContent = String(currentActiveMonitor);
+      btn.title = `Viewing Display ${currentActiveMonitor} of ${currentMonitorCount} (Tap to Switch)`;
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  function initScreenMonitorSwitcher() {
+    const btn = document.getElementById('btn-screen-monitor-switch');
+    if (!btn) return;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+        screenWs.send('switch_monitor');
+        vibrate(24);
+      }
+    };
+  }
+
   let reconnectAttempts = 0;
 
   function onMainWsOpen() {
@@ -2155,6 +2541,10 @@
     updateStatus('connected', 'Connected');
     if (el.connectModal) el.connectModal.classList.remove('show');
     vibrate(28);
+
+    try {
+      recordRecentPC(state.serverHost, state.serverPort, window.currentPcHostname || state.serverHost);
+    } catch (e) {}
 
     clearAutoReconnect();
     saveAllSettings(false);
@@ -2264,8 +2654,8 @@
         }
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         state.screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen?token=${encodeURIComponent(serverToken)}`;
-        if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
-          connectScreenWs();
+        if (state.activeTab === 'tab-screen') {
+          connectScreenWs(true);
         }
       }
       return;
@@ -2278,12 +2668,12 @@
         try { mainWs.send('get_token'); return; } catch (e) {}
       }
       showToast('Pairing required: please scan the QR code on your PC screen.', 'error');
-      if (el.connectModal) el.connectModal.classList.add('show');
+      openConnectModal();
       return;
     }
     if (data.startsWith('pair_ok,')) {
-      if (state.activeTab === 'tab-screen' && (!screenWs || screenWs.readyState !== WebSocket.OPEN)) {
-        connectScreenWs();
+      if (state.activeTab === 'tab-screen') {
+        connectScreenWs(true);
       }
       return;
     }
@@ -2403,8 +2793,8 @@
     state.connected = false;
     updateStatus('disconnected', 'Disconnected');
     const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
-    if (!localStorage.getItem('pcdeck_ip') && !localStorage.getItem('neontrack_ip') && el.connectModal && isNativeApp) {
-      el.connectModal.classList.add('show');
+    if (!localStorage.getItem('pcdeck_ip') && !localStorage.getItem('neontrack_ip') && isNativeApp) {
+      openConnectModal();
     }
   }
 
@@ -2419,6 +2809,11 @@
         sConnChip.textContent = 'OFFLINE';
       }
     }
+    try {
+      if (typeof updateRecentPCDropdownStatus === 'function') {
+        updateRecentPCDropdownStatus(status);
+      }
+    } catch (e) {}
     if (!el.statusIndicator || !el.statusLabel) return;
     if (status === 'connected') {
       el.statusIndicator.className = 'status-dot connected';
@@ -2591,16 +2986,20 @@
 
   function sendCommand(cmdStr) {
     if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      if (mainWs.bufferedAmount > 65536) return;
       mainWs.send(cmdStr);
     } else if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+      if (screenWs.bufferedAmount > 65536) return;
       screenWs.send(cmdStr);
     }
   }
 
   function sendScreenCommand(cmdStr) {
     if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      if (mainWs.bufferedAmount > 65536) return;
       mainWs.send(cmdStr);
     } else if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+      if (screenWs.bufferedAmount > 65536) return;
       screenWs.send(cmdStr);
     }
   }
@@ -2757,7 +3156,7 @@
         if (el.settingCursorSpeed) el.settingCursorSpeed.value = state.cursorSpeed.toString();
         if (el.valCursorSpeed) el.valCursorSpeed.textContent = `${state.cursorSpeed.toFixed(1)}x`;
         vibrate(25);
-        showToast(`Mouse Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success', '⚡');
+        showToast(`Mouse Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success');
         saveAllSettings(false);
       };
     }
@@ -2816,6 +3215,7 @@
 
     surface.addEventListener('touchstart', (e) => {
       globalLastTouchTime = Date.now();
+      surface.classList.add('touch-active');
       if (e.touches.length === 1) {
         touchActive = true;
         twoFingerActive = false;
@@ -2921,7 +3321,7 @@
           twoFingerLastTapTime = now;
           vibrate(isDoubleTap ? 35 : 25);
           sendBinaryClick('right');
-          showToast(isDoubleTap ? '2-Finger Double Tap (Right Click)' : 'Right Click', 'success', '🖱️');
+          showToast(isDoubleTap ? '2-Finger Double Tap (Right Click)' : 'Right Click', 'success');
         }
         twoFingerActive = false;
         e.preventDefault();
@@ -2940,6 +3340,7 @@
 
       if (touchActive && e.touches.length === 0) {
         touchActive = false;
+        surface.classList.remove('touch-active');
         flushMovement();
         const tapDuration = Date.now() - tapStartTime;
         if (tapDuration < 320 && totalMoved < 16) {
@@ -2949,7 +3350,7 @@
             lastTapTime = 0;
             vibrate(25);
             sendBinaryClick('double');
-            showToast('Double Click', 'success', '⚡');
+            showToast('Double Click', 'success');
           } else {
             // Single tap -> Left Click
             lastTapTime = now;
@@ -2965,10 +3366,16 @@
       e.preventDefault();
     }, { passive: false });
 
+    surface.addEventListener('touchcancel', () => {
+      touchActive = false;
+      surface.classList.remove('touch-active');
+    });
+
     // Desktop Web Control: Mouse handling on Trackpad surface
     surface.addEventListener('mousedown', (e) => {
       if (Date.now() - globalLastTouchTime < 650) return;
       touchActive = true;
+      surface.classList.add('touch-active');
       startX = lastX = e.clientX;
       startY = lastY = e.clientY;
       tapStartTime = Date.now();
@@ -3002,6 +3409,8 @@
     });
 
     window.addEventListener('mouseup', (e) => {
+      surface.classList.remove('touch-active');
+      if (el.scrollStrip) el.scrollStrip.classList.remove('touch-active');
       if (Date.now() - globalLastTouchTime < 650) return;
       if (!touchActive || state.activeTab !== 'tab-trackpad') return;
       touchActive = false;
@@ -3031,6 +3440,7 @@
 
       el.scrollStrip.addEventListener('touchstart', (e) => {
         scrollActive = true;
+        el.scrollStrip.classList.add('touch-active');
         scrollStartY = e.touches[0].clientY;
         vibrate(10);
       }, { passive: false });
@@ -3048,7 +3458,212 @@
 
       el.scrollStrip.addEventListener('touchend', () => {
         scrollActive = false;
+        el.scrollStrip.classList.remove('touch-active');
       }, { passive: false });
+
+      el.scrollStrip.addEventListener('touchcancel', () => {
+        scrollActive = false;
+        el.scrollStrip.classList.remove('touch-active');
+      });
+
+      el.scrollStrip.addEventListener('mousedown', () => {
+        el.scrollStrip.classList.add('touch-active');
+      });
+    }
+  }
+
+  // --- CRT Retro Space-Saving Arched Dial Navigation Channel Map & Logic ---
+  const CRT_WHEEL_CHANNELS = [
+    { id: 'tab-screen', num: '01', name: 'SCREEN' },
+    { id: 'tab-trackpad', num: '02', name: 'TRACKPAD' },
+    { id: 'tab-keyboard', num: '03', name: 'KEYS' },
+    { id: 'tab-files', num: '04', name: 'FILES' },
+    { id: 'tab-media', num: '05', name: 'MEDIA' },
+    { id: 'tab-settings', num: '06', name: 'SETTINGS' }
+  ];
+
+  function updateCrtWheelNav(targetId) {
+    const disc = document.getElementById('crt-wheel-disc');
+    const idx = CRT_WHEEL_CHANNELS.findIndex(c => c.id === targetId);
+    if (idx === -1 || !disc) return;
+
+    const spokes = disc.querySelectorAll('.crt-wheel-spoke');
+    spokes.forEach(s => {
+      const sTarget = s.dataset.target;
+      const sIdx = CRT_WHEEL_CHANNELS.findIndex(c => c.id === sTarget);
+      if (sIdx === -1) return;
+
+      let d = sIdx - idx;
+      // Circular wrap around 6 channels to find shortest distance:
+      if (d > 3) d -= 6;
+      if (d < -2) d += 6;
+
+      const isHidden = (Math.abs(d) >= 3);
+      const isActive = (d === 0);
+      s.classList.toggle('active', isActive);
+
+      // Top arch line is at Y = 6px (center), Y = 12.5px (mid), Y = 32px (outer).
+      // All spokes are strictly positioned BELOW the arch line with 8px clearance:
+      // d = 0: y = 14px (arch line is at 6px, clear 8px above)
+      // d = ±1: y = 21px (arch line is at 12.5px, clear 8.5px above)
+      // d = ±2: y = 40px (arch line is at 32px, clear 8px above)
+      const x = isHidden ? (d > 0 ? 225 : -225) : d * 76;
+      const y = isHidden ? 68 : (Math.abs(d) === 2 ? 38 : (Math.abs(d) === 1 ? 20 : 14));
+      const rot = isHidden ? (d > 0 ? 26 : -26) : d * 9;
+      const scale = isActive ? 1.06 : (Math.abs(d) === 1 ? 0.95 : (Math.abs(d) === 2 ? 0.88 : 0.65));
+      const opacity = isHidden ? 0 : (isActive ? 1.0 : (Math.abs(d) === 1 ? 0.92 : 0.85));
+
+      s.style.width = '54px';
+      s.style.height = '36px';
+      s.style.transform = `translate(calc(-50% + ${x}px), ${y}px) rotate(${rot}deg) scale(${scale})`;
+      s.style.opacity = opacity;
+      s.style.pointerEvents = isHidden ? 'none' : 'auto';
+      s.style.zIndex = isActive ? '20' : (10 - Math.abs(d));
+    });
+  }
+
+  function initCrtWheelNav() {
+    const disc = document.getElementById('crt-wheel-disc');
+    if (disc) {
+      const spokes = disc.querySelectorAll('.crt-wheel-spoke');
+      spokes.forEach(s => {
+        s.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          vibrate(25);
+          const target = s.dataset.target;
+          if (target && typeof window.switchTabNav === 'function') {
+            window.switchTabNav(null, target);
+          } else if (target) {
+            switchTab(target);
+          }
+          if (target) updateCrtWheelNav(target);
+        });
+      });
+    }
+
+    const wheelNav = document.getElementById('crt-wheel-nav');
+    if (wheelNav) {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      wheelNav.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+
+      wheelNav.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) {
+          vibrate(20);
+          const curIdx = CRT_WHEEL_CHANNELS.findIndex(c => c.id === state.activeTab);
+          if (curIdx !== -1) {
+            const step = dx < 0 ? 1 : -1;
+            const nextIdx = (curIdx + step + CRT_WHEEL_CHANNELS.length) % CRT_WHEEL_CHANNELS.length;
+            const nextTarget = CRT_WHEEL_CHANNELS[nextIdx].id;
+            if (typeof window.switchTabNav === 'function') {
+              window.switchTabNav(null, nextTarget);
+            } else {
+              switchTab(nextTarget);
+            }
+            updateCrtWheelNav(nextTarget);
+          }
+        }
+      }, { passive: true });
+
+      wheelNav.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const curIdx = CRT_WHEEL_CHANNELS.findIndex(c => c.id === state.activeTab);
+        if (curIdx !== -1) {
+          const step = e.deltaY > 0 ? 1 : -1;
+          const nextIdx = (curIdx + step + CRT_WHEEL_CHANNELS.length) % CRT_WHEEL_CHANNELS.length;
+          const nextTarget = CRT_WHEEL_CHANNELS[nextIdx].id;
+          if (typeof window.switchTabNav === 'function') {
+            window.switchTabNav(null, nextTarget);
+          } else {
+            switchTab(nextTarget);
+          }
+          updateCrtWheelNav(nextTarget);
+        }
+      }, { passive: false });
+    }
+
+    updateCrtWheelNav(state.activeTab || 'tab-screen');
+  }
+
+  // --- CRT Rotated Full-Screen Keyboard Handlers ---
+  function initCrtKeyboardHandlers() {
+    const overlay = document.getElementById('crt-rotated-keyboard-overlay');
+    const btnOpen = document.getElementById('btn-crt-open-fullscreen-kb');
+    const btnClose = document.getElementById('btn-crt-close-rotated-kb');
+    const capsBtn = document.getElementById('btn-crt-rot-caps');
+    const capsInd = document.getElementById('crt-rot-caps-ind');
+    let crtCapsActive = false;
+
+    if (btnOpen && overlay) {
+      btnOpen.addEventListener('click', (e) => {
+        e.preventDefault();
+        vibrate(25);
+        overlay.classList.add('active');
+      });
+    }
+
+    if (btnClose && overlay) {
+      btnClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        vibrate(20);
+        overlay.classList.remove('active');
+      });
+    }
+
+    if (capsBtn && capsInd) {
+      capsBtn.addEventListener('click', () => {
+        crtCapsActive = !crtCapsActive;
+        capsInd.textContent = `CAPS: ${crtCapsActive ? '1' : '0'}`;
+        capsInd.classList.toggle('active', crtCapsActive);
+      });
+    }
+
+    // Quick text buffer in rotated keyboard
+    const rotInput = document.getElementById('crt-rot-type-input');
+    const btnRotSend = document.getElementById('btn-crt-rot-send');
+    if (rotInput && btnRotSend) {
+      const sendRotBuffer = () => {
+        const val = rotInput.value;
+        if (val) {
+          sendCommand(`t,${val}`);
+          rotInput.value = '';
+          vibrate(15);
+        }
+      };
+      btnRotSend.addEventListener('click', sendRotBuffer);
+      rotInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendRotBuffer();
+        }
+      });
+    }
+
+    // Quick text buffer in console hub card
+    const termInput = document.getElementById('crt-terminal-type-input');
+    const btnTermSend = document.getElementById('btn-crt-type-send');
+    if (termInput && btnTermSend) {
+      const sendTermBuffer = () => {
+        const val = termInput.value;
+        if (val) {
+          sendCommand(`t,${val}`);
+          termInput.value = '';
+          vibrate(15);
+        }
+      };
+      btnTermSend.addEventListener('click', sendTermBuffer);
+      termInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendTermBuffer();
+        }
+      });
     }
   }
 
@@ -3059,8 +3674,18 @@
 
     vibrate(15);
     state.activeTab = targetId;
+    try {
+      localStorage.setItem('pcdeck_last_active_tab', targetId);
+    } catch (e) {}
+    if (window.AndroidApp && typeof window.AndroidApp.saveLastTab === 'function') {
+      try { window.AndroidApp.saveLastTab(targetId); } catch (e) {}
+    }
     document.body.classList.toggle('on-screen-tab', targetId === 'tab-screen');
     document.body.classList.toggle('gamepad-mode-active', isGpTarget);
+    if (targetId !== 'tab-files') {
+      document.body.classList.remove('fs-header-collapsed');
+    }
+    updateCrtWheelNav(targetId);
 
     const allTabs = (el && el.dockTabs && el.dockTabs.length) ? el.dockTabs : document.querySelectorAll('.dock-tab');
     allTabs.forEach((t) => {
@@ -3190,6 +3815,10 @@
         if (savedPhonePath) targetPhonePath = savedPhonePath;
       } catch (e) {}
       state.phoneFs.currentPath = targetPhonePath;
+    }
+
+    if (targetId === 'tab-settings') {
+      renderRecentPCs();
     }
 
     // Ensure Android hardware immersive fullscreen is applied
@@ -3565,6 +4194,8 @@
     let lastPcScrollTop = 0;
     let lastPhoneScrollTop = 0;
     let scrollTicking = false;
+    let downDeltaAccum = 0;
+    let upDeltaAccum = 0;
 
     function setCardsCollapsed(collapsed) {
       if (isFsCardsCollapsed === collapsed) return;
@@ -3576,13 +4207,89 @@
           tabFiles.classList.remove('fs-compact-mode');
         }
       }
+      document.body.classList.toggle('fs-header-collapsed', collapsed);
     }
     window.setFsCardsCollapsed = setCardsCollapsed;
 
-    // Explicit manual toggle for cards; no scroll-driven layout shifts during touch gestures
+    function handleContainerScroll(container, isPhone) {
+      if (!container) return;
+      const currentScrollTop = container.scrollTop;
+      const lastScrollTop = isPhone ? lastPhoneScrollTop : lastPcScrollTop;
+      const delta = currentScrollTop - lastScrollTop;
+
+      if (isPhone) {
+        lastPhoneScrollTop = currentScrollTop;
+      } else {
+        lastPcScrollTop = currentScrollTop;
+      }
+
+      // Ignore if user is searching / typing in search input
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.id === 'fs-search-input' || activeEl.id === 'phone-fs-search-input')) {
+        return;
+      }
+
+      // If near the top, always restore full view
+      if (currentScrollTop <= 25) {
+        downDeltaAccum = 0;
+        upDeltaAccum = 0;
+        setCardsCollapsed(false);
+        return;
+      }
+
+      // Prevent rubber-band bounce triggers at the bottom of the container
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      if (maxScroll > 0 && currentScrollTop >= maxScroll - 5) {
+        return;
+      }
+
+      if (delta > 0) {
+        // Scrolling downward: accumulate delta with hysteresis
+        upDeltaAccum = 0;
+        downDeltaAccum += delta;
+        if (downDeltaAccum > 35 && currentScrollTop > 45) {
+          setCardsCollapsed(true);
+        }
+      } else if (delta < 0) {
+        // Scrolling upward: accumulate delta with hysteresis
+        downDeltaAccum = 0;
+        upDeltaAccum += Math.abs(delta);
+        if (upDeltaAccum > 25) {
+          setCardsCollapsed(false);
+        }
+      }
+    }
+
+    if (el.fsBrowserItems) {
+      el.fsBrowserItems.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+          window.requestAnimationFrame(() => {
+            handleContainerScroll(el.fsBrowserItems, false);
+            scrollTicking = false;
+          });
+          scrollTicking = true;
+        }
+      }, { passive: true });
+    }
+
+    if (el.phoneFsBrowserItems) {
+      el.phoneFsBrowserItems.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+          window.requestAnimationFrame(() => {
+            handleContainerScroll(el.phoneFsBrowserItems, true);
+            scrollTicking = false;
+          });
+          scrollTicking = true;
+        }
+      }, { passive: true });
+    }
+
+    // Manual toggle for cards
     if (btnFsToggleCards) {
       btnFsToggleCards.onclick = () => {
         vibrate(12);
+        downDeltaAccum = 0;
+        upDeltaAccum = 0;
         setCardsCollapsed(!isFsCardsCollapsed);
       };
     }
@@ -3590,6 +4297,8 @@
     if (btnPhoneFsToggleCards) {
       btnPhoneFsToggleCards.onclick = () => {
         vibrate(12);
+        downDeltaAccum = 0;
+        upDeltaAccum = 0;
         setCardsCollapsed(!isFsCardsCollapsed);
       };
     }
@@ -3598,6 +4307,8 @@
       el.fsCurrentPath.onclick = () => {
         if (isFsCardsCollapsed) {
           vibrate(10);
+          downDeltaAccum = 0;
+          upDeltaAccum = 0;
           setCardsCollapsed(false);
         }
       };
@@ -3607,6 +4318,8 @@
       el.phoneFsCurrentPath.onclick = () => {
         if (isFsCardsCollapsed) {
           vibrate(10);
+          downDeltaAccum = 0;
+          upDeltaAccum = 0;
           setCardsCollapsed(false);
         }
       };
@@ -3616,6 +4329,8 @@
       setCardsCollapsed(false);
       lastPcScrollTop = 0;
       lastPhoneScrollTop = 0;
+      downDeltaAccum = 0;
+      upDeltaAccum = 0;
       if (mode === 'pc') {
         if (el.btnFsModePc) el.btnFsModePc.classList.add('active');
         if (el.btnFsModePhone) el.btnFsModePhone.classList.remove('active');
@@ -3664,9 +4379,12 @@
 
     if (el.btnPhoneFsUp) {
       el.btnPhoneFsUp.onclick = () => {
-        if (state.phoneFs.parentPath) {
-          vibrate(15);
-          browsePhoneDirectory(state.phoneFs.parentPath);
+        vibrate(15);
+        if (state.phoneFsHistory && state.phoneFsHistory.length > 0) {
+          const prev = state.phoneFsHistory.pop();
+          browsePhoneDirectory(prev, '', true);
+        } else if (state.phoneFs.parentPath) {
+          browsePhoneDirectory(state.phoneFs.parentPath, '', true);
         }
       };
     }
@@ -3785,9 +4503,12 @@
 
     if (el.btnFsUp) {
       el.btnFsUp.onclick = () => {
-        if (state.fsParentPath) {
-          vibrate(15);
-          browseFsDirectory(state.fsParentPath);
+        vibrate(15);
+        if (state.fsHistory && state.fsHistory.length > 0) {
+          const prev = state.fsHistory.pop();
+          browseFsDirectory(prev, true);
+        } else if (state.fsParentPath && !state.isFsRoot) {
+          browseFsDirectory(state.fsParentPath, true);
         }
       };
     }
@@ -3961,7 +4682,7 @@
       .catch(() => {});
   }
 
-  function browseFsDirectory(path) {
+  function browseFsDirectory(path, isBackAction = false) {
     if (typeof window.setFsCardsCollapsed === 'function') {
       window.setFsCardsCollapsed(false);
     }
@@ -3978,8 +4699,15 @@
       .then(r => r.json())
       .then(data => {
         if (data.status === 'ok') {
+          if (!isBackAction && state.currentFsPath && state.currentFsPath !== data.current_path) {
+            if (!state.fsHistory) state.fsHistory = [];
+            if (state.fsHistory[state.fsHistory.length - 1] !== state.currentFsPath) {
+              state.fsHistory.push(state.currentFsPath);
+            }
+          }
           state.currentFsPath = data.current_path;
           state.fsParentPath = data.parent_path;
+          state.isFsRoot = !!data.is_root;
           state.fsFolders = data.folders || [];
           state.fsFiles = data.files || [];
 
@@ -4182,6 +4910,10 @@
       const isMarked = state.markedFsPaths.has(file.path);
       card.className = `fs-item-card is-file ${isMarked ? 'is-marked' : ''}`;
       const icon = getFileIcon(file.ext);
+      const extClean = (file.ext || (file.name ? file.name.split('.').pop() : '')).toLowerCase().replace(/^\./, '').trim();
+      const fileNameLower = (file.name || '').toLowerCase();
+      const mediaExts = ['mp4', 'mkv', 'webm', 'avi', 'mov', 'wmv', 'm4v', '3gp', 'flv', 'mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'opus', 'wma'];
+      const isMedia = mediaExts.includes(extClean) || mediaExts.some(ext => fileNameLower.endsWith('.' + ext));
 
       card.innerHTML = `
         <div class="fs-item-info">
@@ -4193,6 +4925,7 @@
           </div>
         </div>
         <div class="fs-actions-row">
+          ${isMedia ? `<button class="fs-btn fs-btn-play" data-action="play" title="Stream media directly over Wi-Fi without downloading"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play</button>` : ''}
           <button class="fs-btn fs-btn-save" data-action="save" title="Download to phone">Save</button>
           <button class="fs-btn fs-btn-open fs-btn-icon-only" data-action="open-pc" title="Open / Launch file on PC"><svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg></button>
           <button class="fs-btn fs-btn-locate fs-btn-icon-only" data-action="locate-pc" title="Show file in Windows File Explorer on PC"><svg class="deck-icon" width="13" height="13"><use href="#icon-folder"/></svg></button>
@@ -4225,10 +4958,14 @@
           if (!state.fsSelectMode) enterFsSelectMode(file.path);
           else toggleMark();
         },
-        () => { // tap → toggle mark if in select mode, else download
+        () => { // tap → toggle mark if in select mode, else stream or download
           if (state.fsSelectMode) { toggleMark(); return; }
           vibrate(15);
-          downloadFileFromPC(file.path, file.name, file.size_formatted);
+          if (isMedia) {
+            openMediaPlayer(file.path, file.name, file.ext);
+          } else {
+            downloadFileFromPC(file.path, file.name, file.size_formatted);
+          }
         }
       );
       fileInfo.addEventListener('touchstart', (e) => { if (e.target !== cb) lp.start(e); }, { passive: true });
@@ -4239,8 +4976,22 @@
         if (e.target === cb || e.isTrusted === false) return;
         if (state.fsSelectMode) { toggleMark(); return; }
         vibrate(15);
-        downloadFileFromPC(file.path, file.name, file.size_formatted);
+        if (isMedia) {
+          openMediaPlayer(file.path, file.name, file.ext);
+        } else {
+          downloadFileFromPC(file.path, file.name, file.size_formatted);
+        }
       };
+
+      // Play Action (Direct Stream)
+      const playBtn = card.querySelector('[data-action="play"]');
+      if (playBtn) {
+        playBtn.onclick = (e) => {
+          e.stopPropagation();
+          vibrate(15);
+          openMediaPlayer(file.path, file.name, file.ext);
+        };
+      }
 
       // Explicit Download Action (always available)
       card.querySelector('[data-action="save"]').onclick = (e) => {
@@ -4366,14 +5117,10 @@
     }
   }
 
-  function browsePhoneDirectory(reqPath, highlightTarget = '') {
+  function browsePhoneDirectory(reqPath, highlightTarget = '', isBackAction = false) {
     if (typeof window.setFsCardsCollapsed === 'function') {
       window.setFsCardsCollapsed(false);
     }
-    state.phoneFs.currentPath = reqPath || 'default';
-    try {
-      localStorage.setItem('pcdeck_last_phone_fs_path', state.phoneFs.currentPath);
-    } catch (e) {}
 
     if (el.phoneFsBrowserItems) {
       el.phoneFsBrowserItems.scrollTop = 0;
@@ -4390,6 +5137,12 @@
         const jsonStr = window.AndroidApp.listPhoneDirectory(reqPath || 'default');
         const data = JSON.parse(jsonStr);
         if (data.status === 'ok') {
+          if (!isBackAction && state.phoneFs.currentPath && state.phoneFs.currentPath !== data.current_path && state.phoneFs.currentPath !== 'default') {
+            if (!state.phoneFsHistory) state.phoneFsHistory = [];
+            if (state.phoneFsHistory[state.phoneFsHistory.length - 1] !== state.phoneFs.currentPath) {
+              state.phoneFsHistory.push(state.phoneFs.currentPath);
+            }
+          }
           state.phoneFs.currentPath = data.current_path;
           state.phoneFs.parentPath = data.parent_path || '';
           state.phoneFs.folders = data.folders || [];
@@ -4965,7 +5718,7 @@
             });
             hideTransferProgress(8000);
           } else if (totalFailed > 0 || errorOccurred) {
-            showToast(`Uploaded with some errors (${totalSuccess}/${totalCount})`, 'warn', '⚠️');
+            showToast(`Uploaded with some errors (${totalSuccess}/${totalCount})`, 'warn');
             showTransferProgress({
               badge: 'PARTIAL SUCCESS',
               badgeClass: 'badge-download',
@@ -4979,7 +5732,7 @@
             });
             hideTransferProgress(15000);
           } else {
-            showToast(`✅ Uploaded ${totalCount} file(s) to PC!`, 'success');
+            showToast(`Uploaded ${totalCount} file(s) to PC!`, 'success');
             showTransferProgress({
               badge: 'ALL UPLOADED',
               badgeClass: 'badge-download',
@@ -5355,6 +6108,778 @@
     })
     .catch(() => {
       showToast('Could not reach PC to open folder', 'error');
+    });
+  }
+
+  // --- In-Place Instant Media Streaming & Zero-Download Player ---
+  let mediaAudioBoost = 1.0;
+  let mediaAudioCtx = null;
+  let mediaGainNode = null;
+  let mediaSourceNode = null;
+
+  function initMediaAudioGraph(videoEl) {
+    if (!videoEl || mediaSourceNode) return;
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      mediaAudioCtx = new AudioContextClass();
+      mediaGainNode = mediaAudioCtx.createGain();
+      mediaGainNode.gain.setValueAtTime(mediaAudioBoost, mediaAudioCtx.currentTime);
+      mediaSourceNode = mediaAudioCtx.createMediaElementSource(videoEl);
+      mediaSourceNode.connect(mediaGainNode);
+      mediaGainNode.connect(mediaAudioCtx.destination);
+    } catch (e) {
+      console.warn('[MediaPlayer] Web Audio Boost setup:', e);
+    }
+  }
+
+  let mediaControlsTimer = null;
+  let mediaAspectMode = 'contain';
+  let isMediaScrubbing = false;
+  let mediaLastTapTime = 0;
+  let mediaLastTapTimeout = null;
+
+  function formatMediaTime(sec) {
+    if (!sec || isNaN(sec) || !isFinite(sec) || sec < 0) return '00:00';
+    sec = Math.floor(sec);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    const mm = String(m).padStart(2, '0');
+    const ss = String(s).padStart(2, '0');
+    return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+
+  function toggleMediaFullscreen(forceState) {
+    const modal = document.getElementById('media-player-modal');
+    if (!modal) return;
+    vibrate(15);
+    const isCurrentlyFs = modal.classList.contains('is-fullscreen');
+    const willBeFs = typeof forceState === 'boolean' ? forceState : !isCurrentlyFs;
+
+    if (willBeFs) {
+      modal.classList.add('is-fullscreen');
+      document.querySelectorAll('.btn-toggle-fs .icon-fs-expand').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.btn-toggle-fs .icon-fs-contract').forEach(el => el.style.display = 'inline-block');
+
+      // Request browser / WebView HTML5 fullscreen
+      try {
+        if (modal.requestFullscreen) modal.requestFullscreen().catch(() => {});
+        else if (modal.webkitRequestFullscreen) modal.webkitRequestFullscreen().catch(() => {});
+        else if (modal.mozRequestFullScreen) modal.mozRequestFullScreen().catch(() => {});
+        else if (modal.msRequestFullscreen) modal.msRequestFullscreen().catch(() => {});
+      } catch (err) {}
+
+      // Auto-orient to landscape for wide viewing if available
+      try {
+        if (window.AndroidApp && typeof window.AndroidApp.setOrientation === 'function') {
+          window.AndroidApp.setOrientation('landscape');
+        } else if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (err) {}
+
+      showToast('Fullscreen Theater (Tap to toggle controls)', 'info');
+    } else {
+      modal.classList.remove('is-fullscreen');
+      document.querySelectorAll('.btn-toggle-fs .icon-fs-expand').forEach(el => el.style.display = 'inline-block');
+      document.querySelectorAll('.btn-toggle-fs .icon-fs-contract').forEach(el => el.style.display = 'none');
+
+      // Exit browser / WebView HTML5 fullscreen
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+        }
+      } catch (err) {}
+
+      // Restore orientation to sensor / portrait
+      try {
+        if (window.AndroidApp && typeof window.AndroidApp.setOrientation === 'function') {
+          window.AndroidApp.setOrientation('sensor');
+        } else if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock().catch(() => {});
+        }
+      } catch (err) {}
+    }
+  }
+
+  function showMediaControls() {
+    const container = document.getElementById('media-video-container');
+    if (!container) return;
+    container.classList.remove('controls-hidden');
+    scheduleMediaControlsHide();
+  }
+
+  function scheduleMediaControlsHide() {
+    if (mediaControlsTimer) clearTimeout(mediaControlsTimer);
+    const videoEl = document.getElementById('media-stream-video');
+    const container = document.getElementById('media-video-container');
+    if (!videoEl || !container || videoEl.paused || isMediaScrubbing) return;
+
+    mediaControlsTimer = setTimeout(() => {
+      if (videoEl && !videoEl.paused && !isMediaScrubbing) {
+        container.classList.add('controls-hidden');
+      }
+    }, 2800);
+  }
+
+  function updateMediaPlayPauseUI() {
+    const videoEl = document.getElementById('media-stream-video');
+    const playIcon = document.querySelector('#btn-media-play-toggle .icon-media-play');
+    const pauseIcon = document.querySelector('#btn-media-play-toggle .icon-media-pause');
+    if (!videoEl || !playIcon || !pauseIcon) return;
+
+    if (videoEl.paused) {
+      playIcon.style.display = 'inline-block';
+      pauseIcon.style.display = 'none';
+      const container = document.getElementById('media-video-container');
+      if (container) container.classList.remove('controls-hidden');
+      if (mediaControlsTimer) clearTimeout(mediaControlsTimer);
+    } else {
+      playIcon.style.display = 'none';
+      pauseIcon.style.display = 'inline-block';
+      scheduleMediaControlsHide();
+    }
+  }
+
+  function flashMediaCenterHUD(type) {
+    const hudIcon = document.getElementById('media-center-hud-icon');
+    if (!hudIcon) return;
+    if (type === 'play') {
+      hudIcon.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>';
+    } else {
+      hudIcon.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
+    }
+    hudIcon.classList.add('active');
+    setTimeout(() => {
+      hudIcon.classList.remove('active');
+    }, 450);
+  }
+
+  function openMediaPlayer(filePath, fileName, fileExt) {
+    if (!filePath) return;
+    vibrate(20);
+    const modal = document.getElementById('media-player-modal');
+    const titleEl = document.getElementById('media-player-title');
+    const videoEl = document.getElementById('media-stream-video');
+    const trackEl = document.getElementById('media-stream-track');
+    const codecInfo = document.getElementById('media-stream-codec-info');
+    const container = document.getElementById('media-video-container');
+    if (!modal || !videoEl) return;
+
+    if (titleEl) titleEl.textContent = fileName || 'Media Stream';
+    const ext = (fileExt || '').replace('.', '').toUpperCase();
+    if (codecInfo) codecInfo.textContent = `${ext || 'MEDIA'} • DIRECT WI-FI`;
+
+    const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+    const port = state.serverPort || (window.location.port && window.location.port !== '' ? window.location.port : '8000');
+    const streamUrl = `http://${host}:${port}/api/fs/stream?path=${encodeURIComponent(filePath)}`;
+    const subUrl = `http://${host}:${port}/api/fs/subtitles?path=${encodeURIComponent(filePath)}`;
+
+    videoEl.src = streamUrl;
+    if (trackEl) trackEl.src = subUrl;
+    modal.style.display = 'flex';
+    if (container) container.classList.remove('controls-hidden');
+
+    // Reset controls state
+    updateMediaPlayPauseUI();
+    const curTime = document.getElementById('media-time-current');
+    const durTime = document.getElementById('media-time-duration');
+    const playedBar = document.getElementById('media-timeline-played');
+    const thumb = document.getElementById('media-timeline-thumb');
+    const bufferBar = document.getElementById('media-timeline-buffer');
+    if (curTime) curTime.textContent = '00:00';
+    if (durTime) durTime.textContent = '00:00';
+    if (playedBar) playedBar.style.width = '0%';
+    if (thumb) thumb.style.left = '0%';
+    if (bufferBar) bufferBar.style.width = '0%';
+
+    try {
+      initMediaAudioGraph(videoEl);
+      if (mediaAudioCtx && mediaAudioCtx.state === 'suspended') {
+        mediaAudioCtx.resume().catch(() => {});
+      }
+    } catch (e) {}
+
+    videoEl.play().catch(err => {
+      console.log('[MediaPlayer] Autoplay prevented, user interaction required:', err);
+    });
+    scheduleMediaControlsHide();
+  }
+
+  function closeMediaPlayer() {
+    const modal = document.getElementById('media-player-modal');
+    const videoEl = document.getElementById('media-stream-video');
+    if (videoEl) {
+      try {
+        videoEl.pause();
+        videoEl.removeAttribute('src');
+        videoEl.load();
+      } catch (e) {}
+    }
+    toggleMediaFullscreen(false);
+    if (mediaControlsTimer) clearTimeout(mediaControlsTimer);
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('is-fullscreen');
+    }
+  }
+
+  // Handle hardware Android back button across all features
+  window._lastBackPressTime = 0;
+  window.handleAndroidBackPressed = function() {
+    // 1. Media Player Modal
+    const mediaModal = document.getElementById('media-player-modal');
+    if (mediaModal && mediaModal.style.display !== 'none') {
+      if (mediaModal.classList.contains('is-fullscreen')) {
+        toggleMediaFullscreen(false);
+        return true;
+      }
+      closeMediaPlayer();
+      return true;
+    }
+
+    // 2. Any other open modal backdrop (connect, quick tools, update, pro upgrade, celebration, hud etc.)
+    const openModals = Array.from(document.querySelectorAll('.modal-backdrop')).filter(m => {
+      if (m.id === 'media-player-modal') return false;
+      const comp = window.getComputedStyle(m);
+      return comp && comp.display !== 'none' && comp.visibility !== 'hidden' && comp.opacity !== '0';
+    });
+    if (openModals.length > 0) {
+      const topModal = openModals[openModals.length - 1];
+      const closeBtn = topModal.querySelector('.modal-close-btn, [data-action="close"], .btn-close, .onboarding-skip-btn, #btn-hud-modal-cancel');
+      if (closeBtn) {
+        closeBtn.click();
+      } else {
+        topModal.style.display = 'none';
+        topModal.classList.remove('show');
+      }
+      return true;
+    }
+
+    // 3. Selection mode in File Manager
+    const filesTab = document.getElementById('tab-files');
+    if (filesTab && filesTab.classList.contains('fs-select-mode')) {
+      if (typeof exitFsSelectMode === 'function') {
+        exitFsSelectMode();
+      } else {
+        filesTab.classList.remove('fs-select-mode');
+        state.markedFsPaths.clear();
+        updateBatchBar();
+      }
+      return true;
+    }
+    if (state.phoneFs && state.phoneFs.markedPaths && state.phoneFs.markedPaths.size > 0) {
+      state.phoneFs.markedPaths.clear();
+      updatePhoneBatchBar();
+      renderFilteredPhoneFsItems();
+      return true;
+    }
+
+    // 4. File Manager Folder Navigation (Inside PC or Phone folder)
+    if (state.activeTab === 'tab-files') {
+      const phonePanel = document.getElementById('fs-phone-panel');
+      const isPhoneView = phonePanel && window.getComputedStyle(phonePanel).display !== 'none';
+
+      if (isPhoneView) {
+        // In Phone Files view
+        if (state.phoneFsHistory && state.phoneFsHistory.length > 0) {
+          vibrate(15);
+          const prevPhone = state.phoneFsHistory.pop();
+          browsePhoneDirectory(prevPhone, '', true);
+          return true;
+        } else if (state.phoneFs && state.phoneFs.parentPath) {
+          vibrate(15);
+          browsePhoneDirectory(state.phoneFs.parentPath, '', true);
+          return true;
+        } else {
+          // At top root of Phone Files -> switch back to PC Files tab
+          const pcTabBtn = document.getElementById('btn-fs-mode-pc');
+          if (pcTabBtn) {
+            vibrate(15);
+            pcTabBtn.click();
+            return true;
+          }
+        }
+      } else {
+        // In PC Files view
+        if (state.fsHistory && state.fsHistory.length > 0) {
+          vibrate(15);
+          const prevPc = state.fsHistory.pop();
+          browseFsDirectory(prevPc, true);
+          return true;
+        } else if (state.fsParentPath && !state.isFsRoot) {
+          vibrate(15);
+          browseFsDirectory(state.fsParentPath, true);
+          return true;
+        }
+      }
+
+      // If at root of files tab, back navigates to the primary trackpad tab
+      vibrate(15);
+      switchTab('tab-trackpad');
+      return true;
+    }
+
+    // 5. If on another secondary tab (keyboard, screen, gamepad, media, settings), go back to trackpad
+    if (state.activeTab && state.activeTab !== 'tab-trackpad') {
+      vibrate(15);
+      switchTab('tab-trackpad');
+      return true;
+    }
+
+    // 6. On main trackpad tab -> confirm exit with double-press debounce
+    const now = Date.now();
+    if (!window._lastBackPressTime || (now - window._lastBackPressTime > 2000)) {
+      window._lastBackPressTime = now;
+      vibrate(20);
+      showToast('Press BACK again to exit PCDeck', 'info');
+      return true; // handled, prevent accidental exit
+    }
+
+    // Second tap within 2 seconds -> allow Android to exit
+    return false;
+  };
+
+  function initMediaPlayerEvents() {
+    const modal = document.getElementById('media-player-modal');
+    const videoEl = document.getElementById('media-stream-video');
+    const container = document.getElementById('media-video-container');
+    const closeBtn = document.getElementById('btn-close-media-player');
+    const closeBtnX = document.getElementById('btn-close-media-player-x');
+    const boostBtn = document.getElementById('btn-media-audio-boost');
+    const pipBtn = document.getElementById('btn-media-pip');
+    const fsBtnTop = document.getElementById('btn-media-fullscreen-top');
+    const fsBtnBottom = document.getElementById('btn-media-fullscreen-bottom');
+    const playToggleBtn = document.getElementById('btn-media-play-toggle');
+    const rewind10Btn = document.getElementById('btn-media-rewind-10');
+    const forward10Btn = document.getElementById('btn-media-forward-10');
+    const aspectBtn = document.getElementById('btn-media-aspect');
+    const volSlider = document.getElementById('media-vol-slider');
+    const volToggleBtn = document.getElementById('btn-media-vol-toggle');
+    const gestureOverlay = document.getElementById('media-gesture-overlay');
+    const timeline = document.getElementById('media-timeline');
+
+    // Close actions
+    const doClose = (e) => {
+      if (e) e.stopPropagation();
+      vibrate(15);
+      closeMediaPlayer();
+    };
+    if (closeBtn) closeBtn.onclick = doClose;
+    if (closeBtnX) closeBtnX.onclick = doClose;
+
+    // Fullscreen buttons
+    const doToggleFs = (e) => {
+      if (e) e.stopPropagation();
+      toggleMediaFullscreen();
+    };
+    if (fsBtnTop) fsBtnTop.onclick = doToggleFs;
+    if (fsBtnBottom) fsBtnBottom.onclick = doToggleFs;
+
+    // Play / Pause Toggle
+    if (playToggleBtn && videoEl) {
+      playToggleBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        if (videoEl.paused) {
+          videoEl.play().catch(() => {});
+          flashMediaCenterHUD('play');
+        } else {
+          videoEl.pause();
+          flashMediaCenterHUD('pause');
+        }
+        updateMediaPlayPauseUI();
+      };
+    }
+
+    // Rewind / Forward 10s
+    if (rewind10Btn && videoEl) {
+      rewind10Btn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        videoEl.currentTime = Math.max(0, videoEl.currentTime - 10);
+        const ripple = document.getElementById('media-seek-ripple-left');
+        if (ripple) {
+          ripple.classList.add('active');
+          setTimeout(() => ripple.classList.remove('active'), 450);
+        }
+        scheduleMediaControlsHide();
+      };
+    }
+
+    if (forward10Btn && videoEl) {
+      forward10Btn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        videoEl.currentTime = Math.min(videoEl.duration || Infinity, videoEl.currentTime + 10);
+        const ripple = document.getElementById('media-seek-ripple-right');
+        if (ripple) {
+          ripple.classList.add('active');
+          setTimeout(() => ripple.classList.remove('active'), 450);
+        }
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Aspect Ratio Toggle
+    if (aspectBtn && videoEl) {
+      aspectBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        if (mediaAspectMode === 'contain') {
+          mediaAspectMode = 'cover';
+          aspectBtn.textContent = 'FILL';
+          videoEl.style.objectFit = 'cover';
+          showToast('Aspect Ratio: Fill Screen (Zoomed)', 'info');
+        } else if (mediaAspectMode === 'cover') {
+          mediaAspectMode = 'fill';
+          aspectBtn.textContent = 'STRETCH';
+          videoEl.style.objectFit = 'fill';
+          showToast('Aspect Ratio: Stretch', 'info');
+        } else {
+          mediaAspectMode = 'contain';
+          aspectBtn.textContent = 'FIT';
+          videoEl.style.objectFit = 'contain';
+          showToast('Aspect Ratio: Fit Screen (Original)', 'info');
+        }
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Audio Boost (WebAudio Gain)
+    if (boostBtn) {
+      boostBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        if (mediaAudioBoost === 1.0) {
+          mediaAudioBoost = 1.5;
+          boostBtn.textContent = 'BOOST 150%';
+          boostBtn.style.color = 'var(--neo-yellow)';
+          showToast('Audio Boost: 150%', 'info');
+        } else if (mediaAudioBoost === 1.5) {
+          mediaAudioBoost = 2.0;
+          boostBtn.textContent = 'BOOST 200%';
+          boostBtn.style.color = 'var(--neo-lime)';
+          showToast('Audio Boost: 200% (Maximum)', 'success');
+        } else {
+          mediaAudioBoost = 1.0;
+          boostBtn.textContent = 'BOOST 100%';
+          boostBtn.style.color = '';
+          showToast('Audio Boost: 100% (Normal)', 'info');
+        }
+        if (mediaGainNode && mediaAudioCtx && mediaAudioCtx.state !== 'closed') {
+          try {
+            mediaGainNode.gain.setValueAtTime(mediaAudioBoost, mediaAudioCtx.currentTime);
+          } catch (err) {}
+        }
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Picture-in-Picture
+    if (pipBtn && videoEl) {
+      pipBtn.onclick = async (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        try {
+          if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+          } else if (videoEl.requestPictureInPicture) {
+            await videoEl.requestPictureInPicture();
+          }
+        } catch (err) {
+          showToast('Picture-in-Picture not supported by browser', 'warn');
+        }
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Volume Slider & Mute Toggle
+    if (volSlider && videoEl) {
+      volSlider.oninput = (e) => {
+        if (e) e.stopPropagation();
+        videoEl.volume = parseFloat(volSlider.value);
+        videoEl.muted = (videoEl.volume === 0);
+        updateVolumeIcons();
+        scheduleMediaControlsHide();
+      };
+    }
+
+    const updateVolumeIcons = () => {
+      const highIcon = document.querySelector('#btn-media-vol-toggle .icon-vol-high');
+      const muteIcon = document.querySelector('#btn-media-vol-toggle .icon-vol-muted');
+      if (!videoEl || !highIcon || !muteIcon) return;
+      if (videoEl.muted || videoEl.volume === 0) {
+        highIcon.style.display = 'none';
+        muteIcon.style.display = 'inline-block';
+      } else {
+        highIcon.style.display = 'inline-block';
+        muteIcon.style.display = 'none';
+      }
+    };
+
+    if (volToggleBtn && videoEl) {
+      volToggleBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        videoEl.muted = !videoEl.muted;
+        if (!videoEl.muted && videoEl.volume === 0) {
+          videoEl.volume = 0.5;
+          if (volSlider) volSlider.value = 0.5;
+        }
+        updateVolumeIcons();
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Speed Selector Pills
+    document.querySelectorAll('.media-speed-pill').forEach(btn => {
+      btn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(10);
+        document.querySelectorAll('.media-speed-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const speed = parseFloat(btn.dataset.speed || '1.0');
+        if (videoEl) videoEl.playbackRate = speed;
+        scheduleMediaControlsHide();
+      };
+    });
+
+    // Gesture Overlay (Single Tap = Toggle Controls, Double-Tap = Seek / Fullscreen)
+    if (gestureOverlay && videoEl) {
+      const handleTapGesture = (clientX) => {
+        const now = Date.now();
+        const delta = now - mediaLastTapTime;
+        const rect = gestureOverlay.getBoundingClientRect();
+        const tapFraction = (clientX - rect.left) / rect.width;
+
+        if (delta < 320) {
+          // Double-Tap Detected!
+          if (mediaLastTapTimeout) {
+            clearTimeout(mediaLastTapTimeout);
+            mediaLastTapTimeout = null;
+          }
+          mediaLastTapTime = 0;
+          vibrate(25);
+
+          if (tapFraction < 0.38) {
+            // Left Double-Tap -> Rewind 10s
+            videoEl.currentTime = Math.max(0, videoEl.currentTime - 10);
+            const ripple = document.getElementById('media-seek-ripple-left');
+            if (ripple) {
+              ripple.classList.add('active');
+              setTimeout(() => ripple.classList.remove('active'), 450);
+            }
+          } else if (tapFraction > 0.62) {
+            // Right Double-Tap -> Forward 10s
+            videoEl.currentTime = Math.min(videoEl.duration || Infinity, videoEl.currentTime + 10);
+            const ripple = document.getElementById('media-seek-ripple-right');
+            if (ripple) {
+              ripple.classList.add('active');
+              setTimeout(() => ripple.classList.remove('active'), 450);
+            }
+          } else {
+            // Center Double-Tap -> Toggle Fullscreen
+            toggleMediaFullscreen();
+          }
+          scheduleMediaControlsHide();
+        } else {
+          // First Tap: Debounce to check for single tap vs double tap
+          mediaLastTapTime = now;
+          if (mediaLastTapTimeout) clearTimeout(mediaLastTapTimeout);
+          mediaLastTapTimeout = setTimeout(() => {
+            // Single Tap: Toggle Controls Visibility
+            if (container) {
+              if (container.classList.contains('controls-hidden')) {
+                showMediaControls();
+              } else if (!videoEl.paused) {
+                container.classList.add('controls-hidden');
+              }
+            }
+            mediaLastTapTimeout = null;
+          }, 320);
+        }
+      };
+
+      gestureOverlay.addEventListener('click', (e) => {
+        handleTapGesture(e.clientX);
+      });
+
+      // Keep controls visible on mouse movement
+      container.addEventListener('mousemove', () => {
+        showMediaControls();
+      });
+    }
+
+    // Video Play/Pause & Time Events
+    if (videoEl) {
+      videoEl.addEventListener('play', () => {
+        updateMediaPlayPauseUI();
+      });
+
+      videoEl.addEventListener('pause', () => {
+        updateMediaPlayPauseUI();
+      });
+
+      videoEl.addEventListener('timeupdate', () => {
+        if (isMediaScrubbing) return;
+        const cur = videoEl.currentTime || 0;
+        const dur = videoEl.duration || 0;
+        const curEl = document.getElementById('media-time-current');
+        const durEl = document.getElementById('media-time-duration');
+        const playedBar = document.getElementById('media-timeline-played');
+        const thumb = document.getElementById('media-timeline-thumb');
+
+        if (curEl) curEl.textContent = formatMediaTime(cur);
+        if (durEl && dur > 0) durEl.textContent = formatMediaTime(dur);
+
+        if (dur > 0) {
+          const pct = Math.min(100, (cur / dur) * 100);
+          if (playedBar) playedBar.style.width = pct + '%';
+          if (thumb) thumb.style.left = pct + '%';
+        }
+      });
+
+      videoEl.addEventListener('progress', () => {
+        const bufferBar = document.getElementById('media-timeline-buffer');
+        if (bufferBar && videoEl.buffered && videoEl.buffered.length > 0 && videoEl.duration) {
+          const bufEnd = videoEl.buffered.end(videoEl.buffered.length - 1);
+          const bufPct = Math.min(100, (bufEnd / videoEl.duration) * 100);
+          bufferBar.style.width = bufPct + '%';
+        }
+      });
+
+      videoEl.addEventListener('ended', () => {
+        updateMediaPlayPauseUI();
+        if (container) container.classList.remove('controls-hidden');
+      });
+    }
+
+    // Interactive Timeline Scrubber
+    if (timeline && videoEl) {
+      const seekFromEvent = (e) => {
+        const rect = timeline.getBoundingClientRect();
+        const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+        const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const dur = videoEl.duration || 0;
+        const seekTime = pct * dur;
+
+        const playedBar = document.getElementById('media-timeline-played');
+        const thumb = document.getElementById('media-timeline-thumb');
+        const curEl = document.getElementById('media-time-current');
+
+        if (playedBar) playedBar.style.width = (pct * 100) + '%';
+        if (thumb) thumb.style.left = (pct * 100) + '%';
+        if (curEl) curEl.textContent = formatMediaTime(seekTime);
+        return seekTime;
+      };
+
+      const startScrubbing = (e) => {
+        if (e) e.stopPropagation();
+        isMediaScrubbing = true;
+        timeline.classList.add('scrubbing');
+        showMediaControls();
+        const seekTime = seekFromEvent(e);
+        if (videoEl.duration) videoEl.currentTime = seekTime;
+
+        const onMove = (ev) => {
+          if (!isMediaScrubbing) return;
+          const st = seekFromEvent(ev);
+          if (videoEl.duration) videoEl.currentTime = st;
+        };
+
+        const onEnd = (ev) => {
+          if (!isMediaScrubbing) return;
+          isMediaScrubbing = false;
+          timeline.classList.remove('scrubbing');
+          const st = seekFromEvent(ev);
+          if (videoEl.duration) videoEl.currentTime = st;
+          scheduleMediaControlsHide();
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onEnd);
+          window.removeEventListener('touchmove', onMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      };
+
+      timeline.addEventListener('mousedown', startScrubbing);
+      timeline.addEventListener('touchstart', startScrubbing, { passive: true });
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (!modal || modal.style.display === 'none') return;
+
+      if (e.key === 'Escape') {
+        if (modal.classList.contains('is-fullscreen')) {
+          toggleMediaFullscreen(false);
+        } else {
+          closeMediaPlayer();
+        }
+        return;
+      }
+
+      if (e.key === ' ' || e.key === 'k') {
+        e.preventDefault();
+        if (videoEl) {
+          if (videoEl.paused) videoEl.play().catch(() => {});
+          else videoEl.pause();
+          flashMediaCenterHUD(videoEl.paused ? 'pause' : 'play');
+          updateMediaPlayPauseUI();
+        }
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleMediaFullscreen();
+      } else if (e.key === 'ArrowLeft' || e.key === 'j') {
+        e.preventDefault();
+        if (videoEl) videoEl.currentTime = Math.max(0, videoEl.currentTime - 10);
+        scheduleMediaControlsHide();
+      } else if (e.key === 'ArrowRight' || e.key === 'l') {
+        e.preventDefault();
+        if (videoEl) videoEl.currentTime = Math.min(videoEl.duration || Infinity, videoEl.currentTime + 10);
+        scheduleMediaControlsHide();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (videoEl) {
+          videoEl.volume = Math.min(1, videoEl.volume + 0.1);
+          if (volSlider) volSlider.value = videoEl.volume;
+          updateVolumeIcons();
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (videoEl) {
+          videoEl.volume = Math.max(0, videoEl.volume - 0.1);
+          if (volSlider) volSlider.value = videoEl.volume;
+          updateVolumeIcons();
+        }
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        if (videoEl) {
+          videoEl.muted = !videoEl.muted;
+          updateVolumeIcons();
+        }
+      }
+    });
+
+    // Listen to Fullscreen changes
+    document.addEventListener('fullscreenchange', () => {
+      const isFs = !!document.fullscreenElement;
+      if (!isFs && modal.classList.contains('is-fullscreen')) {
+        toggleMediaFullscreen(false);
+      }
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+      const isFs = !!document.webkitFullscreenElement;
+      if (!isFs && modal.classList.contains('is-fullscreen')) {
+        toggleMediaFullscreen(false);
+      }
     });
   }
 
@@ -6003,13 +7528,23 @@
 
     if (el.btnReconnectHeader) {
       el.btnReconnectHeader.onclick = () => {
-        if (el.connectModal) el.connectModal.classList.add('show');
+        openConnectModal();
       };
     }
 
     if (el.pillStatus) {
       el.pillStatus.onclick = () => {
-        if (el.connectModal) el.connectModal.classList.add('show');
+        openConnectModal();
+      };
+    }
+
+    const btnClearRecent = document.getElementById('btn-clear-recent-pcs');
+    if (btnClearRecent) {
+      btnClearRecent.onclick = (e) => {
+        e.stopPropagation();
+        try { localStorage.removeItem('pcdeck_recent_pcs'); } catch (err) {}
+        renderRecentPCs();
+        showToast('Cleared Recent Computers', 'info');
       };
     }
 
@@ -7232,7 +8767,12 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
   }
 
+  const VALID_CHROMA_THEMES = ['default', 'aero', 'y2k', 'crt', 'purple', 'oled'];
+
   function applyChromaTheme(themeId) {
+    if (!VALID_CHROMA_THEMES.includes(themeId)) {
+      themeId = 'default';
+    }
     document.body.removeAttribute('data-theme');
     if (themeId && themeId !== 'default') {
       document.body.setAttribute('data-theme', themeId);
@@ -7244,7 +8784,11 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     updateProUI();
 
     // Restore saved theme
-    const savedTheme = localStorage.getItem('pcdeck_chroma_theme') || 'default';
+    let savedTheme = localStorage.getItem('pcdeck_chroma_theme') || 'default';
+    if (!VALID_CHROMA_THEMES.includes(savedTheme)) {
+      savedTheme = 'default';
+      try { localStorage.setItem('pcdeck_chroma_theme', 'default'); } catch(e){}
+    }
     if (savedTheme !== 'default' && window.isProUnlocked()) {
       applyChromaTheme(savedTheme);
       const sel = document.getElementById('setting-theme-picker');
@@ -7272,7 +8816,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     };
 
     window.openProWebsite = function() {
-      const checkoutUrl = 'https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://pcdeck.vercel.app';
+      const checkoutUrl = 'https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://getpcdeck.com';
       if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
         window.AndroidApp.openUrl(checkoutUrl);
       } else {
@@ -7563,10 +9107,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
             'default': 'Cyber Cyan',
             'aero': 'Frutiger Aero',
             'y2k': 'Y2K Chrome',
-            'crt': 'CRT Phosphor',
+            'crt': 'Cool Niece',
             'purple': 'Synthwave',
             'gold': 'Solar Gold',
-            'lime': 'Matrix Lime',
+            'analog': 'Industrial Analog',
             'oled': 'OLED Pure Dark'
           };
           showToast(`Applied Theme: ${themeNames[val] || val}`, 'success');
@@ -7619,7 +9163,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
       // If not connected and in native app without saved IP, show connect modal
       if (!state.connected && !localStorage.getItem('pcdeck_ip') && !localStorage.getItem('neontrack_ip') && isNativeApp) {
-        if (el.connectModal) el.connectModal.classList.add('show');
+        openConnectModal();
       }
     };
 
@@ -7937,7 +9481,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         bottomPresetBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         setTimeout(() => bottomPresetBar.classList.remove('pulse-highlight'), 1200);
       }
-      showToast('🎮 Console Layouts: Xbox 360, PlayStation, Racing, WASD/FPS', 'info');
+      showToast('Console Layouts: Xbox 360, PlayStation, Racing, WASD/FPS', 'info');
     }
 
     // Input Dispatch Engine Toggle (Universal Web vs Direct Controller)
@@ -7949,7 +9493,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         gpHybridMode = !gpHybridMode;
         btnGpHybridToggle.classList.toggle('active', gpHybridMode);
         if (gpHybridLabel) {
-          gpHybridLabel.textContent = gpHybridMode ? '⚡ UNIVERSAL HYBRID (WEB + PC)' : '🎮 DIRECT CONTROLLER ONLY';
+          gpHybridLabel.textContent = gpHybridMode ? 'UNIVERSAL HYBRID (WEB + PC)' : 'DIRECT CONTROLLER ONLY';
         }
         sendCommand(`gp,hybrid,${gpHybridMode ? 1 : 0}`);
         showToast(gpHybridMode ? 'Universal Mode: Web + PC Games' : 'Direct Controller: ViGEm Only', 'info');
@@ -7986,7 +9530,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         e.stopPropagation();
         closeGpConsoleMenu();
         setGamepadMode(false);
-        showToast('Switched to Trackpad', 'info', '🖱️');
+        showToast('Switched to Trackpad', 'info');
       };
     }
 
@@ -8608,7 +10152,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         } else {
           switchTab('tab-gamepad');
           setGamepadMode(true);
-          showToast('🎮 Standalone Game Controller Active', 'info');
+          showToast('Standalone Game Controller Active', 'info');
         }
       };
     }
@@ -8619,7 +10163,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         vibrate(20);
         switchTab('tab-gamepad');
         setGamepadMode(true);
-        showToast('🎮 Standalone Game Controller Active', 'info');
+        showToast('Standalone Game Controller Active', 'info');
       };
     }
 
@@ -8636,7 +10180,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (typeof setGamepadEditMode === 'function') setGamepadEditMode(false);
         setGamepadMode(false);
         switchTab('tab-trackpad');
-        showToast('Joystick Closed — Returned to Trackpad', 'info', '🖱️');
+        showToast('Joystick Closed — Returned to Trackpad', 'info');
       };
     });
 
@@ -9784,7 +11328,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           mainWs.send('driver_check');
         }
         vibrate(30);
-        showToast('🎮 In-Display Gaming HUD Active (Full Screen View)', 'info');
+        showToast('In-Display Gaming HUD Active (Full Screen View)', 'info');
       } else {
         exitEditMode();
         sendCommand('gr');
@@ -11123,8 +12667,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     initTrackpad();
     initVirtualKeyboard();
     initScreenKeyboard();
+    initScreenMonitorSwitcher();
     initQuickTools();
     initFileManager();
+    initMediaPlayerEvents();
     initAudioStreamer();
     initEventHandlers();
     initProEngine();
@@ -11156,7 +12702,24 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     const urlParams = new URLSearchParams(window.location.search);
     const urlTab = urlParams.get('tab');
-    const targetTab = urlTab ? (urlTab.startsWith('tab-') ? urlTab : `tab-${urlTab}`) : 'tab-screen';
+    let savedLastTab = '';
+    if (window.AndroidApp && typeof window.AndroidApp.getLastTab === 'function') {
+      try { savedLastTab = window.AndroidApp.getLastTab() || ''; } catch (e) {}
+    }
+    if (!savedLastTab) {
+      try {
+        savedLastTab = localStorage.getItem('pcdeck_last_active_tab') || '';
+      } catch (e) {}
+    }
+
+    let targetTab = 'tab-screen';
+    if (urlTab) {
+      targetTab = urlTab.startsWith('tab-') ? urlTab : `tab-${urlTab}`;
+    } else if (savedLastTab && document.getElementById(savedLastTab)) {
+      targetTab = savedLastTab;
+    }
+
+    renderRecentPCs();
 
     if (isHttp && !isNativeApp) {
       // In web browser mode: seamlessly auto-connect with ZERO modal popups and open ready-to-use tab (defaults to live Screen)
@@ -11173,7 +12736,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         window.openOnboardingModal();
       }
     } else {
-      if (el.connectModal) el.connectModal.classList.add('show');
+      if (el.connectModal) openConnectModal();
     }
 
     if (window.AndroidApp && typeof window.AndroidApp.getPendingSharedFiles === 'function') {
@@ -11224,9 +12787,9 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
   // ==========================================
   // IN-APP OTA AUTO-UPDATER SYSTEM
   // ==========================================
-  const CURRENT_APP_VERSION_CODE = 274;
-  const CURRENT_APP_VERSION_NAME = '2.7.4';
-  let updateDownloadApkUrl = 'https://pcdeck.vercel.app/PCDeck.apk';
+  const CURRENT_APP_VERSION_CODE = 276;
+  const CURRENT_APP_VERSION_NAME = '2.7.6';
+  let updateDownloadApkUrl = 'https://getpcdeck.com/PCDeck.apk';
 
   function initAppUpdater() {
     const btnCheckUpdates = document.getElementById('btn-check-for-updates');
@@ -11257,7 +12820,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       }
     };
 
-    let targetUpdateUrl = 'https://pcdeck.vercel.app';
+    let targetUpdateUrl = 'https://getpcdeck.com';
     let isPlayStoreTarget = false;
 
     async function checkVersionUpdates(isManual = false) {
@@ -11279,10 +12842,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         // Fetch version info from API (logs ping) or fallback to static version.json
         let res;
         try {
-          res = await fetch('https://pcdeck.vercel.app/api/version/?_t=' + Date.now(), { cache: 'no-store' });
+          res = await fetch('https://getpcdeck.com/api/version/?_t=' + Date.now(), { cache: 'no-store' });
           if (!res.ok) throw new Error('API HTTP ' + res.status);
         } catch (apiErr) {
-          res = await fetch('https://pcdeck.vercel.app/version.json?_t=' + Date.now(), { cache: 'no-store' });
+          res = await fetch('https://getpcdeck.com/version.json?_t=' + Date.now(), { cache: 'no-store' });
         }
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
@@ -11290,7 +12853,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         if (data && data.versionCode && data.versionCode > localCode) {
           const hasPlayStore = !!(data.playStoreUrl && data.playStoreUrl.trim());
           isPlayStoreTarget = hasPlayStore;
-          targetUpdateUrl = hasPlayStore ? data.playStoreUrl.trim() : (data.websiteUrl || 'https://pcdeck.vercel.app');
+          targetUpdateUrl = hasPlayStore ? data.playStoreUrl.trim() : (data.websiteUrl || 'https://getpcdeck.com');
 
           if (updateStatusText) updateStatusText.innerText = `New update available (v${data.versionName || data.versionCode})`;
           
@@ -11330,7 +12893,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         }
       } catch (err) {
         if (isManual) {
-          showToast('Could not check for updates. Check internet.', 'warn', '⚠️');
+          showToast('Could not check for updates. Check internet.', 'warn');
         }
         if (updateStatusText) updateStatusText.innerText = 'Latest version verified';
       }
@@ -11427,6 +12990,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       if (document.hidden) purgeActiveInputsOnInterruption();
     });
     window.addEventListener('pagehide', purgeActiveInputsOnInterruption);
+    initCrtWheelNav();
+    initCrtKeyboardHandlers();
   }
 
   if (document.readyState === 'loading') {

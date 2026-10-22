@@ -42,3 +42,18 @@ Lazy about the solution — never lazy about reading the existing code first.
   4. **Screen Streaming & Touch**: Maintain low-latency screen capture/render, touch click, pan/zoom, kinetic momentum, and high-speed natural scrolling.
   5. **Gamepad & Controls**: Maintain virtual controller emulation (vgamepad/ViGEmBus), key injection, and file transfer pipelines.
 - **Verification Requirement**: Before completing any task touching server, client, or audio/video code, verify that all underlying protocols, sockets, and mechanics remain intact.
+
+## 5. Anti-AI-Slop & Premium UI Invariant (STRICT MANDATE)
+- **Zero AI Slop / Zero Generic Emojis**: NEVER inject generic AI slop, tacky cartoon emojis (e.g. 🚀, 💻, 🤖, ✨, 🔥, ⚡, 🎧, 🎮, 📱, 🎉, 🫧, 💿, 📟, 🌌, 👑, etc.), or gimmicky AI copy into the application UI, buttons, tabs, headers, modal dialogues, or cards.
+- **Eliminate Cheap Amateur Look**: Emojis make professional desktop and mobile software look cheap, low-effort, and AI-generated.
+- **Strict Visual Authority**: Use clean, bespoke SVG vector icons (`<svg class="deck-icon">`), crisp typography (Inter/Outfit), authentic design system micro-interactions, and genuine glassmorphic/cyber aesthetics only. Real software is built with high-fidelity vector icons and typography, never emoji spam.
+
+## 6. Customer Email & Support Communication Directives (STRICT)
+- **First-Person Voice Only**: Always write from Greson personally (**"I" / "my" / "me"**). NEVER use corporate "we", "our team", or "us".
+- **Zero AI Clichés & Zero Exaggeration**: NEVER use bot clichés like "Great catch!", "Thanks for reaching out!", or overly dramatic praise. Be grounded, direct, and human.
+- **Do Not State the Obvious**: Never announce "as an independent developer" or "solo creator" unless explicitly asked; customers already know.
+- **Plain, Non-Jargon Explanations**: Explain technical fixes simply in plain English without dropping internal code jargon, polling loops, or low-level APIs.
+- **Never Pressure for Reviews**: When a customer volunteers a review, acknowledge it with a humble thank you ("thank you for offering to leave a review on the Store as well"). Never say "if you get time this weekend" or pressure paying customers.
+- **Proactive UX Guidance**: Explicitly mention any initial-state UI conditions (e.g., "this list only appears once 2+ PCs are connected to keep the screen clean") to prevent first-time confusion.
+- **Short, Compact & Punchy**: Keep emails brief, bulleted, and immediately scannable on mobile screens.
+

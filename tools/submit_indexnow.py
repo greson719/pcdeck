@@ -10,7 +10,7 @@ import sys
 import urllib.request
 import xml.etree.ElementTree as ET
 
-HOST = "pcdeck.vercel.app"
+HOST = "getpcdeck.com"
 KEYS = [
     "7b2d5f8a9e1c4a3b8d0f2e6c4b8a1d7e",
     "2b967b3e45cd4a0cafab08e647e1fc47",

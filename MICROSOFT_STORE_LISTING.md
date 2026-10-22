@@ -159,5 +159,5 @@ All communication occurs 100% locally over LAN. Zero external cloud servers, zer
   - Keyboard: Recommended
   - Wi-Fi / Local Area Network adapter: Required
 - **Support Email:** `gresonparichha719@gmail.com`
-- **Privacy Policy URL:** `https://pcdeck.vercel.app/privacy_policy.html`
-- **Website URL:** `https://pcdeck.vercel.app`
+- **Privacy Policy URL:** `https://getpcdeck.com/privacy_policy.html`
+- **Website URL:** `https://getpcdeck.com`

@@ -1,12 +1,12 @@
 {
-  "versionCode": 274,
-  "versionName": "2.7.4",
-  "exeSize": "36.3 MB",
-  "apkSize": "691 KB",
-  "apkUrl": "https://pcdeck.vercel.app/PCDeck.apk",
-  "websiteUrl": "https://pcdeck.vercel.app",
+  "versionCode": 276,
+  "versionName": "2.7.6",
+  "exeSize": "36.8 MB",
+  "apkSize": "934 KB",
+  "apkUrl": "https://getpcdeck.com/PCDeck.apk",
+  "websiteUrl": "https://getpcdeck.com",
   "playStoreUrl": "",
-  "releaseNotes": "• Android Share Sheet: Share files & photos directly from mobile apps to PC over Wi-Fi\n• Critical stability patch: Resolved MSIX container startup and shortcut loops\n• Hardened session-local mutex single-instance engine and crash telemetry\n• Smooth 1:1 sub-pixel touch scrolling and low-latency screen streaming",
+  "releaseNotes": "• Invariant MachineGuid Licensing: Permanent license lock immune to network/Wi-Fi/VPN changes\n• Multi-PC Switcher: Instantly switch between multiple computers from Settings in 1 tap\n• Windows Location Privacy Silence: Eliminated Wi-Fi BSSID scan tray icon blinking and CPU hiccups\n• 100% Offline Legacy Migration: Auto-upgrades existing activations without internet calls",
   "minVersionCode": 1,
-  "publishedAt": "2026-10-10"
+  "publishedAt": "2026-10-18"
 }

@@ -234,6 +234,214 @@ def test_anti_tamper_hwid_and_spoof_protection(client, monkeypatch):
     assert verified.get("pro_active") is False
 
 
+def test_screen_multi_monitor_bounds_and_switching(client):
+    """Verify monitor summary and coordinate bounding box calculation for multi-monitor setups."""
+    from server.screen_streamer import ScreenStreamer
+    from server.input_controller import InputController
+
+    streamer = ScreenStreamer()
+    summary = streamer.get_monitors_summary()
+    assert "count" in summary
+    assert "active_idx" in summary
+    assert "monitors" in summary
+    assert summary["count"] >= 1
+    assert len(summary["monitors"]) >= 1
+
+    ctrl = InputController()
+    if hasattr(ctrl, "set_active_monitor_bounds") and hasattr(ctrl, "get_active_monitor_bounds"):
+        # Test custom bounds for a secondary 1080p monitor placed to the right
+        ctrl.set_active_monitor_bounds(left=1920, top=0, width=1920, height=1080)
+        bounds = ctrl.get_active_monitor_bounds()
+        assert bounds["left"] == 1920
+        assert bounds["top"] == 0
+        assert bounds["width"] == 1920
+        assert bounds["height"] == 1080
+
+        # Reset bounds back to primary
+        ctrl.set_active_monitor_bounds(left=0, top=0, width=1920, height=1080)
+        bounds = ctrl.get_active_monitor_bounds()
+        assert bounds["left"] == 0
+
+
+def test_license_legacy_hwid_migration(tmp_path, monkeypatch):
+    """Verify that a license saved under legacy volatile HWID seamlessly migrates to stable HWID."""
+    import server.license_manager as lm
+    import json
+    import base64
+
+    test_license_file = str(tmp_path / "license.dat")
+    monkeypatch.setattr(lm, "SECURE_LICENSE_FILE", test_license_file)
+    monkeypatch.setattr(lm, "LICENSE_DIR", str(tmp_path))
+
+    legacy_hwid = "legacy_volatile_hwid_12345678"
+    stable_hwid = "stable_machine_guid_87654321"
+
+    monkeypatch.setattr(lm, "_get_all_legacy_hwids", lambda: [legacy_hwid])
+    monkeypatch.setattr(lm, "get_machine_hwid", lambda: stable_hwid)
+
+    # Save a record using legacy HWID
+    key = "74a5e381-test-key-1234"
+    instance_id = "inst_legacy_999"
+    sig = lm._compute_hmac(legacy_hwid, key, instance_id)
+    record = {
+        "key": key,
+        "instance_id": instance_id,
+        "hwid": legacy_hwid,
+        "sig": sig,
+        "activated_at": "2026-10-17T09:00:00",
+        "meta": {"legacy": True}
+    }
+    with open(test_license_file, "wb") as f:
+        f.write(base64.b64encode(json.dumps(record).encode("utf-8")))
+
+    # verify_license should recognize legacy HWID and return pro_active=True
+    res = lm.verify_license()
+    assert res["pro_active"] is True
+    assert res["key"] == key.upper()
+
+    # It should also have seamlessly upgraded the file to the new stable HWID
+    with open(test_license_file, "rb") as f:
+        upgraded_data = json.loads(base64.b64decode(f.read()).decode("utf-8"))
+    assert upgraded_data["hwid"] == stable_hwid
+    expected_new_sig = lm._compute_hmac(stable_hwid, key, instance_id)
+    assert upgraded_data["sig"] == expected_new_sig
+
+
+def test_license_hybrid_recovery_on_activation_limit(tmp_path, monkeypatch):
+    """Verify HTTP 422 triggers hybrid recovery on same machine, but rejects fresh machines."""
+    import server.license_manager as lm
+    import urllib.error
+    import io
+    import json
+    import base64
+
+    test_license_file = str(tmp_path / "license.dat")
+    monkeypatch.setattr(lm, "SECURE_LICENSE_FILE", test_license_file)
+    monkeypatch.setattr(lm, "LICENSE_DIR", str(tmp_path))
+
+    # Mock urllib.request.urlopen to raise HTTP 422 for activate, and 200 valid for validate
+    def mock_urlopen(req, timeout=None):
+        url = req.full_url if hasattr(req, "full_url") else str(req)
+        if "/licenses/activate" in url:
+            fp = io.BytesIO(b'{"message":"License key activation limit reached for this key."}')
+            raise urllib.error.HTTPError(url, 422, "Unprocessable Entity", {}, fp)
+        elif "/licenses/validate" in url:
+            class MockResponse:
+                def read(self):
+                    return b'{"valid": true}'
+                def __enter__(self):
+                    return self
+                def __exit__(self, *args):
+                    pass
+            return MockResponse()
+        raise ValueError(f"Unexpected URL {url}")
+
+    monkeypatch.setattr(lm.urllib.request, "urlopen", mock_urlopen)
+
+    key = "74a5e381-valid-key"
+
+    # Case 1: Fresh machine with no prior record -> 422 rejects to protect seat limits
+    ok, msg, data = lm.activate_license_online(key)
+    assert ok is False
+    assert "activation limit reached" in msg.lower()
+
+    # Case 2: Machine already possessed this key locally (re-activation after HWID drift)
+    # Simulate authentic prior local record
+    hwid = lm.get_machine_hwid()
+    sig = lm._compute_hmac(hwid, key, "inst_prior_001")
+    prior_record = {
+        "key": key,
+        "instance_id": "inst_prior_001",
+        "hwid": hwid,
+        "sig": sig,
+        "activated_at": "2026-10-10T00:00:00"
+    }
+    with open(test_license_file, "wb") as f:
+        f.write(base64.b64encode(json.dumps(prior_record).encode("utf-8")))
+
+    # Now activating the same key recovers successfully via hybrid entitlement
+    ok, msg, data = lm.activate_license_online(key)
+    assert ok is True
+    assert "activated successfully" in msg.lower()
+    assert data.get("recovered") is True
+
+    # Check that verify_license now sees the license as active
+    verified = lm.verify_license()
+    assert verified["pro_active"] is True
+    assert verified["key"] == key.upper()
+
+
+def test_first_time_download_stream_not_corrupted(client, tmp_path, monkeypatch):
+    """Verify first-time APK download without cookies is not truncated or corrupted by middleware."""
+    from server.main import STATIC_DIR
+    apk_mock = tmp_path / "PCDeck.apk"
+    # Create a dummy APK > 200 KB
+    content = b"PK\x03\x04" + b"X" * 250000
+    apk_mock.write_bytes(content)
+
+    import server.main as main_mod
+    monkeypatch.setattr(main_mod, "STATIC_DIR", str(tmp_path))
+
+    # Request without any cookies or prior visits
+    resp = client.get("/PCDeck.apk")
+    assert resp.status_code == 200
+    assert len(resp.content) == len(content)
+    assert resp.content == content
+    assert "set-cookie" not in resp.headers
+
+
+def test_websocket_pair_response_on_authenticated_client(client):
+    """Verify that websocket pair command always receives pair_ok response even if client IP was already authorized."""
+    from server.main import get_pairing_token
+    token = get_pairing_token()
+    with client.websocket_connect("/ws") as ws:
+        # Client sends pair command
+        ws.send_text(f"pair,{token}")
+        reply = ws.receive_text()
+        assert reply == "pair_ok,1"
+
+
+def test_media_stream_range_requests(client, tmp_path):
+    """Verify /api/fs/stream serves HTTP 206 Partial Content with byte ranges for video/audio seeking."""
+    dummy_video = tmp_path / "sample_video.mp4"
+    dummy_content = b"X" * 10240  # 10 KB dummy content
+    dummy_video.write_bytes(dummy_content)
+
+    # 1. Full file request
+    resp = client.get(f"/api/fs/stream?path={dummy_video}")
+    assert resp.status_code == 200
+    assert resp.headers.get("accept-ranges") == "bytes"
+    assert resp.headers.get("content-type") == "video/mp4"
+
+    # 2. HTTP 206 Byte Range Request (first 100 bytes)
+    resp_range = client.get(
+        f"/api/fs/stream?path={dummy_video}",
+        headers={"Range": "bytes=0-99"}
+    )
+    assert resp_range.status_code == 206
+    assert resp_range.headers.get("content-range") == "bytes 0-99/10240"
+    assert len(resp_range.content) == 100
+    assert resp_range.content == dummy_content[:100]
+
+
+def test_media_subtitles_endpoint(client, tmp_path):
+    """Verify /api/fs/subtitles locates and auto-converts sidecar .srt files to WebVTT."""
+    dummy_video = tmp_path / "movie.mp4"
+    dummy_video.write_bytes(b"dummy")
+
+    dummy_srt = tmp_path / "movie.srt"
+    dummy_srt.write_text("1\n00:00:01,000 --> 00:00:04,000\nHello world\n", encoding="utf-8")
+
+    resp = client.get(f"/api/fs/subtitles?path={dummy_video}")
+    assert resp.status_code == 200
+    assert "text/vtt" in resp.headers.get("content-type", "")
+    assert "WEBVTT" in resp.text
+    assert "00:00:01.000 --> 00:00:04.000" in resp.text
+    assert "Hello world" in resp.text
+
+
+
+
 
 
 

@@ -177,8 +177,8 @@ Follow these steps in the [Microsoft Partner Center](https://partner.microsoft.c
    - Secondary: **Productivity**
 2. **Support Contact Info**:
    - Support email: gresonparichha719@gmail.com
-   - Privacy Policy URL: https://pcdeck.vercel.app/privacy (or hosted privacy_policy.html)
-   - Website: https://pcdeck.vercel.app
+   - Privacy Policy URL: https://getpcdeck.com/privacy (or hosted privacy_policy.html)
+   - Website: https://getpcdeck.com
 3. **Hardware Requirements**:
    - Keyboard: **Required**
    - Mouse: **Required**
@@ -254,7 +254,7 @@ PCDeck distributes as a native 64-bit Windows Application Installer (.exe) desig
 
 1. Navigate to the **Package setup** or **Installer** page in Partner Center.
 2. Fill in the installer properties:
-   - **Installer download URL:** `https://pcdeck.vercel.app/PCDeck-Setup.exe` (or direct GitHub Release link `https://github.com/greson719/pcdeck/releases/download/v2.7.0/PCDeck-Setup.exe`)
+   - **Installer download URL:** `https://getpcdeck.com/PCDeck-Setup.exe` (or direct GitHub Release link `https://github.com/greson719/pcdeck/releases/download/v2.7.0/PCDeck-Setup.exe`)
    - **Installer type:** `.exe`
    - **Silent install parameters:** `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`
    - **Silent uninstall command:** `"{autopf}\PCDeck\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`
@@ -292,5 +292,5 @@ PCDeck distributes as a native 64-bit Windows Application Installer (.exe) desig
 - **Developer Name:** Greshon Parichha
 - **Support Email:** gresonparichha719@gmail.com
 - **Application Name:** PCDeck
-- **Official Website:** https://pcdeck.vercel.app
+- **Official Website:** https://getpcdeck.com
 - **Distribution Model:** 100% Offline Local Wi-Fi Utility (Free, Zero Ads)

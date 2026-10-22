@@ -390,7 +390,12 @@ def get_interface_addresses() -> Dict[str, List[str]]:
     return result
 
 
-def get_link_health() -> Dict[str, Any]:
+_cached_link_health: Optional[Dict[str, Any]] = None
+_cached_link_health_time: float = 0.0
+_link_health_lock = threading.Lock()
+
+
+def get_link_health(force: bool = False, max_age: float = 45.0) -> Dict[str, Any]:
     """The single source of truth for "can the phone reach this PC right now?".
 
     Combines the radio association with the bound IPv4 address so we can tell
@@ -401,6 +406,12 @@ def get_link_health() -> Dict[str, Any]:
       * no_lease      - associated but stuck on APIPA (DHCP failed)
       * ok            - associated with a routable private address
     """
+    global _cached_link_health, _cached_link_health_time
+    now = time.time()
+    with _link_health_lock:
+        if not force and _cached_link_health is not None and (now - _cached_link_health_time < max_age):
+            return dict(_cached_link_health)
+
     interfaces = get_wireless_interfaces()
     addresses = get_interface_addresses()
     admin_states = get_admin_states()
@@ -414,7 +425,7 @@ def get_link_health() -> Dict[str, Any]:
                     break
             if wired_ip:
                 break
-        return {
+        res = {
             "status": "ok" if wired_ip else "no_radio",
             "wireless": False,
             "ip": wired_ip,
@@ -424,6 +435,10 @@ def get_link_health() -> Dict[str, Any]:
             "interfaces": [],
             "is_hotspot": False,
         }
+        with _link_health_lock:
+            _cached_link_health = dict(res)
+            _cached_link_health_time = time.time()
+        return res
 
     best: Optional[Dict[str, Any]] = None
     for iface in interfaces:
@@ -471,7 +486,7 @@ def get_link_health() -> Dict[str, Any]:
     else:
         status = "disconnected"
 
-    return {
+    res = {
         "status": status,
         "wireless": True,
         "ip": best["ip"],
@@ -486,16 +501,20 @@ def get_link_health() -> Dict[str, Any]:
         "is_hotspot": best["ip"].startswith(HOTSPOT_PREFIXES) if best["ip"] else False,
         "weak": bool(best["ip"]) and signal_percent(best["signal"]) < 30,
     }
+    with _link_health_lock:
+        _cached_link_health = dict(res)
+        _cached_link_health_time = time.time()
+    return res
 
 
-def get_current_wifi_status() -> Dict[str, Any]:
+def get_current_wifi_status(force: bool = False) -> Dict[str, Any]:
     """Backwards-compatible status dict used by the GUI badge.
 
     Unlike the old version, "connected" here means *usable*: associated AND
     holding a routable IPv4. A radio sitting on an APIPA address is reported as
     disconnected because the phone genuinely cannot reach it.
     """
-    health = get_link_health()
+    health = get_link_health(force=force)
     connected = health["status"] == "ok"
     return {
         "state": "connected" if connected else ("unavailable" if health["status"] == "no_radio" else "disconnected"),

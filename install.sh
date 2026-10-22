@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # PCDeck Pro - Universal 1-Line Linux Installer & Launcher
-# Usage: curl -sSL https://pcdeck.vercel.app/install.sh | bash
+# Usage: curl -sSL https://getpcdeck.com/install.sh | bash
 # ==============================================================================
 set -e
 
@@ -26,7 +26,7 @@ BIN_DIR="$HOME/.local/bin"
 DESKTOP_DIR="$HOME/.local/share/applications"
 mkdir -p "$APP_DIR" "$BIN_DIR" "$DESKTOP_DIR"
 
-echo -e "${GREEN}==>${NC} Installing PCDeck v2.7.0 for Linux..."
+echo -e "${GREEN}==>${NC} Installing PCDeck v2.7.4 for Linux..."
 
 # Check Python 3
 if command -v python3 &>/dev/null; then
@@ -44,7 +44,7 @@ elif command -v git &>/dev/null; then
     echo -e "${GREEN}==>${NC} Cloning PCDeck repository..."
     git clone --depth 1 https://github.com/greson719/pcdeck.git "$APP_DIR"
 else
-    echo -e "${GREEN}==>${NC} Downloading PCDeck v2.7.0 package..."
+    echo -e "${GREEN}==>${NC} Downloading PCDeck v2.7.4 package..."
     curl -fsSL https://github.com/greson719/pcdeck/archive/refs/heads/main.tar.gz | tar -xz -C "$APP_DIR" --strip-components=1
 fi
 
@@ -77,5 +77,5 @@ if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
     echo -e "      export PATH=\"\$HOME/.local/bin:\$PATH\""
 fi
 echo ""
-echo -e "${YELLOW}Starting PCDeck v2.7.0 now...${NC}"
+echo -e "${YELLOW}Starting PCDeck v2.7.4 now...${NC}"
 exec "$BIN_DIR/pcdeck"

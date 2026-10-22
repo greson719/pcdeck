@@ -91,9 +91,9 @@ def test_msix_detection_vectors(monkeypatch):
 
     # Test 1: sys.executable containing WindowsApps
     monkeypatch.setattr(gui_module.sys, "platform", "win32")
-    monkeypatch.setattr(gui_module.sys, "executable", r"C:\Program Files\WindowsApps\GresonParichha.PCDeck_2.7.4.0_x64__abc\PCDeck.exe")
+    monkeypatch.setattr(gui_module.sys, "executable", r"C:\Program Files\WindowsApps\GresonParichha.PCDeck_2.7.6.0_x64__abc\PCDeck.exe")
     monkeypatch.setattr(main_module.sys, "platform", "win32")
-    monkeypatch.setattr(main_module.sys, "executable", r"C:\Program Files\WindowsApps\GresonParichha.PCDeck_2.7.4.0_x64__abc\PCDeck.exe")
+    monkeypatch.setattr(main_module.sys, "executable", r"C:\Program Files\WindowsApps\GresonParichha.PCDeck_2.7.6.0_x64__abc\PCDeck.exe")
 
     assert gui_module.is_msix_packaged() is True
     assert main_module.is_msix_packaged() is True

@@ -269,15 +269,74 @@ class ScreenStreamer:
             return {"width": w, "height": h, "top": 0, "left": 0, "count": 1}
         else:
             import mss
-            sct = mss.mss()
-            mon = sct.monitors[min(self._monitor_idx, len(sct.monitors) - 1)]
+            try:
+                sct = mss.mss()
+                mon = sct.monitors[min(self._monitor_idx, len(sct.monitors) - 1)]
+                res = {
+                    "width": mon["width"],
+                    "height": mon["height"],
+                    "top": mon["top"],
+                    "left": mon["left"],
+                    "count": max(1, len(sct.monitors) - 1),
+                }
+                sct.close()
+                return res
+            except Exception:
+                w = user32.GetSystemMetrics(0)
+                h = user32.GetSystemMetrics(1)
+                return {"width": w, "height": h, "top": 0, "left": 0, "count": 1}
+
+    def get_monitors_summary(self) -> dict:
+        """Returns details of all connected physical monitors."""
+        if _USE_WIN32_GDI:
+            w = user32.GetSystemMetrics(0)
+            h = user32.GetSystemMetrics(1)
             return {
-                "width": mon["width"],
-                "height": mon["height"],
-                "top": mon["top"],
-                "left": mon["left"],
-                "count": len(sct.monitors) - 1,
+                "count": 1,
+                "active_idx": 1,
+                "monitors": [{"index": 1, "left": 0, "top": 0, "width": w, "height": h}],
             }
+        import mss
+        try:
+            sct = mss.mss()
+            count = max(1, len(sct.monitors) - 1)
+            monitors = []
+            for i in range(1, len(sct.monitors)):
+                m = sct.monitors[i]
+                monitors.append({
+                    "index": i,
+                    "left": m["left"],
+                    "top": m["top"],
+                    "width": m["width"],
+                    "height": m["height"]
+                })
+            sct.close()
+            return {
+                "count": count,
+                "active_idx": min(self._monitor_idx, count),
+                "monitors": monitors,
+            }
+        except Exception:
+            w = user32.GetSystemMetrics(0)
+            h = user32.GetSystemMetrics(1)
+            return {
+                "count": 1,
+                "active_idx": 1,
+                "monitors": [{"index": 1, "left": 0, "top": 0, "width": w, "height": h}],
+            }
+
+    def set_monitor_index(self, idx: int) -> dict:
+        """Switches the active streamed monitor index and returns the new monitor's bounding box."""
+        with self._lock:
+            summary = self.get_monitors_summary()
+            count = summary["count"]
+            clamped_idx = max(1, min(idx, count))
+            self._monitor_idx = clamped_idx
+            self._wake_event.set()
+            for m in summary["monitors"]:
+                if m["index"] == clamped_idx:
+                    return m
+            return summary["monitors"][0] if summary["monitors"] else {"index": 1, "left": 0, "top": 0, "width": 1920, "height": 1080}
 
     def register_async_listener(self, loop: asyncio.AbstractEventLoop, event: asyncio.Event):
         """Registers an asyncio.Event to receive zero-latency frame readiness notifications."""

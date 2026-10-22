@@ -1,6 +1,6 @@
 import sys
 import time
-from typing import List, Union
+from typing import List, Union, Dict
 
 _IS_WIN32 = sys.platform == "win32"
 
@@ -230,6 +230,9 @@ class WindowsInputController:
         self.screen_height = user32.GetSystemMetrics(1) if user32 else 1080
         self.is_dragging = False
 
+        # Active monitor bounding box for multi-monitor coordinate mapping
+        self._active_monitor_bounds = {"left": 0, "top": 0, "width": self.screen_width, "height": self.screen_height}
+
         # Sub-pixel accumulators for ultra-smooth non-shaking mouse glide
         self._accum_x = 0.0
         self._accum_y = 0.0
@@ -294,11 +297,32 @@ class WindowsInputController:
         self._attach_desktop()
         user32.SetCursorPos(int(x), int(y))
 
-    def move_absolute(self, norm_x: float, norm_y: float):
-        """Move cursor to normalized coordinate [0.0 - 1.0] across all displays with edge snapping."""
-        self._attach_desktop()
+    def set_active_monitor_bounds(self, left: int, top: int, width: int, height: int):
+        """Sets the coordinate bounding box of the display currently mirrored to the mobile client."""
+        self._active_monitor_bounds = {
+            "left": int(left),
+            "top": int(top),
+            "width": max(1, int(width)),
+            "height": max(1, int(height)),
+        }
+
+    def get_active_monitor_bounds(self) -> Dict[str, int]:
+        """Returns the active monitor bounding box, falling back to primary screen."""
+        b = getattr(self, "_active_monitor_bounds", None)
+        if b and b.get("width", 0) > 0 and b.get("height", 0) > 0:
+            return b
         w = max(1, user32.GetSystemMetrics(0))
         h = max(1, user32.GetSystemMetrics(1))
+        return {"left": 0, "top": 0, "width": w, "height": h}
+
+    def move_absolute(self, norm_x: float, norm_y: float):
+        """Move cursor to normalized coordinate [0.0 - 1.0] across active display with edge snapping."""
+        self._attach_desktop()
+        b = self.get_active_monitor_bounds()
+        w = b["width"]
+        h = b["height"]
+        left = b["left"]
+        top = b["top"]
 
         # Precision Edge Snapping: Taps near phone edges (<0.015 or >0.985) snap to exact boundary pixels
         clamped_x = max(0.0, min(1.0, float(norm_x)))
@@ -312,8 +336,8 @@ class WindowsInputController:
         elif clamped_y < 0.015:
             clamped_y = 0.0
 
-        px = int(round(clamped_x * (w - 1)))
-        py = int(round(clamped_y * (h - 1)))
+        px = int(round(clamped_x * (w - 1))) + left
+        py = int(round(clamped_y * (h - 1))) + top
         user32.SetCursorPos(px, py)
 
     def set_cursor_normalized(self, norm_x: float, norm_y: float):
@@ -346,10 +370,13 @@ class WindowsInputController:
 
     def scroll_at(self, norm_x: float, norm_y: float, dx: float, dy: float):
         """Move cursor to coordinate if needed, and scroll vertical & horizontal wheel with standard Win32 WHEEL_DELTA."""
-        w = max(1, user32.GetSystemMetrics(0))
-        h = max(1, user32.GetSystemMetrics(1))
-        target_x = int(round(max(0.0, min(1.0, float(norm_x))) * (w - 1)))
-        target_y = int(round(max(0.0, min(1.0, float(norm_y))) * (h - 1)))
+        b = self.get_active_monitor_bounds()
+        w = b["width"]
+        h = b["height"]
+        left = b["left"]
+        top = b["top"]
+        target_x = int(round(max(0.0, min(1.0, float(norm_x))) * (w - 1))) + left
+        target_y = int(round(max(0.0, min(1.0, float(norm_y))) * (h - 1))) + top
         cur_x, cur_y = self.get_cursor_pos()
         if abs(cur_x - target_x) > 4 or abs(cur_y - target_y) > 4:
             user32.SetCursorPos(target_x, target_y)

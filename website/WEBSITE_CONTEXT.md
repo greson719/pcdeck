@@ -94,9 +94,9 @@
 - **Direct Support Channels**:
   - **Official Reddit Feedback Thread**: Community bug tracking, questions, and feature requests.
   - **1-Click Clipboard Email Copy**:
-    - Copies `dogonews67@gmail.com` via `navigator.clipboard.writeText()`.
+    - Copies `gresonparichha719@gmail.com` via `navigator.clipboard.writeText()`.
     - Shows dynamic visual confirmation toast (`✔ Copied to Clipboard!`).
-    - Graceful fallback opens `mailto:dogonews67@gmail.com?subject=[PCDeck]%20Feedback`.
+    - Graceful fallback opens `mailto:gresonparichha719@gmail.com?subject=[PCDeck]%20Feedback`.
   - **Web Gmail Link**: Direct web compose URL for users without desktop mail clients.
 - **Android WebView Compatibility**:
   - Native `MainActivity.java` intercepts `mailto:` and `reddit.com` URLs to open native device apps instead of throwing WebView navigation errors.
@@ -202,11 +202,16 @@ To avoid erroneous optimization assumptions, all web decisions must align with v
 - **Technical Stability**: Crash-free stability patch prepared in v2.7.4.0.
 - **Top Geographic Distribution**: India (19 active devices, 38%), France (7, 14%), United States (4, 8%), Japan (2, 4%), Sierra Leone (3), Qatar (1), Dominican Republic (2).
 
-### B. Google Search Console (Organic Web Performance)
-- **Sandbox Graduation**: Average position surged from Page 6 (Pos 55–63) in August to consistent **Page 1 (Pos 5.5–10)** starting mid-September.
-- **Mobile Rank Super-Weapon**: Mobile devices rank at **Position 6.98 with 7.46% CTR** (vs. Desktop at Pos 45.11). Confirms necessity of Mobile Bridge ("Email to PC" / "Copy Link") above the fold.
-- **Star Landing Page**: `/browser-pc-remote/` achieved **20 clicks, 164 impressions, 12.2% CTR, Position 8.18**.
-- **Topical Clustering**: Google indexes PCDeck across 100+ "No Mouse / Broken Mouse" long-tail queries (`/use-pc-without-mouse/` has 707 impressions on Google).
+### B. Google Search Console (Organic Web Performance — Aug 25 – Oct 16, 2026)
+- **Consolidated Telemetry**: **90 total clicks**, **2,140 impressions**, **4.21% average CTR**.
+- **Sandbox Graduation & Traffic Scaling**: Average position surged from Page 6 (Pos 55–63) in August to consistent **Page 1 (Pos 4.2–8.5)** by mid-October. Daily velocity climbed from 0–1 clicks/day in August to sustained **4–9 clicks/day** in October (peak: 9 clicks, 80 impressions at Pos 4.2 on Oct 15).
+- **Mobile Rank Super-Weapon**: Mobile searchers rank at **Position 6.33 with 5.66% CTR** (636 impressions, 36 clicks), outperforming Desktop (Pos 33.92, 1,479 impressions, 54 clicks) due to high mobile-intent queries ("control PC from phone").
+- **Star Landing Page (`/browser-pc-remote/`)**: Primary traffic generator driving **58 clicks (64.4% of site traffic)**, 415 impressions, **13.98% CTR**, and Position 6.90. Confirms dominant product-market fit for zero-install browser remote queries.
+- **Top Converting Queries**: `pcdeck` (brand: 6 clicks, Pos 5.08), `from browser` (Pos 1.0, 100% CTR), `online` (Pos 2.0), `without any software` (Pos 2.0), `free` (Pos 3.0).
+- **High-Volume Search Clusters**:
+  - `/control-linux-pc-from-phone/`: 513 impressions at **Position 7.08** (Page 1). Title and meta description streamlined to 57/148 chars with Steam Deck desktop mode targeting.
+  - `/use-pc-without-mouse/`: 851 impressions (highest impression footprint on site) indexing over 100+ broken mouse / emergency keyboard navigation queries.
+- **Top Click Geographies**: India (12 clicks, 216 imp), United States (10 clicks, 539 imp), Brazil (6 clicks, 12.8% CTR), Indonesia (5 clicks, 9.8% CTR).
 
 ### C. Bing Webmaster Tools (Windows Edge Searchers)
 - **Desktop Search Growth**: Sustained volume of **50 to 71 impressions/day** with steady daily clicks (up to 10% CTR).
@@ -258,16 +263,43 @@ To avoid erroneous optimization assumptions, all web decisions must align with v
 
 ---
 
-## 13. Production Release v2.7.4 & Store Update Management
+## 13. Production Release v2.7.6 & Store Update Management
 
-- **Release Highlights**:
-  - **Android System Share Sheet Integration**: Direct "Share to PCDeck" target allows sharing photos, videos, documents, or text from any Android app directly to the connected Windows PC over local Wi-Fi.
-  - **Crash Prevention & AppUserModelID Hardening**: Fixed the Windows Shell MSIX AppUserModelID conflict, session-local mutex fallback, and safe working directory mapping to ensure zero startup crashes.
-  - **Port 8000 & Network Endpoint Stability**: Verified 200 OK responses on `/connect`, `/`, and local `/PCDeck.apk` serving.
-- **Active Binary Checksums & Checksum Sync**:
-  - `PCDeck.exe`: `38,072,930 bytes` | SHA256: `71E4B67A6B2ED0CD784A95E21B41407CEDE135F220B701066514DD3029535574`
-  - `PCDeck.apk`: `711,443 bytes` | SHA256: `C5351806A94C182C093189136589D6D657DA58F70F8DFDCEC215E0C4D0FD24D1`
-  - `PCDeck_Store_Upload.msix`: `40,151,167 bytes` | SHA256: `50FC6125A1FF47D8D6C249366EC331D6F06C108FF9A173148EA2B0924182D064`
+- **Release Highlights (v2.7.6.0)**:
+  - **Multi-PC Switcher**: Instant switching between multiple computers from Settings in 1 tap with zero UI clutter on single-PC setups.
+  - **MachineGuid Licensing**: 100% immune to Wi-Fi/MAC randomization, VPN toggles, and network churn.
+  - **Offline Migration Engine**: Migrates legacy v2.7.5 activations in 0.001s without server pings.
+  - **Download Stream Resiliency**: Eliminated 1.14 KB chunked truncation on first-time APK downloads via middleware streaming exemption.
+  - **Desktop Window Version Label**: Added version indicator (`self.version_lbl`) at the bottom-right of the desktop server control panel.
+  - **Active Binary Checksums (v2.7.6.0)**:
+    - `PCDeck.exe`: `38,655,319 bytes` | SHA256: `42552AABE95BA5D278849F461B37727378F52B072A221DF4A93F0A6E9BE9AC8C`
+    - `PCDeck.apk`: `998,228 bytes` | SHA256: `CE5280580976A0CB3A98CD9A596902398C1141BAB6C23F1E0076AF1AFFF1A7EC`
+    - `PCDeck_Store_Upload.msix`: `40,738,378 bytes` | SHA256: `A0B95D731B744C186701D19383603BA52A7F5DFBB1A022189842B7A7C4136EC9`
+
+---
+
+## 14. Commercial & Conversion Telemetry (Updated October 20, 2026)
+- **Microsoft Store**: 155 acquisitions, 375 page views, 41.33% conversion, 100% install success rate.
+- **Vercel Analytics**: 158 weekly unique visitors (+84% WoW), 234 page views (+77% WoW), peak 34 daily visitors.
+- **Search Console & Bing**: >4,000 combined impressions, 143 organic search clicks.
+- **Dodo Payments Revenue**: 8 Pro license keys sold ($31.92 Gross Volume), $18.74 available payout balance (threshold: $50 USD).
+
+---
+
+## 15. Custom Domain Launch: getpcdeck.com (October 22, 2026)
+
+- **Domain**: `getpcdeck.com` (Official Primary Canonical)
+- **Secondary / Redirect**: `www.getpcdeck.com` (`308 Permanent Redirect` -> `https://getpcdeck.com/`)
+- **Legacy Fallback**: `pcdeck.vercel.app` (Preserved as active production alias)
+- **Registrar & Nameservers**: Hostinger (`apollo.dns-parking.com`, `athena.dns-parking.com`)
+- **DNS Records**:
+  - `A @ 216.198.79.1` (TTL 300)
+  - `CNAME www getpcdeck.com` (TTL 300)
+- **Verification Telemetry**:
+  - `https://getpcdeck.com` $\implies$ HTTP 200 OK (Vercel Edge, SSL Active)
+  - `http://getpcdeck.com` $\implies$ HTTP 308 Permanent Redirect to HTTPS
+  - `https://www.getpcdeck.com` $\implies$ HTTP 308 Permanent Redirect to `https://getpcdeck.com/`
+
 
 
 

@@ -5,7 +5,7 @@
 #define MyAppName "PCDeck"
 #define MyAppVersion "2.7.2"
 #define MyAppPublisher "Greshon Parichha"
-#define MyAppURL "https://pcdeck.vercel.app"
+#define MyAppURL "https://getpcdeck.com"
 #define MyAppExeName "PCDeck.exe"
 
 [Setup]

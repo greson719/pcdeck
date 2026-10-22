@@ -29,43 +29,145 @@ _S3 = bytes([95, 112, 114, 111, 95, 50, 48, 50, 54]) # "_pro_2026"
 _SALT = _S1 + _S2 + _S3                              # "pcdeck_secure_pro_2026"
 
 
-def get_machine_hwid() -> str:
+def _get_all_legacy_hwids() -> list:
     """
-    Generate a stable, unique hardware fingerprint for the local machine.
-    Combines Windows MachineGuid and System UUID to prevent license sharing.
+    Generate all possible legacy HWIDs for this machine by checking all active
+    and virtual network adapters (Wi-Fi, Ethernet, Bluetooth).
+    Enables 100% OFFLINE migration from v2.7.5 to v2.7.6 even if the user switched
+    adapters or had MAC randomization enabled.
     """
-    components = []
-
-    # 1. Windows MachineGuid (fast, reliable, in-process)
+    guid_part = ""
     if sys.platform == "win32":
         try:
             import winreg
-            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
+            access = winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0x0100)
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0, access) as key:
                 guid, _ = winreg.QueryValueEx(key, "MachineGuid")
                 if guid:
-                    components.append(f"guid:{guid.strip().lower()}")
+                    guid_part = f"guid:{guid.strip().lower()}"
         except Exception:
             pass
 
-    # 2. Hostname and username fallback
+    host_part = ""
     try:
         host = socket.gethostname().strip().lower()
         if host:
-            components.append(f"host:{host}")
+            host_part = f"host:{host}"
     except Exception:
         pass
 
-    # 3. Network MAC address fallback
+    # Collect all known MAC integers on this physical machine
+    mac_ints = set()
     try:
         import uuid
         node = uuid.getnode()
         if node:
-            components.append(f"mac:{node}")
+            mac_ints.add(node)
     except Exception:
         pass
 
-    raw_seed = "|".join(components) if components else "pcdeck_fallback_hwid"
-    return hashlib.sha256(raw_seed.encode("utf-8")).hexdigest()[:32]
+    try:
+        import psutil
+        for addrs in psutil.net_if_addrs().values():
+            for a in addrs:
+                if hasattr(a, "family") and getattr(a.family, "name", "") == "AF_LINK" and a.address:
+                    clean_mac = a.address.replace("-", "").replace(":", "").strip()
+                    if clean_mac and len(clean_mac) == 12:
+                        try:
+                            mac_ints.add(int(clean_mac, 16))
+                        except Exception:
+                            pass
+    except Exception:
+        pass
+
+    legacy_hwids = []
+    base_components = []
+    if guid_part:
+        base_components.append(guid_part)
+    if host_part:
+        base_components.append(host_part)
+
+    for m in mac_ints:
+        comps = list(base_components) + [f"mac:{m}"]
+        raw_seed = "|".join(comps)
+        legacy_hwids.append(hashlib.sha256(raw_seed.encode("utf-8")).hexdigest()[:32])
+
+    if not legacy_hwids:
+        raw_seed = "|".join(base_components) if base_components else "pcdeck_fallback_hwid"
+        legacy_hwids.append(hashlib.sha256(raw_seed.encode("utf-8")).hexdigest()[:32])
+
+    return legacy_hwids
+
+
+def _get_legacy_hwid() -> str:
+    """Primary legacy HWID using current active node."""
+    all_legacy = _get_all_legacy_hwids()
+    return all_legacy[0] if all_legacy else hashlib.sha256(b"pcdeck_fallback_hwid").hexdigest()[:32]
+
+
+def get_machine_hwid() -> str:
+    """
+    Generate a rock-solid, invariant hardware fingerprint for the local machine.
+    On Windows, uses the immutable Windows MachineGuid with KEY_WOW64_64KEY view
+    so network changes, VPN switches, Wi-Fi reconnection, and reboots never invalidate the license.
+    """
+    # 1. Windows MachineGuid (permanent per Windows installation)
+    if sys.platform == "win32":
+        try:
+            import winreg
+            access = winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0x0100)
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0, access) as key:
+                guid, _ = winreg.QueryValueEx(key, "MachineGuid")
+                if guid and len(guid.strip()) > 8:
+                    return hashlib.sha256(f"guid:{guid.strip().lower()}".encode("utf-8")).hexdigest()[:32]
+        except Exception:
+            pass
+
+    # 2. Linux machine-id fallback
+    for p in ("/etc/machine-id", "/var/lib/dbus/machine-id"):
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    mid = f.read().strip()
+                    if mid:
+                        return hashlib.sha256(f"linux_id:{mid.lower()}".encode("utf-8")).hexdigest()[:32]
+            except Exception:
+                pass
+
+    # 3. macOS IOPlatformUUID fallback
+    if sys.platform == "darwin":
+        try:
+            import subprocess
+            out = subprocess.check_output(["ioreg", "-rd1", "-c", "IOPlatformExpertDevice"]).decode("utf-8")
+            for line in out.splitlines():
+                if "IOPlatformUUID" in line:
+                    uuid_str = line.split("=")[-1].strip().strip('"')
+                    return hashlib.sha256(f"mac_uuid:{uuid_str.lower()}".encode("utf-8")).hexdigest()[:32]
+        except Exception:
+            pass
+
+    # 4. Hostname fallback only if OS GUIDs are unavailable
+    try:
+        host = socket.gethostname().strip().lower()
+        if host:
+            return hashlib.sha256(f"host:{host}".encode("utf-8")).hexdigest()[:32]
+    except Exception:
+        pass
+
+    return hashlib.sha256(b"pcdeck_fallback_hwid").hexdigest()[:32]
+
+
+def get_stored_license_record() -> Dict[str, Any]:
+    """Read raw payload from local license file without HWID enforcement."""
+    if not os.path.exists(SECURE_LICENSE_FILE):
+        return {}
+    try:
+        with open(SECURE_LICENSE_FILE, "rb") as f:
+            raw_b64 = f.read()
+        payload_bytes = base64.b64decode(raw_b64)
+        return json.loads(payload_bytes.decode("utf-8"))
+    except Exception:
+        return {}
 
 
 def _compute_hmac(hwid: str, key: str, instance_id: str) -> str:
@@ -78,6 +180,7 @@ def verify_license() -> Dict[str, Any]:
     """
     Cryptographically verify local license file.
     Ensures license has not been modified and was issued for THIS specific machine.
+    Seamlessly migrates licenses from legacy volatile HWID to stable HWID.
     """
     # Safe developer override: ONLY active in non-frozen dev environment with explicit flag
     if os.environ.get("PCDECK_DEV_PRO") == "1" and not getattr(sys, "frozen", False):
@@ -107,15 +210,32 @@ def verify_license() -> Dict[str, Any]:
         if not key or not instance_id or not stored_hwid or not stored_sig:
             return {"pro_active": False, "key": "", "instance_id": "", "token": ""}
 
-        # 1. Hardware ID match check (prevents copying license file between PCs)
         current_hwid = get_machine_hwid()
-        if not hmac.compare_digest(stored_hwid, current_hwid):
+
+        # 1. Hardware ID match check (primary stable HWID or legacy multi-adapter check)
+        hwid_matched = hmac.compare_digest(stored_hwid, current_hwid)
+        is_legacy = False
+        if not hwid_matched:
+            for leg_hwid in _get_all_legacy_hwids():
+                if hmac.compare_digest(stored_hwid, leg_hwid):
+                    hwid_matched = True
+                    is_legacy = True
+                    break
+
+        if not hwid_matched:
             return {"pro_active": False, "key": "", "instance_id": "", "token": ""}
 
-        # 2. Cryptographic signature check (prevents editing the file contents)
-        expected_sig = _compute_hmac(current_hwid, key, instance_id)
+        # 2. Cryptographic signature check
+        expected_sig = _compute_hmac(stored_hwid, key, instance_id)
         if not hmac.compare_digest(stored_sig, expected_sig):
             return {"pro_active": False, "key": "", "instance_id": "", "token": ""}
+
+        # Seamlessly upgrade legacy record to new stable HWID
+        if is_legacy:
+            try:
+                save_license(key, instance_id, data.get("meta", {}))
+            except Exception:
+                pass
 
         return {
             "pro_active": True,
@@ -137,7 +257,7 @@ def save_license(key: str, instance_id: str, meta: Dict[str, Any] = None) -> boo
         sig = _compute_hmac(hwid, key, instance_id)
 
         record = {
-            "key": key.strip().upper(),
+            "key": key.strip().lower(),
             "instance_id": instance_id.strip(),
             "hwid": hwid,
             "sig": sig,
@@ -148,8 +268,10 @@ def save_license(key: str, instance_id: str, meta: Dict[str, Any] = None) -> boo
         payload_bytes = json.dumps(record, sort_keys=True).encode("utf-8")
         raw_b64 = base64.b64encode(payload_bytes)
 
-        with open(SECURE_LICENSE_FILE, "wb") as f:
+        temp_file = os.path.join(LICENSE_DIR, "license.tmp")
+        with open(temp_file, "wb") as f:
             f.write(raw_b64)
+        os.replace(temp_file, SECURE_LICENSE_FILE)
 
         # Remove vulnerable legacy file if it exists
         if os.path.exists(LEGACY_LICENSE_FILE):
@@ -163,12 +285,82 @@ def save_license(key: str, instance_id: str, meta: Dict[str, Any] = None) -> boo
         return False
 
 
+def check_dodo_license_valid(key_str: str) -> Tuple[bool, str]:
+    """
+    Check whether a license key is valid directly with Dodo Payments /licenses/validate.
+    Public unauthenticated endpoint - fast and safe.
+    """
+    clean_key = (key_str or "").strip()
+    if not clean_key or len(clean_key) < 5:
+        return False, "Invalid license key format."
+    if clean_key.upper().startswith("PCDECK-DEV") or clean_key.upper().startswith("PCDECK-LOCALDEV"):
+        return False, "Developer test key."
+
+    try:
+        req_data = json.dumps({"license_key": clean_key}).encode("utf-8")
+        req = urllib.request.Request(
+            "https://live.dodopayments.com/licenses/validate",
+            data=req_data,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "User-Agent": "PCDeck-Windows-Client/2.7.0"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            res_json = json.loads(resp.read().decode("utf-8"))
+            if res_json.get("valid") is True:
+                return True, "License key is active and valid."
+            return False, res_json.get("message") or res_json.get("error") or "License key is inactive or expired."
+    except Exception as ex:
+        return False, f"Validation network error: {ex}"
+
+
+def try_silent_license_recovery() -> bool:
+    """
+    Attempt to silently recover an existing license file if HWID drifted.
+    Runs asynchronously on startup without blocking the UI or event loop.
+    Enforces hardware affinity to prevent copied license files from auto-activating.
+    """
+    info = verify_license()
+    if info.get("pro_active"):
+        return True
+
+    stored = get_stored_license_record()
+    key = stored.get("key", "").strip()
+    if not key or key.upper().startswith("PCDECK-DEV") or key.upper().startswith("PCDECK-LOCALDEV"):
+        return False
+
+    stored_hwid = (stored.get("hwid") or "").strip()
+    stored_sig = (stored.get("sig") or "").strip()
+    hwid = get_machine_hwid()
+
+    # Hardware affinity check: only recover if this file originated on this physical machine
+    is_same_machine = (stored_hwid == hwid or stored_hwid in _get_all_legacy_hwids())
+    if not is_same_machine:
+        return False
+
+    # Cryptographic integrity check: ensure the file was signed by PCDeck
+    expected_sig = _compute_hmac(stored_hwid, key, stored.get("instance_id", ""))
+    if not hmac.compare_digest(stored_sig, expected_sig):
+        return False
+
+    is_valid, _ = check_dodo_license_valid(key)
+    if is_valid:
+        instance_id = stored.get("instance_id") or f"inst_active_{hwid[:12]}"
+        return save_license(key, instance_id, stored.get("meta", {}))
+    return False
+
+
 def activate_license_online(key_str: str) -> Tuple[bool, str, Dict[str, Any]]:
     """
     Activate license key directly with official Dodo Payments API.
     Binds the generated instance to this machine's HWID.
+    Uses the Hybrid Approach: if the activation limit is reached (HTTP 422),
+    it immediately verifies key entitlement via /licenses/validate and
+    binds the valid license to this machine without trapping the user.
     """
-    clean_key = (key_str or "").strip().upper()
+    clean_key = (key_str or "").strip().lower()
     if not clean_key:
         return False, "Please enter a valid license key.", {}
 
@@ -176,7 +368,7 @@ def activate_license_online(key_str: str) -> Tuple[bool, str, Dict[str, Any]]:
     instance_name = f"PCDeck Windows Host ({hwid[:8]})"
 
     # Developer test key (safe local hardware binding ONLY active in non-frozen dev environment with explicit flag)
-    if (clean_key == "PCDECK-DEV-TEST" or clean_key.startswith("PCDECK-LOCALDEV")) and os.environ.get("PCDECK_DEV_PRO") == "1" and not getattr(sys, "frozen", False):
+    if (clean_key == "pcdeck-dev-test" or clean_key.startswith("pcdeck-localdev")) and os.environ.get("PCDECK_DEV_PRO") == "1" and not getattr(sys, "frozen", False):
         instance_id = f"dev_{hwid[:12]}"
         saved = save_license(clean_key, instance_id, {"tier": "developer_test", "mode": "local_test"})
         if saved:
@@ -209,6 +401,35 @@ def activate_license_online(key_str: str) -> Tuple[bool, str, Dict[str, Any]]:
                 return False, "Failed to securely save license file.", {}
 
     except urllib.error.HTTPError as e:
+        # HYBRID AUTO-RECOVERY: If activation limit is reached (HTTP 422),
+        # allow recovery IF this machine already possessed this key locally (re-activation after HWID drift/network change).
+        # Rejects brand new machines attempting to exceed the seat limit.
+        if e.code == 422:
+            stored_record = get_stored_license_record()
+            stored_key = (stored_record.get("key") or "").strip().lower()
+            stored_hwid = (stored_record.get("hwid") or "").strip()
+            stored_sig = (stored_record.get("sig") or "").strip()
+
+            is_same_machine = (stored_key == clean_key) and (
+                stored_hwid == hwid or stored_hwid in _get_all_legacy_hwids()
+            )
+            file_authentic = False
+            if is_same_machine and stored_hwid and stored_sig:
+                expected_sig = _compute_hmac(stored_hwid, stored_key, stored_record.get("instance_id", ""))
+                if hmac.compare_digest(stored_sig, expected_sig):
+                    file_authentic = True
+
+            if is_same_machine and file_authentic:
+                is_valid, _ = check_dodo_license_valid(clean_key)
+                if is_valid:
+                    instance_id = stored_record.get("instance_id") or f"inst_active_{hwid[:12]}"
+                    saved = save_license(clean_key, instance_id, {
+                        "source": "dodo_hybrid_recovery",
+                        "note": "Re-activated on existing authorized machine"
+                    })
+                    if saved:
+                        return True, "PCDeck Pro activated successfully!", {"id": instance_id, "recovered": True}
+
         err_msg = ""
         try:
             body = json.loads(e.read().decode("utf-8"))

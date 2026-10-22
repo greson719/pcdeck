@@ -12,12 +12,12 @@ export default function handler(req, res) {
   console.log(`[PCDeck Ping] Client: ${userAgent} | Country: ${country}`);
 
   return res.status(200).json({
-    versionCode: 272,
-    versionName: "2.7.2",
+    versionCode: 276,
+    versionName: "2.7.6",
     exeSize: "36.3 MB",
     apkSize: "691 KB",
-    apkUrl: "https://pcdeck.vercel.app/PCDeck.apk",
-    websiteUrl: "https://pcdeck.vercel.app",
+    apkUrl: "https://getpcdeck.com/PCDeck.apk",
+    websiteUrl: "https://getpcdeck.com",
     playStoreUrl: "",
     msStoreUrl: "https://apps.microsoft.com/detail/9P4BK16LBGLS",
     msStoreDirectUrl: "https://get.microsoft.com/installer/download/9P4BK16LBGLS",

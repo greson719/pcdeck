@@ -1,6 +1,6 @@
 ﻿# ==============================================================================
 # PCDeck - Universal Emergency Windows Downloader & Launcher
-# Usage: powershell -ExecutionPolicy Bypass -Command "irm https://pcdeck.vercel.app/install.ps1 | iex"
+# Usage: powershell -ExecutionPolicy Bypass -Command "irm https://getpcdeck.com/install.ps1 | iex"
 # ==============================================================================
 $ErrorActionPreference = 'Stop'
 try {
@@ -20,7 +20,7 @@ $destPath = [System.IO.Path]::Combine($destDir, "PCDeck.exe")
 
 $urls = @(
     "https://github.com/greson719/pcdeck/releases/latest/download/PCDeck.exe",
-    "https://pcdeck.vercel.app/PCDeck.exe"
+    "https://getpcdeck.com/PCDeck.exe"
 )
 
 $downloaded = $false
