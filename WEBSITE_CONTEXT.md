@@ -295,10 +295,50 @@ To avoid erroneous optimization assumptions, all web decisions must align with v
 - **DNS Records**:
   - `A @ 216.198.79.1` (TTL 300)
   - `CNAME www getpcdeck.com` (TTL 300)
+  - `TXT @ google-site-verification=9GdXotk3owSHTyICyxvvEFWIx9WU-XTtAYuBFL6InRc` (TTL 14400)
 - **Verification Telemetry**:
   - `https://getpcdeck.com` $\implies$ HTTP 200 OK (Vercel Edge, SSL Active)
   - `http://getpcdeck.com` $\implies$ HTTP 308 Permanent Redirect to HTTPS
   - `https://www.getpcdeck.com` $\implies$ HTTP 308 Permanent Redirect to `https://getpcdeck.com/`
+- **Global Codebase & Canonical Migration**:
+  - 122 files migrated (all 66 HTML pages, OpenGraph, JSON-LD schemas, breadcrumbs, `sitemap.xml`, `robots.txt`, `llms.txt`, `api/version.js`).
+  - Android App Links: `android_app/AndroidManifest.xml` configured with `getpcdeck.com` & `www.getpcdeck.com`.
+  - Binaries rebuilt & signed: `PCDeck.apk` (974.8 KB) and standalone `PCDeck.exe` (36.9 MB).
+- **Search Engine Discovery**:
+  - **IndexNow / Bing**: 32 URLs submitted and accepted (`HTTP 200 OK` / `HTTP 202 Accepted`).
+  - **Google Search Console**: Verified domain ownership via DNS TXT. `sitemap.xml` submitted with status **`Success`** (29+ discovered URLs).
+
+---
+
+## 16. Dedicated Transparent Pricing Page (/pricing/)
+
+- **Canonical URL**: `https://getpcdeck.com/pricing/` (HTTP 200 OK live verified).
+- **Design Philosophy**:
+  - Clean, high-density side-by-side comparison.
+  - Zero AI slop, zero generic emojis, built on `guide.css` design tokens.
+- **Tiers**:
+  - **PCDeck Core ($0 Free Forever)**: Multi-touch trackpad, virtual keyboard & numpad, 30 FPS screen mirroring, PC audio streaming, webcam, mic, file transfer, standard gamepad.
+  - **PCDeck Pro ($3.99 One-Time Lifetime)**: 60/120 FPS high-refresh mirroring, custom HUD keymapper, uncapped gigabit Wi-Fi file transfers, neon chroma themes.
+- **Checkout Link**: Dodo Payments integration (`https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://getpcdeck.com`).
+- **Structured Data**: JSON-LD `Product` with multi-tier `Offer` schemas (`Free Software` + `One-time Lifetime License`), `BreadcrumbList`, and `FAQPage`.
+- **Sync**: Files present in both `pricing/index.html` and `website/pricing/index.html`.
+
+---
+
+## 17. High-Authority Backlink Pipeline & Directory Status (Domain Authority)
+
+- **Microsoft Partner Center (DA 99)**: Official Store listing submission updated with `Website: https://getpcdeck.com` and `Privacy Policy: https://getpcdeck.com/privacy_policy.html`.
+- **GitHub Repository (DA 96)**: `homepageUrl` set to `https://getpcdeck.com`.
+- **SaaSHub (DA 75)**:
+  - Product listing live and verified: `https://www.saashub.com/pcdeck` (HTTP 200 OK).
+  - Backlink to `https://getpcdeck.com` active on page.
+  - Categories: `Remote Desktop`, `Utilities`, `OS & Utilities`, `Remote PC Access`, `Remote Control`, `Multi Monitor`, `Productivity`, `Office & Productivity`.
+  - Competitor associations: Remote Mouse, Unified Remote, Monect, KDE Connect, AudioRelay, DroidCam, Spacedesk, AnyDesk, Microsoft Remote Desktop, Splashtop, LogMeIn, Macro Deck, TouchPortal, Deckboard, MATRIC.
+  - Pricing synced: Freemium ($0 Free Option / $3.99 One-off Pro Option linking to `https://getpcdeck.com/pricing/`).
+  - Status: Verification passed, listing live, product in review queue for featured placement.
+- **AlternativeTo (DA 80+)**: Submission in review queue (Day 26).
+- **Next Directory Targets**: SourceForge (DA 93), Softpedia (DA 88), Product Hunt (DA 90).
+
 
 
 
