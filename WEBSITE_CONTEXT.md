@@ -339,6 +339,26 @@ To avoid erroneous optimization assumptions, all web decisions must align with v
 - **AlternativeTo (DA 80+)**: Submission in review queue (Day 26).
 - **Next Directory Targets**: SourceForge (DA 93), Softpedia (DA 88), Product Hunt (DA 90).
 
+---
+
+## 18. Post-Domain Traffic Telemetry & Viral Distribution Protocol (October 22, 2026)
+
+### A. Vercel Analytics Telemetry (First 24 Hours Post-Launch)
+- **Consolidated Traffic**: 77 visitors (+221%), 115 page views (+238%).
+- **Forensic Traffic Breakdown**:
+  - **Real Organic Humans**: ~8 direct search engine clicks (Google: 7, Bing: 1) during the active window, maintaining steady 25–33 real human daily baseline (Oct 21: 33 real humans).
+  - **Automated Verification Surge (Spike of 23 at 6pm–7pm)**: 69 visits with empty referrers representing automated IndexNow engine crawlers (Bing, Yandex), Vercel 18-region Edge SSL validation probes, Google DNS verification bots, and SaaSHub scrapers.
+- **New Domain Initial Traction**: `getpcdeck.com` processed 17 live sessions within initial deployment hours while `pcdeck.vercel.app` handled 61 legacy sessions seamlessly via 308 redirects.
+- **Conversion Intent**: `checkout.dodopayments.com` recorded in referrers, confirming active customer funnel navigation to the Pro checkout.
+
+### B. Distribution Strategic Decision: Skip Softpedia, Prioritize Microsoft Store & Video
+- **Softpedia Exemption**: Discontinued standalone `.exe` mirror submission to prevent ongoing binary maintenance overhead. Official Windows distribution remains strictly anchored to the **Microsoft Store (`.msix`)** for maximum user trust and zero SmartScreen friction, with `PCDeck.exe` as the secondary portable alternative.
+- **Viral Video Showcase Plan (Scheduled for Tomorrow)**:
+  - Video format: 20–30s fast-paced physical demo (Hook: broken mouse $\rightarrow$ instant zero-lag phone trackpad, 2-finger scroll, PC audio loopback to phone earbuds, instant QR pairing).
+  - Launch targets: `r/SideProject`, `r/windows`, `r/pcmasterrace`, YouTube Shorts, TikTok.
+  - Destination link: Strictly `https://getpcdeck.com` (with fallback to Microsoft Store).
+
+
 
 
 
