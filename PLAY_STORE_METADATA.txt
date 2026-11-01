@@ -1,0 +1,110 @@
+================================================================================
+                    PCDECK - GOOGLE PLAY STORE METADATA & ASO
+================================================================================
+
+[APP TITLE / NAME] (Limit: 30 chars)
+PCDeck: WiFi Mouse & Trackpad
+
+[SHORT DESCRIPTION] (Limit: 80 chars)
+Turn your phone into a low-latency PC trackpad, keyboard, and screen mirror.
+
+[CATEGORY]
+Tools / Productivity
+
+[TAGS / KEYWORDS]
+Remote Mouse, WiFi Trackpad, PC Trackpad, Wireless Keyboard, Remote Desktop, 
+Screen Mirror, PC Remote Control, File Transfer, Touchpad for PC
+
+================================================================================
+[FULL DESCRIPTION] (Copy text between dashed lines)
+--------------------------------------------------------------------------------
+Turn your Android phone into an ultra-low-latency wireless trackpad, mechanical keyboard, desktop screen mirror, and high-speed local file transfer hub for Windows 10 and 11.
+
+PCDeck connects directly over your local Wi-Fi or mobile hotspot with zero cloud relay, zero telemetry, and zero account requirements. Experience desktop control that feels responsive, tactile, and natural.
+
+
+KEY FEATURES:
+
+1. PRECISION MULTI-TOUCH TRACKPAD
+- Smooth cursor navigation with ballistic acceleration and tremor filtering.
+- 1-Finger Tap: Instant left click.
+- 2-Finger Tap: Right click context menu.
+- 1-Finger Long Press: Tactile drag-and-drop lock.
+- Dedicated Scroll Strip & 2-Finger Kinetic Scrolling: Calibrated inertia that matches native mobile physics.
+
+2. FULL VIRTUAL KEYBOARD & NUMPAD
+- Complete desktop layout with Function keys (F1–F12), Esc, Tab, Ctrl, Alt, and Windows key.
+- Dedicated Numpad for rapid data entry and spreadsheet navigation.
+- One-tap common shortcuts: Copy (Ctrl+C), Paste (Ctrl+V), Task Switcher (Alt+Tab), Show Desktop (Win+D), and screenshot triggers.
+- Full media deck: Play/Pause, Next, Previous, Volume Up/Down, and Mute.
+- Unicode typing synchronization for fast text input.
+
+3. ZERO-LAG PC SCREEN STREAMING & DIRECT TOUCH
+- Low-latency binary desktop streaming directly to your phone screen.
+- 1:1 Direct Physical Tracking: Dragging content moves your Windows screen at exact 1:1 finger velocity.
+- Kinetic momentum and fling physics with instant tap-to-stop responsiveness.
+- Adaptive streaming quality (30/60 FPS) with dynamic resolution scaling.
+
+4. LIVE PC AUDIO STREAMING
+- Stream your PC stereo audio output directly to your phone.
+- Listen privately through headphones or wireless earbuds over Wi-Fi without needing long audio cables.
+
+5. HIGH-SPEED LOCAL FILE TRANSFER
+- Transfer documents, videos, photos, and archives between your phone and PC at full Wi-Fi speeds.
+- Direct chunked streaming with automatic download resume support.
+- Clean dedicated folders: Downloads/PCDeck on Android and Downloads/PCDeck_Transfers on Windows.
+
+
+100% OFFLINE & PRIVACY FOCUSED:
+- No user accounts, logins, or registration required.
+- No cloud servers, analytics, or background telemetry.
+- Direct peer-to-peer connection over your local network (LAN or phone hotspot).
+
+
+QUICK 3-STEP SETUP:
+1. Download and launch the free PCDeck Windows companion app on your PC.
+2. Ensure your phone and PC are connected to the same Wi-Fi network or Mobile Hotspot.
+3. Open PCDeck on Android and scan the on-screen pairing QR code or enter your local PC IP.
+
+
+SYSTEM REQUIREMENTS:
+- Windows 10 or Windows 11 (64-bit).
+- Android 5.0 (Lollipop) or newer.
+- Shared local Wi-Fi network or Mobile Hotspot.
+--------------------------------------------------------------------------------
+
+================================================================================
+          HOW TO UPLOAD TO GOOGLE PLAY CONSOLE (FROM PHONE OR PC)
+================================================================================
+
+1. GO TO GOOGLE PLAY CONSOLE:
+   - Visit: https://play.google.com/console
+   - Log in with your registered Google Play Developer Account.
+
+2. CREATE APP (OR SELECT EXISTING APP):
+   - Click "Create app" (top right).
+   - App name: PCDeck: WiFi Mouse & Trackpad
+   - Default language: English (United States)
+   - App or game: App
+   - Free or paid: Free
+   - Accept declarations and click "Create app".
+
+3. APP CONTENT & STORE PRESENCE:
+   - In left menu, navigate to "Store presence" -> "Main store listing".
+   - Paste the App title, Short description, and Full description from above.
+   - Upload App Icon (512x512 PNG, provided as icon-512.png in PCDeck).
+   - Upload Feature Graphic (1024x500 PNG).
+   - Upload phone screenshots (minimum 2 screenshots).
+
+4. UPLOAD APP BUNDLE (.AAB):
+   - In left menu, go to "Release" -> "Production" (or "Internal testing" / "Closed testing" for your first release).
+   - Click "Create new release".
+   - Under "App bundles", click "Upload" and choose "PCDeck.aab" (located in your phone's Download folder).
+   - Release name: 1.0.0 (1)
+   - Release notes: Initial release of PCDeck - Zero-lag WiFi trackpad, keyboard, screen mirror & file transfer.
+   - Click "Next" -> "Save" -> "Review release".
+
+5. SUBMIT FOR REVIEW:
+   - Complete any remaining Store declaration checklists (Data Safety, Privacy Policy, Target Audience).
+   - Click "Start rollout to Production" to submit for Google Play review!
+================================================================================

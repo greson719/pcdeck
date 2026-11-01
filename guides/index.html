@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCDeck Guides — Complete Windows & Mobile PC Remote Tutorials</title>
+<meta name="description" content="Official step-by-step guides for PCDeck: turn your phone into a mouse, keyboard, PC screen viewer, audio receiver, and Wi-Fi file transfer tool for PC.">
+<meta name="keywords" content="PCDeck guides, android phone as mouse, phone as keyboard, stream pc screen to phone, stream pc audio to phone, transfer files wifi pc to android, use pc without monitor, use pc without mouse">
+<link rel="canonical" href="https://getpcdeck.com/guides/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://getpcdeck.com/guides/">
+<meta property="og:title" content="PCDeck Guides — Complete Windows & Mobile PC Remote Tutorials">
+<meta property="og:description" content="Official step-by-step guides for PCDeck: turn your phone into a mouse, keyboard, PC screen viewer, audio receiver, and Wi-Fi file transfer tool for PC.">
+<meta property="og:image" content="https://getpcdeck.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:locale" content="en_US">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PCDeck Guides — Complete Windows & Mobile PC Remote Tutorials">
+<meta name="twitter:description" content="Official step-by-step guides for PCDeck: turn your phone into a mouse, keyboard, PC screen viewer, audio receiver, and Wi-Fi file transfer tool for PC.">
+<meta name="twitter:image" content="https://getpcdeck.com/og-image.png">
+
+<meta name="theme-color" content="#eef0f3">
+
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+<style>
+.guide-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 32px;
+}
+.filter-pill {
+  background: var(--paper);
+  border: 1px solid var(--grid);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: var(--body);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--graphite);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.filter-pill:hover {
+  border-color: var(--signal);
+  color: var(--signal-ink);
+  background: var(--signal-wash);
+}
+.filter-pill.active {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: #ffffff;
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      "@id": "https://getpcdeck.com/guides/#page",
+      "url": "https://getpcdeck.com/guides/",
+      "name": "PCDeck Guides & Technical Documentation",
+      "description": "Comprehensive index of official step-by-step guides and tutorials for using PCDeck with Windows 10/11 and Android.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://getpcdeck.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://getpcdeck.com/icon-512.png"
+        }
+      },
+      "image": "https://getpcdeck.com/og-image.png"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://getpcdeck.com/guides/#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://getpcdeck.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://getpcdeck.com/guides/"
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a href="#main" class="skip">Skip to main content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a href="/" class="brand" aria-label="PCDeck homepage">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30" aria-hidden="true"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="/features/">Features</a>
+      <a href="/guides/">Guides</a>
+      <a href="/security/">Security</a>
+      <a href="/#features">Capabilities</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a href="/#download" class="btn sm">Download PCDeck</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/">Home</a>
+        <a href="/features/">Features &amp; Controls</a>
+        <a href="/guides/">Guides Hub</a>
+        <a href="/security/">Security Architecture</a>
+        <a href="/#download">Download PCDeck</a>
+      </div>
+      <div class="mobile-guides-title">Featured Guides</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/connect-pc-to-pc-wifi/">Connect PC to PC via Wi-Fi</a>
+        <a href="/use-iphone-as-webcam-windows/">iPhone as HD Webcam</a>
+        <a href="/browser-pc-remote/">Zero-Install Web Remote</a>
+        <a href="/use-phone-as-mouse/">Phone as Mouse</a>
+        <a href="/use-phone-as-keyboard/">Phone as Keyboard</a>
+        <a href="/use-phone-as-second-monitor/">Phone as PC Screen</a>
+        <a href="/control-windows-from-android/">Control Windows from Android</a>
+        <a href="/control-linux-pc-from-phone/">Linux &amp; Steam Deck Control</a>
+        <a href="/linux-install/">Linux Terminal Install</a>
+        <a href="/use-pc-without-mouse/">Use PC without Mouse</a>
+        <a href="/use-pc-without-keyboard/">Use PC without Keyboard</a>
+        <a href="/use-pc-without-monitor/">Use PC without Monitor</a>
+        <a href="/stream-pc-audio-to-phone/">Stream PC Audio</a>
+        <a href="/transfer-files-pc-to-android/">Wi-Fi File Transfer</a>
+        <a href="/use-pc-without-internet/">Use PC without Internet</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="shell">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">PCDeck</a></li>
+        <li aria-current="page">Guides</li>
+      </ol>
+    </nav>
+
+    <div class="lede-block">
+      <p class="tag">Knowledge Base &amp; Technical Manuals</p>
+      <h1>PCDeck Guides &amp; Tutorials</h1>
+      <p class="sub">
+        Explore step-by-step tutorials for controlling your Windows 10/11 PC from an Android phone over local Wi-Fi. Learn how to configure input, stream the desktop screen, route PC audio, transfer large files, and navigate emergency hardware failures.
+      </p>
+      <p class="updated tag">Updated September 2026 · 100% Offline Local Network · Windows 10 &amp; 11 · Android 5.0+</p>
+    </div>
+
+    <div class="guide">
+
+      <!-- Interactive Category Filter Bar -->
+      <div class="guide-filter-bar">
+        <button class="filter-pill active" data-cat="all">All Guides (18)</button>
+        <button class="filter-pill" data-cat="popular">⭐ Most Popular</button>
+        <button class="filter-pill" data-cat="input">🖱️ Mouse &amp; Keyboard</button>
+        <button class="filter-pill" data-cat="linux">🐧 Linux &amp; Steam Deck</button>
+        <button class="filter-pill" data-cat="emergency">🚨 Emergency Fixes</button>
+        <button class="filter-pill" data-cat="media">🔊 Audio &amp; Display</button>
+        <button class="filter-pill" data-cat="compare">🔄 Comparisons</button>
+      </div>
+
+      <!-- ⭐ Most Popular Solutions -->
+      <section class="guides-section" data-section="popular">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          Featured &amp; Most Popular Solutions
+        </h2>
+        <div class="guides-grid">
+          <a href="/browser-pc-remote/" class="guide-card" style="border-left: 3px solid var(--signal);">
+            <div>
+              <span class="tag" style="color: var(--signal); font-weight: 700;">Zero-Install Remote</span>
+              <h3>Control Your PC From Any Browser (Zero Install)</h3>
+              <p>Turn Safari, Chrome, or Firefox on iPhone, iPad, Mac, or Android into a wireless trackpad, keyboard, and screen viewer via QR code with no app install.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/control-linux-pc-from-phone/" class="guide-card" style="border-left: 3px solid var(--signal);">
+            <div>
+              <span class="tag" style="color: var(--signal); font-weight: 700;">Linux &amp; SteamOS</span>
+              <h3>Control Linux PC or Steam Deck from Phone &amp; Browser</h3>
+              <p>Full guide to running PCDeck on Ubuntu 24.04 Wayland, Debian, Arch, and SteamOS Desktop Mode with low-latency remote touch, trackpad, and Konsole access.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/use-pc-without-mouse/" class="guide-card">
+            <div>
+              <span class="tag" style="color: var(--caution); font-weight: 700;">Emergency Hardware Fix</span>
+              <h3>How to Use a Windows PC When Your Mouse Breaks</h3>
+              <p>Complete guide to native Windows keyboard navigation shortcuts, Windows Mouse Keys, and using PCDeck as an emergency wireless mouse.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/stream-pc-audio-to-phone/" class="guide-card">
+            <div>
+              <span class="tag" style="color: var(--graphite); font-weight: 700;">Audio Streaming</span>
+              <h3>Stream PC Audio to Phone Headphones Wirelessly</h3>
+              <p>Capture Windows system audio via WASAPI Loopback (48 kHz stereo PCM) and route it in real time to your phone earbuds.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/use-iphone-as-webcam-windows/" class="guide-card" style="border-left: 3px solid var(--signal);">
+            <div>
+              <span class="tag" style="color: var(--signal); font-weight: 700;">Studio HD Camera</span>
+              <h3>Use iPhone as HD Webcam for Windows (No App Required)</h3>
+              <p>Broadcast your iPhone's 48MP/12MP camera into Windows over Wi-Fi. Works with Zoom, Teams, OBS, Discord, and AI vision with zero App Store downloads.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 1. Input & Virtual Controls -->
+      <section class="guides-section" data-section="input">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><line x1="12" y1="7" x2="12" y2="11"/></svg>
+          </span>
+          Input &amp; Virtual Controls
+        </h2>
+        <div class="guides-grid">
+          <a href="/browser-pc-remote/" class="guide-card">
+            <div>
+              <h3>Control Your PC From Any Browser (Zero Install)</h3>
+              <p>Turn Safari, Chrome, or Firefox on iPhone, iPad, Mac, or Android into a wireless trackpad, keyboard, and screen viewer via QR code with no app install.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/use-phone-as-mouse/" class="guide-card">
+            <div>
+              <h3>Turn Any Phone into a Wireless Mouse &amp; Trackpad (No App Needed)</h3>
+              <p>Turn any iPhone or Android phone into a precision trackpad with tap-to-click, two-finger right-click, and smooth scrolling via QR code scan.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/use-phone-as-keyboard/" class="guide-card">
+            <div>
+              <h3>Turn Any Phone into a PC Keyboard &amp; Numpad (No App Needed)</h3>
+              <p>Type into Windows from your iPhone or Android phone browser. Includes full QWERTY, dedicated numeric keypad, and Windows shortcut keys.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 2. Display & Remote Control -->
+      <section class="guides-section" data-section="media">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </span>
+          Display &amp; Remote Control
+        </h2>
+        <div class="guides-grid">
+          <a href="/connect-pc-to-pc-wifi/" class="guide-card">
+            <div>
+              <h3>How to Connect PC to Another PC Using Wi-Fi (Control Laptop from PC)</h3>
+              <p>Wirelessly connect two Windows computers over local Wi-Fi. Control a desktop from a laptop, bypass Windows Home RDP limits, and transfer files instantly.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/use-phone-as-second-monitor/" class="guide-card">
+            <div>
+              <h3>Stream Windows Desktop Screen to Phone (No App Needed)</h3>
+              <p>Stream your PC desktop live to any iPhone, iPad, or Android screen over Wi-Fi. Emergency display recovery with tap-to-click controls.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/control-windows-from-android/" class="guide-card">
+            <div>
+              <h3>Complete Guide to Controlling Windows 10/11 from Your Phone</h3>
+              <p>Full walkthrough of instant QR code browser control and optional Android APK. Mouse, keyboard, display, audio, and file manager over local Wi-Fi.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 3. Connectivity & Offline Work -->
+      <section class="guides-section" data-section="all">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          </span>
+          Connectivity &amp; Architecture
+        </h2>
+        <div class="guides-grid">
+          <a href="/use-pc-without-internet/" class="guide-card">
+            <div>
+              <h3>Control Windows Without an Internet Connection</h3>
+              <p>How PCDeck operates entirely offline over local Wi-Fi routers or an Android portable mobile hotspot with zero external data traffic.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/security/" class="guide-card">
+            <div>
+              <h3>Security, Privacy &amp; Local Network Architecture</h3>
+              <p>Technical breakdown of local socket binding, zero-telemetry architecture, SHA-256 binary verification, and Windows SmartScreen context.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 4. Audio & Media -->
+      <section class="guides-section" data-section="media">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+          </span>
+          Audio &amp; Media
+        </h2>
+        <div class="guides-grid">
+          <a href="/stream-pc-audio-to-phone/" class="guide-card">
+            <div>
+              <h3>Stream PC Audio to Phone Headphones Wirelessly</h3>
+              <p>How PCDeck captures Windows system audio via WASAPI Loopback (48 kHz stereo PCM) and routes it in real time to your phone earbuds.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 5. File Transfer -->
+      <section class="guides-section" data-section="input">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="17"/></svg>
+          </span>
+          Wireless File Transfer
+        </h2>
+        <div class="guides-grid">
+          <a href="/transfer-files-pc-to-android/" class="guide-card">
+            <div>
+              <h3>Transfer Files Between PC and Android Wirelessly (No Cable)</h3>
+              <p>High-speed local Wi-Fi file transfers between Windows and Android with chunked HTTP streaming and automatic resume support.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 6. Emergency & Troubleshooting -->
+      <section class="guides-section" data-section="emergency">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
+          Emergency &amp; Hardware Troubleshooting
+        </h2>
+        <div class="guides-grid">
+          <a href="/use-pc-without-mouse/" class="guide-card">
+            <div>
+              <h3>How to Use a Windows PC When Your Mouse Breaks</h3>
+              <p>Complete guide to native Windows keyboard navigation shortcuts, Windows Mouse Keys, and using PCDeck as an emergency wireless mouse.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/use-pc-without-keyboard/" class="guide-card">
+            <div>
+              <h3>How to Type on Windows When Your Physical Keyboard Fails</h3>
+              <p>Step-by-step instructions for launching Windows On-Screen Keyboard (OSK), sign-in accessibility buttons, and PCDeck virtual typing.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/use-pc-without-monitor/" class="guide-card">
+            <div>
+              <h3>How to Diagnose and Control a PC When the Monitor Dies</h3>
+              <p>Emergency recovery steps for dead laptop screens and detached displays, display session prerequisites, and remote desktop viewing.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 7. Linux & Steam Deck -->
+      <section class="guides-section" data-section="linux">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          </span>
+          Linux &amp; Steam Deck
+        </h2>
+        <div class="guides-grid">
+          <a href="/control-linux-pc-from-phone/" class="guide-card">
+            <div>
+              <h3>Control Linux PC or Steam Deck from Phone &amp; Browser</h3>
+              <p>Full guide to running PCDeck on Ubuntu, Debian, Fedora, Arch, and SteamOS with low-latency remote touch, trackpad, and screen streaming.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+
+          <a href="/linux-install/" class="guide-card">
+            <div>
+              <h3>Linux 1-Line Terminal Installation &amp; Setup</h3>
+              <p>Step-by-step terminal installation, automated dependency resolution, Wayland/X11 compatibility, and background service setup for Linux.</p>
+            </div>
+            <span class="guide-card-meta">Read Guide &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 8. Competitor Comparisons & Alternatives -->
+      <section class="guides-section" data-section="compare">
+        <h2 class="guides-category-title">
+          <span class="guides-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="m21 3-7 7"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/><path d="m14 10-4-4"/></svg>
+          </span>
+          Competitor Comparisons &amp; Alternatives
+        </h2>
+        <div class="guides-grid">
+          <a href="/remote-mouse-alternative/" class="guide-card">
+            <div>
+              <h3>Best Free Remote Mouse Alternative (Ad-Free, No Phone App)</h3>
+              <p>Compare PCDeck with Remote Mouse: zero unskippable video ads, no $14.99/year paywalls, and no phone app download required.</p>
+            </div>
+            <span class="guide-card-meta">Read Comparison &rarr;</span>
+          </a>
+
+          <a href="/unified-remote-alternative/" class="guide-card">
+            <div>
+              <h3>Best Lightweight Unified Remote Alternative</h3>
+              <p>Compare PCDeck with Unified Remote: lightweight portable .exe and instant browser remote vs heavy background services and firewall friction.</p>
+            </div>
+            <span class="guide-card-meta">Read Comparison &rarr;</span>
+          </a>
+          <a href="/wifi-mouse-alternative/" class="guide-card">
+            <div>
+              <h3>Best Free WiFi Mouse Alternative (Ad-Free, No Drops)</h3>
+              <p>Compare PCDeck with WiFi Mouse: zero popup ads, zero disconnects, and no mobile app install.</p>
+            </div>
+            <span class="guide-card-meta">Read Comparison &rarr;</span>
+          </a>
+
+          <a href="/monect-alternative/" class="guide-card">
+            <div>
+              <h3>Best Lightweight Monect Alternative (Zero Drivers)</h3>
+              <p>Compare PCDeck with Monect: zero virtual joystick drivers, no PC reboots, and instant browser trackpad.</p>
+            </div>
+            <span class="guide-card-meta">Read Comparison &rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Bottom Pitch Card -->
+      <div class="pitch">
+        <h2>Ready to connect your devices?</h2>
+        <p>PCDeck runs directly on your local network. No account required, no cloud relays, and no telemetry.</p>
+        <div class="row">
+          <a class="btn" href="/#download">Download PCDeck Free</a>
+          <a class="btn ghost" href="/security/">Read Security Architecture</a>
+        </div>
+        <p class="fine">Windows 10 / 11 · Linux &amp; Steam Deck · Android 5.0+ · 100% Offline Local Wi-Fi</p>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>&copy; 2026 PCDeck · Runs offline. No account, no telemetry. · <a href="/#community" style="color:var(--signal);font-weight:600;">Suggestions &amp; Complaints</a></p>
+    <div>
+      <a href="/features/">Features &amp; Controls</a> · 
+      <a href="/guides/">All Guides Hub</a> · 
+      <a href="/connect-pc-to-pc-wifi/">Connect PC to PC via Wi-Fi</a> · 
+      <a href="/browser-pc-remote/">Zero-Install Web Remote</a> · 
+      <a href="/security/">Security Architecture</a> · 
+      <a href="/control-linux-pc-from-phone/">Linux Guide</a> · 
+      <a href="/privacy_policy.html">Privacy Policy</a> · 
+      <a href="/#download">Downloads</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    } else {
+      menu.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menu.addEventListener('click', function (e) {
+    if (e.target === menu || e.target.closest('a')) {
+      toggleMenu(false);
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && menu.classList.contains('active')) {
+      toggleMenu(false);
+    }
+  });
+
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 900 && menu.classList.contains('active')) {
+      toggleMenu(false);
+    }
+  });
+})();
+
+// Category filter pills handler
+(function () {
+  var pills = document.querySelectorAll('.filter-pill');
+  var sections = document.querySelectorAll('.guides-section');
+  if (!pills.length || !sections.length) return;
+
+  pills.forEach(function (pill) {
+    pill.addEventListener('click', function () {
+      pills.forEach(function (p) { p.classList.remove('active'); });
+      pill.classList.add('active');
+      var cat = pill.getAttribute('data-cat');
+
+      sections.forEach(function (sec) {
+        if (cat === 'all') {
+          sec.style.display = '';
+        } else {
+          var secCat = sec.getAttribute('data-section');
+          sec.style.display = (secCat === cat || secCat === 'popular') ? '' : 'none';
+        }
+      });
+      if (typeof window.va === 'function') {
+        window.va('event', { name: 'filter_guides', category: cat });
+      }
+    });
+  });
+})();
+</script>
+<script defer src="/va.js"></script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCDeck — Owner & Developer Visit Exclusion Console</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0f17;
+  --panel: #131b26;
+  --border: #1f2d3f;
+  --cyan: #00f0ff;
+  --lime: #10b981;
+  --red: #ef4444;
+  --text: #ffffff;
+  --muted: #94a3b8;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Instrument Sans', sans-serif;
+  --heading: 'Archivo', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+.console-card {
+  max-width: 580px;
+  width: 100%;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.shield-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.15);
+  border: 2px solid var(--lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: var(--lime);
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid var(--lime);
+  color: var(--lime);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 auto;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 10px var(--lime);
+}
+h1 {
+  font-family: var(--heading);
+  font-size: 24px;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+p.sub {
+  font-size: 14.5px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.55;
+}
+.diag-box {
+  background: #06090e;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.diag-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #141c26;
+  padding-bottom: 6px;
+}
+.diag-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.diag-key { color: var(--muted); }
+.diag-val { color: var(--lime); font-weight: 700; }
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+.btn-primary {
+  background: var(--cyan);
+  color: #000000;
+}
+.btn-primary:hover {
+  background: #22f4ff;
+  transform: translateY(-1px);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover {
+  border-color: var(--muted);
+  color: #fff;
+}
+.btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  font-size: 13px;
+  padding: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="console-card">
+  <div class="shield-badge" id="shield-icon">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <polyline points="9 12 11 14 15 10"/>
+    </svg>
+  </div>
+
+  <div class="status-pill" id="pill-status">
+    <span class="status-dot"></span>
+    <span id="pill-text">VISITS BLOCKED (INVISIBLE)</span>
+  </div>
+
+  <h1>Owner Visit Restriction Active</h1>
+  <p class="sub">
+    This device and browser are permanently excluded from PCDeck Vercel Analytics. You can freely view, test, and browse the site without inflating pageviews or visitors.
+  </p>
+
+  <div class="diag-box">
+    <div class="diag-row">
+      <span class="diag-key">LocalStorage [pcdeck_no_track]:</span>
+      <span class="diag-val" id="val-storage">Active (1)</span>
+    </div>
+    <div class="diag-row">
+      <span class="diag-key">LocalStorage [va-disable]:</span>
+      <span class="diag-val" id="val-va">Active (1)</span>
+    </div>
+    <div class="diag-row">
+      <span class="diag-key">Persistent Cookie (10 Years):</span>
+      <span class="diag-val" id="val-cookie">Set &amp; Synced</span>
+    </div>
+    <div class="diag-row">
+      <span class="diag-key">Vercel Insights Tracker:</span>
+      <span class="diag-val" id="val-script" style="color:#00f0ff;">Dropped &amp; Nullified</span>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <a href="/" class="btn btn-primary">&larr; Return to Homepage (Tracking Remains Blocked)</a>
+    <button type="button" class="btn btn-outline" id="btn-refresh" onclick="location.reload()">Re-verify Status</button>
+    <button type="button" class="btn btn-danger" id="btn-reset" onclick="resetTracking()">Re-enable Tracking for this device (Testing Only)</button>
+  </div>
+</div>
+
+<script>
+// Automatically enforce the block immediately on page load
+(function() {
+  try {
+    localStorage.setItem('pcdeck_no_track', '1');
+    localStorage.setItem('va-disable', '1');
+    sessionStorage.setItem('pcdeck_no_track', '1');
+    document.cookie = 'pcdeck_no_track=1; path=/; max-age=315360000; SameSite=Lax';
+    document.cookie = 'va-disable=1; path=/; max-age=315360000; SameSite=Lax';
+  } catch (e) {}
+
+  // Update diagnostic elements
+  document.getElementById('val-storage').textContent = localStorage.getItem('pcdeck_no_track') === '1' ? 'Blocked (1)' : 'Not Set';
+  document.getElementById('val-va').textContent = localStorage.getItem('va-disable') === '1' ? 'Disabled (1)' : 'Not Set';
+  document.getElementById('val-cookie').textContent = document.cookie.indexOf('pcdeck_no_track=1') !== -1 ? 'Set (10 Years)' : 'Not Set';
+})();
+
+function resetTracking() {
+  if (confirm('Are you sure you want to RE-ENABLE analytics on this device? Your visits will be tracked.')) {
+    try {
+      localStorage.removeItem('pcdeck_no_track');
+      localStorage.removeItem('va-disable');
+      sessionStorage.removeItem('pcdeck_no_track');
+      document.cookie = 'pcdeck_no_track=; path=/; max-age=0; SameSite=Lax';
+      document.cookie = 'va-disable=; path=/; max-age=0; SameSite=Lax';
+    } catch (e) {}
+    alert('Tracking re-enabled. Reloading page...');
+    location.reload();
+  }
+}
+</script>
+<script defer src="/va.js"></script>
+</body>
+</html>

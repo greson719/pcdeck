@@ -1,0 +1,48 @@
+﻿# Vercel Deployment Ignore Rules
+# Exclude heavy binaries, local tools, and non-website assets to prevent exceeding Vercel 10GB deployment storage limit
+
+# Python environment & caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Executables & Archives (Distributed via GitHub Releases CDN)
+*.exe
+*.exe.old
+*.zip
+*.msi
+*.aab
+*.jar
+*.keystore
+*.pfx
+PCDeck-Setup.exe
+PCDeck.exe
+PCDeck_Package.zip
+website/PCDeck-Setup.exe
+website/PCDeck.exe
+website/PCDeck.exe.old
+website/PCDeck_Package.zip
+
+# Server, Drivers, Mobile and Desktop build files
+server/
+android_app/
+drivers/
+build/
+dist/
+build_android/
+msstore_assets/
+playstore_assets/
+scrcpy_bin/
+tools/
+scratch/
+.agents/
+.claude/
+tests/
+
+# System dumps & temp files
+*.tmp
+*.log
+dom_dump.txt

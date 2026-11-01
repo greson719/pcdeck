@@ -1,0 +1,13749 @@
+/**
+ * PCDeck Pro - Cyber-Neobrutalism Client Controller
+ * Low-Latency PC Remote Touch Display, Universal Virtual Keyboard, In-Built PC File Manager & Anti-Jitter Trackpad
+ */
+
+(function () {
+  'use strict';
+
+  function checkIsNativeApp() {
+    return !!(window.AndroidApp || window.AndroidBridge || window.isNativeApp || (window.location && window.location.protocol === 'file:') || (window.navigator && window.navigator.userAgent && window.navigator.userAgent.includes('PCDeckNativeApp')) || (typeof document !== 'undefined' && ((document.documentElement && document.documentElement.classList.contains('is-native-app')) || (document.body && document.body.classList.contains('is-native-app')))));
+  }
+  window.checkIsNativeApp = checkIsNativeApp;
+  const isNativeApp = checkIsNativeApp();
+  try {
+    if (isNativeApp) {
+      document.documentElement.classList.add('is-native-app');
+      document.documentElement.classList.remove('is-web-browser');
+    } else {
+      document.documentElement.classList.add('is-web-browser');
+      document.documentElement.classList.remove('is-native-app');
+    }
+  } catch (e) {}
+
+  window.showDeckToast = function (msg, duration) {
+    try {
+      var t = document.getElementById('deck-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'deck-toast';
+        t.style.cssText = 'position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:rgba(10,14,23,0.96);border:1.5px solid var(--neo-cyan);color:#fff;padding:10px 18px;border-radius:8px;font-size:0.8rem;font-weight:700;z-index:999999;box-shadow:0 8px 24px rgba(0,240,255,0.25);pointer-events:none;transition:opacity 0.25s,transform 0.25s;text-align:center;max-width:90vw;backdrop-filter:blur(10px);opacity:0;';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1';
+      t.style.transform = 'translateX(-50%) translateY(0)';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function () {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(8px)';
+      }, duration || 3000);
+    } catch (e) {
+      console.log('Toast:', msg);
+    }
+  };
+
+  window.sendFeedbackMail = function () {
+    var email = 'gresonparichha719@gmail.com';
+    var subject = '[PCDeck] Feedback & Suggestion';
+    var body = 'Hi Greson,\n\nHere is my feedback / bug report:\n';
+
+    // 1. Android APK native intent
+    if (window.AndroidApp && typeof window.AndroidApp.sendEmail === 'function') {
+      try {
+        window.AndroidApp.sendEmail(email, subject, body);
+        return;
+      } catch (e) {
+        console.warn('Native sendEmail failed', e);
+      }
+    }
+
+    // 2. 1-click clipboard copy
+    var copied = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(email).then(function () {
+        window.showDeckToast('Copied ' + email + ' to clipboard!');
+      }).catch(function () {});
+      copied = true;
+    }
+
+    // 3. Mailto fallback
+    var mailUrl = 'mailto:' + encodeURIComponent(email) +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body=' + encodeURIComponent(body);
+
+    var a = document.createElement('a');
+    a.href = mailUrl;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    if (!copied) {
+      window.showDeckToast('Creator email: ' + email);
+    }
+  };
+
+  window.openRedditFeedback = function () {
+    var url = 'https://www.reddit.com/user/Old_Boysenberry_4008/comments/1wkh5v0/pcdeck_official_feedback_bug_reports_feature/';
+    if (window.AndroidApp && typeof window.AndroidApp.openExternalUrl === 'function') {
+      try {
+        window.AndroidApp.openExternalUrl(url);
+        return;
+      } catch (e) {
+        console.warn('Native openExternalUrl failed', e);
+      }
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  window.openMsStoreReview = function () {
+    var url = 'https://apps.microsoft.com/detail/9P4BK16LBGLS';
+    var isConnected = (mainWs && mainWs.readyState === WebSocket.OPEN);
+    var host = (state && state.serverHost) || (localStorage.getItem('pcdeck_ip') || '').split(':')[0];
+    var port = (state && state.serverPort) || '8000';
+
+    // 1. If connected to PC over Wi-Fi, trigger the native Store review dialog directly on the PC monitor
+    if (isConnected) {
+      try {
+        mainWs.send('open_store_review,1');
+      } catch (e) {}
+      showToast('Opening Microsoft Store review on PC...', 'info');
+      return; // Do NOT kick user out to mobile phone browser when connected to PC
+    }
+
+    // 2. If disconnected from WebSocket but host IP is configured, attempt HTTP trigger to PC
+    if (host) {
+      fetch('http://' + host + ':' + port + '/api/open_store_review', { method: 'POST', mode: 'no-cors' }).catch(function () {});
+      showToast('Opening Microsoft Store review on PC...', 'info');
+      return;
+    }
+
+    // 3. Fallback only if completely offline / no PC configured: open store web page on device
+    if (window.AndroidApp && typeof window.AndroidApp.openExternalUrl === 'function') {
+      try {
+        window.AndroidApp.openExternalUrl(url);
+        return;
+      } catch (e) {
+        console.warn('Native openExternalUrl failed', e);
+      }
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  // Global PCDeck Icon Registry & Helper Function
+  const PC_DECK_ICONS = {
+    lock: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+    mic: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+    gamepad: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>`,
+    camera: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`,
+    keyc: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>`,
+    insert: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+    home: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    pageUp: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/><polyline points="18 9 12 3 6 9"/></svg>`,
+    pageDown: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/><polyline points="6 15 12 21 18 15"/></svg>`,
+    end: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 19 12"/><polyline points="13 6 19 12 13 18"/><line x1="21" y1="6" x2="21" y2="18"/></svg>`,
+    fileUp: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>`,
+    sendFiles: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><path d="M8 16l4-4 4 4"/><line x1="12" y1="12" x2="12" y2="20"/></svg>`,
+    folder: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></svg>`,
+    pc: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+    phone: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
+    mute: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
+    volDown: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><line x1="18" y1="12" x2="22" y2="12"/></svg>`,
+    volUp: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`,
+    showDesktop: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="13" x2="22" y2="13"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>`,
+    switchApp: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="13" height="13" rx="2"/><path d="M4 17V5a2 2 0 0 1 2-2h12"/></svg>`,
+    screenshot: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M20 9V5a1 1 0 0 0-1-1h-4"/><path d="M4 15v4a1 1 0 0 0 1 1h4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>`,
+    taskManager: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 12h2l2-4 3 8 2-4h2"/></svg>`,
+    closeWindow: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>`,
+    send: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+    qrScanner: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M16 4h3a1 1 0 0 1 1 1v3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 20H5a1 1 0 0 1-1-1v-3"/><rect x="7" y="7" width="3" height="3" rx="0.5"/><rect x="14" y="7" width="3" height="3" rx="0.5"/><rect x="7" y="14" width="3" height="3" rx="0.5"/><path d="M14 14h3v3h-3z"/></svg>`,
+    cameraLoading: `<svg class="deck-icon deck-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>`,
+    file: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
+    image: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+    video: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+    wifi: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`,
+    settings: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    close: `<svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+  };
+
+  /**
+   * Normalizes input key aliases and returns the matching SVG markup.
+   */
+  function getIcon(name) {
+    const normalized = String(name).trim().toLowerCase().replace(/[\s\-_]/g, '');
+    const aliasMap = {
+      lock: 'lock',
+      mic: 'mic',
+      mick: 'mic',
+      gamepad: 'gamepad',
+      camera: 'camera',
+      keyc: 'keyc',
+      keys: 'keyc',
+      keyboard: 'keyc',
+      insert: 'insert',
+      home: 'home',
+      gageup: 'pageUp',
+      pageup: 'pageUp',
+      pagedown: 'pageDown',
+      end: 'end',
+      fileup: 'fileUp',
+      sendfiles: 'sendFiles',
+      folder: 'folder',
+      pc: 'pc',
+      phone: 'phone',
+      mure: 'mute',
+      mute: 'mute',
+      volminus: 'volDown',
+      voldown: 'volDown',
+      volplus: 'volUp',
+      volup: 'volUp',
+      showdesktop: 'showDesktop',
+      switchapp: 'switchApp',
+      screenshot: 'screenshot',
+      screenshotm: 'screenshot',
+      taskmanager: 'taskManager',
+      closewindow: 'closeWindow',
+      send: 'send',
+      qrscanner: 'qrScanner',
+      cameraloading: 'cameraLoading',
+      file: 'file',
+      image: 'image',
+      video: 'video',
+      wifi: 'wifi',
+      settings: 'settings',
+      close: 'close'
+    };
+
+    const key = aliasMap[normalized] || name;
+    return PC_DECK_ICONS[key] || PC_DECK_ICONS.pc;
+  }
+
+  window.PC_DECK_ICONS = PC_DECK_ICONS;
+  window.getIcon = getIcon;
+  window.getDeckIcon = getIcon;
+
+  window.switchTab = function(targetId) {
+    if (typeof switchTab === 'function') {
+      switchTab(targetId);
+    }
+  };
+
+  window.switchTabNav = function(tabEl, targetId) {
+    if (typeof switchTab === 'function') {
+      switchTab(targetId);
+    }
+  };
+
+  window.renderRecentPCs = function() {
+    if (typeof renderRecentPCs === 'function') {
+      renderRecentPCs();
+    }
+  };
+
+  window.switchToPC = function(host, port) {
+    if (typeof switchToPC === 'function') {
+      switchToPC(host, port);
+    }
+  };
+
+  // --- Configuration & Default State ---
+  const state = {
+    serverHost: (window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '',
+    serverPort: window.location.port || '8000',
+    wsUrl: '',
+    screenWsUrl: '',
+    connected: false,
+    screenConnected: false,
+    latency: 0,
+    cursorSpeed: 1.0,
+    scrollSpeed: 1.4,
+    smoothAccel: true,
+    invertScroll: false,
+    hapticsEnabled: true,
+    wakelockEnabled: true,
+    autoAudioStream: false,
+    pinchZoomEnabled: true,
+    // Screen stream encoder settings, pushed to the server as "cfg,quality,scale,fps".
+    // The server clamps fps to 10-60, so 60 is the effective maximum.
+    streamFps: 30,
+    streamQuality: 75,
+    streamScale: 0.85,
+    autoQualityMode: 'auto',
+    zoomSens: 1.0,
+    activeTab: 'tab-screen',
+    transferSpeed: 'standard', // 'standard' (10 MB/s) or 'turbo' (Pro uncapped multi-stream)
+    screenMode: 'touch', // 'touch', 'mouse', or 'rclick'
+    dragLocked: false,
+    titleBarHidden: false,
+    gamepadHudEnabled: false,
+    gamepadHudActive: false,
+    gamepadHudEditing: false,
+    gamepadDriverInstalled: true,
+    wakeLockObj: null,
+    // Mouse Smoothing & Anti-Jitter Filter
+    smoothDx: 0,
+    smoothDy: 0,
+    // Pinch & Pan state
+    zoomScale: 1.0,
+    panX: 0,
+    panY: 0,
+    initialPinchDist: 0,
+    initialZoom: 1.0,
+    initialPanX: 0,
+    initialPanY: 0,
+    pinchMidX: 0,
+    pinchMidY: 0,
+    isPinching: false,
+    lastTapTime: 0,
+    // Sticky modifiers state
+    capsLock: false,
+    shiftPressed: false,
+    ctrlPressed: false,
+    altPressed: false,
+    // In-Built PC File Manager State
+    currentFsPath: '',
+    fsParentPath: null,
+    isFsRoot: false,
+    fsHistory: [],
+    fsFolders: [],
+    fsFiles: [],
+    fsFilterText: '',
+    markedFsPaths: new Set(),
+    fsSelectMode: false,       // true = long-press selection mode active (PC files)
+    // In-Built Phone File Manager State
+    phoneFsHistory: [],
+    phoneFs: {
+      currentPath: 'default',
+      parentPath: '',
+      folders: [],
+      files: [],
+      filterText: '',
+      markedPaths: new Set(),
+      selectMode: false,       // true = long-press selection mode active (phone files)
+    },
+    // QR Scanner stream
+    qrStream: null,
+    currentFacingMode: 'environment',
+    autoReconnectTimer: null,
+  };
+
+  // --- DOM Elements & Context Holder ---
+  let el = {};
+  let screenCtx = null;
+
+  function updateGamepadHudVisibility() {
+    const isNative = (typeof checkIsNativeApp === 'function') ? checkIsNativeApp() : isNativeApp;
+    const shouldShow = !!(state.gamepadHudEnabled && isNative);
+
+    if (document.body) {
+      document.body.classList.toggle('gamepad-hud-enabled', shouldShow);
+    }
+
+    const fab = document.getElementById('btn-screen-hud-fab');
+    if (fab) {
+      fab.style.setProperty('display', (shouldShow && state.activeTab === 'tab-screen') ? 'flex' : 'none', 'important');
+    }
+
+    if (!shouldShow && state.gamepadHudActive) {
+      if (typeof window.toggleGamepadHUD === 'function') {
+        window.toggleGamepadHUD(false);
+      }
+    }
+  }
+  window.updateGamepadHudVisibility = updateGamepadHudVisibility;
+
+  function initDomElements() {
+    el = {
+      appWrapper: document.getElementById('app-wrapper'),
+      connectModal: document.getElementById('connect-modal'),
+      modalIpInput: document.getElementById('modal-ip-input'),
+      modalBtnConnect: document.getElementById('modal-btn-connect'),
+      modalBtnScanQr: document.getElementById('modal-btn-scan-qr'),
+      qrScannerModal: document.getElementById('qr-scanner-modal'),
+      qrVideo: document.getElementById('qr-video'),
+      qrCanvas: document.getElementById('qr-canvas'),
+      btnCloseScanner: document.getElementById('btn-close-scanner'),
+      btnSwitchCamera: document.getElementById('btn-switch-camera'),
+      btnToggleTorch: document.getElementById('btn-toggle-torch'),
+      toastMsg: document.getElementById('toast-msg'),
+      toastIcon: document.getElementById('toast-icon'),
+      toastText: document.getElementById('toast-text'),
+      // Quick Tools Modal & Actions Drawer
+      quickToolsModal: document.getElementById('quick-tools-modal'),
+      btnQuickToolsToggle: document.getElementById('btn-quick-tools-toggle'),
+      btnCloseTools: document.getElementById('btn-close-tools'),
+      toolRotate: document.getElementById('tool-rotate'),
+      toolKeyboard: document.getElementById('tool-keyboard'),
+      toolTouchMode: document.getElementById('tool-touch-mode'),
+      toolTouchStatus: document.getElementById('tool-touch-status'),
+      toolRclick: document.getElementById('tool-rclick'),
+      toolRclickStatus: document.getElementById('tool-rclick-status'),
+      toolZoomReset: document.getElementById('tool-zoom-reset'),
+      toolWakelock: document.getElementById('tool-wakelock'),
+      toolWakelockStatus: document.getElementById('tool-wakelock-status'),
+      toolFullscreen: document.getElementById('tool-fullscreen'),
+      // Virtual Keyboard Drawer
+      kbdDrawer: document.getElementById('virtual-kbd-drawer'),
+      btnOpenKbdNav: document.getElementById('btn-open-kbd-nav'),
+      btnCloseKbd: document.getElementById('btn-close-kbd'),
+      kbdLiveInput: document.getElementById('kbd-live-input'),
+      btnKbdPaste: document.getElementById('btn-kbd-paste'),
+      btnKbdSend: document.getElementById('btn-kbd-send'),
+      btnTabQwerty: document.getElementById('btn-tab-qwerty'),
+      btnTabNumpad: document.getElementById('btn-tab-numpad'),
+      btnTabFn: document.getElementById('btn-tab-fn'),
+      panelQwerty: document.getElementById('panel-qwerty'),
+      panelNumpad: document.getElementById('panel-numpad'),
+      panelFn: document.getElementById('panel-fn'),
+      vkCaps: document.getElementById('vk-caps'),
+      vkShift: document.getElementById('vk-shift'),
+      vkCtrl: document.getElementById('vk-ctrl'),
+      vkAlt: document.getElementById('vk-alt'),
+      // Header & Navigation
+      topNav: document.querySelector('header.top-nav'),
+      btnToggleTitlebar: document.getElementById('btn-toggle-titlebar'),
+      btnUnhideTitlebar: document.getElementById('btn-unhide-titlebar'),
+      btnReconnectHeader: document.getElementById('btn-reconnect-header'),
+      pillStatus: document.getElementById('pill-status'),
+      statusIndicator: document.getElementById('status-indicator'),
+      statusLabel: document.getElementById('status-label'),
+      latencyVal: document.getElementById('latency-val'),
+      dockTabs: document.querySelectorAll('.dock-tab'),
+      tabViews: document.querySelectorAll('.tab-view'),
+      // Screen Tab
+      screenViewport: document.getElementById('screen-viewport'),
+      screenCanvasWrapper: document.getElementById('screen-canvas-wrapper'),
+      screenCanvas: document.getElementById('screen-canvas'),
+      screenTouchRippleLayer: document.getElementById('screen-touch-ripple-layer'),
+      screenLoader: document.getElementById('screen-loader'),
+      // Trackpad Tab
+      trackpadSurface: document.getElementById('trackpad-surface'),
+      scrollStrip: document.getElementById('scroll-strip'),
+      btnLeftClick: document.getElementById('btn-left-click'),
+      btnMiddleClick: document.getElementById('btn-middle-click'),
+      btnRightClick: document.getElementById('btn-right-click'),
+      btnSpeedQuick: document.getElementById('btn-speed-quick'),
+      toolDragLock: document.getElementById('tool-drag-lock'),
+      btnEscQuick: document.getElementById('btn-esc-quick'),
+      btnDesktopQuick: document.getElementById('btn-desktop-quick'),
+      btnKbdQuick: document.getElementById('btn-kbd-quick'),
+      scrollBar: document.getElementById('scroll-bar'),
+      textInput: document.getElementById('text-input'),
+      // In-Built PC File Manager
+      fsPlacesStrip: document.getElementById('fs-places-strip'),
+      fsItemCount: document.getElementById('fs-item-count'),
+      fsCurrentPath: document.getElementById('fs-current-path'),
+      btnFsUp: document.getElementById('btn-fs-up'),
+      btnFsRefresh: document.getElementById('btn-fs-refresh'),
+      btnFsNewFolder: document.getElementById('btn-fs-new-folder'),
+      btnFsUploadHere: document.getElementById('btn-fs-upload-here'),
+      btnFsOpenPcFolder: document.getElementById('btn-fs-open-pc-folder'),
+      btnFsModePc: document.getElementById('btn-fs-mode-pc'),
+      btnFsModePhone: document.getElementById('btn-fs-mode-phone'),
+      fsPcPanel: document.getElementById('fs-pc-panel'),
+      fsPhonePanel: document.getElementById('fs-phone-panel'),
+      phoneFsPlacesStrip: document.getElementById('phone-fs-places-strip'),
+      btnPhoneFsUp: document.getElementById('btn-phone-fs-up'),
+      phoneFsCurrentPath: document.getElementById('phone-fs-current-path'),
+      btnPhoneFsRefresh: document.getElementById('btn-phone-fs-refresh'),
+      btnPhoneFsNewFolder: document.getElementById('btn-phone-fs-new-folder'),
+      btnPhoneFsUploadToPc: document.getElementById('btn-phone-fs-upload-to-pc'),
+      phoneFsSearchInput: document.getElementById('phone-fs-search-input'),
+      phoneFsItemCount: document.getElementById('phone-fs-item-count'),
+      phoneFsBatchBar: document.getElementById('phone-fs-batch-bar'),
+      phoneFsBatchSelectAll: document.getElementById('phone-fs-batch-select-all'),
+      phoneFsBatchCountLabel: document.getElementById('phone-fs-batch-count-label'),
+      phoneFsBatchSendLabel: document.getElementById('phone-fs-batch-send-label'),
+      btnPhoneFsBatchSendPc: document.getElementById('btn-phone-fs-batch-send-pc'),
+      btnPhoneFsBatchDelete: document.getElementById('btn-phone-fs-batch-delete'),
+      btnPhoneFsBatchClear: document.getElementById('btn-phone-fs-batch-clear'),
+      phoneFsBrowserItems: document.getElementById('phone-fs-browser-items'),
+      filePicker: document.getElementById('file-picker'),
+      fsSearchInput: document.getElementById('fs-search-input'),
+      fsBatchBar: document.getElementById('fs-batch-bar'),
+      fsBatchSelectAll: document.getElementById('fs-batch-select-all'),
+      fsBatchCountLabel: document.getElementById('fs-batch-count-label'),
+      fsBatchDlLabel: document.getElementById('fs-batch-dl-label'),
+      btnFsBatchDownload: document.getElementById('btn-fs-batch-download'),
+      btnFsBatchDelete: document.getElementById('btn-fs-batch-delete'),
+      btnFsBatchClear: document.getElementById('btn-fs-batch-clear'),
+      fileTransferBox: document.getElementById('file-transfer-box') || document.getElementById('file-upload-box'),
+      fileUploadBox: document.getElementById('file-upload-box') || document.getElementById('file-transfer-box'),
+      transferBadge: document.getElementById('transfer-badge'),
+      transferFilename: document.getElementById('transfer-filename') || document.getElementById('upload-filename'),
+      uploadFilename: document.getElementById('upload-filename') || document.getElementById('transfer-filename'),
+      transferPercent: document.getElementById('transfer-percent') || document.getElementById('upload-percent'),
+      uploadPercent: document.getElementById('upload-percent') || document.getElementById('transfer-percent'),
+      transferBar: document.getElementById('transfer-bar') || document.getElementById('upload-bar'),
+      uploadBar: document.getElementById('upload-bar') || document.getElementById('transfer-bar'),
+      transferStatus: document.getElementById('transfer-status') || document.getElementById('upload-status'),
+      uploadStatus: document.getElementById('upload-status') || document.getElementById('transfer-status'),
+      btnTransferOpenPc: document.getElementById('btn-transfer-open-pc'),
+      btnTransferOpenPhone: document.getElementById('btn-transfer-open-phone'),
+      btnTransferClose: document.getElementById('btn-transfer-close'),
+      btnFsPhoneDownloadsChip: document.getElementById('btn-fs-phone-downloads-chip'),
+      fsBrowserItems: document.getElementById('fs-browser-items'),
+      // Settings Tab
+      settingsIpInput: document.getElementById('settings-ip-input'),
+      btnSaveIp: document.getElementById('btn-save-ip'),
+      settingsBtnScanQr: document.getElementById('settings-btn-scan-qr'),
+      settingsBtnRotate: document.getElementById('settings-btn-rotate'),
+      settingGamepadHud: document.getElementById('setting-gamepad-hud'),
+      btnScreenGamepadHud: document.getElementById('btn-screen-gamepad-hud'),
+      btnScreenHudFab: document.getElementById('btn-screen-hud-fab'),
+      settingPinchZoom: document.getElementById('setting-pinch-zoom'),
+      settingZoomSens: document.getElementById('setting-zoom-sens'),
+      valZoomSens: document.getElementById('val-zoom-sens'),
+      settingCursorSpeed: document.getElementById('setting-cursor-speed'),
+      valCursorSpeed: document.getElementById('val-cursor-speed'),
+      settingScrollSpeed: document.getElementById('setting-scroll-speed'),
+      valScrollSpeed: document.getElementById('val-scroll-speed'),
+      settingAccel: document.getElementById('setting-accel'),
+      settingInvertScroll: document.getElementById('setting-invert-scroll'),
+      settingHaptics: document.getElementById('setting-haptics'),
+      settingWakelock: document.getElementById('setting-wakelock'),
+      settingAutoAudio: document.getElementById('setting-auto-audio'),
+      btnSaveAllSettings: document.getElementById('btn-save-all-settings'),
+      btnResetSettings: document.getElementById('btn-reset-settings'),
+      // Live PC Audio Streaming Elements
+      btnToggleAudioStream: document.getElementById('btn-toggle-audio-stream'),
+      audioBtnIcon: document.getElementById('audio-btn-icon'),
+      audioBtnLabel: document.getElementById('audio-btn-label'),
+      audioStatusPill: document.getElementById('audio-status-pill'),
+      audioVolumeSlider: document.getElementById('audio-volume-slider'),
+      valAudioVolume: document.getElementById('val-audio-volume'),
+      audioVisualizerBars: document.getElementById('audio-visualizer-bars'),
+    };
+
+    if (el.screenCanvas) {
+      screenCtx = el.screenCanvas.getContext('2d', { alpha: false });
+    }
+  }
+
+  // WebSockets
+  let mainWs = null;
+  let screenWs = null;
+  let pingInterval = null;
+  let qrScanAnimationId = null;
+  let toastTimer = null;
+  let globalLastTouchTime = 0;
+
+  window.__pcdeckState = state;
+  window.__pcdeckGetWs = () => ({
+    mainWs,
+    screenWs,
+    mainReady: mainWs ? mainWs.readyState : -1,
+    screenReady: screenWs ? screenWs.readyState : -1,
+    connected: state.connected
+  });
+
+  // --- Cyber-Neon Vector Toast Notification Capsule (Zero Emojis, Pure SVG Vector) ---
+  const TOAST_ICONS = {
+    success: '<svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+    info: '<svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+    warn: '<svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+    error: '<svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>'
+  };
+
+  const TOAST_EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}\u{2B50}-\u{2B55}\u{203C}\u{2049}\u{2122}\u{2139}\u{2194}-\u{2199}\u{21A9}-\u{21AA}\u{FE00}-\u{FE0F}]/gu;
+
+  function showToast(text, type = 'success', _legacyIcon = null) {
+    if (!el.toastMsg) return;
+    clearTimeout(toastTimer);
+
+    let toastType = (type || 'info').toLowerCase();
+    if (toastType === 'warning') toastType = 'warn';
+    if (!TOAST_ICONS[toastType]) toastType = 'info';
+
+    // Strictly sanitize and purge any emojis or AI buzzwords
+    let cleanText = String(text || '')
+      .replace(TOAST_EMOJI_REGEX, '')
+      .replace(/\(Real-Time AI-Tuned\)/gi, '(Adaptive Dynamic Tuning)')
+      .replace(/\bAI-Tuned\b/gi, 'Adaptive')
+      .replace(/\bAI-Powered\b/gi, 'Automated')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (el.toastText) el.toastText.textContent = cleanText;
+    if (el.toastIcon) {
+      el.toastIcon.innerHTML = TOAST_ICONS[toastType] || TOAST_ICONS.info;
+      el.toastIcon.className = `neo-toast-icon toast-icon-${toastType}`;
+    }
+
+    el.toastMsg.className = `neo-toast show toast-${toastType}`;
+    if (toastType === 'warn') {
+      el.toastMsg.classList.add('toast-warn');
+    } else if (toastType === 'error') {
+      el.toastMsg.classList.add('toast-error');
+    }
+
+    toastTimer = setTimeout(() => {
+      if (el.toastMsg) el.toastMsg.classList.remove('show');
+    }, 1900);
+  }
+
+  // --- Haptic Feedback ---
+  let userGestureSeen = false;
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pointerdown', () => { userGestureSeen = true; }, { once: true, passive: true });
+    window.addEventListener('keydown', () => { userGestureSeen = true; }, { once: true, passive: true });
+    window.addEventListener('touchstart', () => { userGestureSeen = true; }, { once: true, passive: true });
+  }
+
+  function vibrate(ms = 18) {
+    if (!userGestureSeen && !window.AndroidApp) return;
+    if (state.hapticsEnabled && window.navigator && window.navigator.vibrate) {
+      try {
+        window.navigator.vibrate(ms);
+      } catch (e) {}
+    }
+  }
+
+  // --- Screen Wake Lock API ---
+  async function requestWakeLock() {
+    if ('wakeLock' in navigator && state.wakelockEnabled) {
+      try {
+        state.wakeLockObj = await navigator.wakeLock.request('screen');
+        state.wakeLockObj.addEventListener('release', () => {
+          state.wakeLockObj = null;
+        });
+      } catch (err) {
+        console.warn('Wake Lock error:', err);
+      }
+    }
+  }
+
+  function releaseWakeLock() {
+    if (state.wakeLockObj) {
+      state.wakeLockObj.release().catch(() => {});
+      state.wakeLockObj = null;
+    }
+  }
+
+  // --- Host / IP Address Sanitizer ---
+  function parseHostPort(input) {
+    if (!input || typeof input !== 'string') return null;
+    let clean = input.trim();
+    if (clean.includes('?')) {
+      try {
+        const u = new URL(clean.startsWith('http') ? clean : `http://${clean}`);
+        const tok = u.searchParams.get('token') || u.searchParams.get('t');
+        if (tok) {
+          try { localStorage.setItem('pcdeck_token', tok.trim()); } catch (e) {}
+        }
+        const ipParam = u.searchParams.get('ip');
+        if (ipParam) clean = ipParam;
+        else if (u.hostname) return { host: u.hostname, port: u.port || '8000' };
+      } catch (e) {}
+    }
+    clean = clean.replace(/^(https?:\/\/|wss?:\/\/)/i, '');
+    clean = clean.split('/')[0].split('?')[0].trim();
+    if (!clean) return null;
+    if (clean.includes(':')) {
+      const parts = clean.split(':');
+      const host = parts[0].trim();
+      const port = parts[1].trim() || '8000';
+      return { host, port };
+    }
+    return { host: clean, port: '8000' };
+  }
+
+  // --- Settings Persistence ---
+  function loadSettings() {
+    try {
+      const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
+      const getPref = (key) => localStorage.getItem('pcdeck_' + key) ?? localStorage.getItem('neontrack_' + key);
+
+      // 0. Auto-derive or load Server IP & Pairing Token
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryIp = urlParams.get('ip') || urlParams.get('connect');
+      const queryToken = urlParams.get('token') || urlParams.get('t');
+      if (queryToken) {
+        try { localStorage.setItem('pcdeck_token', queryToken); } catch (e) {}
+      } else if (typeof document !== 'undefined' && document.cookie) {
+        const match = document.cookie.match(/(?:^|;\s*)pcdeck_token=([^;]+)/);
+        if (match && match[1]) {
+          try { localStorage.setItem('pcdeck_token', decodeURIComponent(match[1])); } catch (e) {}
+        }
+      }
+
+      if (queryIp) {
+        // Deep link with ?ip=192.168.x.x:8000
+        const parsed = parseHostPort(queryIp);
+        if (parsed) {
+          state.serverHost = parsed.host;
+          state.serverPort = parsed.port;
+          if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
+          if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
+          localStorage.setItem('pcdeck_ip', `${state.serverHost}:${state.serverPort}`);
+          localStorage.setItem('pcdeck_onboarding_completed', 'true');
+        }
+      } else if (isHttp) {
+        // Direct browser connection: host is already the PC server
+        state.serverHost = window.location.hostname;
+        state.serverPort = window.location.port || '8000';
+        if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
+        if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
+        localStorage.setItem('pcdeck_ip', `${state.serverHost}:${state.serverPort}`);
+        localStorage.setItem('pcdeck_onboarding_completed', 'true');
+      } else {
+        const savedIp = getPref('ip');
+        if (savedIp) {
+          const parsed = parseHostPort(savedIp);
+          if (parsed) {
+            state.serverHost = parsed.host;
+            state.serverPort = parsed.port;
+            if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
+            if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
+          }
+        }
+      }
+
+      const cursor = getPref('cursor_speed');
+      if (cursor) {
+        state.cursorSpeed = parseFloat(cursor);
+        if (el.settingCursorSpeed) el.settingCursorSpeed.value = cursor;
+        if (el.valCursorSpeed) el.valCursorSpeed.textContent = parseFloat(cursor).toFixed(1) + 'x';
+        if (el.btnSpeedQuick) el.btnSpeedQuick.textContent = `${parseFloat(cursor).toFixed(1)}x`;
+      } else {
+        state.cursorSpeed = 1.0;
+        if (el.settingCursorSpeed) el.settingCursorSpeed.value = '1.0';
+        if (el.valCursorSpeed) el.valCursorSpeed.textContent = '1.0x';
+        if (el.btnSpeedQuick) el.btnSpeedQuick.textContent = '1.0x';
+      }
+
+      const scroll = getPref('scroll_speed');
+      if (scroll) {
+        state.scrollSpeed = parseFloat(scroll);
+        if (el.settingScrollSpeed) el.settingScrollSpeed.value = scroll;
+        if (el.valScrollSpeed) el.valScrollSpeed.textContent = parseFloat(scroll).toFixed(1) + 'x';
+      } else {
+        state.scrollSpeed = 1.4;
+        if (el.settingScrollSpeed) el.settingScrollSpeed.value = '1.4';
+        if (el.valScrollSpeed) el.valScrollSpeed.textContent = '1.4x';
+      }
+
+      const zoomSens = getPref('zoom_sens');
+      if (zoomSens) {
+        state.zoomSens = parseFloat(zoomSens);
+        if (el.settingZoomSens) el.settingZoomSens.value = zoomSens;
+        if (el.valZoomSens) el.valZoomSens.textContent = zoomSens + 'x';
+      }
+
+      const pinch = getPref('pinch_zoom');
+      if (pinch !== null && pinch !== undefined) {
+        state.pinchZoomEnabled = pinch === 'true';
+        if (el.settingPinchZoom) el.settingPinchZoom.checked = state.pinchZoomEnabled;
+      }
+
+      const accel = getPref('accel');
+      if (accel !== null && accel !== undefined) {
+        state.smoothAccel = accel === 'true';
+        if (el.settingAccel) el.settingAccel.checked = state.smoothAccel;
+      }
+
+      const invert = getPref('invert_scroll');
+      if (invert !== null && invert !== undefined) {
+        state.invertScroll = invert === 'true';
+        if (el.settingInvertScroll) el.settingInvertScroll.checked = state.invertScroll;
+      }
+
+      const haptics = getPref('haptics');
+      if (haptics !== null && haptics !== undefined) {
+        state.hapticsEnabled = haptics === 'true';
+        if (el.settingHaptics) el.settingHaptics.checked = state.hapticsEnabled;
+      }
+
+      const wakelock = getPref('wakelock');
+      if (wakelock !== null && wakelock !== undefined) {
+        state.wakelockEnabled = wakelock === 'true';
+        if (el.settingWakelock) el.settingWakelock.checked = state.wakelockEnabled;
+      }
+
+      const hudEnabled = getPref('gamepad_hud_enabled');
+      if (hudEnabled !== null && hudEnabled !== undefined) {
+        state.gamepadHudEnabled = hudEnabled === 'true';
+        if (el.settingGamepadHud) el.settingGamepadHud.checked = state.gamepadHudEnabled;
+      } else {
+        state.gamepadHudEnabled = false;
+        if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
+      }
+      if (typeof updateGamepadHudVisibility === 'function') {
+        updateGamepadHudVisibility();
+      }
+
+      const autoAudio = getPref('auto_audio');
+      if (autoAudio !== null && autoAudio !== undefined) {
+        state.autoAudioStream = autoAudio === 'true';
+        if (el.settingAutoAudio) el.settingAutoAudio.checked = state.autoAudioStream;
+      } else {
+        state.autoAudioStream = false;
+        if (el.settingAutoAudio) el.settingAutoAudio.checked = false;
+      }
+
+      const savedFps = getPref('stream_fps');
+      if (savedFps !== null && savedFps !== undefined) {
+        const parsed = parseInt(savedFps, 10);
+        if (parsed === 30 || parsed === 60) state.streamFps = parsed;
+      }
+
+      const savedQuality = getPref('stream_quality');
+      if (savedQuality !== null && savedQuality !== undefined) state.streamQuality = parseInt(savedQuality, 10);
+      const savedScale = getPref('stream_scale');
+      if (savedScale !== null && savedScale !== undefined) state.streamScale = parseFloat(savedScale);
+      const savedAutoMode = getPref('stream_auto_mode');
+      if (savedAutoMode) state.autoQualityMode = savedAutoMode;
+
+      const selClarity = document.getElementById('setting-stream-clarity');
+      if (selClarity) {
+        selClarity.value = state.autoQualityMode || 'auto';
+      }
+
+      const savedSpeed = getPref('transfer_speed');
+      if (savedSpeed === 'turbo' || savedSpeed === 'standard') {
+        state.transferSpeed = savedSpeed;
+      }
+      const selSpeed = document.getElementById('setting-transfer-speed');
+      if (selSpeed) {
+        selSpeed.value = state.transferSpeed || 'standard';
+      }
+
+      const titlebarHidden = getPref('titlebar_hidden');
+      if (titlebarHidden === 'true') {
+        state.titleBarHidden = true;
+        if (el.topNav) el.topNav.classList.add('hidden-bar');
+        if (el.btnUnhideTitlebar) el.btnUnhideTitlebar.style.display = 'inline-flex';
+      }
+    } catch (e) {
+      console.warn('Could not load settings from localStorage', e);
+    }
+  }
+
+  function saveAllSettings(showToastNotify = true) {
+    try {
+      localStorage.setItem('pcdeck_ip', `${state.serverHost}:${state.serverPort}`);
+      localStorage.setItem('pcdeck_cursor_speed', state.cursorSpeed.toString());
+      localStorage.setItem('pcdeck_scroll_speed', state.scrollSpeed.toString());
+      localStorage.setItem('pcdeck_zoom_sens', state.zoomSens.toString());
+      localStorage.setItem('pcdeck_pinch_zoom', state.pinchZoomEnabled.toString());
+      localStorage.setItem('pcdeck_accel', state.smoothAccel.toString());
+      localStorage.setItem('pcdeck_invert_scroll', state.invertScroll.toString());
+      localStorage.setItem('pcdeck_haptics', state.hapticsEnabled.toString());
+      localStorage.setItem('pcdeck_wakelock', state.wakelockEnabled.toString());
+      localStorage.setItem('pcdeck_gamepad_hud_enabled', state.gamepadHudEnabled.toString());
+      localStorage.setItem('pcdeck_auto_audio', state.autoAudioStream.toString());
+      localStorage.setItem('pcdeck_stream_fps', state.streamFps.toString());
+      localStorage.setItem('pcdeck_stream_quality', state.streamQuality.toString());
+      localStorage.setItem('pcdeck_stream_scale', state.streamScale.toString());
+      localStorage.setItem('pcdeck_stream_auto_mode', state.autoQualityMode || 'auto');
+      localStorage.setItem('pcdeck_transfer_speed', state.transferSpeed || 'standard');
+      localStorage.setItem('pcdeck_titlebar_hidden', state.titleBarHidden.toString());
+
+      if (showToastNotify) {
+        showToast('All Preferences Saved!', 'success');
+        vibrate(30);
+      }
+    } catch (e) {
+      console.warn('Could not save settings to localStorage', e);
+    }
+  }
+
+  function resetAllSettings() {
+    localStorage.clear();
+    state.cursorSpeed = 1.0;
+    state.scrollSpeed = 1.4;
+    state.zoomSens = 1.0;
+    state.pinchZoomEnabled = true;
+    state.smoothAccel = true;
+    state.invertScroll = false;
+    state.hapticsEnabled = true;
+    state.wakelockEnabled = true;
+    state.gamepadHudEnabled = false;
+    if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
+    if (typeof updateGamepadHudVisibility === 'function') {
+      updateGamepadHudVisibility();
+    }
+    state.autoAudioStream = false;
+    state.titleBarHidden = false;
+    if (el.topNav) el.topNav.classList.remove('hidden-bar');
+    if (el.btnUnhideTitlebar) el.btnUnhideTitlebar.style.display = 'none';
+
+    if (el.settingCursorSpeed) el.settingCursorSpeed.value = '1.5';
+    if (el.valCursorSpeed) el.valCursorSpeed.textContent = '1.5x';
+    if (el.btnSpeedQuick) el.btnSpeedQuick.textContent = '1.5x';
+    if (el.settingScrollSpeed) el.settingScrollSpeed.value = '1.4';
+    if (el.valScrollSpeed) el.valScrollSpeed.textContent = '1.4x';
+    if (el.settingZoomSens) el.settingZoomSens.value = '1.0';
+    if (el.valZoomSens) el.valZoomSens.textContent = '1.0x';
+    if (el.settingPinchZoom) el.settingPinchZoom.checked = true;
+    if (el.settingGamepadHud) el.settingGamepadHud.checked = false;
+    if (el.settingAccel) el.settingAccel.checked = true;
+    if (el.settingInvertScroll) el.settingInvertScroll.checked = false;
+    if (el.settingHaptics) el.settingHaptics.checked = true;
+    if (el.settingWakelock) el.settingWakelock.checked = true;
+    if (el.settingAutoAudio) el.settingAutoAudio.checked = true;
+    if (window.updateTitlebarActions) window.updateTitlebarActions();
+
+    resetPinchZoom();
+    showToast('Settings Reset to Defaults', 'warn');
+    vibrate(30);
+  }
+
+  // --- Cyber Touch Ripple After-Effect Engine ---
+  function spawnTouchRipple(clientX, clientY, type = 'tap') {
+    const layer = el.screenTouchRippleLayer || document.getElementById('screen-touch-ripple-layer');
+    if (!layer || !el.screenCanvasWrapper) return;
+
+    const wrapperRect = el.screenCanvasWrapper.getBoundingClientRect();
+    const x = clientX - wrapperRect.left;
+    const y = clientY - wrapperRect.top;
+
+    const ripple = document.createElement('div');
+    ripple.className = `touch-ripple-effect ripple-${type}`;
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+
+    layer.appendChild(ripple);
+
+    // Auto cleanup after animation
+    const duration = type === 'trail' ? 200 : (type === 'double' ? 380 : 340);
+    setTimeout(() => {
+      if (ripple.parentNode) {
+        ripple.parentNode.removeChild(ripple);
+      }
+    }, duration);
+  }
+
+  // --- Smart Touchscreen Interaction Engine for Streaming Display ---
+  function initScreenTouchDisplay() {
+    if (!el.screenCanvas || !el.screenViewport) return;
+
+    let touchActive = false;
+    let touchStartX = 0, touchStartY = 0;
+    let lastX = 0, lastY = 0;
+    let touchStartTime = 0;
+    let longPressTimer = null;
+    let lastTapTime = 0;
+    let lastTapX = 0, lastTapY = 0;
+    let rAfMoveScheduled = false;
+    let pendingNormX = 0, pendingNormY = 0;
+    let pendingRelDx = 0, pendingRelDy = 0;
+    let lastTrailTime = 0;
+
+    let isScrolling = false;
+    let isLongPressTriggered = false;
+    let isLongPressDrag = false;
+    let touchAnchorNormX = 0.5;
+    let touchAnchorNormY = 0.5;
+    let scrollCursorAnchored = false;
+    let scrollLastX = 0, scrollLastY = 0;
+    let wasMomentumStopped = false;
+    let twoFingerActive = false;
+    let twoFingerStartTime = 0;
+    let twoFingerStartDist = 0;
+    let twoFingerMoved = false;
+    let twoFingerMidX = 0, twoFingerMidY = 0;
+    let twoFingerLastTapTime = 0;
+
+    // Velocity Tracker for True Mobile Kinetic Momentum (Fling Inertia)
+    let touchHistory = [];
+    let isMomentumActive = false;
+    let momentumAnimId = null;
+
+    // Prevent default context menu and text selection
+    el.screenCanvas.oncontextmenu = (e) => { e.preventDefault(); return false; };
+    if (el.screenViewport) {
+      el.screenViewport.oncontextmenu = (e) => { e.preventDefault(); return false; };
+    }
+
+    function getNormalizedCoords(clientX, clientY) {
+      if (!el.screenCanvas) return { x: 0.5, y: 0.5, inBounds: true };
+      const rect = el.screenCanvas.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return { x: 0.5, y: 0.5, inBounds: true };
+      const rawX = (clientX - rect.left) / rect.width;
+      const rawY = (clientY - rect.top) / rect.height;
+      const inBounds = rawX >= -0.08 && rawX <= 1.08 && rawY >= -0.08 && rawY <= 1.08;
+      const normX = Math.max(0, Math.min(1, rawX));
+      const normY = Math.max(0, Math.min(1, rawY));
+      return { x: normX, y: normY, inBounds };
+    }
+
+    const touchArena = el.screenViewport || el.screenCanvas;
+
+    touchArena.addEventListener('touchstart', (e) => {
+      globalLastTouchTime = Date.now();
+      // Check if Gamepad HUD is active or touch is on UI overlays
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
+        return;
+      }
+
+      // Instantly cancel any ongoing kinetic momentum glide (tap-to-stop)
+      if (isMomentumActive) {
+        isMomentumActive = false;
+        wasMomentumStopped = true;
+        if (momentumAnimId) {
+          cancelAnimationFrame(momentumAnimId);
+          momentumAnimId = null;
+        }
+      } else {
+        wasMomentumStopped = false;
+      }
+
+      // 2-Finger Touch handling (Pinch-to-Zoom & Pan)
+      if (e.touches.length === 2) {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+        touchActive = false;
+        twoFingerActive = true;
+        twoFingerMoved = false;
+        twoFingerStartTime = Date.now();
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        twoFingerStartDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        twoFingerMidX = (t1.clientX + t2.clientX) / 2;
+        twoFingerMidY = (t1.clientY + t2.clientY) / 2;
+
+        if (state.pinchZoomEnabled) {
+          state.isPinching = false;
+          state.initialPinchDist = twoFingerStartDist;
+          state.initialZoom = state.zoomScale;
+          state.initialPanX = state.panX;
+          state.initialPanY = state.panY;
+          state.pinchMidX = twoFingerMidX;
+          state.pinchMidY = twoFingerMidY;
+        }
+        e.preventDefault();
+        return;
+      }
+
+      if (e.touches.length > 1) return;
+
+      twoFingerActive = false;
+      touchActive = true;
+      isScrolling = false;
+      isLongPressTriggered = false;
+      isLongPressDrag = false;
+      scrollCursorAnchored = false;
+      const touch = e.touches[0];
+      touchStartX = lastX = scrollLastX = touch.clientX;
+      touchStartY = lastY = scrollLastY = touch.clientY;
+      touchStartTime = Date.now();
+
+      touchHistory = [{ time: touchStartTime, x: touch.clientX, y: touch.clientY }];
+
+      const norm = getNormalizedCoords(touch.clientX, touch.clientY);
+      touchAnchorNormX = norm.x;
+      touchAnchorNormY = norm.y;
+      pendingNormX = norm.x;
+      pendingNormY = norm.y;
+      pendingRelDx = 0;
+      pendingRelDy = 0;
+
+      // 1-Finger Long-Press Timer (350ms): Hold still in place -> Engage Drag Mode (Left Mouse Down)!
+      longPressTimer = setTimeout(() => {
+        if (touchActive && !isScrolling && !state.isPinching) {
+          const dist = Math.hypot(lastX - touchStartX, lastY - touchStartY);
+          if (dist < 14) {
+            isLongPressTriggered = true;
+            isLongPressDrag = true;
+            const curNorm = getNormalizedCoords(lastX, lastY);
+            sendBinaryMoveAbs(curNorm.x, curNorm.y);
+            sendBinaryTouchDown(curNorm.x, curNorm.y, 'left');
+            spawnTouchRipple(lastX, lastY, 'tap');
+            vibrate(40);
+            showToast('Drag to Move', 'info');
+          }
+        }
+      }, 350);
+    }, { passive: false });
+
+    touchArena.addEventListener('touchmove', (e) => {
+      globalLastTouchTime = Date.now();
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
+        return;
+      }
+
+      // 2-Finger Pinch-to-Zoom & Pan
+      if (e.touches.length === 2 && twoFingerActive) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const curDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const midX = (t1.clientX + t2.clientX) / 2;
+        const midY = (t1.clientY + t2.clientY) / 2;
+
+        if (Math.abs(curDist - twoFingerStartDist) > 10 || Math.hypot(midX - twoFingerMidX, midY - twoFingerMidY) > 8) {
+          twoFingerMoved = true;
+          if (state.pinchZoomEnabled) {
+            state.isPinching = true;
+          }
+        }
+
+        if (state.pinchZoomEnabled && state.isPinching && state.initialPinchDist > 0) {
+          const factor = (curDist / state.initialPinchDist - 1) * state.zoomSens + 1;
+          state.zoomScale = Math.max(0.7, Math.min(5.0, state.initialZoom * factor));
+          state.panX = state.initialPanX + (midX - state.pinchMidX);
+          state.panY = state.initialPanY + (midY - state.pinchMidY);
+          updateCanvasTransform();
+        }
+        e.preventDefault();
+        return;
+      }
+
+      if (state.isPinching || e.touches.length > 1 || !touchActive) return;
+      const touch = e.touches[0];
+      lastX = touch.clientX;
+      lastY = touch.clientY;
+
+      const now = Date.now();
+      touchHistory.push({ time: now, x: touch.clientX, y: touch.clientY });
+      while (touchHistory.length > 0 && now - touchHistory[0].time > 100) {
+        touchHistory.shift();
+      }
+
+      const totalDist = Math.hypot(touch.clientX - touchStartX, touch.clientY - touchStartY);
+
+      // If in Long-Press Drag Mode: move the file / item / window / selection on PC!
+      if (isLongPressTriggered) {
+        if (!isLongPressDrag && totalDist > 14) {
+          isLongPressDrag = true;
+          const startNorm = getNormalizedCoords(touchStartX, touchStartY);
+          sendBinaryTouchDown(startNorm.x, startNorm.y, 'left');
+          vibrate(40);
+        }
+        if (isLongPressDrag) {
+          const norm = getNormalizedCoords(touch.clientX, touch.clientY);
+          sendBinaryTouchMove(norm.x, norm.y);
+          if (now - lastTrailTime > 40) {
+            lastTrailTime = now;
+            spawnTouchRipple(touch.clientX, touch.clientY, 'trail');
+          }
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // If finger moved beyond micro-slop (> 3px), cancel long-press timer and engage mobile scrolling
+      if (totalDist > 3 && longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+
+      // Direct Mobile Touch 1:1 Scroll Drag Physics
+      if (totalDist > 3) {
+        let scrollDx = 0;
+        let scrollDy = 0;
+
+        if (!isScrolling) {
+          // Transitioning from tap to active mobile scroll:
+          // Immediately include the initial displacement from touchStartX/Y so there is zero lost movement or deadzone!
+          isScrolling = true;
+          scrollDx = touch.clientX - touchStartX;
+          scrollDy = touch.clientY - touchStartY;
+          scrollLastX = touch.clientX;
+          scrollLastY = touch.clientY;
+        } else {
+          // Continuous mobile touch scroll frame delta
+          scrollDx = touch.clientX - scrollLastX;
+          scrollDy = touch.clientY - scrollLastY;
+          scrollLastX = touch.clientX;
+          scrollLastY = touch.clientY;
+        }
+
+        // Anchor the PC mouse cursor once at the initial touch point:
+        // 1. Keeps scroll focus strictly on the target list in Windows File Explorer (no treeview/header drift).
+        // 2. Eliminates hover lag, link flickers, and selection interrupts in web browsers.
+        if (!scrollCursorAnchored) {
+          scrollCursorAnchored = true;
+          sendBinaryMoveAbs(touchAnchorNormX, touchAnchorNormY);
+        }
+
+        const rect = el.screenCanvas.getBoundingClientRect();
+        const canvasH = (el.screenCanvas.height && el.screenCanvas.height > 0) ? el.screenCanvas.height : 1080;
+        const canvasW = (el.screenCanvas.width && el.screenCanvas.width > 0) ? el.screenCanvas.width : 1920;
+        const rectH = (rect && rect.height > 0) ? rect.height : (window.innerHeight || 360);
+        const rectW = (rect && rect.width > 0) ? rect.width : (window.innerWidth || 640);
+        const scrollFactor = state.invertScroll ? -1 : 1;
+
+        // Exact 1:1 Physical Screen Tracking:
+        // rectH from getBoundingClientRect() already accounts for mobile viewport size and active pinch-zoom.
+        // canvasH / rectH accurately maps mobile touch pixels to PC monitor pixels.
+        // Windows WHEEL_DELTA (120) averages ~110px in modern browsers/apps (~1.08 wheel units per PC pixel).
+        const scaleY = canvasH / rectH;
+        const scaleX = canvasW / rectW;
+        const speedMultiplier = 1.08 * (state.scrollSpeed ? (state.scrollSpeed / 1.4) : 1.0);
+
+        const wheelDy = scrollDy * scaleY * speedMultiplier * scrollFactor;
+        const wheelDx = scrollDx * scaleX * speedMultiplier * scrollFactor;
+
+        if (Math.abs(wheelDy) >= 0.05 || Math.abs(wheelDx) >= 0.05) {
+          sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    touchArena.addEventListener('touchend', (e) => {
+      globalLastTouchTime = Date.now();
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
+        return;
+      }
+
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+
+      // 2-Finger Release: Single Tap or Double Click triggers Right Click!
+      if (twoFingerActive && e.touches.length < 2) {
+        const dur = Date.now() - twoFingerStartTime;
+        if (!twoFingerMoved && dur < 380) {
+          const now = Date.now();
+          const isDoubleTap = (now - twoFingerLastTapTime < 450);
+          twoFingerLastTapTime = now;
+          // Two-finger tap or two-finger double tap -> Instant Right-Click!
+          const norm = getNormalizedCoords(twoFingerMidX, twoFingerMidY);
+          sendBinaryMoveAbs(norm.x, norm.y);
+          sendBinaryClick('right');
+          spawnTouchRipple(twoFingerMidX, twoFingerMidY, 'right');
+          vibrate(isDoubleTap ? 35 : 25);
+          showToast(isDoubleTap ? '2-Finger Double Tap (Right Click)' : 'Right Click', 'success');
+        }
+        twoFingerActive = false;
+        state.isPinching = false;
+        if (state.zoomScale < 0.9) {
+          resetPinchZoom();
+        }
+        e.preventDefault();
+        return;
+      }
+
+      if (state.isPinching || !touchActive) return;
+      touchActive = false;
+
+      // If touch was solely a tap-to-stop to cancel kinetic momentum, don't trigger click!
+      if (wasMomentumStopped) {
+        wasMomentumStopped = false;
+        e.preventDefault();
+        return;
+      }
+
+      const touchEndTime = Date.now();
+      const tapDuration = touchEndTime - touchStartTime;
+      const moveDist = Math.hypot(lastX - touchStartX, lastY - touchStartY);
+
+      // If user was in Long-Press Drag Mode: Release mouse button at drop location!
+      if (isLongPressDrag) {
+        isLongPressDrag = false;
+        isLongPressTriggered = false;
+        const norm = getNormalizedCoords(lastX, lastY);
+        sendBinaryTouchUp(norm.x, norm.y, 'left');
+        spawnTouchRipple(lastX, lastY, 'tap');
+        showToast('Item Dropped / Moved', 'success');
+        vibrate(30);
+        return;
+      }
+
+      // If long press triggered right click and user released without dragging, we're done
+      if (isLongPressTriggered) {
+        isLongPressTriggered = false;
+        return;
+      }
+
+      // Calculate release velocity for kinetic momentum (fling physics)
+      const now = Date.now();
+      const recentPoints = touchHistory.filter(p => now - p.time < 80);
+      let vy = 0, vx = 0;
+      if (recentPoints.length >= 2) {
+        const first = recentPoints[0];
+        const last = recentPoints[recentPoints.length - 1];
+        const dt = last.time - first.time;
+        if (dt > 10) {
+          vy = (last.y - first.y) / dt; // px per millisecond
+          vx = (last.x - first.x) / dt;
+        }
+      }
+
+      // If user was scrolling / dragged finger, don't trigger click on release
+      if (isScrolling || moveDist > 14) {
+        const wasScrolling = isScrolling;
+        isScrolling = false;
+        scrollCursorAnchored = false;
+
+        // Engage Natural Kinetic Momentum Glide if flicked with velocity (> 0.35 px/ms)
+        if (wasScrolling && (Math.abs(vy) > 0.35 || Math.abs(vx) > 0.35)) {
+          const rect = el.screenCanvas.getBoundingClientRect();
+          const canvasH = (el.screenCanvas.height && el.screenCanvas.height > 0) ? el.screenCanvas.height : 1080;
+          const canvasW = (el.screenCanvas.width && el.screenCanvas.width > 0) ? el.screenCanvas.width : 1920;
+          const rectH = (rect && rect.height > 0) ? rect.height : (window.innerHeight || 360);
+          const rectW = (rect && rect.width > 0) ? rect.width : (window.innerWidth || 640);
+          const scrollFactor = state.invertScroll ? -1 : 1;
+          const scaleY = canvasH / rectH;
+          const scaleX = canvasW / rectW;
+          const speedMultiplier = 1.08 * (state.scrollSpeed ? (state.scrollSpeed / 1.4) : 1.0);
+
+          const maxVelocity = 2.5; // Cap velocity to prevent wild overshoot
+          let momentumVy = Math.max(-maxVelocity, Math.min(maxVelocity, vy)) * 0.70;
+          let momentumVx = Math.max(-maxVelocity, Math.min(maxVelocity, vx)) * 0.70;
+          let lastMomentumTime = performance.now();
+
+          const stepMomentum = (curTime) => {
+            if (!isMomentumActive) return;
+            const dt = Math.min(32, curTime - lastMomentumTime);
+            lastMomentumTime = curTime;
+
+            // Natural mobile touchscreen deceleration curve (half-life ~300ms)
+            const friction = Math.pow(0.92, dt / 16.67);
+            momentumVy *= friction;
+            momentumVx *= friction;
+
+            const stepDy = momentumVy * dt;
+            const stepDx = momentumVx * dt;
+
+            // 1:1 Physical kinetic momentum
+            const wheelDy = stepDy * scaleY * speedMultiplier * scrollFactor;
+            const wheelDx = stepDx * scaleX * speedMultiplier * scrollFactor;
+
+            if (Math.abs(wheelDy) >= 0.05 || Math.abs(wheelDx) >= 0.05) {
+              sendBinaryScrollAbs(touchAnchorNormX, touchAnchorNormY, wheelDx, wheelDy);
+            }
+
+            if (Math.abs(momentumVy) > 0.02 || Math.abs(momentumVx) > 0.02) {
+              momentumAnimId = requestAnimationFrame(stepMomentum);
+            } else {
+              isMomentumActive = false;
+              momentumAnimId = null;
+            }
+          };
+
+          isMomentumActive = true;
+          momentumAnimId = requestAnimationFrame(stepMomentum);
+        }
+        return;
+      }
+
+      // 1-Finger Tap & Double Tap Handling (Simple, Fast, Natural)
+      if (tapDuration < 350 && moveDist < 16) {
+        const timeSinceLastTap = touchEndTime - lastTapTime;
+        const tapDistance = Math.hypot(lastX - lastTapX, lastY - lastTapY);
+
+        if (timeSinceLastTap < 400 && tapDistance < 36) {
+          // 1-Finger Double Tap -> Double Click (Opens file/app/folder)
+          lastTapTime = 0;
+          spawnTouchRipple(lastX, lastY, 'double');
+          const norm = getNormalizedCoords(lastX, lastY);
+          sendBinaryMoveAbs(norm.x, norm.y);
+          sendBinaryClick('double');
+          vibrate(28);
+          showToast('Double Click', 'success');
+        } else {
+          // 1-Finger Single Tap -> Left Click at exact touch position!
+          lastTapTime = touchEndTime;
+          lastTapX = lastX;
+          lastTapY = lastY;
+          vibrate(18);
+
+          spawnTouchRipple(lastX, lastY, 'tap');
+
+          const norm = getNormalizedCoords(lastX, lastY);
+          sendBinaryMoveAbs(norm.x, norm.y);
+          sendBinaryClick('left');
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    touchArena.addEventListener('touchcancel', () => {
+      touchActive = false;
+      isScrolling = false;
+      scrollCursorAnchored = false;
+      isLongPressTriggered = false;
+      isLongPressDrag = false;
+      twoFingerActive = false;
+      state.isPinching = false;
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    });
+
+    // Desktop Web Control: Mouse & Pointer Interaction Handling
+    let isMouseDown = false;
+    let mouseDownBtn = 'left';
+    let mouseStartX = 0;
+    let mouseStartY = 0;
+    let mouseStartTime = 0;
+    let mouseMoved = false;
+
+    touchArena.addEventListener('mousedown', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
+        return;
+      }
+      isMouseDown = true;
+      mouseMoved = false;
+      mouseStartX = e.clientX;
+      mouseStartY = e.clientY;
+      mouseStartTime = Date.now();
+      mouseDownBtn = (e.button === 2) ? 'right' : ((e.button === 1) ? 'middle' : 'left');
+
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      sendBinaryMoveAbs(norm.x, norm.y);
+      sendBinaryTouchDown(norm.x, norm.y, mouseDownBtn);
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (!isMouseDown) return;
+      const dist = Math.hypot(e.clientX - mouseStartX, e.clientY - mouseStartY);
+      if (dist > 3) mouseMoved = true;
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      sendBinaryTouchMove(norm.x, norm.y);
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (!isMouseDown) return;
+      isMouseDown = false;
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      sendBinaryTouchUp(norm.x, norm.y, mouseDownBtn);
+
+      const duration = Date.now() - mouseStartTime;
+      const dist = Math.hypot(e.clientX - mouseStartX, e.clientY - mouseStartY);
+      if (duration < 300 && dist < 5 && !mouseMoved) {
+        spawnTouchRipple(e.clientX, e.clientY, mouseDownBtn === 'right' ? 'right' : 'tap');
+      }
+    });
+
+    touchArena.addEventListener('wheel', (e) => {
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
+        return;
+      }
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      const scrollFactor = state.invertScroll ? -1 : 1;
+      const dy = -e.deltaY * 1.2 * state.scrollSpeed * scrollFactor;
+      const dx = -e.deltaX * 1.2 * state.scrollSpeed * scrollFactor;
+      sendBinaryScrollAbs(norm.x, norm.y, dx, dy);
+      e.preventDefault();
+    }, { passive: false });
+
+    touchArena.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+
+    touchArena.addEventListener('dblclick', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (state.gamepadHudActive || (e.target && e.target.closest('#screen-gamepad-overlay, #btn-screen-keyboard, #screen-type-bar, #btn-screen-gamepad-hud, #btn-screen-hud-fab, .screen-hud-fab, .btn-header-gamepad'))) {
+        return;
+      }
+      const norm = getNormalizedCoords(e.clientX, e.clientY);
+      sendBinaryMoveAbs(norm.x, norm.y);
+      sendBinaryClick('double');
+      spawnTouchRipple(e.clientX, e.clientY, 'double');
+      e.preventDefault();
+    });
+  }
+
+  // --- Pinch-to-Zoom & Pan Gesture Engine ---
+  function updateCanvasTransform() {
+    if (!el.screenCanvasWrapper) return;
+    el.screenCanvasWrapper.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoomScale})`;
+  }
+
+  function resetPinchZoom() {
+    state.zoomScale = 1.0;
+    state.panX = 0;
+    state.panY = 0;
+    state.isPinching = false;
+    updateCanvasTransform();
+    showToast('Zoom reset to 100% Fit', 'success');
+  }
+
+  function initPinchZoomGestures() {
+    // Gestures unified inside initScreenTouchDisplay for smooth synchronization
+  }
+
+  // --- Auto-Connect, Zero-Config Discovery & WebSocket Management ---
+  let isSubnetSweeping = false;
+  let wsConnectTimeoutTimer = null;
+
+  function clearWsConnectTimeout() {
+    if (wsConnectTimeoutTimer) {
+      clearTimeout(wsConnectTimeoutTimer);
+      wsConnectTimeoutTimer = null;
+    }
+  }
+
+  // Global handler called when PC server is discovered via native UDP or subnet scan
+  window.onServerDiscovered = function(discoveredHost, discoveredPort, discoveredToken) {
+    if (!discoveredHost || typeof discoveredHost !== 'string') return;
+    const cleanHost = discoveredHost.trim();
+    const cleanPort = (discoveredPort && typeof discoveredPort === 'string' ? discoveredPort.trim() : '8000') || '8000';
+    if (!cleanHost || cleanHost === '127.0.0.1' || cleanHost === '0.0.0.0') return;
+
+    if (discoveredToken && typeof discoveredToken === 'string') {
+      try { localStorage.setItem('pcdeck_token', discoveredToken.trim()); } catch (e) {}
+    }
+
+    // Never override localhost / loopback connection if browsing directly from the PC
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return;
+    }
+
+    // Guard: If already successfully connected to this exact server, do not reconnect or flicker status!
+    if (state.connected && mainWs && mainWs.readyState === WebSocket.OPEN && state.serverHost === cleanHost && state.serverPort === cleanPort) {
+      return;
+    }
+
+    const wasDifferent = (state.serverHost !== cleanHost || state.serverPort !== cleanPort);
+
+    state.serverHost = cleanHost;
+    state.serverPort = cleanPort;
+    if (el.modalIpInput) el.modalIpInput.value = `${cleanHost}:${cleanPort}`;
+    if (el.settingsIpInput) el.settingsIpInput.value = `${cleanHost}:${cleanPort}`;
+    localStorage.setItem('pcdeck_ip', `${cleanHost}:${cleanPort}`);
+    localStorage.setItem('pcdeck_onboarding_completed', 'true');
+
+    if (el.connectModal && el.connectModal.classList.contains('show')) {
+      el.connectModal.classList.remove('show');
+    }
+
+    // Only force reconnect if host changed, or connect if disconnected
+    if (!state.connected || wasDifferent) {
+      clearWsConnectTimeout();
+      connect(wasDifferent);
+    }
+  };
+
+  function triggerDiscoveryAndSweep() {
+    // In web browser mode: host is already window.location.hostname; avoid sweeping LAN which chokes web connections
+    const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
+    const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+    if (!isNativeApp && isHttp) return;
+
+    // 1. Trigger Native Android UDP Broadcast Discovery (< 5ms)
+    if (window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
+      try {
+        window.AndroidApp.discoverServer();
+      } catch (e) {}
+    }
+
+    // 2. Parallel Fast Subnet Sweeper for web and fallback (< 250ms)
+    sweepSubnetAndConnect();
+  }
+
+  async function sweepSubnetAndConnect() {
+    if (isSubnetSweeping || state.connected) return;
+    isSubnetSweeping = true;
+
+    try {
+      const candidates = new Set();
+
+      let deviceIp = '';
+      if (window.AndroidApp && typeof window.AndroidApp.getDeviceIp === 'function') {
+        try { deviceIp = window.AndroidApp.getDeviceIp(); } catch (e) {}
+      }
+      let gatewayIp = '';
+      if (window.AndroidApp && typeof window.AndroidApp.getGatewayIp === 'function') {
+        try { gatewayIp = window.AndroidApp.getGatewayIp(); } catch (e) {}
+      }
+
+      const saved = localStorage.getItem('pcdeck_ip') || localStorage.getItem('neontrack_ip');
+      if (saved) {
+        const p = parseHostPort(saved);
+        if (p) candidates.add(p.host);
+      }
+      if (state.serverHost) candidates.add(state.serverHost);
+      if (gatewayIp) candidates.add(gatewayIp);
+
+      // High-priority hotspot and router gateways
+      const priorityIps = [
+        '192.168.43.1',   // Android Mobile Hotspot Gateway
+        '192.168.137.1',  // Windows Mobile Hotspot Gateway
+        '192.168.1.1',    // Router Gateway
+        '192.168.0.1',    // Router Gateway
+        '192.168.1.100',  // Common DHCP PC IP
+        '192.168.0.100',
+        '10.0.0.1',
+      ];
+      priorityIps.forEach(ip => candidates.add(ip));
+
+      // Derive subnet /24 ranges to sweep
+      const subnetsToSweep = new Set();
+      if (window.AndroidApp && typeof window.AndroidApp.getAllSubnets === 'function') {
+        try {
+          const subs = JSON.parse(window.AndroidApp.getAllSubnets());
+          if (Array.isArray(subs)) {
+            subs.forEach(s => { if (s && typeof s === 'string' && s.includes('.')) subnetsToSweep.add(s); });
+          }
+        } catch (e) {}
+      }
+      if (deviceIp && deviceIp.includes('.')) {
+        subnetsToSweep.add(deviceIp.substring(0, deviceIp.lastIndexOf('.')));
+      }
+      if (gatewayIp && gatewayIp.includes('.')) {
+        subnetsToSweep.add(gatewayIp.substring(0, gatewayIp.lastIndexOf('.')));
+      }
+      if (state.serverHost && state.serverHost.includes('.')) {
+        subnetsToSweep.add(state.serverHost.substring(0, state.serverHost.lastIndexOf('.')));
+      }
+      if (saved && saved.includes('.')) {
+        const p = parseHostPort(saved);
+        if (p && p.host.includes('.')) {
+          subnetsToSweep.add(p.host.substring(0, p.host.lastIndexOf('.')));
+        }
+      }
+
+      if (subnetsToSweep.size === 0) {
+        subnetsToSweep.add('192.168.43');
+        subnetsToSweep.add('192.168.137');
+        subnetsToSweep.add('192.168.1');
+        subnetsToSweep.add('192.168.0');
+      }
+
+      const port = state.serverPort || '8000';
+
+      // 1. Ultra-fast probe of candidate list first (< 100ms)
+      const initialCandidates = Array.from(candidates);
+      const candPromises = initialCandidates.map(ip => {
+        return new Promise(resolve => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => { controller.abort(); resolve(null); }, 300);
+          fetch(`http://${ip}:${port}/api/ping`, {
+            signal: controller.signal,
+            mode: 'cors',
+            cache: 'no-store',
+          })
+            .then(r => r.json())
+            .then(data => {
+              clearTimeout(timer);
+              if (data && data.status === 'ok' && (data.app === 'PCDeck' || data.name)) {
+                if (data.pro_active !== undefined) {
+                  const isUnlocked = !!data.pro_active;
+                  window.serverProActive = isUnlocked;
+                  if (isUnlocked) {
+                    try { localStorage.setItem('pcdeck_pro_active', 'true'); } catch (e) {}
+                  } else if (!localStorage.getItem('pcdeck_pro_license')) {
+                    try { localStorage.removeItem('pcdeck_pro_active'); } catch (e) {}
+                  }
+                  if (typeof updateProUI === 'function') updateProUI(false);
+                }
+                if (data.token) {
+                  try { localStorage.setItem('pcdeck_token', data.token.trim()); } catch (e) {}
+                }
+                resolve({ ip: data.ip || ip, port: (data.port ? data.port.toString() : port), token: data.token });
+              } else {
+                resolve(null);
+              }
+            })
+            .catch(() => {
+              clearTimeout(timer);
+              resolve(null);
+            });
+        });
+      });
+
+      const candResults = await Promise.all(candPromises);
+      const candMatch = candResults.find(r => r !== null);
+      if (candMatch) {
+        window.onServerDiscovered(candMatch.ip, candMatch.port, candMatch.token);
+        return;
+      }
+
+      // 2. Parallel sweep across all identified physical subnets in batches of 32
+      const fullTargetList = [];
+      for (const subnet of subnetsToSweep) {
+        for (let i = 1; i <= 254; i++) {
+          const ip = `${subnet}.${i}`;
+          if (!candidates.has(ip)) {
+            fullTargetList.push(ip);
+          }
+        }
+      }
+
+      let found = false;
+      const BATCH_SIZE = 32;
+      for (let i = 0; i < fullTargetList.length && !found && !state.connected; i += BATCH_SIZE) {
+        const batch = fullTargetList.slice(i, i + BATCH_SIZE);
+        const promises = batch.map(ip => {
+          return new Promise(resolve => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => {
+              controller.abort();
+              resolve(null);
+            }, 300);
+
+            fetch(`http://${ip}:${port}/api/ping`, {
+              signal: controller.signal,
+              mode: 'cors',
+              cache: 'no-store',
+            })
+              .then(r => r.json())
+              .then(data => {
+                clearTimeout(timer);
+                if (data && data.status === 'ok' && (data.app === 'PCDeck' || data.name)) {
+                  if (data.pro_active !== undefined) {
+                    const isUnlocked = !!data.pro_active;
+                    window.serverProActive = isUnlocked;
+                    if (isUnlocked) {
+                      try { localStorage.setItem('pcdeck_pro_active', 'true'); } catch (e) {}
+                    } else if (!localStorage.getItem('pcdeck_pro_license')) {
+                      try { localStorage.removeItem('pcdeck_pro_active'); } catch (e) {}
+                    }
+                    if (typeof updateProUI === 'function') updateProUI(false);
+                  }
+                  if (data.token) {
+                    try { localStorage.setItem('pcdeck_token', data.token.trim()); } catch (e) {}
+                  }
+                  resolve({ ip: data.ip || ip, port: (data.port ? data.port.toString() : port), token: data.token });
+                } else {
+                  resolve(null);
+                }
+              })
+              .catch(() => {
+                clearTimeout(timer);
+                resolve(null);
+              });
+          });
+        });
+
+        const results = await Promise.all(promises);
+        const match = results.find(r => r !== null);
+        if (match) {
+          found = true;
+          window.onServerDiscovered(match.ip, match.port, match.token);
+          break;
+        }
+      }
+    } catch (e) {
+    } finally {
+      isSubnetSweeping = false;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-PC Recent Connections Manager
+  // ---------------------------------------------------------------------------
+  function getRecentPCs() {
+    try {
+      const raw = localStorage.getItem('pcdeck_recent_pcs');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      // Deduplicate stored records by host:port AND by unique computer name
+      const seenKeys = new Set();
+      const seenNames = new Set();
+      const clean = [];
+      for (const item of parsed) {
+        if (!item || !item.host) continue;
+        const key = `${item.host}:${item.port || '8000'}`;
+        const nameClean = (item.name || '').trim();
+        const normName = nameClean.toLowerCase();
+        const isRealName = normName && !['pc', 'windows pc', 'computer', 'unknown', 'my pc', 'desktop', 'no pc connected', 'server'].includes(normName) && normName !== item.host.toLowerCase();
+        if (seenKeys.has(key)) continue;
+        if (isRealName && seenNames.has(normName)) continue;
+        seenKeys.add(key);
+        if (isRealName) seenNames.add(normName);
+        clean.push(item);
+      }
+      return clean;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function recordRecentPC(host, port, name) {
+    if (!host || host === '127.0.0.1' || host === 'localhost' || host === 'No PC Connected') return;
+    try {
+      let list = getRecentPCs();
+      const portStr = String(port || '8000');
+      let computerName = (name || host).trim();
+      const targetKey = `${host}:${portStr}`;
+      const normName = computerName.toLowerCase();
+      const isRealName = normName && !['pc', 'windows pc', 'computer', 'unknown', 'my pc', 'desktop', 'no pc connected', 'server'].includes(normName) && normName !== host.toLowerCase();
+
+      const existing = list.find(item => `${item.host}:${item.port}` === targetKey || (isRealName && (item.name || '').trim().toLowerCase() === normName));
+      if (existing && existing.name && existing.name !== host && (computerName === host || !computerName)) {
+        computerName = existing.name;
+      }
+
+      // Filter out ANY previous entry with the same host:port OR the same computer name
+      list = list.filter(item => {
+        if (`${item.host}:${item.port}` === targetKey) return false;
+        if (isRealName && (item.name || '').trim().toLowerCase() === normName) return false;
+        return true;
+      });
+
+      list.unshift({
+        host: host,
+        port: portStr,
+        name: computerName,
+        lastSeen: Date.now()
+      });
+
+      if (list.length > 100) list = list.slice(0, 100);
+      localStorage.setItem('pcdeck_recent_pcs', JSON.stringify(list));
+      renderRecentPCs();
+    } catch (e) {}
+  }
+
+  function switchToPC(targetHost, targetPort) {
+    if (!targetHost) return;
+    state.serverHost = targetHost;
+    state.serverPort = targetPort || '8000';
+    try {
+      localStorage.setItem('pcdeck_server_host', targetHost);
+      localStorage.setItem('pcdeck_server_port', targetPort || '8000');
+    } catch (e) {}
+
+    const modalIp = document.getElementById('modal-ip-input');
+    if (modalIp) modalIp.value = `${targetHost}:${state.serverPort}`;
+    const settingsIp = document.getElementById('settings-ip-input');
+    if (settingsIp) settingsIp.value = `${targetHost}:${state.serverPort}`;
+
+    if (el.connectModal) el.connectModal.classList.remove('show');
+
+    connect(true);
+    showToast(`Connecting to ${targetHost}...`, 'info');
+  }
+
+  let recentPCDropdownInitialized = false;
+
+  function closeRecentPCDropdown() {
+    const dropdownMenu = document.getElementById('recent-pcs-dropdown-menu');
+    const dropdownBtn = document.getElementById('recent-pcs-dropdown-btn');
+    if (dropdownMenu) {
+      dropdownMenu.style.display = 'none';
+      const searchInput = dropdownMenu.querySelector('#recent-pcs-search-input');
+      if (searchInput && searchInput.value) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+      }
+    }
+    if (dropdownBtn) dropdownBtn.classList.remove('open');
+  }
+
+  function openRecentPCDropdown() {
+    const dropdownMenu = document.getElementById('recent-pcs-dropdown-menu');
+    const dropdownBtn = document.getElementById('recent-pcs-dropdown-btn');
+    if (dropdownMenu) dropdownMenu.style.display = 'block';
+    if (dropdownBtn) dropdownBtn.classList.add('open');
+  }
+
+  function updateRecentPCDropdownStatus(status) {
+    const currentStatusEl = document.getElementById('recent-pcs-current-status');
+    if (!currentStatusEl) return;
+    if (status === 'connected') {
+      currentStatusEl.className = 'recent-pc-status-pill connected';
+      currentStatusEl.textContent = 'CONNECTED';
+    } else if (status === 'connecting') {
+      currentStatusEl.className = 'recent-pc-status-pill connecting';
+      currentStatusEl.textContent = 'CONNECTING...';
+    } else {
+      currentStatusEl.className = 'recent-pc-status-pill offline';
+      currentStatusEl.textContent = 'STANDBY';
+    }
+  }
+
+  function renderRecentPCs() {
+    const list = getRecentPCs();
+    const settingsSection = document.getElementById('settings-recent-pcs-section');
+    const dropdownBtn = document.getElementById('recent-pcs-dropdown-btn');
+    const dropdownMenu = document.getElementById('recent-pcs-dropdown-menu');
+    const currentNameEl = document.getElementById('recent-pcs-current-name');
+    const currentIpEl = document.getElementById('recent-pcs-current-ip');
+    const currentStatusEl = document.getElementById('recent-pcs-current-status');
+    const clearBtn = document.getElementById('btn-clear-recent-pcs');
+
+    // Always show Recent Computers section so users can view active PC and switch targets
+    if (settingsSection) settingsSection.style.display = 'block';
+
+    let savedHost = '';
+    let savedPort = '8000';
+    try {
+      savedHost = localStorage.getItem('pcdeck_server_host') || (localStorage.getItem('pcdeck_ip') || '').split(':')[0] || '';
+      savedPort = localStorage.getItem('pcdeck_server_port') || (localStorage.getItem('pcdeck_ip') || '').split(':')[1] || '8000';
+    } catch (e) {}
+
+    const curHost = state.serverHost || savedHost || (list[0] ? list[0].host : (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : 'No PC Connected'));
+    const curPort = state.serverPort || savedPort || (list[0] ? list[0].port : '8000');
+    const currentKey = `${curHost}:${curPort}`;
+    const activeItem = (list.length > 0)
+      ? (list.find(item => `${item.host}:${item.port}` === currentKey) || list[0])
+      : { host: curHost, port: curPort, name: (window.currentPcHostname || (curHost !== 'No PC Connected' ? curHost : 'DESKTOP')) };
+    const activeKey = `${activeItem.host}:${activeItem.port}`;
+
+    if (currentNameEl) {
+      currentNameEl.textContent = activeItem.name || activeItem.host;
+    }
+    if (currentIpEl) {
+      currentIpEl.textContent = (activeItem.host && activeItem.host !== 'No PC Connected') ? `${activeItem.host}:${activeItem.port}` : 'Tap Connect or Scan QR';
+    }
+    if (currentStatusEl) {
+      if (state.connected) {
+        currentStatusEl.className = 'recent-pc-status-pill connected';
+        currentStatusEl.textContent = 'CONNECTED';
+      } else {
+        currentStatusEl.className = 'recent-pc-status-pill offline';
+        currentStatusEl.textContent = 'STANDBY';
+      }
+    }
+
+    // Filter to ONLY the other computers to switch to - NO REDUNDANCY / DUPLICATION!
+    const activeNameNorm = (activeItem.name || '').trim().toLowerCase();
+    const otherPCs = list.filter(item => {
+      if (`${item.host}:${item.port}` === activeKey) return false;
+      const itemNameNorm = (item.name || '').trim().toLowerCase();
+      if (activeNameNorm && itemNameNorm && activeNameNorm !== activeItem.host.toLowerCase() && itemNameNorm === activeNameNorm) return false;
+      return true;
+    });
+
+    if (dropdownMenu) {
+      if (otherPCs.length === 0) {
+        dropdownMenu.innerHTML = `
+          <div class="cyber-dropdown-item-empty" style="padding: 12px 14px; font-size: 0.74rem; color: var(--text-muted); text-align: center; line-height: 1.4;">
+            No other saved computers<br>
+            <span style="font-size: 0.68rem; opacity: 0.75;">Connect to another PC or scan its QR code to switch between them here.</span>
+          </div>
+        `;
+      } else {
+        const showSearch = otherPCs.length >= 6;
+        const searchBarHtml = showSearch ? `
+          <div class="cyber-dropdown-search-wrap">
+            <div class="cyber-dropdown-search-box">
+              <svg class="deck-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="recent-pcs-search-input" class="cyber-dropdown-search-input" placeholder="Search computers..." autocomplete="off" spellcheck="false">
+              <button type="button" id="recent-pcs-search-clear" class="cyber-dropdown-search-clear" style="display: none;">✕</button>
+            </div>
+          </div>
+        ` : '';
+
+        const itemsHtml = otherPCs.map(item => {
+          const safeName = String(item.name || item.host)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+          return `
+            <div class="cyber-dropdown-item" data-host="${item.host}" data-port="${item.port}" data-name="${safeName}">
+              <div class="dropdown-item-left">
+                <div class="dropdown-item-icon-box">
+                  <svg class="deck-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                </div>
+                <div class="dropdown-item-info">
+                  <span class="dropdown-item-name">${safeName}</span>
+                  <span class="dropdown-item-ip">${item.host}:${item.port}</span>
+                </div>
+              </div>
+              <span class="recent-pc-status-pill switch">CONNECT</span>
+            </div>
+          `;
+        }).join('');
+
+        dropdownMenu.innerHTML = `
+          ${searchBarHtml}
+          <div id="recent-pcs-items-container">
+            ${itemsHtml}
+          </div>
+          <div id="recent-pcs-no-match" class="cyber-dropdown-item-empty" style="display: none; padding: 12px 14px; font-size: 0.72rem; color: var(--text-muted); text-align: center;">
+            No matching computers found
+          </div>
+        `;
+
+        const searchInput = dropdownMenu.querySelector('#recent-pcs-search-input');
+        const searchClear = dropdownMenu.querySelector('#recent-pcs-search-clear');
+        const noMatchEl = dropdownMenu.querySelector('#recent-pcs-no-match');
+
+        if (searchInput) {
+          searchInput.onclick = (e) => e.stopPropagation();
+          searchInput.onkeydown = (e) => e.stopPropagation();
+          searchInput.oninput = (e) => {
+            e.stopPropagation();
+            const query = searchInput.value.trim().toLowerCase();
+            if (searchClear) searchClear.style.display = query ? 'inline-block' : 'none';
+            let matchCount = 0;
+            dropdownMenu.querySelectorAll('.cyber-dropdown-item').forEach(item => {
+              const name = (item.getAttribute('data-name') || '').toLowerCase();
+              const host = (item.getAttribute('data-host') || '').toLowerCase();
+              const port = (item.getAttribute('data-port') || '').toLowerCase();
+              const isMatch = !query || name.includes(query) || host.includes(query) || `${host}:${port}`.includes(query);
+              item.style.display = isMatch ? 'flex' : 'none';
+              if (isMatch) matchCount++;
+            });
+            if (noMatchEl) noMatchEl.style.display = matchCount === 0 ? 'block' : 'none';
+          };
+        }
+
+        if (searchClear) {
+          searchClear.onclick = (e) => {
+            e.stopPropagation();
+            if (searchInput) {
+              searchInput.value = '';
+              searchInput.dispatchEvent(new Event('input'));
+              searchInput.focus();
+            }
+          };
+        }
+
+        dropdownMenu.querySelectorAll('.cyber-dropdown-item').forEach(elem => {
+          elem.onclick = (e) => {
+            e.stopPropagation();
+            const targetHost = elem.getAttribute('data-host');
+            const targetPort = elem.getAttribute('data-port');
+            const targetName = elem.getAttribute('data-name');
+
+            closeRecentPCDropdown();
+
+            // Promote target computer to TOP of the recent list immediately
+            recordRecentPC(targetHost, targetPort, targetName);
+
+            // Update header button immediately to show target
+            if (currentNameEl) currentNameEl.textContent = targetName || targetHost;
+            if (currentIpEl) currentIpEl.textContent = `${targetHost}:${targetPort}`;
+            if (currentStatusEl) {
+              currentStatusEl.className = 'recent-pc-status-pill connecting';
+              currentStatusEl.textContent = 'CONNECTING...';
+            }
+
+            switchToPC(targetHost, targetPort);
+          };
+        });
+      }
+    }
+
+    if (!recentPCDropdownInitialized) {
+      recentPCDropdownInitialized = true;
+
+      if (dropdownBtn) {
+        dropdownBtn.onclick = (e) => {
+          e.stopPropagation();
+          const isOpen = dropdownMenu && dropdownMenu.style.display === 'block';
+          if (isOpen) {
+            closeRecentPCDropdown();
+          } else {
+            openRecentPCDropdown();
+          }
+        };
+      }
+
+      document.addEventListener('click', (e) => {
+        const dd = document.getElementById('recent-pcs-dropdown');
+        if (dd && !dd.contains(e.target)) {
+          closeRecentPCDropdown();
+        }
+      });
+
+      if (clearBtn) {
+        clearBtn.onclick = (e) => {
+          e.stopPropagation();
+          try {
+            localStorage.removeItem('pcdeck_recent_pcs');
+          } catch (err) {}
+          closeRecentPCDropdown();
+          renderRecentPCs();
+          showToast('Saved computers cleared', 'info');
+        };
+      }
+    }
+  }
+
+  function openConnectModal() {
+    if (el.connectModal) {
+      el.connectModal.classList.add('show');
+    }
+  }
+
+  function clearAutoReconnect() {
+    if (state.autoReconnectTimer) {
+      clearTimeout(state.autoReconnectTimer);
+      clearInterval(state.autoReconnectTimer);
+      state.autoReconnectTimer = null;
+    }
+  }
+
+  function connect(force) {
+    clearAutoReconnect();
+    clearWsConnectTimeout();
+    const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
+    const host = state.serverHost || (isHttp ? window.location.hostname : '127.0.0.1');
+    const port = state.serverPort || (isHttp ? (window.location.port || '8000') : '8000');
+    state.serverHost = host;
+    state.serverPort = port;
+
+    let storedToken = localStorage.getItem('pcdeck_token') || '';
+    if (!storedToken) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token') || urlParams.get('t');
+      if (urlToken) {
+        storedToken = urlToken.trim();
+        try { localStorage.setItem('pcdeck_token', storedToken); } catch (e) {}
+      }
+    }
+    if (!storedToken && typeof document !== 'undefined' && document.cookie) {
+      const match = document.cookie.match(/(?:^|;\s*)pcdeck_token=([^;]+)/);
+      if (match && match[1]) {
+        storedToken = decodeURIComponent(match[1]);
+        try { localStorage.setItem('pcdeck_token', storedToken); } catch (e) {}
+      }
+    }
+    if (host) {
+      const pingProto = window.location.protocol.startsWith('http') ? window.location.protocol : 'http:';
+      fetch(`${pingProto}//${host}:${port}/api/ping`, { cache: 'no-store' })
+        .then(res => res.json())
+        .then(pingData => {
+          if (pingData && (pingData.name || pingData.ip)) {
+            window.currentPcHostname = pingData.name || pingData.ip;
+            recordRecentPC(host, port, pingData.name || pingData.ip);
+          }
+          if (pingData && pingData.pro_active !== undefined) {
+            const isUnlocked = !!pingData.pro_active;
+            window.serverProActive = isUnlocked;
+            if (isUnlocked) {
+              try { localStorage.setItem('pcdeck_pro_active', 'true'); } catch (e) {}
+            } else if (!localStorage.getItem('pcdeck_pro_license')) {
+              try { localStorage.removeItem('pcdeck_pro_active'); } catch (e) {}
+            }
+            if (typeof updateProUI === 'function') updateProUI(false);
+          }
+          if (!storedToken && pingData && pingData.token) {
+            const tok = pingData.token.trim();
+            try { localStorage.setItem('pcdeck_token', tok); } catch (e) {}
+            if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+              try { mainWs.send(`pair,${tok}`); } catch (e) {}
+            }
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            state.screenWsUrl = `${proto}//${host}:${port}/ws/screen?token=${encodeURIComponent(tok)}`;
+            if (state.activeTab === 'tab-screen') {
+              connectScreenWs(true);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const tokenQuery = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+    const targetWsUrl = `${protocol}//${host}:${port}/ws${tokenQuery}`;
+    const targetScreenWsUrl = `${protocol}//${host}:${port}/ws/screen${tokenQuery}`;
+
+    // If socket is already OPEN and connecting to the same target, avoid redundant reconnect and maintain solid status
+    if (!force && mainWs && mainWs.readyState === WebSocket.OPEN && state.connected && state.wsUrl === targetWsUrl) {
+      updateStatus('connected', 'Connected');
+      if (state.activeTab === 'tab-screen') {
+        connectScreenWs();
+      }
+      return;
+    }
+
+    // Only set "Connecting..." if we are truly disconnected
+    if (!state.connected || !mainWs || mainWs.readyState !== WebSocket.OPEN) {
+      updateStatus('connecting', 'Connecting...');
+    }
+
+    state.wsUrl = targetWsUrl;
+    state.screenWsUrl = targetScreenWsUrl;
+
+    if (mainWs) {
+      const oldWs = mainWs;
+      mainWs = null;
+      oldWs.onopen = null;
+      oldWs.onmessage = null;
+      oldWs.onclose = null;
+      oldWs.onerror = null;
+      try { oldWs.close(); } catch (e) {}
+    }
+
+    // Concurrently trigger native UDP discovery on connect attempt only when disconnected
+    if (!state.connected && window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
+      try { window.AndroidApp.discoverServer(); } catch (e) {}
+    }
+
+    // Stable Connect Timeout (5000ms):
+    // Prevents false disconnects on mobile Wi-Fi while giving ample time for WebSocket handshake
+    wsConnectTimeoutTimer = setTimeout(() => {
+      if (mainWs && mainWs.readyState === WebSocket.CONNECTING) {
+        try { mainWs.close(); } catch (e) {}
+        triggerDiscoveryAndSweep();
+      }
+    }, 5000);
+
+    try {
+      const ws = new WebSocket(state.wsUrl);
+      ws.binaryType = 'arraybuffer';
+      mainWs = ws;
+      mainWs.onopen = (e) => {
+        clearWsConnectTimeout();
+        if (ws !== mainWs) return;
+        onMainWsOpen(e);
+      };
+      mainWs.onmessage = (e) => {
+        if (ws !== mainWs) return;
+        onMainWsMessage(e);
+      };
+      mainWs.onclose = (e) => {
+        clearWsConnectTimeout();
+        if (ws !== mainWs) return;
+        onMainWsClose(e);
+      };
+      mainWs.onerror = (e) => {
+        clearWsConnectTimeout();
+        if (ws !== mainWs) return;
+        onMainWsError(e);
+      };
+
+      if (state.activeTab === 'tab-screen') {
+        connectScreenWs();
+      }
+    } catch (e) {
+      clearWsConnectTimeout();
+      console.error('Failed to open main WebSocket:', e);
+      onMainWsError();
+    }
+  }
+
+  let screenReconnectTimer = null;
+  let lastScreenFrameReceivedTime = Date.now();
+  let lastVideoFrameReceivedTime = Date.now();
+  let screenFirstFrameSeen = false;
+  let screenWatchdogTimer = null;
+  let screenLoaderInterval = null;
+
+  function hideScreenLoader() {
+    screenFirstFrameSeen = true;
+    if (screenLoaderInterval) {
+      clearInterval(screenLoaderInterval);
+      screenLoaderInterval = null;
+    }
+    if (el.screenLoader) {
+      el.screenLoader.style.display = 'none';
+    }
+  }
+
+  function showScreenLoader(message) {
+    if (!el.screenLoader) return;
+    if (screenFirstFrameSeen) {
+      el.screenLoader.style.display = 'none';
+      return;
+    }
+    el.screenLoader.style.display = '';
+    const label = el.screenLoader.querySelector('span');
+    if (label) label.textContent = message || 'STREAMING PC SCREEN...';
+
+    if (screenLoaderInterval) clearInterval(screenLoaderInterval);
+    screenLoaderInterval = setInterval(() => {
+      if (screenFirstFrameSeen) {
+        hideScreenLoader();
+        return;
+      }
+      if (state.activeTab === 'tab-screen') {
+        if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+          try { screenWs.send('resume'); } catch (e) {}
+          try { screenWs.send('req_frame'); } catch (e) {}
+        } else if (!screenWs || screenWs.readyState === WebSocket.CLOSED) {
+          connectScreenWs();
+        }
+      }
+    }, 800);
+  }
+
+  // Self-heals a stalled stream gently without repeatedly destroying active sockets.
+  function startScreenWatchdog() {
+    if (screenWatchdogTimer) return;
+    screenWatchdogTimer = setInterval(() => {
+      if (state.activeTab !== 'tab-screen') return;
+      if (!screenWs || screenWs.readyState === WebSocket.CLOSED) {
+        connectScreenWs();
+      } else if (screenWs.readyState === WebSocket.OPEN) {
+        const now = Date.now();
+        // Check actual video frames received (not just heartbeat string 'h')
+        const noVideo = (!screenFirstFrameSeen && (now - lastVideoFrameReceivedTime > 700)) ||
+                        (now - lastVideoFrameReceivedTime > 2000);
+        if (noVideo) {
+          lastVideoFrameReceivedTime = now;
+          try { screenWs.send('resume'); } catch (e) {}
+          try { screenWs.send('req_frame'); } catch (e) {}
+          sendStreamConfig();
+        }
+      }
+    }, 800);
+  }
+
+  function disconnectScreenWs() {
+    if (screenReconnectTimer) {
+      clearTimeout(screenReconnectTimer);
+      screenReconnectTimer = null;
+    }
+    if (screenLoaderInterval) {
+      clearInterval(screenLoaderInterval);
+      screenLoaderInterval = null;
+    }
+    if (screenWatchdogTimer) {
+      clearInterval(screenWatchdogTimer);
+      screenWatchdogTimer = null;
+    }
+    if (screenWs) {
+      const ws = screenWs;
+      screenWs = null;
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onclose = null;
+      ws.onerror = null;
+      try { ws.close(); } catch (e) {}
+    }
+  }
+
+  // Pushes the encoder settings to the server.
+  function sendStreamConfig() {
+    if (!screenWs || screenWs.readyState !== WebSocket.OPEN) return;
+    const fps = Math.max(10, Math.min(60, parseInt(state.streamFps, 10) || 30));
+    const quality = Math.max(20, Math.min(100, parseInt(state.streamQuality, 10) || 75));
+    const scale = Math.max(0.3, Math.min(1.0, parseFloat(state.streamScale) || 0.85));
+    try {
+      screenWs.send(`cfg,${quality},${scale.toFixed(2)},${fps}`);
+    } catch (e) {}
+  }
+
+  // --- Intelligent Dynamic Adaptive Quality & Latency Controller (Auto ABR) ---
+  let smoothedRtt = 25; // ms
+  let stableTicks = 0;
+  let currentAppliedQuality = 75;
+  let currentAppliedScale = 0.85;
+  let currentAppliedFps = 30;
+
+  function getLatencyColor(ms) {
+    if (ms <= 25) return '#00ff66'; // Cyber Lime (Ultra-fast <25ms)
+    if (ms <= 45) return '#00f0ff'; // Neon Cyan (Fast LAN 25-45ms)
+    if (ms <= 75) return '#a3e635'; // Lime Yellow (Normal 45-75ms)
+    if (ms <= 110) return '#eab308'; // Amber (Moderate 75-110ms)
+    if (ms <= 180) return '#f97316'; // Neon Orange (Elevated 110-180ms)
+    if (ms <= 300) return '#ef4444'; // Red-Orange (High 180-300ms)
+    return '#ff0055';               // Neon Crimson (Critical lag >300ms)
+  }
+
+  let lastLatencyUiUpdate = 0;
+  let smoothedLatencyMs = 0;
+
+  function updateLatencyDisplay(ms, force = false) {
+    if (!state.connected) return;
+    const now = Date.now();
+    const raw = Math.max(1, Math.round(ms));
+
+    // Low-pass exponential moving average filter (80% historical, 20% sample)
+    if (smoothedLatencyMs <= 0) {
+      smoothedLatencyMs = raw;
+    } else {
+      smoothedLatencyMs = (smoothedLatencyMs * 0.80) + (raw * 0.20);
+    }
+
+    // Pace UI updates to at most once every 1000ms unless forced (prevents rapid flickering)
+    if (!force && (now - lastLatencyUiUpdate < 1000)) {
+      return;
+    }
+    lastLatencyUiUpdate = now;
+
+    const currentMs = Math.max(1, Math.round(smoothedLatencyMs));
+    const color = getLatencyColor(currentMs);
+
+    if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      el.statusLabel.innerHTML = `Connected • <span class="status-latency-num" style="color: ${color}; font-weight: 800; text-shadow: 0 0 6px ${color}88;">${currentMs}ms</span>`;
+    }
+
+    if (el.statusIndicator && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      el.statusIndicator.className = 'status-dot connected';
+      el.statusIndicator.style.background = '';
+      el.statusIndicator.style.boxShadow = '';
+      el.statusIndicator.style.borderColor = '';
+    }
+
+    if (el.pillStatus) {
+      el.pillStatus.style.borderColor = '';
+      el.pillStatus.style.boxShadow = '';
+    }
+
+    if (el.latencyVal) {
+      el.latencyVal.textContent = `${currentMs}ms`;
+      el.latencyVal.style.color = color;
+      el.latencyVal.style.fontWeight = '800';
+    }
+
+    if (typeof updateScreenPerfHud === 'function') {
+      updateScreenPerfHud();
+    }
+  }
+
+  let degradeTicks = 0;
+
+  function updateAdaptiveQuality(currentRtt) {
+    if (state.autoQualityMode !== 'auto') return;
+
+    // Exponential moving average for jitter-resistant smoothed RTT
+    smoothedRtt = Math.round(smoothedRtt * 0.70 + currentRtt * 0.30);
+
+    const isPro = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+    const maxAllowedFps = isPro ? (parseInt(state.streamFps, 10) || 60) : 30;
+
+    let targetQuality = 75;
+    let targetScale = 0.85;
+    let targetFps = maxAllowedFps;
+
+    if (smoothedRtt <= 20) {
+      // Tier 1: ULTRA (5 GHz / Clean RTT < 20ms) -> Peak fidelity 60 FPS @ 8 Mbps
+      targetQuality = 80;
+      targetScale = 1.0;
+      targetFps = maxAllowedFps;
+    } else if (smoothedRtt <= 55) {
+      // Tier 2: BALANCED (2.4 GHz Clean RTT 20-55ms) -> 30 FPS @ 2.5 Mbps
+      targetQuality = 75;
+      targetScale = 0.90;
+      targetFps = Math.min(maxAllowedFps, 30);
+    } else {
+      // Tier 3: SURVIVAL (2.4 GHz Congested RTT > 55ms) -> 20 FPS @ 1.0 Mbps
+      targetQuality = 60;
+      targetScale = 0.75;
+      targetFps = Math.min(maxAllowedFps, 20);
+    }
+
+    const isDegrading = (targetQuality < currentAppliedQuality || targetFps < currentAppliedFps);
+    if (isDegrading) {
+      // Require 2 consecutive degraded samples (~3s) to prevent single-packet jitter from dropping FPS
+      degradeTicks++;
+      if (degradeTicks >= 2) {
+        degradeTicks = 0;
+        stableTicks = 0;
+        currentAppliedQuality = targetQuality;
+        currentAppliedScale = targetScale;
+        currentAppliedFps = targetFps;
+        state.streamQuality = currentAppliedQuality;
+        state.streamScale = currentAppliedScale;
+        state.streamFps = currentAppliedFps;
+        sendStreamConfig();
+      }
+    } else if (targetQuality > currentAppliedQuality || targetFps > currentAppliedFps) {
+      degradeTicks = 0;
+      // Require 2 consecutive stable checks before stepping up quality
+      stableTicks++;
+      if (stableTicks >= 2) {
+        stableTicks = 0;
+        currentAppliedQuality = targetQuality;
+        currentAppliedScale = targetScale;
+        currentAppliedFps = targetFps;
+        state.streamQuality = currentAppliedQuality;
+        state.streamScale = currentAppliedScale;
+        state.streamFps = currentAppliedFps;
+        sendStreamConfig();
+      }
+    } else {
+      degradeTicks = 0;
+      stableTicks = 0;
+    }
+
+    // Update status label with dynamic latency color gradient
+    if (el.statusLabel && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      updateLatencyDisplay(smoothedRtt);
+    }
+  }
+
+  function connectScreenWs(force = false) {
+    if (screenReconnectTimer) {
+      clearTimeout(screenReconnectTimer);
+      screenReconnectTimer = null;
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token') || urlParams.get('t') || '';
+    const currentToken = localStorage.getItem('pcdeck_token') || urlToken;
+    const tokenQuery = currentToken ? `?token=${encodeURIComponent(currentToken)}` : '';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen${tokenQuery}`;
+    state.screenWsUrl = screenWsUrl;
+
+    // If socket is already OPEN or CONNECTING to the same exact URL, maintain it and nudge for frames
+    if (!force && screenWs && (screenWs.readyState === WebSocket.OPEN || screenWs.readyState === WebSocket.CONNECTING) && screenWs.url === screenWsUrl) {
+      sendStreamConfig();
+      if (screenWs.readyState === WebSocket.OPEN && state.activeTab === 'tab-screen') {
+        try { screenWs.send('resume'); } catch (e) {}
+        try { screenWs.send('req_frame'); } catch (e) {}
+      }
+      return;
+    }
+
+    try {
+      if (screenWs) {
+        const oldScreenWs = screenWs;
+        screenWs = null;
+        oldScreenWs.onopen = null;
+        oldScreenWs.onmessage = null;
+        oldScreenWs.onclose = null;
+        oldScreenWs.onerror = null;
+        try { oldScreenWs.close(); } catch (e) {}
+      }
+      lastScreenFrameReceivedTime = Date.now();
+      lastVideoFrameReceivedTime = Date.now();
+      if (!screenFirstFrameSeen) {
+        showScreenLoader('STREAMING PC SCREEN...');
+      }
+      const ws = new WebSocket(screenWsUrl);
+      screenWs = ws;
+      ws.binaryType = 'blob';
+      ws.onopen = () => {
+        if (ws !== screenWs) return;
+        state.screenConnected = true;
+        lastScreenFrameReceivedTime = Date.now();
+        lastVideoFrameReceivedTime = Date.now();
+        startScreenWatchdog();
+        // Re-apply encoder settings
+        sendStreamConfig();
+        if (state.activeTab === 'tab-screen') {
+          try { ws.send('resume'); } catch (e) {}
+          try { ws.send('req_frame'); } catch (e) {}
+        } else {
+          try { ws.send('pause'); } catch (e) {}
+        }
+      };
+      ws.onmessage = (event) => {
+        if (ws !== screenWs) return;
+        if (event.data) {
+          lastScreenFrameReceivedTime = Date.now();
+          if (typeof event.data !== 'string') {
+            lastVideoFrameReceivedTime = Date.now();
+            // Instant frame ACK back to server so server knows this frame cleared the network pipe!
+            try { ws.send('a'); } catch (e) {}
+            renderScreenFrame(event.data);
+          } else {
+            handleScreenTextMessage(event.data);
+          }
+        }
+      };
+      ws.onclose = () => {
+        if (ws !== screenWs) return;
+        state.screenConnected = false;
+        if ((state.connected || state.activeTab === 'tab-screen') && !screenReconnectTimer) {
+          screenReconnectTimer = setTimeout(() => {
+            screenReconnectTimer = null;
+            if (state.activeTab === 'tab-screen') connectScreenWs();
+          }, 1000);
+        }
+      };
+      ws.onerror = () => {
+        if (ws !== screenWs) return;
+        state.screenConnected = false;
+        try { ws.close(); } catch (e) {}
+      };
+    } catch (e) {
+      console.error('Failed to open screen WebSocket:', e);
+    }
+  }
+
+  // --- Aero Multi-Monitor Switcher Controller ---
+  let currentMonitorCount = 1;
+  let currentActiveMonitor = 1;
+
+  function handleScreenTextMessage(msg) {
+    if (!msg || typeof msg !== 'string') return;
+    if (msg.startsWith('monitors,')) {
+      const parts = msg.split(',');
+      const count = parseInt(parts[1] || '1', 10);
+      const activeIdx = parseInt(parts[2] || '1', 10);
+      currentMonitorCount = count;
+      currentActiveMonitor = activeIdx;
+      updateScreenMonitorButton();
+    }
+  }
+
+  function updateScreenMonitorButton() {
+    const btn = document.getElementById('btn-screen-monitor-switch');
+    const badge = document.getElementById('screen-monitor-num');
+    if (!btn) return;
+    if (currentMonitorCount >= 2) {
+      btn.style.display = 'flex';
+      if (badge) badge.textContent = String(currentActiveMonitor);
+      btn.title = `Viewing Display ${currentActiveMonitor} of ${currentMonitorCount} (Tap to Switch)`;
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  function initScreenMonitorSwitcher() {
+    const btn = document.getElementById('btn-screen-monitor-switch');
+    if (!btn) return;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+        screenWs.send('switch_monitor');
+        vibrate(24);
+      }
+    };
+  }
+
+  let reconnectAttempts = 0;
+
+  function onMainWsOpen() {
+    reconnectAttempts = 0;
+    state.connected = true;
+    updateStatus('connected', 'Connected');
+    if (el.connectModal) el.connectModal.classList.remove('show');
+    vibrate(28);
+
+    try {
+      recordRecentPC(state.serverHost, state.serverPort, window.currentPcHostname || state.serverHost);
+    } catch (e) {}
+
+    clearAutoReconnect();
+    saveAllSettings(false);
+
+    try {
+      var sc = parseInt(localStorage.getItem('pcdeck_sess_count') || '0', 10) + 1;
+      localStorage.setItem('pcdeck_sess_count', sc.toString());
+    } catch (e) {}
+
+    // Engage native Android low-latency Wi-Fi performance lock immediately upon connection
+    if (window.AndroidApp && typeof window.AndroidApp.setLowLatencyWifiEnabled === 'function') {
+      try { window.AndroidApp.setLowLatencyWifiEnabled(true); } catch (e) {}
+    }
+
+    // Flush any pending shared files from system share sheet
+    if (pendingSharedFilesQueue && pendingSharedFilesQueue.length > 0) {
+      const q = pendingSharedFilesQueue.slice();
+      pendingSharedFilesQueue = [];
+      if (typeof switchTab === 'function') {
+        try { switchTab('tab-files'); } catch (e) {}
+      }
+      setTimeout(() => {
+        uploadMarkedPhoneFilesToPc(q);
+      }, 500);
+    }
+    // Transmit pairing token if stored locally, or request it from PC server
+    let storedToken = localStorage.getItem('pcdeck_token');
+    if (!storedToken && typeof document !== 'undefined' && document.cookie) {
+      const match = document.cookie.match(/(?:^|;\s*)pcdeck_token=([^;]+)/);
+      if (match && match[1]) {
+        storedToken = decodeURIComponent(match[1]);
+        try { localStorage.setItem('pcdeck_token', storedToken); } catch (e) {}
+      }
+    }
+    if (storedToken && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try { mainWs.send(`pair,${storedToken}`); } catch (e) {}
+    } else if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try { mainWs.send('get_token'); } catch (e) {}
+    }
+
+    // Start active 1000ms binary ping beacon to maintain Wi-Fi low latency and measure RTT calmly
+    startUltraLowLatencyBeacon();
+
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingInterval = null;
+    }
+
+    // Refresh Places & Current Directory
+    loadFsPlaces();
+
+    // Only restore / connect screen stream channel if currently on screen tab, avoiding unused Wi-Fi load
+    if (state.activeTab === 'tab-screen') {
+      connectScreenWs();
+    }
+
+    // Send Pro status to PC Server
+    const isProActive = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+    if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      mainWs.send(isProActive ? 'pro_status,1' : 'pro_check');
+    }
+
+    // Auto-enable PC audio streaming if enabled in preferences.
+    // Never override a manual stop, or every auto-reconnect would revive the stream.
+    if (state.autoAudioStream && !audioStreamActive && !userManuallyStoppedAudio) {
+      startAudioStream();
+    }
+  }
+
+  function onMainWsMessage(event) {
+    if (event.data instanceof ArrayBuffer) {
+      const view = new DataView(event.data);
+      if (view.byteLength >= 8 && view.getUint8(0) === 0x08) { // OP_PING / PONG
+        const sentTime = view.getUint32(2, true);
+        const now = (Date.now() & 0xFFFFFFFF) >>> 0;
+        const delta = (now >= sentTime) ? (now - sentTime) : ((0xFFFFFFFF - sentTime) + now + 1);
+        state.latency = Math.max(1, delta);
+        updateLatencyDisplay(state.latency);
+        updateAdaptiveQuality(state.latency);
+        // Synchronize measured latency strictly over mainWs (zero queue delay with TCP_NODELAY)
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          try { mainWs.send(`lat,${state.latency}`); } catch (e) {}
+        }
+      }
+      return;
+    }
+
+    const data = event.data;
+    if (typeof data === 'string' && data.startsWith('pro_unlocked,')) {
+      const parts = data.split(',');
+      const isUnlocked = parts[1] === '1';
+      const errMsg = parts.slice(2).join(',') || '';
+      window.serverProActive = isUnlocked;
+      if (isUnlocked) {
+        try { localStorage.setItem('pcdeck_pro_active', 'true'); } catch (e) {}
+      } else if (!localStorage.getItem('pcdeck_pro_license')) {
+        try { localStorage.removeItem('pcdeck_pro_active'); } catch (e) {}
+      }
+      if (typeof updateProUI === 'function') updateProUI(false);
+      if (typeof window._proAuthCallback === 'function') {
+        const cb = window._proAuthCallback;
+        window._proAuthCallback = null;
+        cb(isUnlocked, errMsg);
+      }
+      return;
+    }
+    if (typeof data === 'string' && data.startsWith('token,')) {
+      const serverToken = data.substring(6).trim();
+      if (serverToken) {
+        try { localStorage.setItem('pcdeck_token', serverToken); } catch (e) {}
+        // Immediately complete two-way handshake on mainWs
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          try { mainWs.send(`pair,${serverToken}`); } catch (e) {}
+        }
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        state.screenWsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/screen?token=${encodeURIComponent(serverToken)}`;
+        if (state.activeTab === 'tab-screen') {
+          connectScreenWs(true);
+        }
+      }
+      return;
+    }
+    if (data === 'auth_required' || data.startsWith('pair_error,')) {
+      const savedTok = localStorage.getItem('pcdeck_token');
+      if (savedTok && mainWs && mainWs.readyState === WebSocket.OPEN) {
+        try { mainWs.send(`pair,${savedTok}`); return; } catch (e) {}
+      } else if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        try { mainWs.send('get_token'); return; } catch (e) {}
+      }
+      showToast('Pairing required: please scan the QR code on your PC screen.', 'error');
+      openConnectModal();
+      return;
+    }
+    if (data.startsWith('pair_ok,')) {
+      if (state.activeTab === 'tab-screen') {
+        connectScreenWs(true);
+      }
+      return;
+    }
+    if (data.startsWith('pong,')) {
+      const sentTime = parseInt(data.split(',')[1], 10);
+      state.latency = Math.max(1, Date.now() - sentTime);
+      updateLatencyDisplay(state.latency);
+      updateAdaptiveQuality(state.latency);
+      // Synchronize measured latency strictly over mainWs
+      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        try { mainWs.send(`lat,${state.latency}`); } catch (e) {}
+      }
+      return;
+    }
+
+    // --- Legacy Driver Message Sink (Pure Driverless Architecture) ---
+    if (data.startsWith('gamepad_driver_') || data.startsWith('driver_') || data.startsWith('cam_driver_') || data.startsWith('mic_driver_')) {
+      state.gamepadDriverInstalled = true;
+      return;
+    }
+
+    // --- Reverse Control Commands from PC ---
+    if (data.startsWith('phone_tap,')) {
+      const parts = data.split(',');
+      const x = parseFloat(parts[1]);
+      const y = parseFloat(parts[2]);
+      if (window.AndroidApp && typeof window.AndroidApp.dispatchPhoneTap === 'function') {
+        window.AndroidApp.dispatchPhoneTap(x, y);
+      }
+    } else if (data.startsWith('phone_swipe,')) {
+      const parts = data.split(',');
+      const x1 = parseFloat(parts[1]);
+      const y1 = parseFloat(parts[2]);
+      const x2 = parseFloat(parts[3]);
+      const y2 = parseFloat(parts[4]);
+      const duration = parseInt(parts[5] || '300', 10);
+      if (window.AndroidApp && typeof window.AndroidApp.dispatchPhoneSwipe === 'function') {
+        window.AndroidApp.dispatchPhoneSwipe(x1, y1, x2, y2, duration);
+      }
+    } else if (data.startsWith('phone_nav,')) {
+      const action = data.split(',')[1];
+      if (window.AndroidApp && typeof window.AndroidApp.dispatchPhoneNav === 'function') {
+        window.AndroidApp.dispatchPhoneNav(action);
+      }
+    } else if (data.startsWith('phone_text,')) {
+      const text = data.substring('phone_text,'.length);
+      if (window.AndroidApp && typeof window.AndroidApp.dispatchPhoneText === 'function') {
+        window.AndroidApp.dispatchPhoneText(text);
+      }
+    }
+  }
+
+  let ultraLowLatencyBeaconTimer = null;
+  function startUltraLowLatencyBeacon() {
+    if (ultraLowLatencyBeaconTimer) clearInterval(ultraLowLatencyBeaconTimer);
+    ultraLowLatencyBeaconTimer = setInterval(() => {
+      if (state.connected && mainWs && mainWs.readyState === WebSocket.OPEN) {
+        sendBinaryPing();
+      }
+    }, 500); // 500ms probe pace for real-time closed-loop network adaptation
+  }
+
+  function stopUltraLowLatencyBeacon() {
+    if (ultraLowLatencyBeaconTimer) {
+      clearInterval(ultraLowLatencyBeaconTimer);
+      ultraLowLatencyBeaconTimer = null;
+    }
+  }
+
+  function onMainWsClose() {
+    clearWsConnectTimeout();
+    stopUltraLowLatencyBeacon();
+    smoothedLatencyMs = 0;
+    lastLatencyUiUpdate = 0;
+    if (window.AndroidApp && typeof window.AndroidApp.setLowLatencyWifiEnabled === 'function') {
+      try { window.AndroidApp.setLowLatencyWifiEnabled(false); } catch (e) {}
+    }
+    state.connected = false;
+    reconnectAttempts++;
+
+    if (reconnectAttempts >= 3) {
+      updateStatus('disconnected', 'Reconnecting... (Check Wi-Fi/Hotspot)');
+      if (reconnectAttempts === 3) {
+        showToast(`Searching for PC on network...`, 'info');
+      }
+    } else {
+      updateStatus('disconnected', 'Reconnecting...');
+    }
+
+    // Trigger instant UDP discovery and subnet sweep on connection drop
+    triggerDiscoveryAndSweep();
+
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingInterval = null;
+    }
+    if (audioStreamActive) {
+      stopAudioStream();
+    }
+
+    clearAutoReconnect();
+    const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
+    const hasTarget = localStorage.getItem('pcdeck_ip') || localStorage.getItem('neontrack_ip') || state.serverHost || (isHttp ? window.location.hostname : null);
+    if (hasTarget) {
+      // Super fast initial retry (350ms) instead of 1000ms+ delay
+      const delay = reconnectAttempts <= 1 ? 350 : Math.min(600 + Math.min(reconnectAttempts, 4) * 500, 2500);
+      state.autoReconnectTimer = setTimeout(() => {
+        state.autoReconnectTimer = null;
+        if (!state.connected) {
+          connect();
+        }
+      }, delay);
+    }
+  }
+
+  function onMainWsError() {
+    state.connected = false;
+    updateStatus('disconnected', 'Disconnected');
+    const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+    if (!localStorage.getItem('pcdeck_ip') && !localStorage.getItem('neontrack_ip') && isNativeApp) {
+      openConnectModal();
+    }
+  }
+
+  function updateStatus(status, label) {
+    const sConnChip = document.getElementById('settings-conn-chip');
+    if (sConnChip) {
+      if (status === 'connected') {
+        sConnChip.className = 'mini-status-chip online';
+        sConnChip.textContent = 'CONNECTED';
+      } else {
+        sConnChip.className = 'mini-status-chip offline';
+        sConnChip.textContent = 'OFFLINE';
+      }
+    }
+    try {
+      if (typeof updateRecentPCDropdownStatus === 'function') {
+        updateRecentPCDropdownStatus(status);
+      }
+    } catch (e) {}
+    if (!el.statusIndicator || !el.statusLabel) return;
+    if (status === 'connected') {
+      el.statusIndicator.className = 'status-dot connected';
+      updateLatencyDisplay(state.latency || 15, true);
+    } else {
+      // Robust Guard: Never override active connection display if socket is truly OPEN!
+      if (mainWs && mainWs.readyState === WebSocket.OPEN && state.connected) {
+        return;
+      }
+      el.statusIndicator.className = 'status-dot';
+      el.statusIndicator.style.background = '';
+      el.statusIndicator.style.boxShadow = '';
+      el.statusIndicator.style.borderColor = '';
+      if (el.pillStatus) {
+        el.pillStatus.style.borderColor = '';
+        el.pillStatus.style.boxShadow = '';
+      }
+      el.statusLabel.textContent = label;
+      if (el.latencyVal) {
+        el.latencyVal.textContent = '--ms';
+        el.latencyVal.style.color = '';
+      }
+    }
+  }
+
+  // --- High-Speed Zero-Allocation Binary Wire Protocol ---
+  const BINARY_OP = {
+    MOVE_REL: 0x01,
+    MOVE_ABS: 0x02,
+    TOUCH_DOWN: 0x03,
+    TOUCH_UP: 0x04,
+    CLICK: 0x05,
+    SCROLL_REL: 0x06,
+    SCROLL_ABS: 0x07,
+    PING: 0x08,
+    GAMEPAD: 0x09,
+    TOUCH_MOVE: 0x0A
+  };
+
+  const BTN_MAP_JS = { left: 0, right: 1, middle: 2, double: 3 };
+
+  // Pre-allocated static buffers (Zero GC overhead, dedicated per opcode to prevent race conditions)
+  const _bufMoveRel = new ArrayBuffer(8);
+  const _viewMoveRel = new DataView(_bufMoveRel);
+
+  const _bufMoveAbs = new ArrayBuffer(8);
+  const _viewMoveAbs = new DataView(_bufMoveAbs);
+
+  const _bufTouchDown = new ArrayBuffer(8);
+  const _viewTouchDown = new DataView(_bufTouchDown);
+
+  const _bufTouchMove = new ArrayBuffer(8);
+  const _viewTouchMove = new DataView(_bufTouchMove);
+
+  const _bufTouchUp = new ArrayBuffer(8);
+  const _viewTouchUp = new DataView(_bufTouchUp);
+
+  const _bufClick = new ArrayBuffer(8);
+  const _viewClick = new DataView(_bufClick);
+
+  const _bufScrollRel = new ArrayBuffer(8);
+  const _viewScrollRel = new DataView(_bufScrollRel);
+
+  const _bufScrollAbs = new ArrayBuffer(12);
+  const _viewScrollAbs = new DataView(_bufScrollAbs);
+
+  const _bufPing = new ArrayBuffer(8);
+  const _viewPing = new DataView(_bufPing);
+
+  function sendBinaryMoveRel(dx, dy, flags = 0) {
+    _viewMoveRel.setUint8(0, BINARY_OP.MOVE_REL);
+    _viewMoveRel.setUint8(1, flags);
+    const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
+    const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
+    _viewMoveRel.setInt16(2, idx, true);
+    _viewMoveRel.setInt16(4, idy, true);
+    _viewMoveRel.setUint16(6, 0, true);
+    sendCommand(_bufMoveRel);
+  }
+
+  function sendBinaryMoveAbs(normX, normY, pressure = 0, flags = 0) {
+    _viewMoveAbs.setUint8(0, BINARY_OP.MOVE_ABS);
+    _viewMoveAbs.setUint8(1, flags);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    _viewMoveAbs.setUint16(2, ix, true);
+    _viewMoveAbs.setUint16(4, iy, true);
+    _viewMoveAbs.setUint8(6, pressure & 0xFF);
+    _viewMoveAbs.setUint8(7, 0);
+    sendScreenCommand(_bufMoveAbs);
+  }
+
+  function sendBinaryTouchDown(normX, normY, button = 'left', pressure = 0) {
+    _viewTouchDown.setUint8(0, BINARY_OP.TOUCH_DOWN);
+    _viewTouchDown.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    _viewTouchDown.setUint16(2, ix, true);
+    _viewTouchDown.setUint16(4, iy, true);
+    _viewTouchDown.setUint8(6, pressure & 0xFF);
+    _viewTouchDown.setUint8(7, 0);
+    sendScreenCommand(_bufTouchDown);
+  }
+
+  function sendBinaryTouchMove(normX, normY, pressure = 0, flags = 0) {
+    _viewTouchMove.setUint8(0, BINARY_OP.TOUCH_MOVE);
+    _viewTouchMove.setUint8(1, flags);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    _viewTouchMove.setUint16(2, ix, true);
+    _viewTouchMove.setUint16(4, iy, true);
+    _viewTouchMove.setUint8(6, pressure & 0xFF);
+    _viewTouchMove.setUint8(7, 0);
+    sendScreenCommand(_bufTouchMove);
+  }
+
+  function sendBinaryTouchUp(normX, normY, button = 'left') {
+    _viewTouchUp.setUint8(0, BINARY_OP.TOUCH_UP);
+    _viewTouchUp.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    _viewTouchUp.setUint16(2, ix, true);
+    _viewTouchUp.setUint16(4, iy, true);
+    _viewTouchUp.setUint16(6, 0, true);
+    sendScreenCommand(_bufTouchUp);
+  }
+
+  function sendBinaryClick(button = 'left') {
+    _viewClick.setUint8(0, BINARY_OP.CLICK);
+    _viewClick.setUint8(1, BTN_MAP_JS[button] ?? 0);
+    _viewClick.setUint32(2, 0, true);
+    _viewClick.setUint16(6, 0, true);
+    sendCommand(_bufClick);
+  }
+
+  function sendBinaryScrollRel(dx, dy, flags = 0) {
+    _viewScrollRel.setUint8(0, BINARY_OP.SCROLL_REL);
+    _viewScrollRel.setUint8(1, flags);
+    const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
+    const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
+    _viewScrollRel.setInt16(2, idx, true);
+    _viewScrollRel.setInt16(4, idy, true);
+    _viewScrollRel.setUint16(6, 0, true);
+    sendCommand(_bufScrollRel);
+  }
+
+  function sendBinaryScrollAbs(normX, normY, dx, dy, flags = 0) {
+    _viewScrollAbs.setUint8(0, BINARY_OP.SCROLL_ABS);
+    _viewScrollAbs.setUint8(1, flags);
+    const ix = Math.max(0, Math.min(65535, Math.round(normX * 65535.0)));
+    const iy = Math.max(0, Math.min(65535, Math.round(normY * 65535.0)));
+    const idx = Math.max(-32768, Math.min(32767, Math.round(dx * 10.0)));
+    const idy = Math.max(-32768, Math.min(32767, Math.round(dy * 10.0)));
+    _viewScrollAbs.setUint16(2, ix, true);
+    _viewScrollAbs.setUint16(4, iy, true);
+    _viewScrollAbs.setInt16(6, idx, true);
+    _viewScrollAbs.setInt16(8, idy, true);
+    _viewScrollAbs.setUint16(10, 0, true);
+    sendScreenCommand(_bufScrollAbs);
+  }
+
+  function sendBinaryPing(flags = 0) {
+    const ts = Date.now() & 0xFFFFFFFF;
+    _viewPing.setUint8(0, BINARY_OP.PING);
+    _viewPing.setUint8(1, flags);
+    _viewPing.setUint32(2, ts, true);
+    _viewPing.setUint16(6, 0, true);
+    sendCommand(_bufPing);
+  }
+
+  function sendCommand(cmdStr) {
+    if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      if (mainWs.bufferedAmount > 65536) return;
+      mainWs.send(cmdStr);
+    } else if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+      if (screenWs.bufferedAmount > 65536) return;
+      screenWs.send(cmdStr);
+    }
+  }
+
+  function sendScreenCommand(cmdStr) {
+    if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      if (mainWs.bufferedAmount > 65536) return;
+      mainWs.send(cmdStr);
+    } else if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+      if (screenWs.bufferedAmount > 65536) return;
+      screenWs.send(cmdStr);
+    }
+  }
+
+  // --- High-Performance Hardware-Accelerated Zero-Lag Screen Frame Renderer ---
+  let isDecodingScreen = false;
+  let nextFrameBuffer = null;
+  let cachedScreenImg = new Image();
+  let activeBlobUrl = null;
+
+  function recordStreamFrameRendered() {}
+  function updateScreenPerfHud() {}
+  window.updateScreenPerfHud = updateScreenPerfHud;
+
+  function renderScreenFrame(data) {
+    if (!data) return;
+    if (typeof data === 'string') {
+      // Keepalive heartbeat
+      lastScreenFrameReceivedTime = Date.now();
+      return;
+    }
+    lastScreenFrameReceivedTime = Date.now();
+    lastVideoFrameReceivedTime = Date.now();
+    nextFrameBuffer = data;
+    if (!isDecodingScreen) {
+      processNextScreenFrame();
+    }
+  }
+
+  async function processNextScreenFrame() {
+    if (!nextFrameBuffer || !el.screenCanvas) {
+      isDecodingScreen = false;
+      return;
+    }
+    isDecodingScreen = true;
+    const data = nextFrameBuffer;
+    nextFrameBuffer = null;
+
+    if (!screenCtx) {
+      screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
+      if (screenCtx) {
+        screenCtx.imageSmoothingEnabled = false;
+      }
+    }
+
+    let renderedOk = false;
+    try {
+      const blob = (data instanceof Blob) ? data : new Blob([data], { type: 'image/jpeg' });
+
+      // Primary Decoder: Hardware-Accelerated createImageBitmap
+      if (window.createImageBitmap) {
+        try {
+          const bmp = await createImageBitmap(blob);
+          if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
+            el.screenCanvas.width = bmp.width;
+            el.screenCanvas.height = bmp.height;
+            screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
+            if (screenCtx) screenCtx.imageSmoothingEnabled = false;
+            updateScreenPerfHud();
+          }
+          if (screenCtx) {
+            screenCtx.drawImage(bmp, 0, 0);
+            renderedOk = true;
+          }
+          if (bmp.close) bmp.close();
+        } catch (bmpErr) {}
+      }
+
+      // Secondary Decoder: HTML5 Image element fallback
+      if (!renderedOk) {
+        await new Promise((resolve) => {
+          if (activeBlobUrl) URL.revokeObjectURL(activeBlobUrl);
+          activeBlobUrl = URL.createObjectURL(blob);
+          cachedScreenImg.onload = () => {
+            if (el.screenCanvas.width !== cachedScreenImg.naturalWidth || el.screenCanvas.height !== cachedScreenImg.naturalHeight) {
+              el.screenCanvas.width = cachedScreenImg.naturalWidth;
+              el.screenCanvas.height = cachedScreenImg.naturalHeight;
+              screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
+              updateScreenPerfHud();
+            }
+            if (screenCtx) {
+              screenCtx.drawImage(cachedScreenImg, 0, 0);
+              renderedOk = true;
+            }
+            resolve();
+          };
+          cachedScreenImg.onerror = (err) => {
+            resolve();
+          };
+          cachedScreenImg.src = activeBlobUrl;
+        });
+      }
+
+      if (renderedOk) {
+        recordStreamFrameRendered();
+      }
+
+      if (renderedOk || screenFirstFrameSeen) {
+        hideScreenLoader();
+      }
+    } catch (e) {
+      console.warn('Frame render error:', e);
+    } finally {
+      if (nextFrameBuffer) {
+        setTimeout(processNextScreenFrame, 0);
+      } else {
+        isDecodingScreen = false;
+      }
+    }
+  }
+
+  // --- Jitter-Free EMA Low-Pass Filter Trackpad ---
+  function initTrackpad() {
+    const surface = el.trackpadSurface;
+    if (!surface) return;
+
+    let touchActive = false;
+    let startX = 0, startY = 0;
+    let lastX = 0, lastY = 0;
+    let tapStartTime = 0;
+    let totalMoved = 0;
+
+    let twoFingerActive = false;
+    let twoFingerStartTime = 0;
+    let twoFingerStartMidX = 0, twoFingerStartMidY = 0;
+    let lastTwoFingerMidX = 0, lastTwoFingerMidY = 0;
+    let twoFingerMoved = false;
+    let twoFingerLastTapTime = 0;
+
+    // Double-tap and tap-to-drag state
+    let lastTapTime = 0;
+    let lastTapX = 0, lastTapY = 0;
+    let isTapDragging = false;
+
+    // Frame-coalesced kinematic filtering & motion prediction variables
+    let filteredDx = 0;
+    let filteredDy = 0;
+    let pendingDx = 0;
+    let pendingDy = 0;
+    let rAfScheduled = false;
+    let lastFlushTime = performance.now();
+    let velPredictX = 0;
+    let velPredictY = 0;
+
+    // Quick Speed Preset Toggle Button
+    if (el.btnSpeedQuick) {
+      const SPEED_PRESETS = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5];
+      el.btnSpeedQuick.onclick = () => {
+        let currentIdx = SPEED_PRESETS.findIndex(s => Math.abs(s - state.cursorSpeed) < 0.1);
+        let nextIdx = (currentIdx + 1) % SPEED_PRESETS.length;
+        if (currentIdx === -1) nextIdx = 1;
+        state.cursorSpeed = SPEED_PRESETS[nextIdx];
+        el.btnSpeedQuick.textContent = `${state.cursorSpeed.toFixed(1)}x`;
+        if (el.settingCursorSpeed) el.settingCursorSpeed.value = state.cursorSpeed.toString();
+        if (el.valCursorSpeed) el.valCursorSpeed.textContent = `${state.cursorSpeed.toFixed(1)}x`;
+        vibrate(25);
+        showToast(`Mouse Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success');
+        saveAllSettings(false);
+      };
+    }
+
+    function flushMovement() {
+      rAfScheduled = false;
+      if (!touchActive && pendingDx === 0 && pendingDy === 0) return;
+
+      const rawDx = pendingDx;
+      const rawDy = pendingDy;
+      pendingDx = 0;
+      pendingDy = 0;
+
+      const moveDist = Math.hypot(rawDx, rawDy);
+      if (moveDist < 0.08) return;
+
+      const nowTime = performance.now();
+      const dt = Math.max(1.0, nowTime - lastFlushTime);
+      lastFlushTime = nowTime;
+
+      // Adaptive Dynamic Smoothing:
+      // High responsiveness for real movements, strong damping for sub-pixel digitizer tremor
+      const alpha = Math.min(1.0, Math.max(0.65, moveDist / 8.0));
+      filteredDx = alpha * rawDx + (1.0 - alpha) * filteredDx;
+      filteredDy = alpha * rawDy + (1.0 - alpha) * filteredDy;
+
+      // Instant velocity (px/ms) & EMA Velocity Predictor
+      const instVx = filteredDx / dt;
+      const instVy = filteredDy / dt;
+      velPredictX = 0.65 * instVx + 0.35 * velPredictX;
+      velPredictY = 0.65 * instVy + 0.35 * velPredictY;
+
+      // Lead-ahead prediction for network latency compensation (~2.5ms Wi-Fi flight time)
+      let predDx = 0;
+      let predDy = 0;
+      if (moveDist > 2.0) {
+        predDx = velPredictX * 2.5;
+        predDy = velPredictY * 2.5;
+      }
+
+      let sendDx = (filteredDx + predDx) * state.cursorSpeed * 1.35;
+      let sendDy = (filteredDy + predDy) * state.cursorSpeed * 1.35;
+
+      if (state.smoothAccel) {
+        // Natural ballistic curve: 1.0x at low speed, accelerating smoothly up to 2.5x on rapid swipes
+        let accelFactor = 1.0;
+        if (moveDist > 2.0) {
+          accelFactor = 1.0 + Math.min(1.6, (moveDist - 2.0) * 0.08);
+        }
+        sendDx *= accelFactor;
+        sendDy *= accelFactor;
+      }
+
+      sendBinaryMoveRel(sendDx, sendDy);
+    }
+
+    surface.addEventListener('touchstart', (e) => {
+      globalLastTouchTime = Date.now();
+      surface.classList.add('touch-active');
+      if (window.isAirMouseActive && typeof window.freezeAirMouseForClick === 'function') {
+        window.freezeAirMouseForClick(80);
+      }
+      if (e.touches.length === 1) {
+        touchActive = true;
+        twoFingerActive = false;
+        const t = e.touches[0];
+        startX = lastX = t.clientX;
+        startY = lastY = t.clientY;
+        tapStartTime = Date.now();
+        lastFlushTime = performance.now();
+        totalMoved = 0;
+        filteredDx = 0;
+        filteredDy = 0;
+        pendingDx = 0;
+        pendingDy = 0;
+        velPredictX = 0;
+        velPredictY = 0;
+
+        // Double-tap detection: second touch within 300ms and 24px engages drag
+        const now = Date.now();
+        if (now - lastTapTime < 300 && Math.hypot(t.clientX - lastTapX, t.clientY - lastTapY) < 24) {
+          isTapDragging = true;
+          sendCommand('d,left');
+          vibrate(25);
+        } else {
+          isTapDragging = false;
+        }
+      } else if (e.touches.length === 2) {
+        touchActive = false;
+        twoFingerActive = true;
+        twoFingerMoved = false;
+        twoFingerStartTime = Date.now();
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        twoFingerStartMidX = (t1.clientX + t2.clientX) / 2;
+        twoFingerStartMidY = (t1.clientY + t2.clientY) / 2;
+        lastTwoFingerMidX = twoFingerStartMidX;
+        lastTwoFingerMidY = twoFingerStartMidY;
+        if (isTapDragging) {
+          isTapDragging = false;
+          sendCommand('u,left');
+        }
+      } else {
+        touchActive = false;
+        twoFingerActive = false;
+        if (isTapDragging) {
+          isTapDragging = false;
+          sendCommand('u,left');
+        }
+      }
+    }, { passive: false });
+
+    surface.addEventListener('touchmove', (e) => {
+      globalLastTouchTime = Date.now();
+      if (e.touches.length === 2 && twoFingerActive) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const midX = (t1.clientX + t2.clientX) / 2;
+        const midY = (t1.clientY + t2.clientY) / 2;
+        const dX = midX - lastTwoFingerMidX;
+        const dY = midY - lastTwoFingerMidY;
+        lastTwoFingerMidX = midX;
+        lastTwoFingerMidY = midY;
+
+        const moveDist = Math.hypot(midX - twoFingerStartMidX, midY - twoFingerStartMidY);
+        if (moveDist > 6) {
+          twoFingerMoved = true;
+        }
+
+        const scrollFactor = state.invertScroll ? -1 : 1;
+        const wheelDy = dY * 2.2 * state.scrollSpeed * scrollFactor;
+        const wheelDx = dX * 2.2 * state.scrollSpeed * scrollFactor;
+        if (Math.abs(wheelDy) >= 0.1 || Math.abs(wheelDx) >= 0.1) {
+          sendBinaryScrollRel(wheelDx, wheelDy);
+        }
+        e.preventDefault();
+        return;
+      }
+
+      if (!touchActive || e.touches.length !== 1) return;
+      if (window.isAirMouseActive) {
+        // In Air Mouse mode: gyroscope steers the cursor. Touchmove does not fight gyro.
+        e.preventDefault();
+        return;
+      }
+      const t = e.touches[0];
+      const dx = t.clientX - lastX;
+      const dy = t.clientY - lastY;
+      lastX = t.clientX;
+      lastY = t.clientY;
+
+      totalMoved += Math.hypot(dx, dy);
+      pendingDx += dx;
+      pendingDy += dy;
+
+      if (!rAfScheduled) {
+        rAfScheduled = true;
+        requestAnimationFrame(flushMovement);
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    surface.addEventListener('touchend', (e) => {
+      globalLastTouchTime = Date.now();
+      if (twoFingerActive && e.touches.length < 2) {
+        const dur = Date.now() - twoFingerStartTime;
+        if (!twoFingerMoved && dur < 380) {
+          const now = Date.now();
+          const isDoubleTap = (now - twoFingerLastTapTime < 450);
+          twoFingerLastTapTime = now;
+          vibrate(isDoubleTap ? 35 : 25);
+          sendBinaryClick('right');
+          showToast(isDoubleTap ? '2-Finger Double Tap (Right Click)' : 'Right Click', 'success');
+        }
+        twoFingerActive = false;
+        e.preventDefault();
+        return;
+      }
+
+      if (isTapDragging) {
+        isTapDragging = false;
+        sendCommand('u,left');
+        vibrate(20);
+        touchActive = false;
+        lastTapTime = 0;
+        e.preventDefault();
+        return;
+      }
+
+      if (touchActive && e.touches.length === 0) {
+        touchActive = false;
+        surface.classList.remove('touch-active');
+        if (window.isAirMouseActive && typeof window.freezeAirMouseForClick === 'function') {
+          window.freezeAirMouseForClick(100);
+        }
+        flushMovement();
+        const tapDuration = Date.now() - tapStartTime;
+        if (tapDuration < 320 && totalMoved < 16) {
+          const now = Date.now();
+          if (now - lastTapTime < 350 && Math.hypot(lastX - lastTapX, lastY - lastTapY) < 28) {
+            // Quick double tap -> Double Click
+            lastTapTime = 0;
+            vibrate(25);
+            sendBinaryClick('double');
+            showToast('Double Click', 'success');
+          } else {
+            // Single tap -> Left Click
+            lastTapTime = now;
+            lastTapX = lastX;
+            lastTapY = lastY;
+            vibrate(18);
+            sendBinaryClick('left');
+          }
+        } else {
+          lastTapTime = 0;
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    surface.addEventListener('touchcancel', () => {
+      touchActive = false;
+      surface.classList.remove('touch-active');
+    });
+
+    // Desktop Web Control: Mouse handling on Trackpad surface
+    surface.addEventListener('mousedown', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      touchActive = true;
+      surface.classList.add('touch-active');
+      startX = lastX = e.clientX;
+      startY = lastY = e.clientY;
+      tapStartTime = Date.now();
+      lastFlushTime = performance.now();
+      totalMoved = 0;
+      filteredDx = 0;
+      filteredDy = 0;
+      pendingDx = 0;
+      pendingDy = 0;
+      velPredictX = 0;
+      velPredictY = 0;
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (!touchActive || state.activeTab !== 'tab-trackpad') return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      totalMoved += Math.hypot(dx, dy);
+      pendingDx += dx;
+      pendingDy += dy;
+
+      if (!rAfScheduled) {
+        rAfScheduled = true;
+        requestAnimationFrame(flushMovement);
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      surface.classList.remove('touch-active');
+      if (el.scrollStrip) el.scrollStrip.classList.remove('touch-active');
+      if (Date.now() - globalLastTouchTime < 650) return;
+      if (!touchActive || state.activeTab !== 'tab-trackpad') return;
+      touchActive = false;
+      flushMovement();
+      const tapDuration = Date.now() - tapStartTime;
+      if (tapDuration < 350 && totalMoved < 12) {
+        const btn = (e.button === 2) ? 'right' : 'left';
+        vibrate(18);
+        sendBinaryClick(btn);
+      }
+    });
+
+    surface.addEventListener('wheel', (e) => {
+      const scrollDelta = -e.deltaY * 2.0 * state.scrollSpeed * (state.invertScroll ? -1 : 1);
+      sendBinaryScrollRel(0, scrollDelta);
+      e.preventDefault();
+    }, { passive: false });
+
+    surface.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+
+    // Scroll Strip Handler
+    if (el.scrollStrip) {
+      let scrollStartY = 0;
+      let scrollActive = false;
+
+      el.scrollStrip.addEventListener('touchstart', (e) => {
+        scrollActive = true;
+        el.scrollStrip.classList.add('touch-active');
+        scrollStartY = e.touches[0].clientY;
+        vibrate(10);
+      }, { passive: false });
+
+      el.scrollStrip.addEventListener('touchmove', (e) => {
+        if (!scrollActive) return;
+        const currentY = e.touches[0].clientY;
+        const dy = currentY - scrollStartY;
+        scrollStartY = currentY;
+
+        let scrollDelta = dy * 4.0 * state.scrollSpeed * (state.invertScroll ? -1 : 1);
+        sendBinaryScrollRel(0, scrollDelta);
+        e.preventDefault();
+      }, { passive: false });
+
+      el.scrollStrip.addEventListener('touchend', () => {
+        scrollActive = false;
+        el.scrollStrip.classList.remove('touch-active');
+      }, { passive: false });
+
+      el.scrollStrip.addEventListener('touchcancel', () => {
+        scrollActive = false;
+        el.scrollStrip.classList.remove('touch-active');
+      });
+
+      el.scrollStrip.addEventListener('mousedown', () => {
+        el.scrollStrip.classList.add('touch-active');
+      });
+    }
+  }
+
+  // --- CRT Retro Space-Saving Arched Dial Navigation Channel Map & Logic ---
+  const CRT_WHEEL_CHANNELS = [
+    { id: 'tab-screen', num: '01', name: 'SCREEN' },
+    { id: 'tab-trackpad', num: '02', name: 'TRACKPAD' },
+    { id: 'tab-keyboard', num: '03', name: 'KEYS' },
+    { id: 'tab-files', num: '04', name: 'FILES' },
+    { id: 'tab-media', num: '05', name: 'MEDIA' },
+    { id: 'tab-settings', num: '06', name: 'SETTINGS' }
+  ];
+
+  function updateCrtWheelNav(targetId) {
+    const disc = document.getElementById('crt-wheel-disc');
+    const idx = CRT_WHEEL_CHANNELS.findIndex(c => c.id === targetId);
+    if (idx === -1 || !disc) return;
+
+    const spokes = disc.querySelectorAll('.crt-wheel-spoke');
+    spokes.forEach(s => {
+      const sTarget = s.dataset.target;
+      const sIdx = CRT_WHEEL_CHANNELS.findIndex(c => c.id === sTarget);
+      if (sIdx === -1) return;
+
+      let d = sIdx - idx;
+      // Circular wrap around 6 channels to find shortest distance:
+      if (d > 3) d -= 6;
+      if (d < -2) d += 6;
+
+      const isHidden = (Math.abs(d) >= 3);
+      const isActive = (d === 0);
+      s.classList.toggle('active', isActive);
+
+      // Top arch line is at Y = 6px (center), Y = 12.5px (mid), Y = 32px (outer).
+      // All spokes are strictly positioned BELOW the arch line with 8px clearance:
+      // d = 0: y = 14px (arch line is at 6px, clear 8px above)
+      // d = ±1: y = 21px (arch line is at 12.5px, clear 8.5px above)
+      // d = ±2: y = 40px (arch line is at 32px, clear 8px above)
+      const x = isHidden ? (d > 0 ? 225 : -225) : d * 76;
+      const y = isHidden ? 68 : (Math.abs(d) === 2 ? 38 : (Math.abs(d) === 1 ? 20 : 14));
+      const rot = isHidden ? (d > 0 ? 26 : -26) : d * 9;
+      const scale = isActive ? 1.06 : (Math.abs(d) === 1 ? 0.95 : (Math.abs(d) === 2 ? 0.88 : 0.65));
+      const opacity = isHidden ? 0 : (isActive ? 1.0 : (Math.abs(d) === 1 ? 0.92 : 0.85));
+
+      s.style.width = '54px';
+      s.style.height = '36px';
+      s.style.transform = `translate(calc(-50% + ${x}px), ${y}px) rotate(${rot}deg) scale(${scale})`;
+      s.style.opacity = opacity;
+      s.style.pointerEvents = isHidden ? 'none' : 'auto';
+      s.style.zIndex = isActive ? '20' : (10 - Math.abs(d));
+    });
+  }
+
+  function initCrtWheelNav() {
+    const disc = document.getElementById('crt-wheel-disc');
+    if (disc) {
+      const spokes = disc.querySelectorAll('.crt-wheel-spoke');
+      spokes.forEach(s => {
+        s.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          vibrate(25);
+          const target = s.dataset.target;
+          if (target && typeof window.switchTabNav === 'function') {
+            window.switchTabNav(null, target);
+          } else if (target) {
+            switchTab(target);
+          }
+          if (target) updateCrtWheelNav(target);
+        });
+      });
+    }
+
+    const wheelNav = document.getElementById('crt-wheel-nav');
+    if (wheelNav) {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      wheelNav.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+
+      wheelNav.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) {
+          vibrate(20);
+          const curIdx = CRT_WHEEL_CHANNELS.findIndex(c => c.id === state.activeTab);
+          if (curIdx !== -1) {
+            const step = dx < 0 ? 1 : -1;
+            const nextIdx = (curIdx + step + CRT_WHEEL_CHANNELS.length) % CRT_WHEEL_CHANNELS.length;
+            const nextTarget = CRT_WHEEL_CHANNELS[nextIdx].id;
+            if (typeof window.switchTabNav === 'function') {
+              window.switchTabNav(null, nextTarget);
+            } else {
+              switchTab(nextTarget);
+            }
+            updateCrtWheelNav(nextTarget);
+          }
+        }
+      }, { passive: true });
+
+      wheelNav.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const curIdx = CRT_WHEEL_CHANNELS.findIndex(c => c.id === state.activeTab);
+        if (curIdx !== -1) {
+          const step = e.deltaY > 0 ? 1 : -1;
+          const nextIdx = (curIdx + step + CRT_WHEEL_CHANNELS.length) % CRT_WHEEL_CHANNELS.length;
+          const nextTarget = CRT_WHEEL_CHANNELS[nextIdx].id;
+          if (typeof window.switchTabNav === 'function') {
+            window.switchTabNav(null, nextTarget);
+          } else {
+            switchTab(nextTarget);
+          }
+          updateCrtWheelNav(nextTarget);
+        }
+      }, { passive: false });
+    }
+
+    updateCrtWheelNav(state.activeTab || 'tab-screen');
+  }
+
+  // --- CRT Rotated Full-Screen Keyboard Handlers ---
+  function initCrtKeyboardHandlers() {
+    const overlay = document.getElementById('crt-rotated-keyboard-overlay');
+    const btnOpen = document.getElementById('btn-crt-open-fullscreen-kb');
+    const btnClose = document.getElementById('btn-crt-close-rotated-kb');
+    const capsBtn = document.getElementById('btn-crt-rot-caps');
+    const capsInd = document.getElementById('crt-rot-caps-ind');
+    let crtCapsActive = false;
+
+    if (btnOpen && overlay) {
+      btnOpen.addEventListener('click', (e) => {
+        e.preventDefault();
+        vibrate(25);
+        overlay.classList.add('active');
+      });
+    }
+
+    if (btnClose && overlay) {
+      btnClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        vibrate(20);
+        overlay.classList.remove('active');
+      });
+    }
+
+    if (capsBtn && capsInd) {
+      capsBtn.addEventListener('click', () => {
+        crtCapsActive = !crtCapsActive;
+        capsInd.textContent = `CAPS: ${crtCapsActive ? '1' : '0'}`;
+        capsInd.classList.toggle('active', crtCapsActive);
+      });
+    }
+
+    // Quick text buffer in rotated keyboard
+    const rotInput = document.getElementById('crt-rot-type-input');
+    const btnRotSend = document.getElementById('btn-crt-rot-send');
+    if (rotInput && btnRotSend) {
+      const sendRotBuffer = () => {
+        const val = rotInput.value;
+        if (val) {
+          sendCommand(`t,${val}`);
+          rotInput.value = '';
+          vibrate(15);
+        }
+      };
+      btnRotSend.addEventListener('click', sendRotBuffer);
+      rotInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendRotBuffer();
+        }
+      });
+    }
+
+    // Quick text buffer in console hub card
+    const termInput = document.getElementById('crt-terminal-type-input');
+    const btnTermSend = document.getElementById('btn-crt-type-send');
+    if (termInput && btnTermSend) {
+      const sendTermBuffer = () => {
+        const val = termInput.value;
+        if (val) {
+          sendCommand(`t,${val}`);
+          termInput.value = '';
+          vibrate(15);
+        }
+      };
+      btnTermSend.addEventListener('click', sendTermBuffer);
+      termInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendTermBuffer();
+        }
+      });
+    }
+  }
+
+  // --- Global Navigation Tab Switching Function ---
+  function switchTab(targetId) {
+    if (!targetId) return;
+    const isGpTarget = (targetId === 'tab-gamepad');
+
+    vibrate(15);
+    state.activeTab = targetId;
+    try {
+      localStorage.setItem('pcdeck_last_active_tab', targetId);
+    } catch (e) {}
+    if (window.AndroidApp && typeof window.AndroidApp.saveLastTab === 'function') {
+      try { window.AndroidApp.saveLastTab(targetId); } catch (e) {}
+    }
+    document.body.classList.toggle('on-screen-tab', targetId === 'tab-screen');
+    document.body.classList.toggle('gamepad-mode-active', isGpTarget);
+    if (targetId !== 'tab-files') {
+      document.body.classList.remove('fs-header-collapsed');
+    }
+    updateCrtWheelNav(targetId);
+
+    const allTabs = (el && el.dockTabs && el.dockTabs.length) ? el.dockTabs : document.querySelectorAll('.dock-tab');
+    allTabs.forEach((t) => {
+      const dt = t.dataset.target;
+      if (targetId === 'tab-gamepad') {
+        t.classList.toggle('active', dt === 'tab-trackpad');
+      } else {
+        t.classList.toggle('active', dt === targetId);
+      }
+    });
+
+    const allViews = (el && el.tabViews && el.tabViews.length) ? el.tabViews : document.querySelectorAll('.tab-view');
+    allViews.forEach((v) => {
+      if (v.id === targetId) {
+        v.classList.add('active');
+      } else {
+        v.classList.remove('active');
+      }
+    });
+
+    if (targetId !== 'tab-trackpad' && typeof window.toggleAirMouse === 'function' && window.isAirMouseActive) {
+      window.toggleAirMouse(false);
+    }
+
+    if (isGpTarget) {
+      if (typeof window.setGamepadMode === 'function') {
+        window.setGamepadMode(true);
+      }
+    } else if (gamepadActive) {
+      if (typeof window.setGamepadMode === 'function') {
+        window.setGamepadMode(false);
+      }
+    }
+
+    // Update Titlebar Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
+    if (typeof window.updateTitlebarActions === 'function') {
+      window.updateTitlebarActions(targetId);
+    }
+
+    // 1. Screen Streaming Tab Handling: Only stream when actively looking at the Screen tab!
+    if (targetId === 'tab-screen') {
+      if (window.AndroidApp && typeof window.AndroidApp.setStreamingMode === 'function') {
+        try { window.AndroidApp.setStreamingMode(true); } catch (e) {}
+      }
+      // Prioritize screen streaming: put non-essential heavy background sensors/inputs to sleep
+      if (typeof stopCam === 'function' && camActive) {
+        stopCam();
+      }
+      if (typeof stopMic === 'function' && micActive) {
+        stopMic();
+      }
+      if (typeof window.setGamepadMode === 'function' && gamepadActive) {
+        window.setGamepadMode(false);
+      }
+
+      if (!screenWs || screenWs.readyState === WebSocket.CLOSED || screenWs.readyState === WebSocket.CLOSING) {
+        connectScreenWs();
+      } else if (screenWs.readyState === WebSocket.OPEN) {
+        try { screenWs.send('resume'); } catch (e) {}
+        try { screenWs.send('req_frame'); } catch (e) {}
+        sendStreamConfig();
+      }
+      // Preserve and allow PC Audio Streaming (essential for movies, videos, and games)
+      if (state.connected && state.autoAudioStream && !audioStreamActive && !userManuallyStoppedAudio && typeof startAudioStream === 'function') {
+        startAudioStream();
+      }
+    } else {
+      // Navigated away from screen tab: immediately pause & disconnect PC screen capture thread
+      // This puts the capture thread to deep sleep and eliminates 100% of Wi-Fi video streaming bandwidth,
+      // guaranteeing rock-solid ultra-low latency for trackpad and typing!
+      if (screenWs) {
+        if (screenWs.readyState === WebSocket.OPEN) {
+          try { screenWs.send('pause'); } catch (e) {}
+        }
+        disconnectScreenWs();
+      }
+      if (window.AndroidApp && typeof window.AndroidApp.setStreamingMode === 'function') {
+        try { window.AndroidApp.setStreamingMode(false); } catch (e) {}
+      }
+    }
+
+    // 2. Wireless Camera / Media Tab Handling: Stop camera & mic sensors when leaving media tab to save CPU & battery
+    if (targetId === 'tab-media') {
+      // Switched to media tab: verify virtual driver status on PC
+      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        mainWs.send('cam_driver_check');
+        mainWs.send('mic_driver_check');
+      }
+    } else if (targetId === 'tab-gamepad') {
+      // Switched to dedicated gamepad tab: activate gamepad mode and verify driver
+      if (typeof window.setGamepadMode === 'function') {
+        window.setGamepadMode(true);
+      }
+      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        mainWs.send('driver_check');
+      }
+    } else if (targetId === 'tab-trackpad') {
+      // Switched to trackpad/gamepad tab: verify virtual controller driver status on PC
+      if (gamepadActive && mainWs && mainWs.readyState === WebSocket.OPEN) {
+        mainWs.send('driver_check');
+      }
+    } else {
+      // Navigated away from media tab: turn off camera & mic immediately so they don't stream in background
+      if (camActive && typeof stopCam === 'function') {
+        stopCam();
+      }
+      if (micActive && typeof stopMic === 'function') {
+        stopMic();
+      }
+    }
+
+    if (targetId !== 'tab-screen' && typeof window.closeScreenTypeBar === 'function') {
+      // Leaving the screen view: don't leave the typing overlay open behind other tabs.
+      window.closeScreenTypeBar();
+    }
+
+    // If switched to files tab, refresh directory listing
+    if (targetId === 'tab-files') {
+      loadFsPlaces();
+      loadPhonePlaces();
+      let targetPath = state.currentFsPath;
+      try {
+        const savedPath = localStorage.getItem('pcdeck_last_fs_path') || localStorage.getItem('neontrack_last_fs_path');
+        if (savedPath) targetPath = savedPath;
+      } catch (e) {}
+      browseFsDirectory(targetPath);
+
+      let targetPhonePath = state.phoneFs.currentPath || 'default';
+      try {
+        const savedPhonePath = localStorage.getItem('pcdeck_last_phone_fs_path') || localStorage.getItem('neontrack_last_phone_fs_path');
+        if (savedPhonePath) targetPhonePath = savedPhonePath;
+      } catch (e) {}
+      state.phoneFs.currentPath = targetPhonePath;
+    }
+
+    if (targetId === 'tab-settings') {
+      renderRecentPCs();
+    }
+
+    // Ensure Android hardware immersive fullscreen is applied
+    if (window.AndroidApp && typeof window.AndroidApp.setImmersiveFullscreen === 'function') {
+      window.AndroidApp.setImmersiveFullscreen(true);
+    }
+  }
+
+  // --- Universal Virtual Keyboard & Live Typing Engine ---
+  // Shared soft-keyboard interceptor: mirrors what is typed on the phone straight to
+  // the PC. Used by the Keys tab and by the on-screen TYPE overlay in the screen view.
+  function attachLiveTyping(inputEl, clearBtn) {
+    if (!inputEl || inputEl.dataset.liveTypingBound === '1') return;
+    inputEl.dataset.liveTypingBound = '1';
+
+    let prevVal = '';
+    let isComposing = false;
+
+    function processInputDelta() {
+      if (isComposing) return;
+      const cur = inputEl.value;
+      if (cur === prevVal) return;
+
+      if (cur.startsWith(prevVal)) {
+        // New characters added to end (typed or pasted)
+        const added = cur.slice(prevVal.length);
+        if (added) {
+          sendCommand(`t,${added}`);
+        }
+      } else if (prevVal.startsWith(cur)) {
+        // Characters deleted (backspace)
+        const deletedCount = prevVal.length - cur.length;
+        for (let i = 0; i < deletedCount; i++) {
+          sendCommand('k,backspace');
+        }
+      } else {
+        // Replacement / auto-correct / pasted text
+        for (let i = 0; i < prevVal.length; i++) {
+          sendCommand('k,backspace');
+        }
+        if (cur) {
+          sendCommand(`t,${cur}`);
+        }
+      }
+
+      prevVal = cur;
+
+      // Reset buffer if getting long to prevent unbounded memory/length
+      if (cur.length > 50) {
+        inputEl.value = '';
+        prevVal = '';
+      }
+    }
+
+    inputEl.addEventListener('compositionstart', () => {
+      isComposing = true;
+    });
+
+    inputEl.addEventListener('compositionend', () => {
+      isComposing = false;
+      processInputDelta();
+    });
+
+    inputEl.addEventListener('input', () => {
+      processInputDelta();
+    });
+
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        vibrate(15);
+        sendCommand('k,enter');
+        inputEl.value = '';
+        prevVal = '';
+      } else if (e.key === 'Backspace' && inputEl.value === '') {
+        vibrate(10);
+        sendCommand('k,backspace');
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        vibrate(15);
+        sendCommand('k,tab');
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        vibrate(15);
+        sendCommand('k,escape');
+        inputEl.blur();
+      }
+    });
+
+    if (clearBtn) {
+      clearBtn.onclick = () => {
+        vibrate(15);
+        inputEl.value = '';
+        prevVal = '';
+        inputEl.focus();
+      };
+    }
+
+    // Lets callers reset the diff baseline when the field is shown/hidden.
+    inputEl.resetLiveTyping = () => {
+      inputEl.value = '';
+      prevVal = '';
+    };
+  }
+
+  // --- On-Screen Quick Typing Overlay (Screen Streaming View) ---
+  function initScreenKeyboard() {
+    const fab = document.getElementById('btn-screen-keyboard');
+    const bar = document.getElementById('screen-type-bar');
+    const input = document.getElementById('screen-typing-input');
+    const btnClose = document.getElementById('btn-screen-type-close');
+    const btnEnter = document.getElementById('btn-screen-type-enter');
+    if (!fab || !bar || !input) return;
+
+    attachLiveTyping(input, null);
+
+    function openTypeBar() {
+      bar.hidden = false;
+      fab.classList.add('active');
+      document.body.classList.add('typing-active');
+      // Focus must happen in the same gesture or Android will not raise the keyboard.
+      input.focus();
+      if (input.value) {
+        const len = input.value.length;
+        try { input.setSelectionRange(len, len); } catch(e) {}
+      }
+      showToast('Typing to PC — tap  to close', 'success', '️');
+    }
+
+    function closeTypeBar() {
+      input.blur();
+      bar.hidden = true;
+      fab.classList.remove('active');
+      document.body.classList.remove('typing-active');
+    }
+
+    fab.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      vibrate(20);
+      if (bar.hidden) {
+        openTypeBar();
+      } else {
+        closeTypeBar();
+      }
+    });
+
+    if (btnClose) {
+      btnClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        vibrate(15);
+        closeTypeBar();
+      });
+    }
+
+    if (btnEnter) {
+      btnEnter.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        vibrate(15);
+        sendCommand('k,enter');
+        if (input.resetLiveTyping) input.resetLiveTyping();
+        input.focus();
+      });
+    }
+
+    // Keep taps inside the bar from reaching the canvas gesture handlers underneath.
+    ['touchstart', 'touchmove', 'touchend', 'click'].forEach((evt) => {
+      bar.addEventListener(evt, (e) => e.stopPropagation());
+    });
+
+    // Leaving the screen tab should not strand an open keyboard bar.
+    window.closeScreenTypeBar = closeTypeBar;
+  }
+
+    // Function Key Modifier Keys System (Ctrl, Alt, Shift, Win + F1-F12)
+  function initFunctionKeyModifiers() {
+    const activeMods = new Set();
+    const modButtons = document.querySelectorAll('.fkey-mod-btn');
+
+    modButtons.forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        vibrate(15);
+        const mod = btn.dataset.fmod;
+        if (activeMods.has(mod)) {
+          activeMods.delete(mod);
+          btn.classList.remove('active');
+        } else {
+          activeMods.add(mod);
+          btn.classList.add('active');
+        }
+      };
+    });
+
+    document.querySelectorAll('.fkey-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        vibrate(20);
+        const fkey = btn.dataset.key;
+        if (activeMods.size > 0) {
+          const combo = [...activeMods, fkey].join('+');
+          sendCommand(`h,${combo}`);
+          showToast(`Shortcut: ${combo.toUpperCase()}`, 'success');
+          // Auto unlatch modifiers after firing combo
+          activeMods.clear();
+          modButtons.forEach(b => b.classList.remove('active'));
+        } else {
+          sendCommand(`k,${fkey}`);
+        }
+      };
+    });
+  }
+
+  function initVirtualKeyboard() {
+    const liveInput = document.getElementById('live-typing-input');
+    const btnClearLive = document.getElementById('btn-clear-live-text');
+    const batchInput = document.getElementById('text-input');
+    const btnSendText = document.getElementById('btn-send-text');
+    const btnKbdQuick = document.getElementById('btn-kbd-quick');
+
+    if (btnKbdQuick) {
+      btnKbdQuick.onclick = (e) => {
+        e.preventDefault();
+        vibrate(20);
+        switchTab('tab-keyboard');
+        setTimeout(() => {
+          if (liveInput) liveInput.focus();
+        }, 200);
+        showToast('Keyboard & PC Typing Active', 'success', '️');
+      };
+    }
+
+    // 1. Live Real-Time Keystroke Interceptor for Phone Soft Keyboards (Gboard, Samsung, etc.)
+    attachLiveTyping(liveInput, btnClearLive);
+    function setKbdPanel(activeBtn, activePanel) {
+      [el.btnTabQwerty, el.btnTabNumpad, el.btnTabFn].forEach(b => b && b.classList.remove('active'));
+      [el.panelQwerty, el.panelNumpad, el.panelFn].forEach(p => p && p.classList.remove('active'));
+      if (activeBtn) activeBtn.classList.add('active');
+      if (activePanel) activePanel.classList.add('active');
+      vibrate(15);
+    }
+
+    if (el.btnTabQwerty) el.btnTabQwerty.onclick = () => setKbdPanel(el.btnTabQwerty, el.panelQwerty);
+    if (el.btnTabNumpad) el.btnTabNumpad.onclick = () => setKbdPanel(el.btnTabNumpad, el.panelNumpad);
+    if (el.btnTabFn) el.btnTabFn.onclick = () => setKbdPanel(el.btnTabFn, el.panelFn);
+
+    // Key Buttons Click Delegation
+    document.querySelectorAll('.vk-key').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        vibrate(12);
+
+        if (btn.id === 'vk-caps') {
+          state.capsLock = !state.capsLock;
+          btn.classList.toggle('active', state.capsLock);
+          return;
+        }
+        if (btn.id === 'vk-shift') {
+          state.shiftPressed = !state.shiftPressed;
+          btn.classList.toggle('active', state.shiftPressed);
+          return;
+        }
+        if (btn.id === 'vk-ctrl') {
+          state.ctrlPressed = !state.ctrlPressed;
+          btn.classList.toggle('active', state.ctrlPressed);
+          return;
+        }
+        if (btn.id === 'vk-alt') {
+          state.altPressed = !state.altPressed;
+          btn.classList.toggle('active', state.altPressed);
+          return;
+        }
+
+        const char = btn.dataset.typeChar;
+        const text = btn.dataset.text;
+        const key = btn.dataset.key;
+        const hotkey = btn.dataset.hotkey;
+
+        if (hotkey) {
+          sendCommand(`h,${hotkey}`);
+          showToast(`Hotkey: ${hotkey.toUpperCase()}`, 'success', '️');
+          return;
+        }
+
+        if (char) {
+          let outChar = char;
+          const isUpper = state.capsLock !== state.shiftPressed;
+          outChar = isUpper ? char.toUpperCase() : char.toLowerCase();
+
+          if (state.ctrlPressed) {
+            sendCommand(`h,ctrl+${char.toLowerCase()}`);
+          } else if (state.altPressed) {
+            sendCommand(`h,alt+${char.toLowerCase()}`);
+          } else {
+            sendCommand(`t,${outChar}`);
+          }
+
+          if (state.shiftPressed) {
+            state.shiftPressed = false;
+            if (el.vkShift) el.vkShift.classList.remove('active');
+          }
+          return;
+        }
+
+        if (text) {
+          sendCommand(`t,${text}`);
+          return;
+        }
+
+        if (key) {
+          let prefix = '';
+          if (state.ctrlPressed) prefix += 'ctrl+';
+          if (state.altPressed) prefix += 'alt+';
+          if (state.shiftPressed) prefix += 'shift+';
+
+          if (prefix) {
+            sendCommand(`h,${prefix}${key}`);
+          } else {
+            sendCommand(`k,${key}`);
+          }
+
+          if (state.shiftPressed) {
+            state.shiftPressed = false;
+            if (el.vkShift) el.vkShift.classList.remove('active');
+          }
+        }
+      });
+    });
+  }
+
+  // --- In-Built PC File Manager & Explorer Module ---
+  // --- File Manager Long-Press Selection Mode ---
+  function enterFsSelectMode(path) {
+    state.fsSelectMode = true;
+    document.getElementById('tab-files')?.classList.add('fs-select-mode');
+    state.markedFsPaths.add(path);
+    vibrate([30, 20, 30]); // distinct double-pulse feedback
+    updateBatchBar();
+    renderFilteredFsItems();
+  }
+
+  function exitFsSelectMode() {
+    state.fsSelectMode = false;
+    document.getElementById('tab-files')?.classList.remove('fs-select-mode');
+    state.markedFsPaths.clear();
+    updateBatchBar();
+    renderFilteredFsItems();
+  }
+
+  function enterPhoneSelectMode(path) {
+    state.phoneFs.selectMode = true;
+    document.getElementById('tab-files')?.classList.add('phone-select-mode');
+    state.phoneFs.markedPaths.add(path);
+    vibrate([30, 20, 30]);
+    updatePhoneBatchBar();
+    renderFilteredPhoneFsItems();
+  }
+
+  function exitPhoneSelectMode() {
+    state.phoneFs.selectMode = false;
+    document.getElementById('tab-files')?.classList.remove('phone-select-mode');
+    state.phoneFs.markedPaths.clear();
+    updatePhoneBatchBar();
+    renderFilteredPhoneFsItems();
+  }
+
+  function makeLongPressHandler(onLongPress, onTap) {
+    let timer = null;
+    let moved = false;
+    const LONG_MS = 480;
+    return {
+      start(e) {
+        moved = false;
+        timer = setTimeout(() => { timer = null; onLongPress(e); }, LONG_MS);
+      },
+      move() { if (timer) { clearTimeout(timer); timer = null; moved = true; } },
+      end(e)  {
+        if (timer) { clearTimeout(timer); timer = null; if (!moved) onTap(e); }
+      },
+      cancel() { if (timer) { clearTimeout(timer); timer = null; } }
+    };
+  }
+
+  function updateBatchBar() {
+    if (!el.fsBatchBar) return;
+    const count = state.markedFsPaths.size;
+    if (count > 0) {
+      state.fsSelectMode = true;
+      document.getElementById('tab-files')?.classList.add('fs-select-mode');
+      el.fsBatchBar.style.display = 'flex';
+      if (el.fsBatchCountLabel) el.fsBatchCountLabel.textContent = `${count} marked`;
+      if (el.fsBatchDlLabel) el.fsBatchDlLabel.textContent = `SAVE TO PHONE (${count})`;
+      const allPaths = [...state.fsFolders.map(f => f.path), ...state.fsFiles.map(f => f.path)];
+      const allSelected = allPaths.length > 0 && allPaths.every(p => state.markedFsPaths.has(p));
+      if (el.fsBatchSelectAll) el.fsBatchSelectAll.checked = allSelected;
+    } else {
+      state.fsSelectMode = false;
+      document.getElementById('tab-files')?.classList.remove('fs-select-mode');
+      el.fsBatchBar.style.display = 'none';
+      if (el.fsBatchSelectAll) el.fsBatchSelectAll.checked = false;
+      if (el.fsBatchDlLabel) el.fsBatchDlLabel.textContent = 'SAVE TO PHONE';
+    }
+  }
+
+  function initFileManager() {
+    const tabFiles = document.getElementById('tab-files');
+    const btnFsToggleCards = document.getElementById('btn-fs-toggle-cards');
+    const btnPhoneFsToggleCards = document.getElementById('btn-phone-fs-toggle-cards');
+    let isFsCardsCollapsed = false;
+    let lastPcScrollTop = 0;
+    let lastPhoneScrollTop = 0;
+    let scrollTicking = false;
+    let downDeltaAccum = 0;
+    let upDeltaAccum = 0;
+
+    function setCardsCollapsed(collapsed) {
+      if (isFsCardsCollapsed === collapsed) return;
+      isFsCardsCollapsed = collapsed;
+      if (tabFiles) {
+        if (collapsed) {
+          tabFiles.classList.add('fs-compact-mode');
+        } else {
+          tabFiles.classList.remove('fs-compact-mode');
+        }
+      }
+      document.body.classList.toggle('fs-header-collapsed', collapsed);
+    }
+    window.setFsCardsCollapsed = setCardsCollapsed;
+
+    function handleContainerScroll(container, isPhone) {
+      if (!container) return;
+      const currentScrollTop = container.scrollTop;
+      const lastScrollTop = isPhone ? lastPhoneScrollTop : lastPcScrollTop;
+      const delta = currentScrollTop - lastScrollTop;
+
+      if (isPhone) {
+        lastPhoneScrollTop = currentScrollTop;
+      } else {
+        lastPcScrollTop = currentScrollTop;
+      }
+
+      // Ignore if user is searching / typing in search input
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.id === 'fs-search-input' || activeEl.id === 'phone-fs-search-input')) {
+        return;
+      }
+
+      // If near the top, always restore full view
+      if (currentScrollTop <= 25) {
+        downDeltaAccum = 0;
+        upDeltaAccum = 0;
+        setCardsCollapsed(false);
+        return;
+      }
+
+      // Prevent rubber-band bounce triggers at the bottom of the container
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      if (maxScroll > 0 && currentScrollTop >= maxScroll - 5) {
+        return;
+      }
+
+      if (delta > 0) {
+        // Scrolling downward: accumulate delta with hysteresis
+        upDeltaAccum = 0;
+        downDeltaAccum += delta;
+        if (downDeltaAccum > 35 && currentScrollTop > 45) {
+          setCardsCollapsed(true);
+        }
+      } else if (delta < 0) {
+        // Scrolling upward: accumulate delta with hysteresis
+        downDeltaAccum = 0;
+        upDeltaAccum += Math.abs(delta);
+        if (upDeltaAccum > 25) {
+          setCardsCollapsed(false);
+        }
+      }
+    }
+
+    if (el.fsBrowserItems) {
+      el.fsBrowserItems.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+          window.requestAnimationFrame(() => {
+            handleContainerScroll(el.fsBrowserItems, false);
+            scrollTicking = false;
+          });
+          scrollTicking = true;
+        }
+      }, { passive: true });
+    }
+
+    if (el.phoneFsBrowserItems) {
+      el.phoneFsBrowserItems.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+          window.requestAnimationFrame(() => {
+            handleContainerScroll(el.phoneFsBrowserItems, true);
+            scrollTicking = false;
+          });
+          scrollTicking = true;
+        }
+      }, { passive: true });
+    }
+
+    // Manual toggle for cards
+    if (btnFsToggleCards) {
+      btnFsToggleCards.onclick = () => {
+        vibrate(12);
+        downDeltaAccum = 0;
+        upDeltaAccum = 0;
+        setCardsCollapsed(!isFsCardsCollapsed);
+      };
+    }
+
+    if (btnPhoneFsToggleCards) {
+      btnPhoneFsToggleCards.onclick = () => {
+        vibrate(12);
+        downDeltaAccum = 0;
+        upDeltaAccum = 0;
+        setCardsCollapsed(!isFsCardsCollapsed);
+      };
+    }
+
+    if (el.fsCurrentPath) {
+      el.fsCurrentPath.onclick = () => {
+        if (isFsCardsCollapsed) {
+          vibrate(10);
+          downDeltaAccum = 0;
+          upDeltaAccum = 0;
+          setCardsCollapsed(false);
+        }
+      };
+    }
+
+    if (el.phoneFsCurrentPath) {
+      el.phoneFsCurrentPath.onclick = () => {
+        if (isFsCardsCollapsed) {
+          vibrate(10);
+          downDeltaAccum = 0;
+          upDeltaAccum = 0;
+          setCardsCollapsed(false);
+        }
+      };
+    }
+
+    function setFilesMode(mode) {
+      setCardsCollapsed(false);
+      lastPcScrollTop = 0;
+      lastPhoneScrollTop = 0;
+      downDeltaAccum = 0;
+      upDeltaAccum = 0;
+      if (mode === 'pc') {
+        if (el.btnFsModePc) el.btnFsModePc.classList.add('active');
+        if (el.btnFsModePhone) el.btnFsModePhone.classList.remove('active');
+        if (el.fsPcPanel) el.fsPcPanel.style.display = 'flex';
+        if (el.fsPhonePanel) el.fsPhonePanel.style.display = 'none';
+      } else {
+        if (el.btnFsModePhone) el.btnFsModePhone.classList.add('active');
+        if (el.btnFsModePc) el.btnFsModePc.classList.remove('active');
+        if (el.fsPhonePanel) el.fsPhonePanel.style.display = 'flex';
+        if (el.fsPcPanel) el.fsPcPanel.style.display = 'none';
+        loadPhonePlaces();
+        let targetPhonePath = state.phoneFs.currentPath || 'default';
+        try {
+          const saved = localStorage.getItem('pcdeck_last_phone_fs_path') || localStorage.getItem('neontrack_last_phone_fs_path');
+          if (saved) targetPhonePath = saved;
+        } catch (e) {}
+        browsePhoneDirectory(targetPhonePath);
+      }
+    }
+
+    if (el.btnFsModePc) {
+      el.btnFsModePc.onclick = () => {
+        vibrate(15);
+        setFilesMode('pc');
+      };
+    }
+
+    if (el.btnFsModePhone) {
+      el.btnFsModePhone.onclick = () => {
+        vibrate(15);
+        setFilesMode('phone');
+      };
+    }
+
+    const btnGrantStorage = document.getElementById('btn-grant-storage');
+    if (btnGrantStorage) {
+      btnGrantStorage.onclick = () => {
+        vibrate(20);
+        if (window.AndroidApp && typeof window.AndroidApp.requestStoragePermission === 'function') {
+          window.AndroidApp.requestStoragePermission();
+        } else {
+          showToast('Storage permission granted', 'info');
+        }
+      };
+    }
+
+    if (el.btnPhoneFsUp) {
+      el.btnPhoneFsUp.onclick = () => {
+        vibrate(15);
+        if (state.phoneFsHistory && state.phoneFsHistory.length > 0) {
+          const prev = state.phoneFsHistory.pop();
+          browsePhoneDirectory(prev, '', true);
+        } else if (state.phoneFs.parentPath) {
+          browsePhoneDirectory(state.phoneFs.parentPath, '', true);
+        }
+      };
+    }
+
+    if (el.btnPhoneFsRefresh) {
+      el.btnPhoneFsRefresh.onclick = () => {
+        vibrate(15);
+        browsePhoneDirectory(state.phoneFs.currentPath);
+      };
+    }
+
+    if (el.btnPhoneFsNewFolder) {
+      el.btnPhoneFsNewFolder.onclick = () => {
+        const folderName = prompt('Enter new phone folder name:');
+        if (folderName && folderName.trim()) {
+          vibrate(20);
+          if (window.AndroidApp && typeof window.AndroidApp.createPhoneFolder === 'function') {
+            const success = window.AndroidApp.createPhoneFolder(state.phoneFs.currentPath, folderName.trim());
+            if (success) {
+              showToast(`Folder "${folderName}" created on phone!`, 'success');
+              browsePhoneDirectory(state.phoneFs.currentPath);
+            } else {
+              showToast('Failed to create folder on phone', 'error');
+            }
+          }
+        }
+      };
+    }
+
+    if (el.btnPhoneFsUploadToPc && el.filePicker) {
+      el.btnPhoneFsUploadToPc.onclick = () => {
+        vibrate(18);
+        el.filePicker.accept = '*/*';
+        el.filePicker.click();
+      };
+    }
+
+    if (el.phoneFsSearchInput) {
+      el.phoneFsSearchInput.addEventListener('input', (e) => {
+        state.phoneFs.filterText = e.target.value.toLowerCase().trim();
+        renderFilteredPhoneFsItems();
+      });
+    }
+
+    if (el.phoneFsBatchSelectAll) {
+      el.phoneFsBatchSelectAll.onchange = () => {
+        vibrate(15);
+        const shouldSelect = el.phoneFsBatchSelectAll.checked;
+        const allItems = [...state.phoneFs.folders, ...state.phoneFs.files];
+        if (shouldSelect) {
+          allItems.forEach(item => state.phoneFs.markedPaths.add(item.path));
+        } else {
+          state.phoneFs.markedPaths.clear();
+        }
+        updatePhoneBatchBar();
+        renderFilteredPhoneFsItems();
+      };
+    }
+
+    if (el.btnPhoneFsBatchClear) {
+      el.btnPhoneFsBatchClear.onclick = () => {
+        vibrate(10);
+        exitPhoneSelectMode();
+      };
+    }
+
+    if (el.btnPhoneFsBatchDelete) {
+      el.btnPhoneFsBatchDelete.onclick = () => {
+        const count = state.phoneFs.markedPaths.size;
+        if (count === 0) return;
+        if (confirm(`Delete ${count} marked item(s) on phone?`)) {
+          vibrate(25);
+          if (window.AndroidApp && typeof window.AndroidApp.deletePhoneFile === 'function') {
+            state.phoneFs.markedPaths.forEach(path => window.AndroidApp.deletePhoneFile(path));
+            showToast(`${count} item(s) deleted on phone`, 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
+            state.phoneFs.markedPaths.clear();
+            updatePhoneBatchBar();
+            browsePhoneDirectory(state.phoneFs.currentPath);
+          }
+        }
+      };
+    }
+
+    if (el.btnPhoneFsBatchSendPc) {
+      el.btnPhoneFsBatchSendPc.onclick = () => {
+        const paths = Array.from(state.phoneFs.markedPaths);
+        if (paths.length === 0) {
+          showToast('No phone files marked', 'warn', '️');
+          return;
+        }
+        vibrate(20);
+        uploadMarkedPhoneFilesToPc(paths);
+      };
+    }
+
+    if (el.btnFsUploadHere && el.filePicker) {
+      el.btnFsUploadHere.onclick = () => {
+        vibrate(18);
+        el.filePicker.accept = '*/*';
+        el.filePicker.click();
+      };
+
+      el.filePicker.onchange = () => {
+        if (el.filePicker.files && el.filePicker.files.length > 0) {
+          uploadFilesToCurrentDir(el.filePicker.files);
+        }
+      };
+    }
+
+    if (el.btnFsRefresh) {
+      el.btnFsRefresh.onclick = () => {
+        vibrate(15);
+        browseFsDirectory(state.currentFsPath);
+      };
+    }
+
+    if (el.btnFsUp) {
+      el.btnFsUp.onclick = () => {
+        vibrate(15);
+        if (state.fsHistory && state.fsHistory.length > 0) {
+          const prev = state.fsHistory.pop();
+          browseFsDirectory(prev, true);
+        } else if (state.fsParentPath && !state.isFsRoot) {
+          browseFsDirectory(state.fsParentPath, true);
+        }
+      };
+    }
+
+    if (el.btnFsNewFolder) {
+      el.btnFsNewFolder.onclick = () => {
+        const folderName = prompt('Enter new folder name:');
+        if (folderName && folderName.trim()) {
+          vibrate(20);
+          fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/mkdir?parent_dir=${encodeURIComponent(state.currentFsPath)}&folder_name=${encodeURIComponent(folderName.trim())}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+              if (data.status === 'created') {
+                showToast(`Folder "${folderName}" created!`, 'success');
+                browseFsDirectory(state.currentFsPath);
+              } else {
+                showToast('Failed to create folder', 'error');
+              }
+            })
+            .catch(() => showToast('Error creating folder', 'error'));
+        }
+      };
+    }
+
+    if (el.fsSearchInput) {
+      el.fsSearchInput.addEventListener('input', (e) => {
+        state.fsFilterText = e.target.value.toLowerCase().trim();
+        renderFilteredFsItems();
+      });
+    }
+
+    // Dismissible Tip Strips
+    const fsTipStrip = document.getElementById('fs-tip-strip');
+    const btnFsDismissTip = document.getElementById('btn-fs-dismiss-tip');
+    if (localStorage.getItem('pcdeck_fs_tip_dismissed') === '1' && fsTipStrip) {
+      fsTipStrip.style.display = 'none';
+    }
+    if (btnFsDismissTip && fsTipStrip) {
+      btnFsDismissTip.onclick = () => {
+        vibrate(10);
+        fsTipStrip.style.display = 'none';
+        localStorage.setItem('pcdeck_fs_tip_dismissed', '1');
+      };
+    }
+
+    const phoneFsTipStrip = document.getElementById('phone-fs-tip-strip');
+    const btnPhoneDismissTip = document.getElementById('btn-phone-dismiss-tip');
+    if (localStorage.getItem('pcdeck_phone_tip_dismissed') === '1' && phoneFsTipStrip) {
+      phoneFsTipStrip.style.display = 'none';
+    }
+    if (btnPhoneDismissTip && phoneFsTipStrip) {
+      btnPhoneDismissTip.onclick = () => {
+        vibrate(10);
+        phoneFsTipStrip.style.display = 'none';
+        localStorage.setItem('pcdeck_phone_tip_dismissed', '1');
+      };
+    }
+
+    // Batch Actions Event Handlers
+    if (el.fsBatchSelectAll) {
+      el.fsBatchSelectAll.onchange = () => {
+        vibrate(15);
+        const shouldSelect = el.fsBatchSelectAll.checked;
+        const allItems = [...state.fsFolders, ...state.fsFiles];
+        if (shouldSelect) {
+          allItems.forEach(item => state.markedFsPaths.add(item.path));
+        } else {
+          state.markedFsPaths.clear();
+        }
+        updateBatchBar();
+        renderFilteredFsItems();
+      };
+    }
+
+    if (el.btnFsBatchDownload) {
+      el.btnFsBatchDownload.onclick = () => {
+        if (state.markedFsPaths.size === 0) {
+          showToast('No files marked for download', 'warn', '️');
+          return;
+        }
+        vibrate(20);
+        downloadMarkedFilesSequentially(Array.from(state.markedFsPaths));
+      };
+    }
+
+    if (el.btnFsBatchDelete) {
+      el.btnFsBatchDelete.onclick = () => {
+        const count = state.markedFsPaths.size;
+        if (count === 0) return;
+        if (confirm(`Delete ${count} marked item(s) on PC?`)) {
+          vibrate(25);
+          fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/delete-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Array.from(state.markedFsPaths)),
+          })
+            .then(r => r.json())
+            .then(data => {
+              showToast(`Deleted ${data.deleted || count} items from PC`, 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
+              state.markedFsPaths.clear();
+              updateBatchBar();
+              browseFsDirectory(state.currentFsPath);
+            })
+            .catch(() => showToast('Batch delete failed', 'error'));
+        }
+      };
+    }
+
+    if (el.btnFsBatchClear) {
+      el.btnFsBatchClear.onclick = () => {
+        vibrate(10);
+        exitFsSelectMode();
+      };
+    }
+  }
+
+  function loadFsPlaces() {
+    fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/places`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'ok' && el.fsPlacesStrip) {
+          el.fsPlacesStrip.innerHTML = '';
+
+          // Add Places
+          (data.places || []).forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'fs-place-chip';
+            if (p.path === state.currentFsPath || (!state.currentFsPath && p.path.toLowerCase().includes('pcdeck_transfers'))) {
+              btn.classList.add('active');
+            }
+            btn.textContent = `${p.icon} ${p.name.replace(/^[^\s]+\s/, '')}`;
+            btn.onclick = () => {
+              vibrate(15);
+              document.querySelectorAll('.fs-place-chip').forEach(c => c.classList.remove('active'));
+              btn.classList.add('active');
+              browseFsDirectory(p.path);
+            };
+            el.fsPlacesStrip.appendChild(btn);
+          });
+
+          // Add Drives
+          (data.drives || []).forEach(d => {
+            const btn = document.createElement('button');
+            btn.className = 'fs-place-chip';
+            btn.style.borderColor = 'var(--neo-yellow)';
+            btn.textContent = d.name;
+            btn.onclick = () => {
+              vibrate(15);
+              document.querySelectorAll('.fs-place-chip').forEach(c => c.classList.remove('active'));
+              btn.classList.add('active');
+              browseFsDirectory(d.path);
+            };
+            el.fsPlacesStrip.appendChild(btn);
+          });
+
+          // Add Phone Downloads Chip
+          const phoneBtn = document.createElement('button');
+          phoneBtn.className = 'fs-place-chip';
+          phoneBtn.style.background = 'rgba(0, 255, 102, 0.15)';
+          phoneBtn.style.borderColor = 'var(--neo-lime)';
+          phoneBtn.style.color = 'var(--neo-lime)';
+          phoneBtn.style.fontWeight = '800';
+          phoneBtn.textContent = 'Received from PC';
+          phoneBtn.onclick = () => {
+            vibrate(15);
+            revealInPhoneFiles('default');
+          };
+          el.fsPlacesStrip.appendChild(phoneBtn);
+        }
+      })
+      .catch(() => {});
+  }
+
+  function browseFsDirectory(path, isBackAction = false) {
+    if (typeof window.setFsCardsCollapsed === 'function') {
+      window.setFsCardsCollapsed(false);
+    }
+    if (!el.fsBrowserItems) return;
+    el.fsBrowserItems.scrollTop = 0;
+    el.fsBrowserItems.innerHTML = `
+      <div class="empty-files-placeholder">
+        <svg class="deck-icon" width="38" height="38" style="opacity: 0.6;"><use href="#icon-folder"/></svg>
+        <p>Loading directory...</p>
+      </div>
+    `;
+
+    fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/browse?path=${encodeURIComponent(path || '')}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          if (!isBackAction && state.currentFsPath && state.currentFsPath !== data.current_path) {
+            if (!state.fsHistory) state.fsHistory = [];
+            if (state.fsHistory[state.fsHistory.length - 1] !== state.currentFsPath) {
+              state.fsHistory.push(state.currentFsPath);
+            }
+          }
+          state.currentFsPath = data.current_path;
+          state.fsParentPath = data.parent_path;
+          state.isFsRoot = !!data.is_root;
+          state.fsFolders = data.folders || [];
+          state.fsFiles = data.files || [];
+
+          try {
+            localStorage.setItem('pcdeck_last_fs_path', data.current_path);
+          } catch (e) {}
+
+          if (el.fsCurrentPath) {
+            const isTransfers = data.current_path.replace(/\\/g, '/').toLowerCase().endsWith('downloads/pcdeck_transfers') || data.current_path.replace(/\\/g, '/').toLowerCase().endsWith('pcdeck_transfers');
+            el.fsCurrentPath.textContent = isTransfers ? 'Received from Phone' : data.current_path;
+            el.fsCurrentPath.title = data.current_path;
+          }
+          if (el.fsItemCount) el.fsItemCount.textContent = `${data.total_items} items`;
+          if (el.btnFsUp) el.btnFsUp.disabled = data.is_root;
+
+          updateBatchBar();
+          renderFilteredFsItems();
+        } else {
+          el.fsBrowserItems.innerHTML = `
+            <div class="empty-files-placeholder">
+              
+              <p>${data.error || 'Could not open folder'}</p>
+            </div>
+          `;
+        }
+      })
+      .catch(() => {
+        el.fsBrowserItems.innerHTML = `
+          <div class="empty-files-placeholder">
+            
+            <p>Connect to PC to explore directories & files.</p>
+          </div>
+        `;
+      });
+  }
+
+    function getFolderIcon(name) {
+    const n = (name || '').toLowerCase().trim();
+    if (n.includes('download')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    }
+    if (n.includes('desktop')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+    }
+    if (n.includes('picture') || n.includes('photo') || n.includes('dcim') || n.includes('camera')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#ff0844" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+    }
+    if (n.includes('music') || n.includes('audio') || n.includes('sound')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#b000ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+    }
+    if (n.includes('video') || n.includes('movie')) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>';
+    }
+    return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+  }
+
+  function getFileIcon(ext) {
+    ext = (ext || '').toLowerCase().trim();
+    // Images & Graphics
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'tiff', 'svg', 'ai', 'psd', 'eps', 'drawio', 'ico', 'cur'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+    }
+    // Videos
+    if (['mp4', 'mkv', 'webm', 'mov', 'avi', 'wmv', 'flv', 'm4v', '3gp', 'ts'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#ff3366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+    }
+    // Audio & Music
+    if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'opus', 'mid', 'midi', 'aiff'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#b000ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+    }
+    // Documents & Office
+    if (['pdf', 'doc', 'docx', 'odt', 'rtf', 'pages', 'txt', 'log', 'md', 'markdown', 'rst', 'nfo'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+    }
+    // Spreadsheets & Data
+    if (['xls', 'xlsx', 'csv', 'tsv', 'ods', 'numbers'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="8" y="12" width="8" height="6"/></svg>';
+    }
+    // Code & Developer
+    if (['py', 'pyw', 'ipynb', 'js', 'mjs', 'cjs', 'ts', 'tsx', 'html', 'htm', 'css', 'scss', 'sass', 'less', 'json', 'yaml', 'yml', 'xml', 'toml', 'ini', 'cfg', 'conf', 'env', 'java', 'kt', 'kts', 'class', 'jar', 'c', 'cpp', 'cc', 'cxx', 'h', 'hpp', 'cs', 'go', 'rs', 'swift', 'sh', 'bat', 'cmd', 'ps1', 'bash', 'zsh', 'sql', 'db', 'sqlite', 'sqlite3', 'mdb'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
+    }
+    // Apps & Executables & Archives
+    if (['apk', 'xapk', 'apks', 'exe', 'msi', 'iso', 'img', 'vmdk', 'dmg', 'zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'].includes(ext)) {
+      return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>';
+    }
+    // Generic Default File
+    return '<svg class="fm-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>';
+  }
+
+  function renderFilteredFsItems() {
+    if (!el.fsBrowserItems) return;
+    el.fsBrowserItems.innerHTML = '';
+
+    const filter = state.fsFilterText;
+    const filteredFolders = state.fsFolders.filter(f => !filter || f.name.toLowerCase().includes(filter));
+    const filteredFiles = state.fsFiles.filter(f => !filter || f.name.toLowerCase().includes(filter));
+
+    if (filteredFolders.length === 0 && filteredFiles.length === 0) {
+      el.fsBrowserItems.innerHTML = `
+        <div class="empty-files-placeholder">
+          <svg class="deck-icon" width="38" height="38" style="opacity: 0.6;"><use href="#icon-folder"/></svg>
+          <p>Folder is empty.<br>Tap Send Files above to transfer to PC!</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Render Folders First
+    filteredFolders.forEach(folder => {
+      const card = document.createElement('div');
+      const isMarked = state.markedFsPaths.has(folder.path);
+      card.className = `fs-item-card is-folder ${isMarked ? 'is-marked' : ''}`;
+      const folderIcon = getFolderIcon(folder.name);
+      card.innerHTML = `
+        <div class="fs-item-info">
+          <input type="checkbox" class="fs-item-checkbox" data-path="${folder.path}" ${isMarked ? 'checked' : ''}>
+          <span class="fs-icon-badge">${folderIcon}</span>
+          <div class="fs-item-details">
+            <span class="fs-item-name" title="${folder.name}">${folder.name}</span>
+            <span class="fs-item-meta">${folder.item_count !== undefined ? folder.item_count + ' items' : 'Folder'}</span>
+          </div>
+        </div>
+        <div class="fs-actions-row">
+          <button class="fs-btn fs-btn-locate fs-btn-icon-only" data-action="locate-folder-pc" title="Open this folder on PC in Windows File Explorer"><svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg></button>
+          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del-folder" title="Delete Folder"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
+        </div>
+      `;
+
+      const cb = card.querySelector('.fs-item-checkbox');
+      const toggleMark = () => {
+        vibrate(10);
+        if (state.markedFsPaths.has(folder.path)) {
+          state.markedFsPaths.delete(folder.path);
+          card.classList.remove('is-marked');
+          cb.checked = false;
+          // Auto-exit select mode if nothing left
+          if (state.markedFsPaths.size === 0) exitFsSelectMode();
+          else updateBatchBar();
+        } else {
+          state.markedFsPaths.add(folder.path);
+          card.classList.add('is-marked');
+          cb.checked = true;
+          updateBatchBar();
+        }
+      };
+
+      cb.onclick = (e) => { e.stopPropagation(); toggleMark(); };
+
+      const itemInfo = card.querySelector('.fs-item-info');
+      const lp = makeLongPressHandler(
+        () => { // long-press → enter/add to select mode
+          if (!state.fsSelectMode) enterFsSelectMode(folder.path);
+          else toggleMark();
+        },
+        () => { // tap → open if not in select mode, else toggle mark
+          if (state.fsSelectMode) { toggleMark(); return; }
+          vibrate(15);
+          browseFsDirectory(folder.path);
+        }
+      );
+      itemInfo.addEventListener('touchstart', (e) => { if (e.target !== cb) lp.start(e); }, { passive: true });
+      itemInfo.addEventListener('touchmove',  () => lp.move(), { passive: true });
+      itemInfo.addEventListener('touchend',   (e) => { if (e.target !== cb) lp.end(e); });
+      itemInfo.addEventListener('touchcancel',() => lp.cancel());
+      itemInfo.onclick = (e) => {
+        if (e.target === cb || e.isTrusted === false) return;
+        if (state.fsSelectMode) { toggleMark(); return; }
+        vibrate(15);
+        browseFsDirectory(folder.path);
+      };
+
+      card.querySelector('[data-action="locate-folder-pc"]').onclick = (e) => {
+        e.stopPropagation();
+        vibrate(15);
+        openLocationOnPc(folder.path);
+      };
+
+      card.querySelector('[data-action="del-folder"]').onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete folder "${folder.name}" and all its contents on PC?`)) {
+          vibrate(25);
+          fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/delete?path=${encodeURIComponent(folder.path)}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(() => {
+              showToast('Folder deleted', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
+              state.markedFsPaths.delete(folder.path);
+              updateBatchBar();
+              browseFsDirectory(state.currentFsPath);
+            });
+        }
+      };
+
+      el.fsBrowserItems.appendChild(card);
+    });
+
+    // Render Files
+    filteredFiles.forEach(file => {
+      const card = document.createElement('div');
+      const isMarked = state.markedFsPaths.has(file.path);
+      card.className = `fs-item-card is-file ${isMarked ? 'is-marked' : ''}`;
+      const icon = getFileIcon(file.ext);
+      const extClean = (file.ext || (file.name ? file.name.split('.').pop() : '')).toLowerCase().replace(/^\./, '').trim();
+      const fileNameLower = (file.name || '').toLowerCase();
+      const mediaExts = ['mp4', 'mkv', 'webm', 'avi', 'mov', 'wmv', 'm4v', '3gp', 'flv', 'mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'opus', 'wma'];
+      const isMedia = mediaExts.includes(extClean) || mediaExts.some(ext => fileNameLower.endsWith('.' + ext));
+
+      card.innerHTML = `
+        <div class="fs-item-info">
+          <input type="checkbox" class="fs-item-checkbox" data-path="${file.path}" ${isMarked ? 'checked' : ''}>
+          <span class="fs-icon-badge">${icon}</span>
+          <div class="fs-item-details">
+            <span class="fs-item-name" title="${file.name}">${file.name}</span>
+            <span class="fs-item-meta">${file.size_formatted}${file.ext ? ' • ' + file.ext.toUpperCase() : ''}</span>
+          </div>
+        </div>
+        <div class="fs-actions-row">
+          ${isMedia ? `<button class="fs-btn fs-btn-play" data-action="play" title="Stream media directly over Wi-Fi without downloading"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play</button>` : ''}
+          <button class="fs-btn fs-btn-save" data-action="save" title="Download to phone">Save</button>
+          <button class="fs-btn fs-btn-open fs-btn-icon-only" data-action="open-pc" title="Open / Launch file on PC"><svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg></button>
+          <button class="fs-btn fs-btn-locate fs-btn-icon-only" data-action="locate-pc" title="Show file in Windows File Explorer on PC"><svg class="deck-icon" width="13" height="13"><use href="#icon-folder"/></svg></button>
+          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del" title="Delete on PC"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
+        </div>
+      `;
+
+      const cb = card.querySelector('.fs-item-checkbox');
+      const toggleMark = () => {
+        vibrate(10);
+        if (state.markedFsPaths.has(file.path)) {
+          state.markedFsPaths.delete(file.path);
+          card.classList.remove('is-marked');
+          cb.checked = false;
+          if (state.markedFsPaths.size === 0) exitFsSelectMode();
+          else updateBatchBar();
+        } else {
+          state.markedFsPaths.add(file.path);
+          card.classList.add('is-marked');
+          cb.checked = true;
+          updateBatchBar();
+        }
+      };
+
+      cb.onclick = (e) => { e.stopPropagation(); toggleMark(); };
+
+      const fileInfo = card.querySelector('.fs-item-info');
+      const lp = makeLongPressHandler(
+        () => { // long-press → enter select mode
+          if (!state.fsSelectMode) enterFsSelectMode(file.path);
+          else toggleMark();
+        },
+        () => { // tap → toggle mark if in select mode, else stream or download
+          if (state.fsSelectMode) { toggleMark(); return; }
+          vibrate(15);
+          if (isMedia) {
+            openMediaPlayer(file.path, file.name, file.ext);
+          } else {
+            downloadFileFromPC(file.path, file.name, file.size_formatted);
+          }
+        }
+      );
+      let lastTouchTime = 0;
+      fileInfo.addEventListener('touchstart', (e) => { if (e.target !== cb) lp.start(e); }, { passive: true });
+      fileInfo.addEventListener('touchmove',  () => lp.move(), { passive: true });
+      fileInfo.addEventListener('touchend',   (e) => {
+        if (e.target !== cb) {
+          lastTouchTime = Date.now();
+          lp.end(e);
+        }
+      });
+      fileInfo.addEventListener('touchcancel',() => lp.cancel());
+      fileInfo.onclick = (e) => {
+        if (e.target === cb || e.isTrusted === false) return;
+        if (Date.now() - lastTouchTime < 450) return;
+        if (state.fsSelectMode) { toggleMark(); return; }
+        vibrate(15);
+        if (isMedia) {
+          openMediaPlayer(file.path, file.name, file.ext);
+        } else {
+          downloadFileFromPC(file.path, file.name, file.size_formatted);
+        }
+      };
+
+      // Play Action (Direct Stream)
+      const playBtn = card.querySelector('[data-action="play"]');
+      if (playBtn) {
+        playBtn.onclick = (e) => {
+          e.stopPropagation();
+          vibrate(15);
+          openMediaPlayer(file.path, file.name, file.ext);
+        };
+      }
+
+      // Explicit Download Action (always available)
+      card.querySelector('[data-action="save"]').onclick = (e) => {
+        e.stopPropagation();
+        vibrate(15);
+        downloadFileFromPC(file.path, file.name, file.size_formatted);
+      };
+
+      // Open on PC Action
+      card.querySelector('[data-action="open-pc"]').onclick = (e) => {
+        e.stopPropagation();
+        vibrate(15);
+        fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/open?path=${encodeURIComponent(file.path)}`, { method: 'POST' })
+          .then(r => r.json())
+          .then(() => showToast(`Opened "${file.name}" on PC!`, 'success', '<svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg>'))
+          .catch(() => showToast('Could not open on PC', 'error'));
+      };
+
+      // Locate on PC Action
+      card.querySelector('[data-action="locate-pc"]').onclick = (e) => {
+        e.stopPropagation();
+        vibrate(15);
+        openLocationOnPc(file.path);
+      };
+
+      // Delete Action
+      card.querySelector('[data-action="del"]').onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete "${file.name}" on PC?`)) {
+          vibrate(20);
+          fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/delete?path=${encodeURIComponent(file.path)}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(() => {
+              showToast('File deleted', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
+              state.markedFsPaths.delete(file.path);
+              updateBatchBar();
+              browseFsDirectory(state.currentFsPath);
+            });
+        }
+      };
+
+      el.fsBrowserItems.appendChild(card);
+    });
+  }
+
+  // --- Phone In-App File Explorer Logic ---
+  function loadPhonePlaces() {
+    const defaultPlaces = [
+      { name: 'Received from PC', path: 'default', icon: '' },
+      { name: 'Internal Storage', path: 'root', icon: '' },
+      { name: 'Camera / DCIM', path: 'dcim', icon: '' },
+      { name: 'Pictures', path: 'pictures', icon: '' },
+      { name: 'Videos & Movies', path: 'movies', icon: '' },
+      { name: 'Downloads', path: 'downloads', icon: '⬇️' },
+      { name: 'Documents', path: 'documents', icon: '' },
+      { name: 'Music', path: 'music', icon: '' },
+    ];
+
+    let places = defaultPlaces;
+    if (window.AndroidApp && typeof window.AndroidApp.getPhonePlaces === 'function') {
+      try {
+        const pStr = window.AndroidApp.getPhonePlaces();
+        const pArr = JSON.parse(pStr);
+        if (Array.isArray(pArr) && pArr.length > 0) {
+          places = pArr;
+        }
+      } catch (e) {}
+    }
+
+    if (el.phoneFsPlacesStrip) {
+      el.phoneFsPlacesStrip.innerHTML = '';
+      places.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'fs-place-chip phone-place-chip';
+        const cur = state.phoneFs.currentPath || 'default';
+        if (p.path === cur || (p.path === 'default' && cur === 'transfers')) {
+          btn.classList.add('active');
+        }
+        btn.dataset.phonePath = p.path;
+        btn.textContent = `${p.icon} ${p.name}`;
+        btn.onclick = () => {
+          vibrate(15);
+          document.querySelectorAll('.phone-place-chip').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          browsePhoneDirectory(p.path);
+        };
+        el.phoneFsPlacesStrip.appendChild(btn);
+      });
+    }
+
+    const btnGrantStorage = document.getElementById('btn-grant-storage');
+    if (btnGrantStorage && !btnGrantStorage.dataset.bound) {
+      btnGrantStorage.dataset.bound = 'true';
+      btnGrantStorage.onclick = () => {
+        vibrate(20);
+        if (window.AndroidApp && typeof window.AndroidApp.requestStoragePermission === 'function') {
+          window.AndroidApp.requestStoragePermission();
+        } else {
+          showToast('Grant Full Storage access in Android App Settings', 'info');
+        }
+      };
+    }
+  }
+
+  function updatePhoneBatchBar() {
+    if (!el.phoneFsBatchBar) return;
+    const count = state.phoneFs.markedPaths.size;
+    if (count > 0) {
+      state.phoneFs.selectMode = true;
+      document.getElementById('tab-files')?.classList.add('phone-select-mode');
+      el.phoneFsBatchBar.style.display = 'flex';
+      if (el.phoneFsBatchCountLabel) el.phoneFsBatchCountLabel.textContent = `${count} marked`;
+      if (el.phoneFsBatchSendLabel) el.phoneFsBatchSendLabel.textContent = `SEND TO PC (${count})`;
+      const allPaths = [...state.phoneFs.folders.map(f => f.path), ...state.phoneFs.files.map(f => f.path)];
+      const allSelected = allPaths.length > 0 && allPaths.every(p => state.phoneFs.markedPaths.has(p));
+      if (el.phoneFsBatchSelectAll) el.phoneFsBatchSelectAll.checked = allSelected;
+    } else {
+      state.phoneFs.selectMode = false;
+      document.getElementById('tab-files')?.classList.remove('phone-select-mode');
+      el.phoneFsBatchBar.style.display = 'none';
+      if (el.phoneFsBatchSelectAll) el.phoneFsBatchSelectAll.checked = false;
+      if (el.phoneFsBatchSendLabel) el.phoneFsBatchSendLabel.textContent = 'SEND TO PC';
+    }
+  }
+
+  function browsePhoneDirectory(reqPath, highlightTarget = '', isBackAction = false) {
+    if (typeof window.setFsCardsCollapsed === 'function') {
+      window.setFsCardsCollapsed(false);
+    }
+
+    if (el.phoneFsBrowserItems) {
+      el.phoneFsBrowserItems.scrollTop = 0;
+      el.phoneFsBrowserItems.innerHTML = `
+        <div class="empty-files-placeholder">
+          <svg class="deck-icon" width="38" height="38" style="opacity: 0.6;"><use href="#icon-phone"/></svg>
+          <p>Loading phone storage & files...</p>
+        </div>
+      `;
+    }
+
+    if (window.AndroidApp && typeof window.AndroidApp.listPhoneDirectory === 'function') {
+      try {
+        const jsonStr = window.AndroidApp.listPhoneDirectory(reqPath || 'default');
+        const data = JSON.parse(jsonStr);
+        if (data.status === 'ok') {
+          if (!isBackAction && state.phoneFs.currentPath && state.phoneFs.currentPath !== data.current_path && state.phoneFs.currentPath !== 'default') {
+            if (!state.phoneFsHistory) state.phoneFsHistory = [];
+            if (state.phoneFsHistory[state.phoneFsHistory.length - 1] !== state.phoneFs.currentPath) {
+              state.phoneFsHistory.push(state.phoneFs.currentPath);
+            }
+          }
+          state.phoneFs.currentPath = data.current_path;
+          state.phoneFs.parentPath = data.parent_path || '';
+          state.phoneFs.folders = data.folders || [];
+          state.phoneFs.files = data.files || [];
+          state.phoneFs.markedPaths.clear();
+
+          try {
+            localStorage.setItem('pcdeck_last_phone_fs_path', data.current_path);
+          } catch (e) {}
+
+          if (el.phoneFsCurrentPath) {
+            el.phoneFsCurrentPath.textContent = data.name || data.current_path;
+            el.phoneFsCurrentPath.title = data.current_path;
+          }
+          if (el.btnPhoneFsUp) {
+            el.btnPhoneFsUp.disabled = !data.parent_path;
+          }
+
+          // Check if storage permission banner needs to be shown
+          const banner = document.getElementById('phone-fs-permission-banner');
+          if (banner) {
+            if (data.has_permission === false) {
+              banner.style.display = 'flex';
+            } else {
+              banner.style.display = 'none';
+            }
+          }
+
+          updatePhoneBatchBar();
+          renderFilteredPhoneFsItems(highlightTarget);
+          return;
+        }
+      } catch (e) {
+        console.error('Error in listPhoneDirectory:', e);
+      }
+    }
+
+    // Web Fallback (Simulated Phone Storage)
+    state.phoneFs.parentPath = '';
+    state.phoneFs.folders = [];
+    state.phoneFs.files = [];
+    if (el.phoneFsCurrentPath) el.phoneFsCurrentPath.textContent = 'Phone Storage / Downloads';
+    if (el.btnPhoneFsUp) el.btnPhoneFsUp.disabled = true;
+    updatePhoneBatchBar();
+    renderFilteredPhoneFsItems(highlightTarget);
+  }
+
+  function renderFilteredPhoneFsItems(highlightTarget = '') {
+    if (!el.phoneFsBrowserItems) return;
+    el.phoneFsBrowserItems.innerHTML = '';
+
+    const filter = (state.phoneFs.filterText || '').toLowerCase();
+    const filteredFolders = state.phoneFs.folders.filter(f => f.name.toLowerCase().includes(filter));
+    const filteredFiles = state.phoneFs.files.filter(f => f.name.toLowerCase().includes(filter));
+
+    if (el.phoneFsItemCount) {
+      const total = filteredFolders.length + filteredFiles.length;
+      el.phoneFsItemCount.textContent = `${total} item${total === 1 ? '' : 's'}`;
+    }
+
+    if (filteredFolders.length === 0 && filteredFiles.length === 0) {
+      el.phoneFsBrowserItems.innerHTML = `
+        <div class="empty-files-placeholder">
+          <svg class="deck-icon" width="38" height="38" style="opacity: 0.6;"><use href="#icon-phone"/></svg>
+          <p>${filter ? 'No matching phone files found' : 'This phone folder is empty'}</p>
+          <button class="neo-btn btn-cyan" style="margin-top: 10px; height: 36px; font-size: 0.75rem;" onclick="if(document.getElementById('file-picker')) document.getElementById('file-picker').click()">
+            SELECT & SEND FILES TO PC
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    // Render Folders
+    filteredFolders.forEach(folder => {
+      const card = document.createElement('div');
+      card.className = 'fs-item-card is-folder';
+      const folderIcon = getFolderIcon(folder.name);
+      card.innerHTML = `
+        <div class="fs-item-info">
+          <span class="fs-icon-badge">${folderIcon}</span>
+          <div class="fs-item-details">
+            <span class="fs-item-name" title="${folder.name}">${folder.name}</span>
+            <span class="fs-item-meta">${folder.item_count} items</span>
+          </div>
+        </div>
+        <div class="fs-actions-row">
+          <button class="fs-btn fs-btn-open" data-action="open" title="Open Folder">Open</button>
+          <button class="fs-btn fs-btn-del" data-action="del" title="Delete Folder"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
+        </div>
+      `;
+
+      card.querySelector('.fs-item-info').onclick = () => {
+        vibrate(15);
+        browsePhoneDirectory(folder.path);
+      };
+
+      card.querySelector('[data-action="open"]').onclick = (e) => {
+        e.stopPropagation();
+        vibrate(15);
+        browsePhoneDirectory(folder.path);
+      };
+
+      card.querySelector('[data-action="del"]').onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete folder "${folder.name}" on phone?`)) {
+          vibrate(20);
+          if (window.AndroidApp && typeof window.AndroidApp.deletePhoneFile === 'function') {
+            window.AndroidApp.deletePhoneFile(folder.path);
+            showToast('Folder deleted on phone', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
+            browsePhoneDirectory(state.phoneFs.currentPath);
+          }
+        }
+      };
+
+      el.phoneFsBrowserItems.appendChild(card);
+    });
+
+    // Render Files
+    filteredFiles.forEach(file => {
+      const card = document.createElement('div');
+      const isMarked = state.phoneFs.markedPaths.has(file.path);
+      const isHighlight = highlightTarget && (file.name.toLowerCase() === highlightTarget.toLowerCase() || file.path.toLowerCase().endsWith(highlightTarget.toLowerCase()));
+
+      card.className = `fs-item-card is-file ${isMarked ? 'is-marked' : ''} ${isHighlight ? 'is-highlighted' : ''}`;
+      const icon = getFileIcon(file.ext);
+
+      card.innerHTML = `
+        <div class="fs-item-info">
+          <input type="checkbox" class="fs-item-checkbox" data-path="${file.path}" ${isMarked ? 'checked' : ''}>
+          <span class="fs-icon-badge">${icon}</span>
+          <div class="fs-item-details">
+            <span class="fs-item-name" title="${file.name}">${file.name}</span>
+            <span class="fs-item-meta">${file.size_formatted}${file.ext ? ' • ' + file.ext.toUpperCase() : ''}</span>
+          </div>
+        </div>
+        <div class="fs-actions-row">
+          <button class="fs-btn fs-btn-save" data-action="send-pc" title="Upload directly to PC">Upload to PC</button>
+          <button class="fs-btn fs-btn-open" data-action="open-phone" title="View / Play on Phone">Open</button>
+          <button class="fs-btn fs-btn-del fs-btn-icon-only" data-action="del" title="Delete on Phone"><svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg></button>
+        </div>
+      `;
+
+      const cb = card.querySelector('.fs-item-checkbox');
+      const toggleMark = () => {
+        vibrate(10);
+        if (state.phoneFs.markedPaths.has(file.path)) {
+          state.phoneFs.markedPaths.delete(file.path);
+          card.classList.remove('is-marked');
+          cb.checked = false;
+          if (state.phoneFs.markedPaths.size === 0) exitPhoneSelectMode();
+          else updatePhoneBatchBar();
+        } else {
+          state.phoneFs.markedPaths.add(file.path);
+          card.classList.add('is-marked');
+          cb.checked = true;
+          updatePhoneBatchBar();
+        }
+      };
+
+      cb.onclick = (e) => {
+        e.stopPropagation();
+        toggleMark();
+      };
+
+      const fileInfo = card.querySelector('.fs-item-info');
+      const lp = makeLongPressHandler(
+        () => {
+          if (!state.phoneFs.selectMode) enterPhoneSelectMode(file.path);
+          else toggleMark();
+        },
+        () => {
+          if (state.phoneFs.selectMode) { toggleMark(); return; }
+          vibrate(15);
+          if (window.AndroidApp && typeof window.AndroidApp.openPhoneFile === 'function') {
+            window.AndroidApp.openPhoneFile(file.path);
+          } else {
+            showToast(`Opening ${file.name}`, 'info');
+          }
+        }
+      );
+      fileInfo.addEventListener('touchstart', (e) => { if (e.target !== cb) lp.start(e); }, { passive: true });
+      fileInfo.addEventListener('touchmove',  () => lp.move(), { passive: true });
+      fileInfo.addEventListener('touchend',   (e) => { if (e.target !== cb) lp.end(e); });
+      fileInfo.addEventListener('touchcancel',() => lp.cancel());
+      fileInfo.onclick = (e) => {
+        if (e.target === cb || e.isTrusted === false) return;
+        if (state.phoneFs.selectMode) { toggleMark(); return; }
+        vibrate(15);
+        if (window.AndroidApp && typeof window.AndroidApp.openPhoneFile === 'function') {
+          window.AndroidApp.openPhoneFile(file.path);
+        } else {
+          showToast(`Opening ${file.name}`, 'info');
+        }
+      };
+
+      // Direct Upload to PC
+      card.querySelector('[data-action="send-pc"]').onclick = (e) => {
+        e.stopPropagation();
+        vibrate(15);
+        if (window.AndroidApp && typeof window.AndroidApp.uploadPhoneFileToPc === 'function') {
+          phoneUploadStartTime = Date.now();
+          showTransferProgress({
+            badge: 'UPLOADING TO PC',
+            badgeClass: 'badge-upload',
+            filename: file.name,
+            percent: 0,
+            status: 'Connecting to PC...',
+            speed: '-- MB/s',
+            isDownload: false
+          });
+
+          showToast(`Sending "${file.name}" to PC...`, 'info');
+          window.AndroidApp.uploadPhoneFileToPc(file.path, state.currentFsPath || '', `http://${state.serverHost}:${state.serverPort}`);
+        } else if (el.filePicker) {
+          el.filePicker.accept = '*/*';
+          el.filePicker.click();
+        }
+      };
+
+      // Open on Phone
+      card.querySelector('[data-action="open-phone"]').onclick = (e) => {
+        e.stopPropagation();
+        vibrate(15);
+        if (window.AndroidApp && typeof window.AndroidApp.openPhoneFile === 'function') {
+          window.AndroidApp.openPhoneFile(file.path);
+        } else {
+          showToast(`Opening ${file.name}`, 'info');
+        }
+      };
+
+      // Delete on Phone
+      card.querySelector('[data-action="del"]').onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete "${file.name}" on phone?`)) {
+          vibrate(20);
+          if (window.AndroidApp && typeof window.AndroidApp.deletePhoneFile === 'function') {
+            window.AndroidApp.deletePhoneFile(file.path);
+            showToast('File deleted on phone', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
+            state.phoneFs.markedPaths.delete(file.path);
+            updatePhoneBatchBar();
+            browsePhoneDirectory(state.phoneFs.currentPath);
+          }
+        }
+      };
+
+      el.phoneFsBrowserItems.appendChild(card);
+
+      if (isHighlight) {
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
+      }
+    });
+  }
+
+  function revealInPhoneFiles(targetFolder = 'default', targetFileName = '') {
+    vibrate(20);
+    switchTab('tab-files');
+    if (el.btnFsModePhone) {
+      el.btnFsModePhone.click();
+    }
+    loadPhonePlaces();
+    browsePhoneDirectory(targetFolder || 'default', targetFileName);
+  }
+
+  window.onStoragePermissionChanged = function() {
+    loadPhonePlaces();
+    browsePhoneDirectory(state.phoneFs.currentPath || 'default');
+  };
+
+  // --- Unified Transfer Progress Controller (Syncs PC & Phone Transfer Cards) ---
+  let hideTransferTimeout = null;
+
+  function showTransferProgress({
+    badge = 'UPLOAD',
+    badgeClass = 'badge-upload',
+    filename = '',
+    percent = 0,
+    status = 'Transferring...',
+    speed = '-- MB/s',
+    showOpenPc = false,
+    showOpenPhone = false,
+    onOpenPc = null,
+    onOpenPhone = null,
+    isDownload = false
+  }) {
+    if (hideTransferTimeout) {
+      clearTimeout(hideTransferTimeout);
+      hideTransferTimeout = null;
+    }
+    const boxes = document.querySelectorAll('.file-transfer-card');
+    const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+    boxes.forEach(box => {
+      box.style.display = 'flex';
+      const badgeEl = box.querySelector('.transfer-badge');
+      if (badgeEl) {
+        badgeEl.textContent = badge;
+        badgeEl.className = `transfer-badge ${badgeClass}`;
+      }
+      const filenameEl = box.querySelector('.transfer-filename');
+      if (filenameEl && filename) filenameEl.textContent = filename;
+      const percentEl = box.querySelector('.transfer-percent');
+      if (percentEl) percentEl.textContent = `${safePercent}%`;
+      const barEl = box.querySelector('.transfer-bar');
+      if (barEl) {
+        barEl.style.width = `${safePercent}%`;
+        if (isDownload) barEl.classList.add('downloading');
+        else barEl.classList.remove('downloading');
+      }
+      const statusEl = box.querySelector('.transfer-status');
+      if (statusEl) statusEl.textContent = status;
+      const speedEl = box.querySelector('.transfer-speed');
+      if (speedEl) speedEl.textContent = speed;
+
+      const btnOpenPc = box.querySelector('[data-transfer-action="open-pc"]') || box.querySelector('#btn-transfer-open-pc');
+      if (btnOpenPc) {
+        btnOpenPc.style.display = showOpenPc ? 'inline-flex' : 'none';
+        if (onOpenPc) {
+          btnOpenPc.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onOpenPc();
+            hideTransferProgress(1000);
+          };
+        }
+      }
+
+      const btnOpenPhone = box.querySelector('[data-transfer-action="open-phone"]') || box.querySelector('#btn-transfer-open-phone');
+      if (btnOpenPhone) {
+        btnOpenPhone.style.display = showOpenPhone ? 'inline-flex' : 'none';
+        if (onOpenPhone) {
+          btnOpenPhone.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onOpenPhone();
+            hideTransferProgress(1000);
+          };
+        }
+      }
+
+      const btnClose = box.querySelector('.transfer-close-btn') || box.querySelector('#btn-transfer-close');
+      if (btnClose) {
+        btnClose.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // Abort active upload XHR and stop the queue
+          activeUploadCancelled = true;
+          if (activeUploadXhr) {
+            try { activeUploadXhr.abort(); } catch (_) {}
+            activeUploadXhr = null;
+          }
+          // Cancel active download batch
+          if (activeDownloadBatch && activeDownloadBatch.active) {
+            activeDownloadBatch.active = false;
+            activeDownloadBatch.cancelled = true;
+          }
+          showToast('Transfer cancelled', 'warn');
+          hideTransferProgress(0);
+        };
+      }
+    });
+
+    // Real-time titlebar label update during active transfer
+    const transferLabel = document.getElementById('fast-transfer-label');
+    if (transferLabel && speed && speed !== '-- MB/s') {
+      transferLabel.textContent = `Fast Transfer • ${speed}`;
+    }
+  }
+
+  function hideTransferProgress(delay = 0) {
+    if (hideTransferTimeout) {
+      clearTimeout(hideTransferTimeout);
+      hideTransferTimeout = null;
+    }
+    if (delay === 0) {
+      const boxes = document.querySelectorAll('.file-transfer-card');
+      boxes.forEach(box => { box.style.display = 'none'; });
+      if (typeof window.syncTransferSpeedButtons === 'function') {
+        window.syncTransferSpeedButtons();
+      }
+    } else {
+      hideTransferTimeout = setTimeout(() => {
+        const boxes = document.querySelectorAll('.file-transfer-card');
+        boxes.forEach(box => { box.style.display = 'none'; });
+        if (typeof window.syncTransferSpeedButtons === 'function') {
+          window.syncTransferSpeedButtons();
+        }
+      }, delay);
+    }
+  }
+
+  // --- Phone -> PC File Upload Handler & Batch Operations ---
+  let phoneUploadStartTime = 0;
+  let activeUploadXhr = null;    // current live XHR — aborted by X button
+  let activeUploadCancelled = false; // flag to stop the queue
+  let activeBatchTransfer = {
+    active: false,
+    total: 0,
+    current: 0,
+    successCount: 0,
+    failCount: 0
+  };
+
+  window.onPhoneUploadProgress = function(percent, loaded, total, filename) {
+    if (!phoneUploadStartTime) phoneUploadStartTime = Date.now();
+    const isPro = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+    const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+    const loadedMB = (loaded / (1024 * 1024)).toFixed(1);
+    const totalMB = total > 0 ? (total / (1024 * 1024)).toFixed(1) : '?';
+    const duration = (Date.now() - phoneUploadStartTime) / 1000;
+    const speedMB = duration > 0.2 ? (loaded / (1024 * 1024) / duration) : 0;
+    const speedText = speedMB > 0 ? `${speedMB.toFixed(1)} MB/s` : '-- MB/s';
+
+    let etaText = '';
+    if (speedMB > 0.1 && total > loaded) {
+      const remainingMB = (total - loaded) / (1024 * 1024);
+      const etaSec = Math.ceil(remainingMB / speedMB);
+      if (etaSec > 60) {
+        etaText = ` • ETA: ${Math.floor(etaSec / 60)}m ${etaSec % 60}s`;
+      } else {
+        etaText = ` • ETA: ${etaSec}s`;
+      }
+    }
+
+    const tierLabel = isPro ? 'PRO UNLIMITED' : 'STANDARD (10 MB/s)';
+    const isBatch = activeBatchTransfer.active && activeBatchTransfer.total > 1;
+    const remainingInQueue = isBatch ? (activeBatchTransfer.total - activeBatchTransfer.current) : 0;
+    const queueNotice = remainingInQueue > 0 ? ` • ${remainingInQueue} in queue` : '';
+
+    const badgeText = isBatch ? `[${activeBatchTransfer.current}/${activeBatchTransfer.total}] ${tierLabel}` : tierLabel;
+    const statusText = isBatch
+      ? `[${activeBatchTransfer.current}/${activeBatchTransfer.total}] ${filename}: ${loadedMB}/${totalMB} MB (${safePercent}%)${etaText}${queueNotice}`
+      : `Uploading ${loadedMB} MB of ${totalMB} MB (${safePercent}%)${etaText}`;
+
+    showTransferProgress({
+      badge: badgeText,
+      badgeClass: 'badge-upload',
+      filename: filename || 'Uploading...',
+      percent: safePercent,
+      status: statusText,
+      speed: speedText,
+      isDownload: false
+    });
+  };
+
+  let onPhoneUploadQueueDone = null;
+
+  window.onPhoneUploadComplete = function(filename, verified = true) {
+    phoneUploadStartTime = 0;
+    vibrate(20);
+
+    if (activeBatchTransfer && activeBatchTransfer.active) {
+      activeBatchTransfer.successCount++;
+    }
+
+    const isBatch = activeBatchTransfer && activeBatchTransfer.active && activeBatchTransfer.total > 1;
+    if (isBatch && activeBatchTransfer.current < activeBatchTransfer.total) {
+      showTransferProgress({
+        badge: `[${activeBatchTransfer.current}/${activeBatchTransfer.total}]`,
+        badgeClass: 'badge-download',
+        filename: filename,
+        percent: 100,
+        status: `Saved "${filename}" on PC. Preparing next file...`,
+        speed: 'Saved to PC',
+        isDownload: false
+      });
+    }
+
+    if (state.currentFsPath !== undefined) {
+      browseFsDirectory(state.currentFsPath);
+    }
+
+    if (typeof onPhoneUploadQueueDone === 'function') {
+      const cb = onPhoneUploadQueueDone;
+      onPhoneUploadQueueDone = null;
+      cb(true);
+    }
+  };
+
+  window.onPhoneUploadError = function(filename, error) {
+    phoneUploadStartTime = 0;
+    showToast(`Upload error: ${error}`, 'error');
+    if (activeBatchTransfer && activeBatchTransfer.active) {
+      activeBatchTransfer.failCount++;
+    }
+    const isBatch = activeBatchTransfer && activeBatchTransfer.active && activeBatchTransfer.total > 1;
+
+    showTransferProgress({
+      badge: 'ERROR',
+      badgeClass: 'badge-upload',
+      filename: filename,
+      percent: 0,
+      status: `Error on ${filename}: ${error}`,
+      speed: 'Failed',
+      isDownload: false
+    });
+
+    if (typeof onPhoneUploadQueueDone === 'function') {
+      const cb = onPhoneUploadQueueDone;
+      onPhoneUploadQueueDone = null;
+      cb(false);
+    }
+  };
+
+  let pendingSharedFilesQueue = [];
+
+  window.handleSharedFiles = function(files) {
+    if (!files || !files.length) return;
+    // Always open File Manager section immediately upon receiving shared files
+    if (typeof switchTab === 'function') {
+      try { switchTab('tab-files'); } catch (e) {}
+    }
+    if (state.connected && state.serverHost) {
+      showToast(`Sending ${files.length} shared file(s) to PC...`, 'info');
+      uploadMarkedPhoneFilesToPc(files);
+    } else {
+      pendingSharedFilesQueue = (pendingSharedFilesQueue || []).concat(files);
+      showToast(`Connecting to PC to send ${files.length} shared file(s)...`, 'info');
+      if (window.AndroidApp && typeof window.AndroidApp.discoverServer === 'function') {
+        try { window.AndroidApp.discoverServer(); } catch (e) {}
+      }
+      connect();
+    }
+  };
+
+  window.handleSharedText = function(text) {
+    if (!text || !text.trim()) return;
+    if (state.connected && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      try {
+        mainWs.send(`type,${encodeURIComponent(text)}`);
+        showToast('Sent shared text to PC', 'success');
+      } catch (e) {}
+    } else {
+      showToast('PC not connected yet', 'warn');
+    }
+  };
+
+  function uploadMarkedPhoneFilesToPc(paths) {
+    if (!paths || paths.length === 0) return;
+    if (!state.serverHost) {
+      showToast('PC not connected yet. Please connect to your PC first.', 'error');
+      if (el.connectModal) openConnectModal();
+      return;
+    }
+    if (window.AndroidApp && typeof window.AndroidApp.uploadPhoneFileToPc === 'function') {
+      let currentIndex = 0;
+      let errorOccurred = false;
+      const totalCount = paths.length;
+      const serverUrl = `http://${state.serverHost}:${state.serverPort}`;
+      const destDir = ''; // Strictly route all uploads to PCDeck_Transfers on PC
+
+      activeBatchTransfer = {
+        active: true,
+        total: totalCount,
+        current: 0,
+        successCount: 0,
+        failCount: 0
+      };
+
+      function uploadNext() {
+        if (currentIndex >= totalCount) {
+          vibrate(30);
+          const totalSuccess = activeBatchTransfer ? activeBatchTransfer.successCount : 0;
+          const totalFailed = activeBatchTransfer ? activeBatchTransfer.failCount : 0;
+          if (activeBatchTransfer) activeBatchTransfer.active = false;
+
+          if (totalSuccess === 0) {
+            showToast(`Upload failed. Check connection or storage permissions.`, 'error');
+            showTransferProgress({
+              badge: 'UPLOAD FAILED',
+              badgeClass: 'badge-upload',
+              filename: `${totalCount} file(s)`,
+              percent: 0,
+              status: 'Upload failed or access denied',
+              speed: 'Failed',
+              isDownload: false
+            });
+            hideTransferProgress(8000);
+          } else if (totalFailed > 0 || errorOccurred) {
+            showToast(`Uploaded with some errors (${totalSuccess}/${totalCount})`, 'warn');
+            showTransferProgress({
+              badge: 'PARTIAL SUCCESS',
+              badgeClass: 'badge-download',
+              filename: `${totalSuccess}/${totalCount} file(s)`,
+              percent: 100,
+              status: `Saved ${totalSuccess} of ${totalCount} files to PCDeck_Transfers`,
+              speed: 'Saved to PC',
+              showOpenPc: true,
+              onOpenPc: () => openLocationOnPc(''),
+              isDownload: false
+            });
+            hideTransferProgress(15000);
+          } else {
+            showToast(`Uploaded ${totalCount} file(s) to PC!`, 'success');
+            showTransferProgress({
+              badge: 'ALL UPLOADED',
+              badgeClass: 'badge-download',
+              filename: `${totalCount} file(s)`,
+              percent: 100,
+              status: 'All Transfers Complete & Verified in PCDeck_Transfers',
+              speed: 'Saved to PC',
+              showOpenPc: true,
+              onOpenPc: () => openLocationOnPc(''),
+              isDownload: false
+            });
+            hideTransferProgress(15000);
+          }
+
+          state.phoneFs.markedPaths.clear();
+          updatePhoneBatchBar();
+          renderFilteredPhoneFsItems();
+          browseFsDirectory(state.currentFsPath);
+          return;
+        }
+
+        const path = paths[currentIndex];
+        const filename = path.split('/').pop().split('\\').pop();
+        currentIndex++;
+        activeBatchTransfer.current = currentIndex;
+        phoneUploadStartTime = Date.now();
+        let lastActivityTime = Date.now();
+
+        showTransferProgress({
+          badge: `[${currentIndex}/${totalCount}]`,
+          badgeClass: 'badge-upload',
+          filename: filename,
+          percent: 0,
+          status: `[${currentIndex}/${totalCount}] Starting ${filename}...`,
+          speed: '-- MB/s',
+          isDownload: false
+        });
+
+        let completed = false;
+        // Watchdog: only timeout if ZERO bytes / progress events occurred for 180 consecutive seconds
+        const watchdog = setInterval(() => {
+          if (Date.now() - lastActivityTime > 180000) {
+            console.warn(`Upload stalled on ${filename}, advancing queue`);
+            showToast(`Stalled transfer on ${filename}`, 'warn', '️');
+            onDoneOnce(false);
+          }
+        }, 15000);
+
+        const onDoneOnce = (success = true) => {
+          if (completed) return;
+          completed = true;
+          clearInterval(watchdog);
+          if (!success) errorOccurred = true;
+          setTimeout(uploadNext, 200);
+        };
+
+        const originalProgress = window.onPhoneUploadProgress;
+        window.onPhoneUploadProgress = function(percent, loaded, total, fname) {
+          lastActivityTime = Date.now();
+          if (typeof originalProgress === 'function') {
+            originalProgress(percent, loaded, total, fname);
+          }
+        };
+
+        onPhoneUploadQueueDone = (success) => {
+          onDoneOnce(success);
+        };
+
+        window.AndroidApp.uploadPhoneFileToPc(path, destDir, serverUrl);
+      }
+
+      uploadNext();
+    } else {
+      if (el.filePicker) el.filePicker.click();
+    }
+  }
+
+  // --- Sequential Queue Download (Strict 1-by-1 FIFO Queue, NO ZIP) ---
+  let nativeDownloadStartTime = 0;
+  let onNativeDownloadDoneCallback = null;
+  let activeDownloadBatch = {
+    active: false,
+    total: 0,
+    current: 0,
+    successCount: 0
+  };
+
+  window.onNativeDownloadProgress = function(percent, loaded, total) {
+    if (!nativeDownloadStartTime) nativeDownloadStartTime = Date.now();
+    const isPro = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+    const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+    const loadedMB = (loaded / (1024 * 1024)).toFixed(1);
+    const totalMB = total > 0 ? (total / (1024 * 1024)).toFixed(1) : '?';
+    const duration = (Date.now() - nativeDownloadStartTime) / 1000;
+    const speedMB = duration > 0.2 ? (loaded / (1024 * 1024) / duration) : 0;
+    const speedText = speedMB > 0 ? `${speedMB.toFixed(1)} MB/s` : '-- MB/s';
+
+    let etaText = '';
+    if (speedMB > 0.1 && total > loaded) {
+      const remainingMB = (total - loaded) / (1024 * 1024);
+      const etaSec = Math.ceil(remainingMB / speedMB);
+      if (etaSec > 60) {
+        etaText = ` • ETA: ${Math.floor(etaSec / 60)}m ${etaSec % 60}s`;
+      } else {
+        etaText = ` • ETA: ${etaSec}s`;
+      }
+    }
+
+    const tierLabel = isPro ? 'PRO UNLIMITED' : 'STANDARD (10 MB/s)';
+    const isBatch = activeDownloadBatch.active && activeDownloadBatch.total > 1;
+    const remainingInQueue = isBatch ? (activeDownloadBatch.total - activeDownloadBatch.current) : 0;
+    const queueNotice = remainingInQueue > 0 ? ` • ${remainingInQueue} in queue` : '';
+
+    const badgeText = isBatch ? `[${activeDownloadBatch.current}/${activeDownloadBatch.total}] ${tierLabel}` : tierLabel;
+    const statusText = isBatch
+      ? `[${activeDownloadBatch.current}/${activeDownloadBatch.total}] Downloading ${loadedMB} MB of ${totalMB} MB (${safePercent}%)${etaText}${queueNotice}`
+      : `Downloading ${loadedMB} MB of ${totalMB} MB (${safePercent}%)${etaText}`;
+
+    showTransferProgress({
+      badge: badgeText,
+      badgeClass: 'badge-download',
+      percent: safePercent,
+      status: statusText,
+      speed: speedText,
+      isDownload: true
+    });
+  };
+
+  window.onNativeDownloadComplete = function(fileName, verified = true) {
+    vibrate(25);
+    nativeDownloadStartTime = 0;
+    const isBatch = activeDownloadBatch.active && activeDownloadBatch.total > 1;
+
+    if (isBatch && activeDownloadBatch.current < activeDownloadBatch.total) {
+      activeDownloadBatch.successCount++;
+      showTransferProgress({
+        badge: `[${activeDownloadBatch.current}/${activeDownloadBatch.total}]`,
+        badgeClass: 'badge-download',
+        filename: fileName,
+        percent: 100,
+        status: `Saved "${fileName}" to Downloads/PCDeck. Next in queue starting...`,
+        speed: 'Saved to Phone',
+        isDownload: true
+      });
+    } else {
+      const totalCount = isBatch ? activeDownloadBatch.total : 1;
+      showTransferProgress({
+        badge: verified ? 'ALL SAVED' : 'DOWNLOADED',
+        badgeClass: 'badge-download',
+        filename: isBatch ? `${totalCount} file(s)` : fileName,
+        percent: 100,
+        status: verified ? `100% Verified! Saved ${totalCount} file(s) in Downloads/PCDeck` : `Saved ${totalCount} file(s) in Downloads/PCDeck`,
+        speed: 'Saved to Phone',
+        showOpenPhone: true,
+        onOpenPhone: () => {
+          revealInPhoneFiles('default', fileName);
+          showToast(`Locating "${fileName}" in Phone Files`, 'success');
+        },
+        isDownload: true
+      });
+
+      hideTransferProgress(15000);
+      activeDownloadBatch.active = false;
+    }
+
+    if (typeof onNativeDownloadDoneCallback === 'function') {
+      const cb = onNativeDownloadDoneCallback;
+      onNativeDownloadDoneCallback = null;
+      cb();
+    }
+  };
+
+  window.onNativeDownloadError = function(errMsg) {
+    nativeDownloadStartTime = 0;
+    showToast('Download error: ' + errMsg, 'error');
+    const isBatch = activeDownloadBatch.active && activeDownloadBatch.total > 1;
+
+    showTransferProgress({
+      badge: 'ERROR',
+      badgeClass: 'badge-upload',
+      filename: 'Download Failed',
+      percent: 0,
+      status: errMsg || 'Network / Storage Error',
+      speed: 'Failed',
+      isDownload: true
+    });
+
+    if (!isBatch || activeDownloadBatch.current >= activeDownloadBatch.total) {
+      hideTransferProgress(8000);
+      activeDownloadBatch.active = false;
+    }
+
+    if (typeof onNativeDownloadDoneCallback === 'function') {
+      const cb = onNativeDownloadDoneCallback;
+      onNativeDownloadDoneCallback = null;
+      cb();
+    }
+  };
+
+  function downloadSingleFileWithProgress(filePath, fileName, fileSizeFormatted, fileIndex, totalFiles, onDone) {
+    const isBatch = totalFiles > 1;
+    showTransferProgress({
+      badge: isBatch ? `[${fileIndex}/${totalFiles}]` : 'DOWNLOADING',
+      badgeClass: 'badge-download',
+      filename: fileName,
+      percent: 0,
+      status: isBatch ? `[${fileIndex}/${totalFiles}] Starting "${fileName}" (${fileSizeFormatted || ''})...` : `Starting "${fileName}" (${fileSizeFormatted || ''})...`,
+      speed: '-- MB/s',
+      isDownload: true
+    });
+
+    const downloadUrl = `http://${state.serverHost}:${state.serverPort}/api/fs/download?path=${encodeURIComponent(filePath)}`;
+
+    // Prioritize 100% Wi-Fi bandwidth for file transfer by putting any background screen stream to sleep
+    if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+      try { screenWs.send('pause'); } catch (e) {}
+    }
+
+    // If running in Android App, use Native MediaStore Downloader directly into Downloads/PCDeck/
+    if (window.AndroidApp && typeof window.AndroidApp.saveFileToDownloads === 'function') {
+      nativeDownloadStartTime = Date.now();
+      onNativeDownloadDoneCallback = onDone;
+      window.AndroidApp.saveFileToDownloads(downloadUrl, fileName);
+      return;
+    }
+
+    // Direct Browser Download Stream (bypasses RAM Blob limit to allow 5GB+ downloads)
+    try {
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = downloadUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) a.parentNode.removeChild(a);
+      }, 1500);
+
+      showTransferProgress({
+        badge: 'DOWNLOADING',
+        badgeClass: 'badge-download',
+        filename: fileName,
+        percent: 100,
+        status: `Browser downloading "${fileName}"...`,
+        speed: 'Streaming',
+        showOpenPhone: false,
+        isDownload: true
+      });
+      hideTransferProgress(8000);
+      if (onDone) onDone();
+    } catch (err) {
+      window.location.assign(downloadUrl);
+      if (onDone) onDone();
+    }
+  }
+
+  function downloadMarkedFilesSequentially(paths) {
+    if (!paths || paths.length === 0) return;
+    if (activeDownloadBatch.active) {
+      showToast(`Download queue active (${activeDownloadBatch.total - activeDownloadBatch.current + 1} remaining)`, 'info');
+      return;
+    }
+
+    const norm = p => (p || '').replace(/[\/\\]+/g, '/').toLowerCase();
+    const markedSet = new Set(paths.map(norm));
+    const fileItems = state.fsFiles.filter(f => markedSet.has(norm(f.path)));
+    if (fileItems.length === 0) {
+      showToast('No downloadable files marked (select individual files to save)', 'warn', '️');
+      return;
+    }
+
+    let currentIndex = 0;
+    const total = fileItems.length;
+    activeDownloadBatch = {
+      active: true,
+      total: total,
+      current: 0,
+      successCount: 0,
+      cancelled: false
+    };
+
+    showToast(`Queued ${total} files for sequential download...`, 'success');
+
+    function downloadNext() {
+      if (activeDownloadBatch.cancelled) {
+        activeDownloadBatch.active = false;
+        hideTransferProgress(0);
+        return;
+      }
+      if (currentIndex >= total) {
+        vibrate(30);
+        activeDownloadBatch.active = false;
+        showToast(`Saved ${total} file(s) to Downloads/PCDeck!`, 'success');
+        if (el.btnTransferOpenPhone) {
+          el.btnTransferOpenPhone.textContent = 'SHOW IN PHONE FILES';
+          el.btnTransferOpenPhone.style.display = 'inline-flex';
+          el.btnTransferOpenPhone.onclick = () => {
+            revealInPhoneFiles('default');
+          };
+        }
+        state.markedFsPaths.clear();
+        updateBatchBar();
+        renderFilteredFsItems();
+        return;
+      }
+
+      const file = fileItems[currentIndex];
+      currentIndex++;
+      activeDownloadBatch.current = currentIndex;
+
+      let completed = false;
+      let lastActivityTime = Date.now();
+
+      // Watchdog: only timeout if ZERO bytes occurred for 180 consecutive seconds
+      const watchdog = setInterval(() => {
+        if (Date.now() - lastActivityTime > 180000) {
+          console.warn(`Download stalled on ${file.name}, advancing queue`);
+          showToast(`Stalled download on ${file.name}`, 'warn', '️');
+          onDoneOnce();
+        }
+      }, 15000);
+
+      const onDoneOnce = () => {
+        if (completed) return;
+        completed = true;
+        clearInterval(watchdog);
+        setTimeout(downloadNext, 300);
+      };
+
+      const origNativeProgress = window.onNativeDownloadProgress;
+      window.onNativeDownloadProgress = function(percent, loaded, totalBytes) {
+        lastActivityTime = Date.now();
+        if (typeof origNativeProgress === 'function') {
+          origNativeProgress(percent, loaded, totalBytes);
+        }
+      };
+
+      downloadSingleFileWithProgress(file.path, file.name, file.size_formatted, currentIndex, total, onDoneOnce);
+    }
+    downloadNext();
+  }
+
+  function downloadFileFromPC(filePath, fileName, fileSizeFormatted) {
+    if (!filePath) return;
+    vibrate(15);
+    downloadSingleFileWithProgress(filePath, fileName, fileSizeFormatted, 1, 1, () => {
+      showToast(`Saved "${fileName}" to Downloads!`, 'success');
+      if (el.btnTransferOpenPhone) {
+        el.btnTransferOpenPhone.textContent = 'SHOW IN PHONE FILES';
+        el.btnTransferOpenPhone.style.display = 'inline-flex';
+        el.btnTransferOpenPhone.onclick = () => {
+          revealInPhoneFiles('default', fileName);
+        };
+      }
+    });
+  }
+
+  function openLocationOnPc(targetPath) {
+    vibrate(25);
+    const target = targetPath || state.currentFsPath || '';
+    fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/open-location`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: target })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        showToast('Opened in Windows Explorer on PC ', 'success');
+      } else {
+        showToast(`PC Error: ${data.error || 'Failed to open'}`, 'error', '️');
+      }
+    })
+    .catch(() => {
+      showToast('Could not reach PC to open folder', 'error');
+    });
+  }
+
+  // --- In-Place Instant Media Streaming & Zero-Download Player ---
+  let mediaAudioBoost = 1.0;
+  let mediaAudioCtx = null;
+  let mediaGainNode = null;
+  let mediaSourceNode = null;
+
+  function initMediaAudioGraph(videoEl) {
+    if (!videoEl || mediaSourceNode) return;
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      mediaAudioCtx = new AudioContextClass();
+      mediaGainNode = mediaAudioCtx.createGain();
+      mediaGainNode.gain.setValueAtTime(mediaAudioBoost, mediaAudioCtx.currentTime);
+      mediaSourceNode = mediaAudioCtx.createMediaElementSource(videoEl);
+      mediaSourceNode.connect(mediaGainNode);
+      mediaGainNode.connect(mediaAudioCtx.destination);
+    } catch (e) {
+      console.warn('[MediaPlayer] Web Audio Boost setup:', e);
+    }
+  }
+
+  let mediaControlsTimer = null;
+  let mediaAspectMode = 'contain';
+  let isMediaScrubbing = false;
+  let isMediaInteractingWithControls = false;
+  let mediaLastTapTime = 0;
+  let mediaLastTapTimeout = null;
+
+  function formatMediaTime(sec) {
+    if (!sec || isNaN(sec) || !isFinite(sec) || sec < 0) return '00:00';
+    sec = Math.floor(sec);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    const mm = String(m).padStart(2, '0');
+    const ss = String(s).padStart(2, '0');
+    return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+
+  function toggleMediaFullscreen(forceState) {
+    const modal = document.getElementById('media-player-modal');
+    if (!modal) return;
+    vibrate(15);
+    const isCurrentlyFs = modal.classList.contains('is-fullscreen');
+    const willBeFs = typeof forceState === 'boolean' ? forceState : !isCurrentlyFs;
+
+    if (willBeFs) {
+      modal.classList.add('is-fullscreen');
+      document.querySelectorAll('.btn-toggle-fs .icon-fs-expand').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.btn-toggle-fs .icon-fs-contract').forEach(el => el.style.display = 'inline-block');
+
+      // Request browser / WebView HTML5 fullscreen
+      try {
+        if (modal.requestFullscreen) modal.requestFullscreen().catch(() => {});
+        else if (modal.webkitRequestFullscreen) modal.webkitRequestFullscreen().catch(() => {});
+        else if (modal.mozRequestFullScreen) modal.mozRequestFullScreen().catch(() => {});
+        else if (modal.msRequestFullscreen) modal.msRequestFullscreen().catch(() => {});
+      } catch (err) {}
+
+      // Auto-orient to landscape for wide viewing if available
+      try {
+        if (window.AndroidApp && typeof window.AndroidApp.setOrientation === 'function') {
+          window.AndroidApp.setOrientation('landscape');
+        } else if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (err) {}
+
+      showToast('Fullscreen Theater (Tap to toggle controls)', 'info');
+    } else {
+      modal.classList.remove('is-fullscreen');
+      document.querySelectorAll('.btn-toggle-fs .icon-fs-expand').forEach(el => el.style.display = 'inline-block');
+      document.querySelectorAll('.btn-toggle-fs .icon-fs-contract').forEach(el => el.style.display = 'none');
+
+      // Exit browser / WebView HTML5 fullscreen
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+        }
+      } catch (err) {}
+
+      // Restore orientation to sensor / portrait
+      try {
+        if (window.AndroidApp && typeof window.AndroidApp.setOrientation === 'function') {
+          window.AndroidApp.setOrientation('sensor');
+        } else if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock().catch(() => {});
+        }
+      } catch (err) {}
+
+      // Keep controls clearly visible upon exiting fullscreen / back
+      showMediaControls();
+    }
+  }
+
+  function showMediaControls(delayMs = 10000) {
+    const container = document.getElementById('media-video-container');
+    if (!container) return;
+    container.classList.remove('controls-hidden');
+    if (!container.classList.contains('is-audio-mode')) {
+      scheduleMediaControlsHide(delayMs);
+    }
+  }
+
+  function scheduleMediaControlsHide(delayMs = 10000) {
+    if (mediaControlsTimer) clearTimeout(mediaControlsTimer);
+    const videoEl = document.getElementById('media-stream-video');
+    const container = document.getElementById('media-video-container');
+    if (!videoEl || !container || videoEl.paused || isMediaScrubbing || isMediaInteractingWithControls || container.classList.contains('is-audio-mode')) return;
+
+    mediaControlsTimer = setTimeout(() => {
+      if (videoEl && !videoEl.paused && !isMediaScrubbing && !isMediaInteractingWithControls && !container.classList.contains('is-audio-mode')) {
+        container.classList.add('controls-hidden');
+      }
+    }, delayMs);
+  }
+
+  function updateMediaPlayPauseUI() {
+    const videoEl = document.getElementById('media-stream-video');
+    const playIcon = document.querySelector('#btn-media-play-toggle .icon-media-play');
+    const pauseIcon = document.querySelector('#btn-media-play-toggle .icon-media-pause');
+    const container = document.getElementById('media-video-container');
+    if (!videoEl || !playIcon || !pauseIcon) return;
+
+    if (videoEl.paused) {
+      playIcon.style.display = 'inline-block';
+      pauseIcon.style.display = 'none';
+      if (container) {
+        container.classList.remove('controls-hidden');
+        container.classList.add('paused');
+      }
+      if (mediaControlsTimer) clearTimeout(mediaControlsTimer);
+    } else {
+      playIcon.style.display = 'none';
+      pauseIcon.style.display = 'inline-block';
+      if (container) {
+        container.classList.remove('paused');
+        if (!container.classList.contains('is-audio-mode')) {
+          scheduleMediaControlsHide();
+        }
+      }
+    }
+  }
+
+  function flashMediaCenterHUD(type) {
+    const hudIcon = document.getElementById('media-center-hud-icon');
+    if (!hudIcon) return;
+    if (type === 'play') {
+      hudIcon.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>';
+    } else {
+      hudIcon.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
+    }
+    hudIcon.classList.add('active');
+    setTimeout(() => {
+      hudIcon.classList.remove('active');
+    }, 450);
+  }
+
+  let currentPlayingStreamUrl = '';
+  let currentPlayingMimeType = '';
+  let currentPlayingFileName = '';
+
+  function openCurrentMediaInExternalPlayer() {
+    if (!currentPlayingStreamUrl) return;
+    vibrate(20);
+    const isAudio = currentPlayingMimeType.startsWith('audio/');
+    const mime = currentPlayingMimeType || (isAudio ? 'audio/*' : 'video/*');
+    if (window.AndroidApp && typeof window.AndroidApp.playMediaInExternalPlayer === 'function') {
+      window.AndroidApp.playMediaInExternalPlayer(currentPlayingStreamUrl, mime);
+      showToast('Streaming in External Player (VLC / MX)', 'success');
+    } else {
+      window.open(currentPlayingStreamUrl, '_blank');
+      showToast('Opening media stream in player', 'info');
+    }
+  }
+
+  function openMediaPlayer(filePath, fileName, fileExt) {
+    if (!filePath) return;
+    vibrate(20);
+    const modal = document.getElementById('media-player-modal');
+    const titleEl = document.getElementById('media-player-title');
+    const videoEl = document.getElementById('media-stream-video');
+    const trackEl = document.getElementById('media-stream-track');
+    const codecInfo = document.getElementById('media-stream-codec-info');
+    const container = document.getElementById('media-video-container');
+    const bufferOverlay = document.getElementById('media-buffering-overlay');
+    const bufferSpinner = document.getElementById('media-buffer-spinner');
+    const bufferText = document.getElementById('media-buffer-text');
+    const bufferSubtext = document.getElementById('media-buffer-subtext');
+    const fallbackBtn = document.getElementById('btn-media-open-external-overlay');
+    if (!modal || !videoEl) return;
+
+    if (titleEl) titleEl.textContent = fileName || 'Media Stream';
+    const ext = (fileExt || '').replace('.', '').toUpperCase();
+    const extLower = ext.toLowerCase();
+    if (codecInfo) codecInfo.textContent = `${ext || 'MEDIA'} • DIRECT WI-FI`;
+
+    const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+    const port = state.serverPort || (window.location.port && window.location.port !== '' ? window.location.port : '8000');
+    const streamUrl = `http://${host}:${port}/api/fs/stream?path=${encodeURIComponent(filePath)}`;
+    const subUrl = `http://${host}:${port}/api/fs/subtitles?path=${encodeURIComponent(filePath)}`;
+
+    const audioExts = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'opus', 'wma', 'alac', 'aiff'];
+    const isAudio = audioExts.includes(extLower);
+
+    const extMimeMap = {
+      'mp4': 'video/mp4',
+      'webm': 'video/webm',
+      'mkv': 'video/x-matroska',
+      'avi': 'video/x-msvideo',
+      'mov': 'video/quicktime',
+      'wmv': 'video/x-ms-wmv',
+      'flv': 'video/x-flv',
+      '3gp': 'video/3gpp',
+      'm4v': 'video/mp4',
+      'ts': 'video/mp2t',
+      'mp3': 'audio/mpeg',
+      'wav': 'audio/wav',
+      'flac': 'audio/flac',
+      'ogg': 'audio/ogg',
+      'm4a': 'audio/mp4',
+      'aac': 'audio/aac',
+      'opus': 'audio/opus',
+      'wma': 'audio/x-ms-wma',
+      'alac': 'audio/alac',
+      'aiff': 'audio/aiff'
+    };
+
+    currentPlayingStreamUrl = streamUrl;
+    currentPlayingMimeType = extMimeMap[extLower] || (isAudio ? 'audio/*' : 'video/*');
+    currentPlayingFileName = fileName || (isAudio ? 'Music Stream' : 'Media Stream');
+
+    const visualizer = document.getElementById('media-audio-visualizer');
+    const aspectBtn = document.getElementById('btn-media-aspect');
+
+    modal.style.display = 'flex';
+    if (container) {
+      container.classList.remove('controls-hidden');
+      if (isAudio) {
+        container.classList.add('is-audio-mode');
+        if (visualizer) visualizer.style.display = 'flex';
+        if (aspectBtn) aspectBtn.style.display = 'none';
+        if (codecInfo) codecInfo.textContent = `${ext || 'AUDIO'} • DIRECT WI-FI MUSIC`;
+      } else {
+        container.classList.remove('is-audio-mode');
+        if (visualizer) visualizer.style.display = 'none';
+        if (aspectBtn) aspectBtn.style.display = '';
+        if (codecInfo) codecInfo.textContent = `${ext || 'MEDIA'} • DIRECT WI-FI`;
+      }
+    }
+
+    // Reset controls state
+    updateMediaPlayPauseUI();
+    const curTime = document.getElementById('media-time-current');
+    const durTime = document.getElementById('media-time-duration');
+    const playedBar = document.getElementById('media-timeline-played');
+    const thumb = document.getElementById('media-timeline-thumb');
+    const bufferBar = document.getElementById('media-timeline-buffer');
+    if (curTime) curTime.textContent = '00:00';
+    if (durTime) durTime.textContent = '00:00';
+    if (playedBar) playedBar.style.width = '0%';
+    if (thumb) thumb.style.left = '0%';
+    if (bufferBar) bufferBar.style.width = '0%';
+
+    // Detect non-native containers (MKV, AVI, WMV, FLV, WMA)
+    const nonNativeExts = ['mkv', 'avi', 'wmv', 'flv', 'wma'];
+    const isNonNative = nonNativeExts.includes(extLower) || (videoEl.canPlayType && videoEl.canPlayType(currentPlayingMimeType) === '');
+
+    if (isNonNative) {
+      if (bufferOverlay) bufferOverlay.style.display = 'flex';
+      if (bufferSpinner) bufferSpinner.style.display = 'none';
+      if (bufferText) bufferText.textContent = `External Player Required (.${ext})`;
+      if (bufferSubtext) bufferSubtext.textContent = `Web browsers cannot decode .${ext} containers natively. Tap below to stream directly in VLC or MX Player.`;
+      if (fallbackBtn) fallbackBtn.style.display = 'inline-flex';
+      return;
+    }
+
+    if (bufferOverlay) bufferOverlay.style.display = 'flex';
+    if (bufferSpinner) bufferSpinner.style.display = 'block';
+    if (bufferText) bufferText.textContent = 'Loading Wi-Fi Stream...';
+    if (bufferSubtext) bufferSubtext.textContent = 'Direct streaming from PC';
+    if (fallbackBtn) fallbackBtn.style.display = 'none';
+
+    try { videoEl.pause(); } catch (e) {}
+    videoEl.src = streamUrl;
+    if (trackEl) trackEl.src = subUrl;
+    try { videoEl.load(); } catch (e) {}
+
+    const playPromise = videoEl.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        if (bufferOverlay) bufferOverlay.style.display = 'none';
+        updateMediaPlayPauseUI();
+      }).catch(err => {
+        console.log('[MediaPlayer] Playback note:', err);
+        if (bufferOverlay) bufferOverlay.style.display = 'none';
+        updateMediaPlayPauseUI();
+      });
+    }
+
+    scheduleMediaControlsHide();
+  }
+
+  function closeMediaPlayer() {
+    const modal = document.getElementById('media-player-modal');
+    const videoEl = document.getElementById('media-stream-video');
+    const container = document.getElementById('media-video-container');
+    const visualizer = document.getElementById('media-audio-visualizer');
+    const bufferOverlay = document.getElementById('media-buffering-overlay');
+    if (videoEl) {
+      try {
+        videoEl.pause();
+        videoEl.removeAttribute('src');
+        videoEl.load();
+      } catch (e) {}
+    }
+    if (bufferOverlay) bufferOverlay.style.display = 'none';
+    if (visualizer) visualizer.style.display = 'none';
+    currentPlayingStreamUrl = '';
+    currentPlayingMimeType = '';
+    toggleMediaFullscreen(false);
+    isMediaInteractingWithControls = false;
+    if (mediaControlsTimer) clearTimeout(mediaControlsTimer);
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('is-fullscreen');
+    }
+    if (container) {
+      container.classList.remove('controls-hidden', 'is-audio-mode', 'paused');
+    }
+  }
+
+  // Handle hardware Android back button across all features
+  window._lastBackPressTime = 0;
+  window.handleAndroidBackPressed = function() {
+    // 1. Media Player Modal
+    const mediaModal = document.getElementById('media-player-modal');
+    if (mediaModal && mediaModal.style.display !== 'none') {
+      if (mediaModal.classList.contains('is-fullscreen')) {
+        toggleMediaFullscreen(false);
+        return true;
+      }
+      closeMediaPlayer();
+      return true;
+    }
+
+    // 2. Any other open modal backdrop (connect, quick tools, update, pro upgrade, celebration, hud etc.)
+    const openModals = Array.from(document.querySelectorAll('.modal-backdrop')).filter(m => {
+      if (m.id === 'media-player-modal') return false;
+      const comp = window.getComputedStyle(m);
+      return comp && comp.display !== 'none' && comp.visibility !== 'hidden' && comp.opacity !== '0';
+    });
+    if (openModals.length > 0) {
+      const topModal = openModals[openModals.length - 1];
+      const closeBtn = topModal.querySelector('.modal-close-btn, [data-action="close"], .btn-close, .onboarding-skip-btn, #btn-hud-modal-cancel');
+      if (closeBtn) {
+        closeBtn.click();
+      } else {
+        topModal.style.display = 'none';
+        topModal.classList.remove('show');
+      }
+      return true;
+    }
+
+    // 3. Selection mode in File Manager
+    const filesTab = document.getElementById('tab-files');
+    if (filesTab && filesTab.classList.contains('fs-select-mode')) {
+      if (typeof exitFsSelectMode === 'function') {
+        exitFsSelectMode();
+      } else {
+        filesTab.classList.remove('fs-select-mode');
+        state.markedFsPaths.clear();
+        updateBatchBar();
+      }
+      return true;
+    }
+    if (state.phoneFs && state.phoneFs.markedPaths && state.phoneFs.markedPaths.size > 0) {
+      state.phoneFs.markedPaths.clear();
+      updatePhoneBatchBar();
+      renderFilteredPhoneFsItems();
+      return true;
+    }
+
+    // 4. File Manager Folder Navigation (Inside PC or Phone folder)
+    if (state.activeTab === 'tab-files') {
+      const phonePanel = document.getElementById('fs-phone-panel');
+      const isPhoneView = phonePanel && window.getComputedStyle(phonePanel).display !== 'none';
+
+      if (isPhoneView) {
+        // In Phone Files view
+        if (state.phoneFsHistory && state.phoneFsHistory.length > 0) {
+          vibrate(15);
+          const prevPhone = state.phoneFsHistory.pop();
+          browsePhoneDirectory(prevPhone, '', true);
+          return true;
+        } else if (state.phoneFs && state.phoneFs.parentPath) {
+          vibrate(15);
+          browsePhoneDirectory(state.phoneFs.parentPath, '', true);
+          return true;
+        } else {
+          // At top root of Phone Files -> switch back to PC Files tab
+          const pcTabBtn = document.getElementById('btn-fs-mode-pc');
+          if (pcTabBtn) {
+            vibrate(15);
+            pcTabBtn.click();
+            return true;
+          }
+        }
+      } else {
+        // In PC Files view
+        if (state.fsHistory && state.fsHistory.length > 0) {
+          vibrate(15);
+          const prevPc = state.fsHistory.pop();
+          browseFsDirectory(prevPc, true);
+          return true;
+        } else if (state.fsParentPath && !state.isFsRoot) {
+          vibrate(15);
+          browseFsDirectory(state.fsParentPath, true);
+          return true;
+        }
+      }
+
+      // If at root of files tab, back navigates to the primary trackpad tab
+      vibrate(15);
+      switchTab('tab-trackpad');
+      return true;
+    }
+
+    // 5. If on another secondary tab (keyboard, screen, gamepad, media, settings), go back to trackpad
+    if (state.activeTab && state.activeTab !== 'tab-trackpad') {
+      vibrate(15);
+      switchTab('tab-trackpad');
+      return true;
+    }
+
+    // 6. On main trackpad tab -> confirm exit with double-press debounce
+    const now = Date.now();
+    if (!window._lastBackPressTime || (now - window._lastBackPressTime > 2000)) {
+      window._lastBackPressTime = now;
+      vibrate(20);
+      showToast('Press BACK again to exit PCDeck', 'info');
+      return true; // handled, prevent accidental exit
+    }
+
+    // Second tap within 2 seconds -> allow Android to exit
+    return false;
+  };
+
+  function initMediaPlayerEvents() {
+    const modal = document.getElementById('media-player-modal');
+    const videoEl = document.getElementById('media-stream-video');
+    const container = document.getElementById('media-video-container');
+    const closeBtn = document.getElementById('btn-close-media-player');
+    const closeBtnX = document.getElementById('btn-close-media-player-x');
+    const boostBtn = document.getElementById('btn-media-audio-boost');
+    const pipBtn = document.getElementById('btn-media-pip');
+    const fsBtnTop = document.getElementById('btn-media-fullscreen-top');
+    const fsBtnBottom = document.getElementById('btn-media-fullscreen-bottom');
+    const playToggleBtn = document.getElementById('btn-media-play-toggle');
+    const rewind10Btn = document.getElementById('btn-media-rewind-10');
+    const forward10Btn = document.getElementById('btn-media-forward-10');
+    const aspectBtn = document.getElementById('btn-media-aspect');
+    const volSlider = document.getElementById('media-vol-slider');
+    const volToggleBtn = document.getElementById('btn-media-vol-toggle');
+    const gestureOverlay = document.getElementById('media-gesture-overlay');
+    const timeline = document.getElementById('media-timeline');
+
+    // Close actions
+    const doClose = (e) => {
+      if (e) e.stopPropagation();
+      vibrate(15);
+      closeMediaPlayer();
+    };
+    if (closeBtn) closeBtn.onclick = doClose;
+    if (closeBtnX) closeBtnX.onclick = doClose;
+
+    // Fullscreen buttons
+    const doToggleFs = (e) => {
+      if (e) e.stopPropagation();
+      toggleMediaFullscreen();
+    };
+    if (fsBtnTop) fsBtnTop.onclick = doToggleFs;
+    if (fsBtnBottom) fsBtnBottom.onclick = doToggleFs;
+
+    // Play / Pause Toggle
+    if (playToggleBtn && videoEl) {
+      playToggleBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        if (videoEl.paused) {
+          videoEl.play().catch(() => {});
+          flashMediaCenterHUD('play');
+        } else {
+          videoEl.pause();
+          flashMediaCenterHUD('pause');
+        }
+        updateMediaPlayPauseUI();
+      };
+    }
+
+    // Rewind / Forward 10s
+    if (rewind10Btn && videoEl) {
+      rewind10Btn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        videoEl.currentTime = Math.max(0, videoEl.currentTime - 10);
+        const ripple = document.getElementById('media-seek-ripple-left');
+        if (ripple) {
+          ripple.classList.add('active');
+          setTimeout(() => ripple.classList.remove('active'), 450);
+        }
+        showMediaControls();
+      };
+    }
+
+    if (forward10Btn && videoEl) {
+      forward10Btn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        videoEl.currentTime = Math.min(videoEl.duration || Infinity, videoEl.currentTime + 10);
+        const ripple = document.getElementById('media-seek-ripple-right');
+        if (ripple) {
+          ripple.classList.add('active');
+          setTimeout(() => ripple.classList.remove('active'), 450);
+        }
+        showMediaControls();
+      };
+    }
+
+    // External Player Buttons
+    const extTopBtn = document.getElementById('btn-media-external-top');
+    const extOverlayBtn = document.getElementById('btn-media-open-external-overlay');
+    if (extTopBtn) extTopBtn.onclick = (e) => { if (e) e.stopPropagation(); openCurrentMediaInExternalPlayer(); };
+    if (extOverlayBtn) extOverlayBtn.onclick = (e) => { if (e) e.stopPropagation(); openCurrentMediaInExternalPlayer(); };
+
+    // Video Streaming State Listeners
+    if (videoEl) {
+      const bufferOverlay = document.getElementById('media-buffering-overlay');
+      const bufferSpinner = document.getElementById('media-buffer-spinner');
+      const bufferText = document.getElementById('media-buffer-text');
+      const bufferSubtext = document.getElementById('media-buffer-subtext');
+      const fallbackBtn = document.getElementById('btn-media-open-external-overlay');
+
+      videoEl.addEventListener('waiting', () => {
+        if (bufferOverlay) {
+          bufferOverlay.style.display = 'flex';
+          if (bufferSpinner) bufferSpinner.style.display = 'block';
+          if (bufferText) bufferText.textContent = 'Buffering Wi-Fi stream...';
+          if (bufferSubtext) bufferSubtext.textContent = 'Direct streaming from PC';
+          if (fallbackBtn) fallbackBtn.style.display = 'none';
+        }
+      });
+
+      videoEl.addEventListener('playing', () => {
+        if (bufferOverlay) bufferOverlay.style.display = 'none';
+        updateMediaPlayPauseUI();
+      });
+
+      videoEl.addEventListener('canplay', () => {
+        if (bufferOverlay && !videoEl.paused) bufferOverlay.style.display = 'none';
+      });
+
+      videoEl.addEventListener('error', (e) => {
+        console.warn('[MediaPlayer] Video element error event:', videoEl.error);
+        if (bufferOverlay) {
+          bufferOverlay.style.display = 'flex';
+          if (bufferSpinner) bufferSpinner.style.display = 'none';
+          if (bufferText) bufferText.textContent = 'Playback Error (Unsupported Codec / Format)';
+          if (bufferSubtext) bufferSubtext.textContent = 'The browser engine cannot decode this media stream. Tap below to stream directly in VLC or MX Player.';
+          if (fallbackBtn) fallbackBtn.style.display = 'inline-flex';
+        }
+      });
+    }
+
+    // Aspect Ratio Toggle
+    if (aspectBtn && videoEl) {
+      aspectBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        if (mediaAspectMode === 'contain') {
+          mediaAspectMode = 'cover';
+          aspectBtn.textContent = 'FILL';
+          videoEl.style.objectFit = 'cover';
+          showToast('Aspect Ratio: Fill Screen (Zoomed)', 'info');
+        } else if (mediaAspectMode === 'cover') {
+          mediaAspectMode = 'fill';
+          aspectBtn.textContent = 'STRETCH';
+          videoEl.style.objectFit = 'fill';
+          showToast('Aspect Ratio: Stretch', 'info');
+        } else {
+          mediaAspectMode = 'contain';
+          aspectBtn.textContent = 'FIT';
+          videoEl.style.objectFit = 'contain';
+          showToast('Aspect Ratio: Fit Screen (Original)', 'info');
+        }
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Audio Boost (WebAudio Gain on-demand with user activation)
+    if (boostBtn) {
+      boostBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        try {
+          if (videoEl) initMediaAudioGraph(videoEl);
+          if (mediaAudioCtx && mediaAudioCtx.state === 'suspended') {
+            mediaAudioCtx.resume().catch(() => {});
+          }
+        } catch (err) {}
+        if (mediaAudioBoost === 1.0) {
+          mediaAudioBoost = 1.5;
+          boostBtn.textContent = 'BOOST 150%';
+          boostBtn.style.color = 'var(--neo-yellow)';
+          showToast('Audio Boost: 150%', 'info');
+        } else if (mediaAudioBoost === 1.5) {
+          mediaAudioBoost = 2.0;
+          boostBtn.textContent = 'BOOST 200%';
+          boostBtn.style.color = 'var(--neo-lime)';
+          showToast('Audio Boost: 200% (Maximum)', 'success');
+        } else {
+          mediaAudioBoost = 1.0;
+          boostBtn.textContent = 'BOOST 100%';
+          boostBtn.style.color = '';
+          showToast('Audio Boost: 100% (Normal)', 'info');
+        }
+        if (mediaGainNode && mediaAudioCtx && mediaAudioCtx.state !== 'closed') {
+          try {
+            mediaGainNode.gain.setValueAtTime(mediaAudioBoost, mediaAudioCtx.currentTime);
+          } catch (err) {}
+        }
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Picture-in-Picture
+    if (pipBtn && videoEl) {
+      pipBtn.onclick = async (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        try {
+          if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+          } else if (videoEl.requestPictureInPicture) {
+            await videoEl.requestPictureInPicture();
+          }
+        } catch (err) {
+          showToast('Picture-in-Picture not supported by browser', 'warn');
+        }
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Volume Slider & Mute Toggle
+    if (volSlider && videoEl) {
+      volSlider.oninput = (e) => {
+        if (e) e.stopPropagation();
+        videoEl.volume = parseFloat(volSlider.value);
+        videoEl.muted = (videoEl.volume === 0);
+        updateVolumeIcons();
+        scheduleMediaControlsHide();
+      };
+    }
+
+    const updateVolumeIcons = () => {
+      const highIcon = document.querySelector('#btn-media-vol-toggle .icon-vol-high');
+      const muteIcon = document.querySelector('#btn-media-vol-toggle .icon-vol-muted');
+      if (!videoEl || !highIcon || !muteIcon) return;
+      if (videoEl.muted || videoEl.volume === 0) {
+        highIcon.style.display = 'none';
+        muteIcon.style.display = 'inline-block';
+      } else {
+        highIcon.style.display = 'inline-block';
+        muteIcon.style.display = 'none';
+      }
+    };
+
+    if (volToggleBtn && videoEl) {
+      volToggleBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(15);
+        videoEl.muted = !videoEl.muted;
+        if (!videoEl.muted && videoEl.volume === 0) {
+          videoEl.volume = 0.5;
+          if (volSlider) volSlider.value = 0.5;
+        }
+        updateVolumeIcons();
+        scheduleMediaControlsHide();
+      };
+    }
+
+    // Keep controls visible for 10s when user interacts with Play, Pause, Fullscreen, Seek, or Volume
+    const keepControlsAlive = (e) => {
+      showMediaControls(10000);
+    };
+
+    [playToggleBtn, rewind10Btn, forward10Btn, fsBtnTop, fsBtnBottom, aspectBtn, boostBtn, pipBtn, volToggleBtn, volSlider].forEach(btn => {
+      if (!btn) return;
+      btn.addEventListener('touchstart', keepControlsAlive, { passive: true });
+      btn.addEventListener('click', keepControlsAlive);
+    });
+
+    // Speed Selector Pills
+    document.querySelectorAll('.media-speed-pill').forEach(btn => {
+      btn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        vibrate(10);
+        document.querySelectorAll('.media-speed-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const speed = parseFloat(btn.dataset.speed || '1.0');
+        if (videoEl) videoEl.playbackRate = speed;
+        scheduleMediaControlsHide();
+      };
+    });
+
+    // Prevent controls from fading while user touches or hovers over options
+    const mediaTopBarEl = document.getElementById('media-top-bar');
+    const mediaBottomBarEl = document.getElementById('media-bottom-bar');
+    const onControlsEnter = () => {
+      isMediaInteractingWithControls = true;
+      if (mediaControlsTimer) clearTimeout(mediaControlsTimer);
+    };
+    const onControlsLeave = () => {
+      isMediaInteractingWithControls = false;
+      scheduleMediaControlsHide(10000);
+    };
+
+    [mediaTopBarEl, mediaBottomBarEl].forEach(bar => {
+      if (!bar) return;
+      bar.addEventListener('mouseenter', onControlsEnter);
+      bar.addEventListener('mouseleave', onControlsLeave);
+      bar.addEventListener('touchstart', onControlsEnter, { passive: true });
+      bar.addEventListener('touchend', onControlsLeave, { passive: true });
+      bar.addEventListener('touchcancel', onControlsLeave, { passive: true });
+      bar.addEventListener('pointerdown', onControlsEnter, { passive: true });
+      bar.addEventListener('pointerup', onControlsLeave, { passive: true });
+    });
+
+    // Gesture Overlay (Single Tap = Toggle Controls, Double-Tap = Seek / Fullscreen)
+    if (gestureOverlay && videoEl) {
+      let controlsWereHiddenAtStart = false;
+      let lastTouchInteractionTime = 0;
+
+      const recordTouchStart = () => {
+        lastTouchInteractionTime = Date.now();
+        if (container) {
+          controlsWereHiddenAtStart = container.classList.contains('controls-hidden');
+        }
+      };
+
+      gestureOverlay.addEventListener('touchstart', recordTouchStart, { passive: true });
+      gestureOverlay.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') {
+          recordTouchStart();
+        }
+      }, { passive: true });
+
+      const handleTapGesture = (clientX) => {
+        // In audio mode, controls always stay visible
+        if (container && container.classList.contains('is-audio-mode')) {
+          showMediaControls();
+          return;
+        }
+
+        const now = Date.now();
+        const delta = now - mediaLastTapTime;
+        const rect = gestureOverlay.getBoundingClientRect();
+        const tapFraction = (clientX - rect.left) / rect.width;
+
+        if (delta < 320) {
+          // Double-Tap Detected!
+          if (mediaLastTapTimeout) {
+            clearTimeout(mediaLastTapTimeout);
+            mediaLastTapTimeout = null;
+          }
+          mediaLastTapTime = 0;
+          vibrate(25);
+
+          if (tapFraction < 0.38) {
+            // Left Double-Tap -> Rewind 10s
+            videoEl.currentTime = Math.max(0, videoEl.currentTime - 10);
+            const ripple = document.getElementById('media-seek-ripple-left');
+            if (ripple) {
+              ripple.classList.add('active');
+              setTimeout(() => ripple.classList.remove('active'), 450);
+            }
+          } else if (tapFraction > 0.62) {
+            // Right Double-Tap -> Forward 10s
+            videoEl.currentTime = Math.min(videoEl.duration || Infinity, videoEl.currentTime + 10);
+            const ripple = document.getElementById('media-seek-ripple-right');
+            if (ripple) {
+              ripple.classList.add('active');
+              setTimeout(() => ripple.classList.remove('active'), 450);
+            }
+          } else {
+            // Center Double-Tap -> Toggle Fullscreen
+            toggleMediaFullscreen();
+          }
+          showMediaControls();
+        } else {
+          // First Tap: Debounce to distinguish single tap from double tap
+          mediaLastTapTime = now;
+          if (mediaLastTapTimeout) clearTimeout(mediaLastTapTimeout);
+          mediaLastTapTimeout = setTimeout(() => {
+            if (container) {
+              // If controls were hidden when touch started OR are currently hidden: SHOW CONTROLS
+              if (controlsWereHiddenAtStart || container.classList.contains('controls-hidden')) {
+                showMediaControls();
+              } else {
+                // Controls were already clearly visible when user tapped: dismiss them
+                if (videoEl && !videoEl.paused) {
+                  container.classList.add('controls-hidden');
+                }
+              }
+            }
+            controlsWereHiddenAtStart = false;
+            mediaLastTapTimeout = null;
+          }, 280);
+        }
+      };
+
+      gestureOverlay.addEventListener('click', (e) => {
+        handleTapGesture(e.clientX);
+      });
+
+      // Keep controls visible on genuine mouse movement (suppress synthetic touch-induced mousemove)
+      container.addEventListener('mousemove', () => {
+        if (Date.now() - lastTouchInteractionTime < 600) return;
+        showMediaControls();
+      });
+    }
+
+    // Video Play/Pause & Time Events
+    if (videoEl) {
+      videoEl.addEventListener('play', () => {
+        updateMediaPlayPauseUI();
+      });
+
+      videoEl.addEventListener('pause', () => {
+        updateMediaPlayPauseUI();
+      });
+
+      videoEl.addEventListener('timeupdate', () => {
+        if (isMediaScrubbing) return;
+        const cur = videoEl.currentTime || 0;
+        const dur = videoEl.duration || 0;
+        const curEl = document.getElementById('media-time-current');
+        const durEl = document.getElementById('media-time-duration');
+        const playedBar = document.getElementById('media-timeline-played');
+        const thumb = document.getElementById('media-timeline-thumb');
+
+        if (curEl) curEl.textContent = formatMediaTime(cur);
+        if (durEl && dur > 0) durEl.textContent = formatMediaTime(dur);
+
+        if (dur > 0) {
+          const pct = Math.min(100, (cur / dur) * 100);
+          if (playedBar) playedBar.style.width = pct + '%';
+          if (thumb) thumb.style.left = pct + '%';
+        }
+      });
+
+      videoEl.addEventListener('progress', () => {
+        const bufferBar = document.getElementById('media-timeline-buffer');
+        if (bufferBar && videoEl.buffered && videoEl.buffered.length > 0 && videoEl.duration) {
+          const bufEnd = videoEl.buffered.end(videoEl.buffered.length - 1);
+          const bufPct = Math.min(100, (bufEnd / videoEl.duration) * 100);
+          bufferBar.style.width = bufPct + '%';
+        }
+      });
+
+      videoEl.addEventListener('ended', () => {
+        updateMediaPlayPauseUI();
+        if (container) container.classList.remove('controls-hidden');
+      });
+    }
+
+    // Interactive Timeline Scrubber
+    if (timeline && videoEl) {
+      const seekFromEvent = (e) => {
+        const rect = timeline.getBoundingClientRect();
+        const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+        const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const dur = videoEl.duration || 0;
+        const seekTime = pct * dur;
+
+        const playedBar = document.getElementById('media-timeline-played');
+        const thumb = document.getElementById('media-timeline-thumb');
+        const curEl = document.getElementById('media-time-current');
+
+        if (playedBar) playedBar.style.width = (pct * 100) + '%';
+        if (thumb) thumb.style.left = (pct * 100) + '%';
+        if (curEl) curEl.textContent = formatMediaTime(seekTime);
+        return seekTime;
+      };
+
+      const startScrubbing = (e) => {
+        if (e) e.stopPropagation();
+        isMediaScrubbing = true;
+        timeline.classList.add('scrubbing');
+        showMediaControls();
+        const seekTime = seekFromEvent(e);
+        if (videoEl.duration) videoEl.currentTime = seekTime;
+
+        const onMove = (ev) => {
+          if (!isMediaScrubbing) return;
+          const st = seekFromEvent(ev);
+          if (videoEl.duration) videoEl.currentTime = st;
+        };
+
+        const onEnd = (ev) => {
+          if (!isMediaScrubbing) return;
+          isMediaScrubbing = false;
+          timeline.classList.remove('scrubbing');
+          const st = seekFromEvent(ev);
+          if (videoEl.duration) videoEl.currentTime = st;
+          scheduleMediaControlsHide();
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onEnd);
+          window.removeEventListener('touchmove', onMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      };
+
+      timeline.addEventListener('mousedown', startScrubbing);
+      timeline.addEventListener('touchstart', startScrubbing, { passive: true });
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (!modal || modal.style.display === 'none') return;
+
+      if (e.key === 'Escape') {
+        if (modal.classList.contains('is-fullscreen')) {
+          toggleMediaFullscreen(false);
+        } else {
+          closeMediaPlayer();
+        }
+        return;
+      }
+
+      if (e.key === ' ' || e.key === 'k') {
+        e.preventDefault();
+        if (videoEl) {
+          if (videoEl.paused) videoEl.play().catch(() => {});
+          else videoEl.pause();
+          flashMediaCenterHUD(videoEl.paused ? 'pause' : 'play');
+          updateMediaPlayPauseUI();
+        }
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleMediaFullscreen();
+      } else if (e.key === 'ArrowLeft' || e.key === 'j') {
+        e.preventDefault();
+        if (videoEl) videoEl.currentTime = Math.max(0, videoEl.currentTime - 10);
+        scheduleMediaControlsHide();
+      } else if (e.key === 'ArrowRight' || e.key === 'l') {
+        e.preventDefault();
+        if (videoEl) videoEl.currentTime = Math.min(videoEl.duration || Infinity, videoEl.currentTime + 10);
+        scheduleMediaControlsHide();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (videoEl) {
+          videoEl.volume = Math.min(1, videoEl.volume + 0.1);
+          if (volSlider) volSlider.value = videoEl.volume;
+          updateVolumeIcons();
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (videoEl) {
+          videoEl.volume = Math.max(0, videoEl.volume - 0.1);
+          if (volSlider) volSlider.value = videoEl.volume;
+          updateVolumeIcons();
+        }
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        if (videoEl) {
+          videoEl.muted = !videoEl.muted;
+          updateVolumeIcons();
+        }
+      }
+    });
+
+    // Listen to Fullscreen changes
+    document.addEventListener('fullscreenchange', () => {
+      const isFs = !!document.fullscreenElement;
+      if (!isFs && modal.classList.contains('is-fullscreen')) {
+        toggleMediaFullscreen(false);
+      }
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+      const isFs = !!document.webkitFullscreenElement;
+      if (!isFs && modal.classList.contains('is-fullscreen')) {
+        toggleMediaFullscreen(false);
+      }
+    });
+  }
+
+  function uploadFilesToCurrentDir(fileList) {
+    if (!fileList || fileList.length === 0) return;
+
+    if (!state.serverHost) {
+      showToast('PC not connected yet. Please connect to your PC first.', 'error');
+      if (el.connectModal) openConnectModal();
+      return;
+    }
+
+    // Reset cancel flag
+    activeUploadCancelled = false;
+
+    // Prioritize 100% Wi-Fi bandwidth for file upload by putting any background screen stream to sleep
+    if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+      try { screenWs.send('pause'); } catch (e) {}
+    }
+
+    const files = Array.from(fileList);
+    let currentIndex = 0;
+    let errorOccurred = false;
+
+    function uploadNext() {
+      // User pressed X — stop the queue immediately
+      if (activeUploadCancelled) {
+        activeUploadXhr = null;
+        hideTransferProgress(0);
+        return;
+      }
+      if (currentIndex >= files.length) {
+        vibrate(30);
+        if (errorOccurred) {
+          showToast(`Completed upload with some errors`, 'warn', '️');
+        } else {
+          showToast(`Uploaded ${files.length} file(s) to PC!`, 'success');
+        }
+        showTransferProgress({
+          badge: errorOccurred ? 'COMPLETED' : 'ALL UPLOADED',
+          badgeClass: 'badge-download',
+          filename: `${files.length} file(s)`,
+          percent: 100,
+          status: errorOccurred ? 'Completed with warnings/errors' : 'All Transfers Complete! Saved on PC',
+          speed: 'Saved to PC',
+          showOpenPc: true,
+          onOpenPc: () => openLocationOnPc(state.currentFsPath),
+          isDownload: false
+        });
+        hideTransferProgress(15000);
+        // Refresh directory listing immediately so new files show up in file browser!
+        browseFsDirectory(state.currentFsPath);
+        return;
+      }
+
+      const file = files[currentIndex];
+      currentIndex++;
+      const startTime = Date.now();
+      let lastProgressTime = Date.now();
+
+      showTransferProgress({
+        badge: `${currentIndex}/${files.length}`,
+        badgeClass: 'badge-upload',
+        filename: file.name,
+        percent: 0,
+        status: `Starting stream (${file.name})...`,
+        speed: 'Connecting...',
+        isDownload: false
+      });
+
+      const uploadUrl = `http://${state.serverHost}:${state.serverPort}/api/fs/upload-stream?filename=${encodeURIComponent(file.name)}&dest_dir=${encodeURIComponent(state.currentFsPath || '')}`;
+      const xhr = new XMLHttpRequest();
+      activeUploadXhr = xhr; // expose for X button cancellation
+      xhr.open('POST', uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+      xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
+      xhr.setRequestHeader('X-Dest-Dir', encodeURIComponent(state.currentFsPath || ''));
+      xhr.timeout = 0; // 0 = Infinite timeout for large multi-gigabyte files
+
+      let done = false;
+      const watchdog = setInterval(() => {
+        if (Date.now() - lastProgressTime > 60000) {
+          clearInterval(watchdog);
+          if (!done) {
+            done = true;
+            errorOccurred = true;
+            showToast(`Upload stalled on "${file.name}"`, 'warn', '️');
+            xhr.abort();
+            uploadNext();
+          }
+        }
+      }, 10000);
+
+      const finishUpload = (success) => {
+        if (done) return;
+        done = true;
+        clearInterval(watchdog);
+        if (!success) errorOccurred = true;
+        uploadNext();
+      };
+
+      xhr.upload.onprogress = (e) => {
+        lastProgressTime = Date.now();
+        if (e.lengthComputable && e.total > 0) {
+          const percent = Math.min(100, Math.round((e.loaded / e.total) * 100));
+          const loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
+          const totalMB = (e.total / (1024 * 1024)).toFixed(1);
+          const duration = (Date.now() - startTime) / 1000;
+          const speedMB = duration > 0.1 ? (e.loaded / (1024 * 1024) / duration).toFixed(1) : '--';
+          showTransferProgress({
+            badge: `${currentIndex}/${files.length}`,
+            badgeClass: 'badge-upload',
+            filename: file.name,
+            percent: percent,
+            status: `Uploading ${loadedMB} MB of ${totalMB} MB (${percent}%)`,
+            speed: `${speedMB} MB/s`,
+            isDownload: false
+          });
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          finishUpload(true);
+        } else {
+          showToast(`Error uploading "${file.name}" (HTTP ${xhr.status})`, 'error');
+          finishUpload(false);
+        }
+      };
+
+      xhr.onerror = () => {
+        showToast(`Network error uploading "${file.name}"`, 'error');
+        finishUpload(false);
+      };
+
+      xhr.send(file);
+    }
+
+    uploadNext();
+  }
+
+  // --- Quick Tools Drawer Sheet ---
+  function updateQuickToolsUi() {
+    // 1. Touch Mode (Direct Touch vs Virtual Cursor)
+    if (el.toolTouchMode) {
+      const isTouch = state.screenMode === 'touch';
+      const isMouse = state.screenMode === 'mouse';
+      const isRclick = state.screenMode === 'rclick';
+
+      el.toolTouchMode.classList.remove('active-cyan', 'active-purple', 'active-pink');
+      if (isTouch) {
+        el.toolTouchMode.classList.add('active-cyan');
+        if (el.toolTouchStatus) el.toolTouchStatus.textContent = '● Direct Tap Active';
+      } else if (isMouse) {
+        el.toolTouchMode.classList.add('active-purple');
+        if (el.toolTouchStatus) el.toolTouchStatus.textContent = '● Virtual Cursor Active';
+      } else if (isRclick) {
+        el.toolTouchMode.classList.add('active-pink');
+        if (el.toolTouchStatus) el.toolTouchStatus.textContent = '● Next Tap: Right-Click!';
+      }
+    }
+
+    // 2. Right Click
+    if (el.toolRclick) {
+      const isRclickArmed = state.screenMode === 'rclick';
+      el.toolRclick.classList.toggle('active-pink', isRclickArmed);
+      if (el.toolRclickStatus) {
+        el.toolRclickStatus.textContent = isRclickArmed ? '● Armed: Next Tap Right-Click!' : 'Instant / Next Tap';
+      }
+    }
+
+    // 3. Zoom Reset
+    if (el.toolZoomReset) {
+      const isZoomed = Math.abs(state.zoomScale - 1.0) > 0.05;
+      el.toolZoomReset.classList.toggle('active-yellow', isZoomed);
+      const sub = el.toolZoomReset.querySelector('.tool-tile-sub');
+      if (sub) {
+        sub.textContent = isZoomed ? `● ${Math.round(state.zoomScale * 100)}% (Tap to 100%)` : 'Fit to Screen (100%)';
+      }
+    }
+
+    // 4. Keep Awake
+    if (el.toolWakelock) {
+      el.toolWakelock.classList.toggle('active-yellow', state.wakelockEnabled);
+      if (el.toolWakelockStatus) {
+        el.toolWakelockStatus.textContent = state.wakelockEnabled ? '● Enabled (Screen Awake)' : 'Disabled';
+      }
+    }
+
+    // 5. Fullscreen
+    if (el.toolFullscreen) {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      el.toolFullscreen.classList.toggle('active-lime', isFull);
+      const sub = el.toolFullscreen.querySelector('.tool-tile-sub');
+      if (sub) {
+        sub.textContent = isFull ? '● Fullscreen (Tap to Exit)' : 'Immersive View';
+      }
+    }
+
+    // 6. Screen Orientation
+    if (el.toolRotate) {
+      const isPortrait = window.innerHeight > window.innerWidth;
+      const sub = el.toolRotate.querySelector('.tool-tile-sub');
+      if (sub) {
+        sub.textContent = isPortrait ? 'Portrait (Tap for Landscape)' : 'Landscape (Tap for Portrait)';
+      }
+    }
+
+    // Keep screen mode pill in sync
+    if (typeof window.updateScreenModePillUi === 'function') {
+      window.updateScreenModePillUi();
+    }
+  }
+
+  function initQuickTools() {
+    function toggleQuickTools(show) {
+      if (!el.quickToolsModal) return;
+      if (show === undefined) {
+        el.quickToolsModal.classList.toggle('show');
+      } else {
+        el.quickToolsModal.classList.toggle('show', show);
+      }
+      if (el.quickToolsModal.classList.contains('show')) {
+        vibrate(20);
+        updateQuickToolsUi();
+      }
+    }
+
+    if (el.btnQuickToolsToggle) {
+      el.btnQuickToolsToggle.onclick = (e) => {
+        e.stopPropagation();
+        toggleQuickTools();
+      };
+    }
+
+    if (el.btnCloseTools) {
+      el.btnCloseTools.onclick = (e) => {
+        e.stopPropagation();
+        toggleQuickTools(false);
+      };
+    }
+
+    if (el.quickToolsModal) {
+      el.quickToolsModal.onclick = (e) => {
+        if (e.target === el.quickToolsModal) toggleQuickTools(false);
+      };
+    }
+
+    if (el.toolRotate) {
+      el.toolRotate.onclick = (e) => {
+        e.stopPropagation();
+        toggleScreenOrientation();
+        updateQuickToolsUi();
+        toggleQuickTools(false);
+      };
+    }
+
+    if (el.toolTouchMode) {
+      el.toolTouchMode.onclick = (e) => {
+        e.stopPropagation();
+        vibrate(20);
+        state.screenMode = state.screenMode === 'touch' ? 'mouse' : 'touch';
+        updateQuickToolsUi();
+        showToast(
+          state.screenMode === 'touch'
+            ? 'Direct Touch: Tap screen to click directly'
+            : 'Virtual Cursor: Glide finger to glide mouse',
+          'success',
+          state.screenMode === 'touch' ? 'Touch' : 'Mouse'
+        );
+        toggleQuickTools(false);
+      };
+    }
+
+    if (el.toolRclick) {
+      el.toolRclick.onclick = (e) => {
+        e.stopPropagation();
+        vibrate(25);
+        // 1. Send immediate Right Click to PC
+        sendCommand('c,right');
+        // 2. Also arm screen canvas for next tap
+        state.screenMode = 'rclick';
+        updateQuickToolsUi();
+        showToast('Right-Click Sent & Armed for next tap', 'success', '️');
+        toggleQuickTools(false);
+      };
+    }
+
+    if (el.toolZoomReset) {
+      el.toolZoomReset.onclick = (e) => {
+        e.stopPropagation();
+        vibrate(18);
+        resetPinchZoom();
+        updateQuickToolsUi();
+        toggleQuickTools(false);
+      };
+    }
+
+    if (el.toolWakelock) {
+      el.toolWakelock.onclick = (e) => {
+        e.stopPropagation();
+        state.wakelockEnabled = !state.wakelockEnabled;
+        if (state.wakelockEnabled) {
+          requestWakeLock();
+          showToast('Keep Awake Enabled', 'success');
+        } else {
+          releaseWakeLock();
+          showToast('Keep Awake Disabled', 'warn');
+        }
+        updateQuickToolsUi();
+        saveAllSettings(false);
+        toggleQuickTools(false);
+      };
+    }
+
+    if (el.toolFullscreen) {
+      el.toolFullscreen.onclick = (e) => {
+        e.stopPropagation();
+        vibrate(20);
+        toggleQuickTools(false);
+
+        if (window.AndroidApp && typeof window.AndroidApp.requestFullscreen === 'function') {
+          window.AndroidApp.requestFullscreen();
+          showToast('Fullscreen Mode (App)', 'success');
+          setTimeout(updateQuickToolsUi, 100);
+          return;
+        }
+
+        const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        if (!isFull) {
+          const docEl = document.documentElement;
+          const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+          if (req) {
+            req.call(docEl).then(() => {
+              showToast('Fullscreen Mode Enabled', 'success');
+              updateQuickToolsUi();
+            }).catch(() => {
+              showToast('Fullscreen mode active', 'info');
+            });
+          } else {
+            showToast('Fullscreen not supported in this browser', 'warn');
+          }
+        } else {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+          if (exit) {
+            exit.call(document).then(() => {
+              showToast('Fullscreen Exited', 'info');
+              updateQuickToolsUi();
+            }).catch(() => {});
+          }
+        }
+      };
+    }
+
+  }
+
+  function toggleTitleBar(forceHide) {
+    vibrate(18);
+    const shouldHide = forceHide !== undefined ? forceHide : !state.titleBarHidden;
+    state.titleBarHidden = shouldHide;
+
+    if (el.topNav) {
+      if (shouldHide) {
+        el.topNav.classList.add('hidden-bar');
+      } else {
+        el.topNav.classList.remove('hidden-bar');
+      }
+    }
+
+    if (el.btnUnhideTitlebar) {
+      el.btnUnhideTitlebar.style.display = shouldHide ? 'inline-flex' : 'none';
+    }
+
+    updateQuickToolsUi();
+
+    showToast(shouldHide ? 'Full View (Title Bar Hidden)' : 'Title Bar Restored', 'info', shouldHide ? '' : '️');
+    try {
+      localStorage.setItem('pcdeck_titlebar_hidden', shouldHide.toString());
+    } catch (e) {}
+  }
+
+  function toggleScreenOrientation() {
+    vibrate(20);
+    if (window.AndroidApp && typeof window.AndroidApp.toggleOrientation === 'function') {
+      window.AndroidApp.toggleOrientation();
+      showToast('Screen Orientation Toggled', 'success');
+      return;
+    }
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        const target = isPortrait ? 'landscape' : 'portrait';
+        screen.orientation.lock(target).then(() => {
+          showToast(`Screen locked to ${target}`, 'success');
+        }).catch(() => {
+          showToast(`Rotate device ${target} physically`, 'warn');
+        });
+      } else {
+        showToast('Rotate your device physically', 'warn');
+      }
+    } catch (e) {
+      showToast('Rotate your device physically', 'warn');
+    }
+  }
+
+  window.onScreenOrientationChange = function(orientation) {
+    if (window.AndroidApp && typeof window.AndroidApp.setImmersiveFullscreen === 'function') {
+      window.AndroidApp.setImmersiveFullscreen(true);
+    }
+  };
+
+  // --- High-Performance Multi-Engine QR Scanner ---
+  let nativeBarcodeDetector = null;
+  if ('BarcodeDetector' in window) {
+    try {
+      nativeBarcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+    } catch (e) {
+      nativeBarcodeDetector = null;
+    }
+  }
+
+  function startQrScanner() {
+    if (!el.qrScannerModal || !el.qrVideo) return;
+    el.qrScannerModal.classList.add('show');
+    vibrate(25);
+
+    const qrLoader = document.getElementById('qr-camera-loading');
+    if (qrLoader) qrLoader.classList.remove('hidden');
+
+    const constraints = {
+      video: {
+        facingMode: state.currentFacingMode,
+        width: { ideal: 1280, max: 1920 },
+        height: { ideal: 720, max: 1080 }
+      },
+      audio: false
+    };
+
+    const hideLoader = () => {
+      if (qrLoader) qrLoader.classList.add('hidden');
+    };
+
+    navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+      state.qrStream = stream;
+      el.qrVideo.srcObject = stream;
+      el.qrVideo.setAttribute('playsinline', 'true');
+      el.qrVideo.onloadeddata = hideLoader;
+      el.qrVideo.play().then(() => {
+        hideLoader();
+        qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+      }).catch(() => {
+        hideLoader();
+        qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+      });
+    }).catch((err) => {
+      console.warn('Camera 720p constraints failed, trying default stream:', err);
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: state.currentFacingMode } }).then((stream) => {
+        state.qrStream = stream;
+        el.qrVideo.srcObject = stream;
+        el.qrVideo.setAttribute('playsinline', 'true');
+        el.qrVideo.onloadeddata = hideLoader;
+        el.qrVideo.play().then(() => {
+          hideLoader();
+          qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+        }).catch(() => {
+          hideLoader();
+          qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+        });
+      }).catch((e2) => {
+        console.error('Camera access error:', e2);
+        showToast('Camera permission required to scan QR', 'error');
+        stopQrScanner();
+      });
+    });
+  }
+
+  function stopQrScanner() {
+    if (qrScanAnimationId) {
+      cancelAnimationFrame(qrScanAnimationId);
+      qrScanAnimationId = null;
+    }
+    if (state.qrStream) {
+      state.qrStream.getTracks().forEach(t => t.stop());
+      state.qrStream = null;
+    }
+    const qrLoader = document.getElementById('qr-camera-loading');
+    if (qrLoader) qrLoader.classList.remove('hidden');
+    state.torchActive = false;
+    if (el.btnToggleTorch) el.btnToggleTorch.textContent = 'Flashlight';
+    if (el.qrScannerModal) el.qrScannerModal.classList.remove('show');
+  }
+
+  let isScanningBusy = false;
+
+  async function scanQrFrame() {
+    if (!el.qrVideo || el.qrVideo.readyState < 2 || isScanningBusy) {
+      qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+      return;
+    }
+
+    // Engine 1: Native Hardware BarcodeDetector (Android Chrome / Modern WebView)
+    if (nativeBarcodeDetector) {
+      try {
+        isScanningBusy = true;
+        const barcodes = await nativeBarcodeDetector.detect(el.qrVideo);
+        if (barcodes && barcodes.length > 0) {
+          const raw = barcodes[0].rawValue;
+          if (raw) {
+            vibrate(60);
+            stopQrScanner();
+            parseQrAndConnect(raw);
+            isScanningBusy = false;
+            return;
+          }
+        }
+      } catch (e) {
+        // Fallback to jsQR
+      } finally {
+        isScanningBusy = false;
+      }
+    }
+
+    // Engine 2: Ultra-Fast Downscaled jsQR with dual-inversion and center crop
+    try {
+      const videoW = el.qrVideo.videoWidth;
+      const videoH = el.qrVideo.videoHeight;
+      if (videoW > 0 && videoH > 0 && window.jsQR) {
+        const canvas = el.qrCanvas || document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        // Optimal downscale to 480px width for instant ~4ms frame processing
+        const targetW = 480;
+        const targetH = Math.round((videoH * targetW) / videoW);
+        canvas.width = targetW;
+        canvas.height = targetH;
+        ctx.drawImage(el.qrVideo, 0, 0, targetW, targetH);
+
+        const imgData = ctx.getImageData(0, 0, targetW, targetH);
+        let code = window.jsQR(imgData.data, targetW, targetH, {
+          inversionAttempts: 'attemptBoth',
+        });
+
+        if (!code) {
+          // Center 60% Crop Zoom Pass (where the reticle is aiming)
+          const cropW = Math.round(videoW * 0.6);
+          const cropH = Math.round(videoH * 0.6);
+          const cropX = Math.round((videoW - cropW) / 2);
+          const cropY = Math.round((videoH - cropH) / 2);
+          canvas.width = 360;
+          canvas.height = 360;
+          ctx.drawImage(el.qrVideo, cropX, cropY, cropW, cropH, 0, 0, 360, 360);
+          const cropImgData = ctx.getImageData(0, 0, 360, 360);
+          code = window.jsQR(cropImgData.data, 360, 360, {
+            inversionAttempts: 'attemptBoth',
+          });
+        }
+
+        if (code && code.data) {
+          vibrate(60);
+          stopQrScanner();
+          parseQrAndConnect(code.data);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('QR decode error:', e);
+    }
+
+    qrScanAnimationId = requestAnimationFrame(scanQrFrame);
+  }
+
+  function parseQrAndConnect(data) {
+    vibrate(60);
+    const parsed = parseHostPort(data);
+    if (parsed) {
+      state.serverHost = parsed.host;
+      state.serverPort = parsed.port;
+      if (el.modalIpInput) el.modalIpInput.value = `${state.serverHost}:${state.serverPort}`;
+      if (el.settingsIpInput) el.settingsIpInput.value = `${state.serverHost}:${state.serverPort}`;
+      try {
+        localStorage.setItem('pcdeck_ip', `${state.serverHost}:${state.serverPort}`);
+        localStorage.setItem('pcdeck_onboarding_completed', 'true');
+      } catch (e) {}
+
+      stopQrScanner();
+      if (el.connectModal) el.connectModal.classList.remove('show');
+      const obModal = document.getElementById('onboarding-modal');
+      if (obModal) obModal.classList.remove('show');
+
+      if (typeof switchTab === 'function') {
+        try { switchTab('tab-screen'); } catch (e) {}
+      }
+
+      showToast(`Connecting to ${state.serverHost}...`, 'info');
+      reconnectAttempts = 0;
+      saveAllSettings(false);
+      connect(true);
+    } else {
+      showToast('Invalid QR code format', 'error');
+    }
+  }
+
+  // Export to window for native Android Deep Link triggers
+  window.parseQrAndConnect = parseQrAndConnect;
+
+  // --- Main Event Handlers Initialization ---
+  function initEventHandlers() {
+    if (el.btnToggleTitlebar) el.btnToggleTitlebar.onclick = () => toggleTitleBar(true);
+    if (el.btnUnhideTitlebar) el.btnUnhideTitlebar.onclick = () => toggleTitleBar(false);
+    if (el.modalBtnScanQr) el.modalBtnScanQr.onclick = startQrScanner;
+    if (el.settingsBtnScanQr) el.settingsBtnScanQr.onclick = startQrScanner;
+    if (el.btnCloseScanner) el.btnCloseScanner.onclick = stopQrScanner;
+    if (el.settingsBtnRotate) el.settingsBtnRotate.onclick = toggleScreenOrientation;
+
+    if (el.btnSwitchCamera) {
+      el.btnSwitchCamera.onclick = () => {
+        state.currentFacingMode = state.currentFacingMode === 'environment' ? 'user' : 'environment';
+        stopQrScanner();
+        startQrScanner();
+      };
+    }
+
+    if (el.btnToggleTorch) {
+      el.btnToggleTorch.onclick = async () => {
+        if (!state.qrStream) return;
+        const track = state.qrStream.getVideoTracks()[0];
+        if (track) {
+          try {
+            state.torchActive = !state.torchActive;
+            await track.applyConstraints({ advanced: [{ torch: state.torchActive }] });
+            el.btnToggleTorch.textContent = state.torchActive ? 'Flash: ON' : 'Flashlight';
+            vibrate(15);
+          } catch (e) {
+            showToast('Flashlight not available on this lens', 'warn');
+          }
+        }
+      };
+    }
+
+    if (el.modalBtnConnect) {
+      el.modalBtnConnect.onclick = () => {
+        const val = el.modalIpInput.value.trim();
+        if (val) {
+          const parsed = parseHostPort(val);
+          if (parsed) {
+            state.serverHost = parsed.host;
+            state.serverPort = parsed.port;
+            reconnectAttempts = 0;
+            saveAllSettings(false);
+            connect(true);
+          }
+        }
+      };
+    }
+
+    const btnCloseConnectModal = document.getElementById('btn-close-connect-modal');
+    if (btnCloseConnectModal) {
+      btnCloseConnectModal.onclick = () => {
+        if (el.connectModal) el.connectModal.classList.remove('show');
+      };
+    }
+    if (el.connectModal) {
+      el.connectModal.onclick = (e) => {
+        if (e.target === el.connectModal) {
+          el.connectModal.classList.remove('show');
+        }
+      };
+    }
+
+    if (el.btnReconnectHeader) {
+      el.btnReconnectHeader.onclick = () => {
+        openConnectModal();
+      };
+    }
+
+    if (el.pillStatus) {
+      el.pillStatus.onclick = () => {
+        openConnectModal();
+      };
+    }
+
+    const btnClearRecent = document.getElementById('btn-clear-recent-pcs');
+    if (btnClearRecent) {
+      btnClearRecent.onclick = (e) => {
+        e.stopPropagation();
+        try { localStorage.removeItem('pcdeck_recent_pcs'); } catch (err) {}
+        renderRecentPCs();
+        showToast('Cleared Recent Computers', 'info');
+      };
+    }
+
+    if (el.btnLeftClick) el.btnLeftClick.onclick = () => { if (typeof window.freezeAirMouseForClick === 'function') window.freezeAirMouseForClick(90); vibrate(20); sendCommand('c,left'); };
+    if (el.btnMiddleClick) el.btnMiddleClick.onclick = () => { if (typeof window.freezeAirMouseForClick === 'function') window.freezeAirMouseForClick(90); vibrate(20); sendCommand('c,middle'); };
+    if (el.btnRightClick) el.btnRightClick.onclick = () => { if (typeof window.freezeAirMouseForClick === 'function') window.freezeAirMouseForClick(90); vibrate(20); sendCommand('c,right'); };
+
+    if (el.btnDesktopQuick) {
+      el.btnDesktopQuick.onclick = () => {
+        vibrate(15);
+        sendCommand('h,win+d');
+        showToast('Desktop Toggled', 'info', '<svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg>');
+      };
+    }
+
+    if (el.btnEscQuick) el.btnEscQuick.onclick = () => { vibrate(15); sendCommand('k,escape'); };
+
+    if (el.btnKbdQuick) {
+      el.btnKbdQuick.onclick = (e) => {
+        e.preventDefault();
+        vibrate(20);
+        switchTab('tab-keyboard');
+        const liveInput = document.getElementById('live-typing-input');
+        if (liveInput) {
+          setTimeout(() => liveInput.focus(), 150);
+        }
+        showToast('Switched to Keyboard', 'success', '️');
+      };
+    }
+
+    if (el.btnSpeedQuick) {
+      el.btnSpeedQuick.onclick = (e) => {
+        e.preventDefault();
+        vibrate(15);
+        const speeds = [1.0, 1.5, 2.0, 2.5];
+        let nextIdx = (speeds.findIndex(s => Math.abs(s - state.cursorSpeed) < 0.1) + 1) % speeds.length;
+        if (nextIdx < 0) nextIdx = 1;
+        state.cursorSpeed = speeds[nextIdx];
+        if (el.settingCursorSpeed) el.settingCursorSpeed.value = state.cursorSpeed.toString();
+        if (el.valCursorSpeed) el.valCursorSpeed.textContent = `${state.cursorSpeed.toFixed(1)}x`;
+        el.btnSpeedQuick.textContent = `${state.cursorSpeed.toFixed(1)}x`;
+        saveAllSettings(false);
+        showToast(`Cursor Speed: ${state.cursorSpeed.toFixed(1)}x`, 'success', '️');
+      };
+    }
+
+    if (el.toolDragLock) {
+      el.toolDragLock.onclick = () => {
+        state.dragLocked = !state.dragLocked;
+        el.toolDragLock.classList.toggle('active', state.dragLocked);
+        el.toolDragLock.textContent = state.dragLocked ? 'Drag: ON' : 'Drag: Off';
+        vibrate(25);
+        sendCommand(state.dragLocked ? 'd,left' : 'u,left');
+      };
+    }
+
+    // --- State-of-the-Art Gyroscope Air Mouse (Motion Pointer) ---
+    const btnAirMouse = document.getElementById('btn-air-mouse');
+    const labelAirMouse = document.getElementById('label-air-mouse');
+    let isAirMouseActive = false;
+    window.isAirMouseActive = false;
+
+    // Zero-rate calibration and filtering state
+    let airBiasH = 0;
+    let airBiasV = 0;
+    let airStationaryTicks = 0;
+    let airFilteredH = 0;
+    let airFilteredV = 0;
+    let airLastMotionTime = 0;
+    let airClickFreezeUntil = 0;
+    let airHasReceivedMotionRate = false;
+
+    // Fallback orientation finite differences state
+    let lastOrientBeta = null;
+    let lastOrientGamma = null;
+    let lastOrientAlpha = null;
+    let lastOrientTime = 0;
+
+    function freezeAirMouseForClick(durationMs = 90) {
+      airClickFreezeUntil = performance.now() + durationMs;
+      airFilteredH = 0;
+      airFilteredV = 0;
+    }
+    window.freezeAirMouseForClick = freezeAirMouseForClick;
+
+    function processAirMouseRates(pitchRate, rollRate, yawRate) {
+      if (!isAirMouseActive) return;
+      const now = performance.now();
+      if (now < airClickFreezeUntil) {
+        airFilteredH = 0;
+        airFilteredV = 0;
+        return;
+      }
+      // Pace updates to ~80Hz for ultra-low latency without packet flood
+      if (airLastMotionTime > 0 && now - airLastMotionTime < 11) return;
+      airLastMotionTime = now;
+
+      // Coordinate Transform based on screen orientation
+      const screenAngle = (window.screen && window.screen.orientation && window.screen.orientation.angle) || window.orientation || 0;
+
+      let rawH = 0;
+      let rawV = 0;
+
+      if (screenAngle === 90) {
+        // Landscape 90 deg (device rotated left)
+        rawH = -(yawRate * 0.85 - pitchRate * 0.45);
+        rawV = rollRate;
+      } else if (screenAngle === 270 || screenAngle === -90) {
+        // Landscape 270 deg (device rotated right)
+        rawH = -(yawRate * 0.85 + pitchRate * 0.45);
+        rawV = -rollRate;
+      } else {
+        // Portrait (natural remote pointing at screen):
+        // Horizontal wrist turn is rotation around phone's vertical length (Y axis: rollRate)
+        // Blended with Z axis (yawRate) for flat-hand pointing
+        rawH = -(rollRate * 0.85 + yawRate * 0.50);
+        // Vertical pointing is Pitch (rotation around X axis)
+        rawV = -pitchRate;
+      }
+
+      // 1. Online Zero-Rate Calibration (stationary drift removal)
+      const rawMag = Math.hypot(rawH, rawV);
+      if (rawMag < 0.40) { // < 0.40 deg/s = stationary resting state
+        airStationaryTicks++;
+        if (airStationaryTicks > 8) { // stable for ~100ms
+          airBiasH = airBiasH * 0.95 + rawH * 0.05;
+          airBiasV = airBiasV * 0.95 + rawV * 0.05;
+        }
+      } else {
+        airStationaryTicks = 0;
+      }
+
+      const calH = rawH - airBiasH;
+      const calV = rawV - airBiasV;
+      const calMag = Math.hypot(calH, calV);
+
+      // 2. Deadzone: eliminate resting hand micro-pulse (< 0.22 deg/s)
+      const deadzone = 0.18;
+      let activeH = 0;
+      let activeV = 0;
+      if (calMag > deadzone) {
+        const scale = (calMag - deadzone) / calMag;
+        activeH = calH * scale;
+        activeV = calV * scale;
+      }
+
+      // 3. Adaptive Dual-Mode 1€ Filter (One Euro Dynamic Low-Pass)
+      // Slow micro-aiming (< 2.5 deg/s): alpha ~ 0.22 (rock-solid, zero hand jitter)
+      // Rapid wrist flicks (> 14 deg/s): alpha ~ 0.92 (zero latency)
+      const speedRatio = Math.min(1.0, calMag / 14.0);
+      const alpha = 0.22 + 0.70 * (speedRatio * speedRatio);
+
+      airFilteredH = alpha * activeH + (1.0 - alpha) * airFilteredH;
+      airFilteredV = alpha * activeV + (1.0 - alpha) * airFilteredV;
+
+      const outMag = Math.hypot(airFilteredH, airFilteredV);
+      if (outMag < 0.04) return;
+
+      // 4. Ballistic Power Curve Acceleration
+      // Micro-aiming is 1:1 precision; fast wrist flicks easily cross 4K screens
+      const baseSens = (state.cursorSpeed || 1.0) * 1.05;
+      const accel = 1.0 + Math.min(2.6, Math.pow(outMag / 7.0, 1.35));
+
+      const dx = airFilteredH * baseSens * accel;
+      const dy = airFilteredV * baseSens * accel;
+
+      if (Math.abs(dx) > 0.04 || Math.abs(dy) > 0.04) {
+        sendBinaryMoveRel(dx, dy);
+      }
+    }
+
+    function handleAirDeviceMotion(e) {
+      if (!isAirMouseActive || !e) return;
+      const rot = e.rotationRate;
+      if (rot && (rot.alpha !== null || rot.beta !== null || rot.gamma !== null)) {
+        airHasReceivedMotionRate = true;
+        const a = rot.alpha || 0; // yaw rate (deg/s)
+        const b = rot.beta || 0;  // pitch rate (deg/s)
+        const g = rot.gamma || 0; // roll rate (deg/s)
+        processAirMouseRates(b, g, a);
+      }
+    }
+
+    function handleAirDeviceOrientation(e) {
+      if (!isAirMouseActive || !e || airHasReceivedMotionRate) return;
+      const now = performance.now();
+      if (lastOrientTime > 0) {
+        const dt = Math.max(0.01, (now - lastOrientTime) / 1000);
+        const beta = e.beta || 0;
+        const gamma = e.gamma || 0;
+        const alpha = e.alpha || 0;
+
+        if (lastOrientBeta !== null && lastOrientGamma !== null) {
+          let dBeta = beta - lastOrientBeta;
+          let dGamma = gamma - lastOrientGamma;
+          let dAlpha = (lastOrientAlpha !== null) ? alpha - lastOrientAlpha : 0;
+
+          if (dBeta > 180) dBeta -= 360; else if (dBeta < -180) dBeta += 360;
+          if (dGamma > 180) dGamma -= 360; else if (dGamma < -180) dGamma += 360;
+          if (dAlpha > 180) dAlpha -= 360; else if (dAlpha < -180) dAlpha += 360;
+
+          processAirMouseRates(dBeta / dt, dGamma / dt, dAlpha / dt);
+        }
+        lastOrientBeta = beta;
+        lastOrientGamma = gamma;
+        lastOrientAlpha = alpha;
+      }
+      lastOrientTime = now;
+    }
+
+    // Android Native Bridge callback
+    window.onNativeGyroRate = function(pitchRate, rollRate, yawRate) {
+      airHasReceivedMotionRate = true;
+      processAirMouseRates(pitchRate, rollRate, yawRate);
+    };
+
+    function toggleAirMouse(forceState) {
+      const willBeActive = typeof forceState === 'boolean' ? forceState : !isAirMouseActive;
+      if (willBeActive === isAirMouseActive) return;
+
+      if (willBeActive) {
+        // Request iOS motion permission if needed
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+          DeviceMotionEvent.requestPermission().then(resp => {
+            if (resp === 'granted') {
+              startAirMouseListener();
+            } else {
+              showToast('Motion permission denied on iOS', 'warn');
+            }
+          }).catch(() => {
+            showToast('Sensor access blocked', 'warn');
+          });
+          return;
+        }
+
+        // Check if motion events exist in current context
+        if (typeof window.DeviceMotionEvent === 'undefined' && typeof window.DeviceOrientationEvent === 'undefined' && !window.AndroidApp) {
+          showToast('Air Mouse (Beta) requires Android APK or motion sensor support', 'warn');
+          return;
+        }
+
+        startAirMouseListener();
+      } else {
+        stopAirMouseListener();
+      }
+    }
+
+    function startAirMouseListener() {
+      isAirMouseActive = true;
+      window.isAirMouseActive = true;
+      airBiasH = 0;
+      airBiasV = 0;
+      airStationaryTicks = 0;
+      airFilteredH = 0;
+      airFilteredV = 0;
+      airLastMotionTime = 0;
+      airHasReceivedMotionRate = false;
+      lastOrientBeta = null;
+      lastOrientGamma = null;
+      lastOrientAlpha = null;
+      lastOrientTime = 0;
+
+      // Listen for W3C devicemotion (angular velocity rotationRate)
+      window.addEventListener('devicemotion', handleAirDeviceMotion, true);
+      // Fallback to orientation finite differences if devicemotion is unsupported
+      window.addEventListener('deviceorientation', handleAirDeviceOrientation, true);
+
+      // Start Android native hardware sensor
+      const bridge = window.AndroidApp || window.AndroidBridge;
+      if (bridge && typeof bridge.startNativeGyro === 'function') {
+        try { bridge.startNativeGyro(); } catch (_) {}
+      }
+
+      if (btnAirMouse) {
+        btnAirMouse.classList.add('active');
+        if (labelAirMouse) labelAirMouse.textContent = 'Air Mouse: ON';
+      }
+      const hudLabel = el.trackpadSurface ? el.trackpadSurface.querySelector('.hud-label') : null;
+      if (hudLabel) hudLabel.textContent = 'Air Pointer (Beta) • Tap to Click • Swipe Strip to Scroll';
+
+      vibrate(25);
+      showToast('Air Mouse (Beta) Active: Experimental pointer mode', 'success');
+    }
+
+    function stopAirMouseListener() {
+      isAirMouseActive = false;
+      window.isAirMouseActive = false;
+      airFilteredH = 0;
+      airFilteredV = 0;
+
+      window.removeEventListener('devicemotion', handleAirDeviceMotion, true);
+      window.removeEventListener('deviceorientation', handleAirDeviceOrientation, true);
+
+      const bridge = window.AndroidApp || window.AndroidBridge;
+      if (bridge && typeof bridge.stopNativeGyro === 'function') {
+        try { bridge.stopNativeGyro(); } catch (_) {}
+      }
+
+      if (btnAirMouse) {
+        btnAirMouse.classList.remove('active');
+        if (labelAirMouse) labelAirMouse.textContent = 'Air Mouse';
+      }
+      const hudLabel = el.trackpadSurface ? el.trackpadSurface.querySelector('.hud-label') : null;
+      if (hudLabel) hudLabel.textContent = 'Glide & Tap';
+    }
+
+    window.toggleAirMouse = toggleAirMouse;
+    if (btnAirMouse) {
+      btnAirMouse.onclick = () => toggleAirMouse();
+    }
+
+    // --- Safe Host PC Shut Down (Two-Step Confirmation) ---
+    const btnShutdown = document.getElementById('btn-shutdown-pc');
+    const btnShutdownText = document.getElementById('btn-shutdown-pc-text');
+    let shutdownTimer = null;
+
+    if (btnShutdown) {
+      btnShutdown.onclick = () => {
+        if (shutdownTimer) {
+          // Confirmed within 3 seconds!
+          clearTimeout(shutdownTimer);
+          shutdownTimer = null;
+          vibrate(70);
+          if (btnShutdownText) btnShutdownText.textContent = 'Shutting Down...';
+          btnShutdown.style.background = '#991b1b';
+          btnShutdown.disabled = true;
+
+          sendCommand('system,shutdown');
+          try {
+            if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+              mainWs.send(JSON.stringify({ type: 'system', action: 'shutdown' }));
+            }
+          } catch (_) {}
+
+          showToast('Shutting down host PC...', 'error');
+          setTimeout(() => {
+            if (btnShutdownText) btnShutdownText.textContent = 'Shut Down PC';
+            btnShutdown.style.background = '#ef4444';
+            btnShutdown.disabled = false;
+          }, 6000);
+        } else {
+          // First tap: prompt confirmation
+          vibrate(30);
+          if (btnShutdownText) btnShutdownText.textContent = 'Tap again to confirm';
+          btnShutdown.style.background = '#b91c1c';
+          btnShutdown.style.borderColor = '#ef4444';
+          showToast('Tap again within 3s to shut down PC', 'warn');
+
+          shutdownTimer = setTimeout(() => {
+            shutdownTimer = null;
+            if (btnShutdownText) btnShutdownText.textContent = 'Shut Down PC';
+            btnShutdown.style.background = '#ef4444';
+          }, 3000);
+        }
+      };
+    }
+
+    // Interactive Media & Shortcuts
+    document.querySelectorAll('[data-media]').forEach(btn => {
+      btn.onclick = () => {
+        vibrate(18);
+        sendCommand(`media,${btn.dataset.media}`);
+      };
+    });
+
+    document.querySelectorAll('[data-hotkey]').forEach(tile => {
+      tile.onclick = () => {
+        vibrate(20);
+        sendCommand(`h,${tile.dataset.hotkey}`);
+        showToast(`Shortcut: ${tile.dataset.hotkey.toUpperCase()}`, 'success', '️');
+      };
+    });
+
+    // All Virtual & Physical Matrix Keys (including Numpad, D-Pad, F-Keys, Modifiers)
+    document.querySelectorAll('[data-key]').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        vibrate(18);
+        const key = btn.dataset.key;
+        sendCommand(`k,${key}`);
+      };
+    });
+
+    // Settings Sliders & Checkboxes
+    if (el.settingCursorSpeed) {
+      el.settingCursorSpeed.oninput = () => {
+        state.cursorSpeed = parseFloat(el.settingCursorSpeed.value);
+        if (el.valCursorSpeed) el.valCursorSpeed.textContent = state.cursorSpeed.toFixed(1) + 'x';
+        if (el.btnSpeedQuick) el.btnSpeedQuick.textContent = `${state.cursorSpeed.toFixed(1)}x`;
+        saveAllSettings(false);
+      };
+    }
+
+    if (el.settingScrollSpeed) {
+      el.settingScrollSpeed.oninput = () => {
+        state.scrollSpeed = parseFloat(el.settingScrollSpeed.value);
+        if (el.valScrollSpeed) el.valScrollSpeed.textContent = state.scrollSpeed + 'x';
+        saveAllSettings(false);
+      };
+    }
+
+    if (el.settingZoomSens) {
+      el.settingZoomSens.oninput = () => {
+        state.zoomSens = parseFloat(el.settingZoomSens.value);
+        if (el.valZoomSens) el.valZoomSens.textContent = state.zoomSens + 'x';
+        saveAllSettings(false);
+      };
+    }
+
+    if (el.settingGamepadHud) {
+      el.settingGamepadHud.onchange = () => {
+        state.gamepadHudEnabled = el.settingGamepadHud.checked;
+        if (typeof updateGamepadHudVisibility === 'function') {
+          updateGamepadHudVisibility();
+        }
+        if (window.updateTitlebarActions) {
+          window.updateTitlebarActions();
+        }
+        if (!state.gamepadHudEnabled && state.gamepadHudActive) {
+          if (typeof window.toggleGamepadHUD === 'function') {
+            window.toggleGamepadHUD(false);
+          }
+        }
+        saveAllSettings(false);
+        showToast(state.gamepadHudEnabled ? 'Gaming Controller HUD Enabled' : 'Gaming Controller HUD Disabled', 'info');
+      };
+    }
+
+    if (el.settingPinchZoom) {
+      el.settingPinchZoom.onchange = () => {
+        state.pinchZoomEnabled = el.settingPinchZoom.checked;
+        if (!state.pinchZoomEnabled) resetPinchZoom();
+        saveAllSettings(false);
+      };
+    }
+
+    if (el.settingAccel) {
+      el.settingAccel.onchange = () => {
+        state.smoothAccel = el.settingAccel.checked;
+        saveAllSettings(false);
+      };
+    }
+
+    if (el.settingInvertScroll) {
+      el.settingInvertScroll.onchange = () => {
+        state.invertScroll = el.settingInvertScroll.checked;
+        saveAllSettings(false);
+      };
+    }
+
+    if (el.settingHaptics) {
+      el.settingHaptics.onchange = () => {
+        state.hapticsEnabled = el.settingHaptics.checked;
+        saveAllSettings(false);
+      };
+    }
+
+    if (el.settingWakelock) {
+      el.settingWakelock.onchange = () => {
+        state.wakelockEnabled = el.settingWakelock.checked;
+        saveAllSettings(false);
+      };
+    }
+
+    if (el.settingAutoAudio) {
+      el.settingAutoAudio.onchange = () => {
+        state.autoAudioStream = el.settingAutoAudio.checked;
+        if (state.autoAudioStream && state.connected && !audioStreamActive) {
+          startAudioStream();
+        } else if (!state.autoAudioStream && audioStreamActive) {
+          stopAudioStream();
+        }
+        saveAllSettings(false);
+        showToast(state.autoAudioStream ? 'Auto PC Audio: ON' : 'Auto PC Audio: OFF', 'success');
+      };
+    }
+
+    // Global gesture listener to resume Web Audio API if suspended by browser policy.
+    // Only resume while a stream is meant to be running: the tap that presses STOP
+    // also bubbles up to window, and resuming here replayed the buffered chunks.
+    const unlockAudioOnGesture = () => {
+      if (audioCtx && audioCtx.state === 'suspended' && audioStreamActive && !userManuallyStoppedAudio) {
+        audioCtx.resume().catch(() => {});
+      }
+    };
+    window.addEventListener('touchstart', unlockAudioOnGesture, { passive: true });
+    window.addEventListener('click', unlockAudioOnGesture, { passive: true });
+
+    if (el.btnSaveIp && el.settingsIpInput) {
+      el.btnSaveIp.onclick = () => {
+        const val = el.settingsIpInput.value.trim();
+        if (val) {
+          const parsed = parseHostPort(val);
+          if (parsed) {
+            state.serverHost = parsed.host;
+            state.serverPort = parsed.port;
+            reconnectAttempts = 0;
+            saveAllSettings(true);
+            connect(true);
+          }
+        }
+      };
+    }
+
+    if (el.btnSaveAllSettings) {
+      el.btnSaveAllSettings.onclick = () => saveAllSettings(true);
+    }
+
+    if (el.btnResetSettings) {
+      el.btnResetSettings.onclick = resetAllSettings;
+    }
+
+    // Navigation Dock Tab Switching (6 Tabs)
+    if (el.dockTabs) {
+      el.dockTabs.forEach((tab) => {
+        const onTabClick = (e) => {
+          e.preventDefault();
+          const targetId = tab.dataset.target;
+          switchTab(targetId);
+        };
+        tab.addEventListener('click', onTabClick);
+      });
+    }
+  }
+
+  // --- Real-Time PC Audio Receiver & Low-Latency Player ---
+  let audioCtx = null;
+  let audioGainNode = null;
+  let audioAnalyser = null;
+  let audioWs = null;
+  let nextAudioPlayTime = 0;
+  let audioStreamActive = false;
+  let userManuallyStoppedAudio = false;
+  let html5AudioFallback = null;
+  let audioSampleRate = 48000;
+  let audioChannels = 2;
+  let audioVisualizerAnimId = null;
+  let audioConnecting = false;
+  let audioSessionId = 0;
+  const scheduledAudioSources = new Set();
+
+  // Ultra-Low-Latency Jitter-Free Circular Ring Buffer Audio Engine
+  const AUDIO_RING_BUFFER_SIZE = 48000 * 2; // 2 seconds of float frames
+  let audioRingBufferL = new Float32Array(AUDIO_RING_BUFFER_SIZE);
+  let audioRingBufferR = new Float32Array(AUDIO_RING_BUFFER_SIZE);
+  let audioRingWritePos = 0;
+  let audioRingReadPos = 0;
+  let audioRingAvailable = 0;
+  let audioContinuousNode = null;
+  let audioWorkletNode = null;
+  let audioWorkletReady = false;
+  let isAudioPrebuffering = true;
+  let audioFracPos = 0.0;
+  let audioLastSampleL = 0.0;
+  let audioLastSampleR = 0.0;
+  let audioFadeGain = 0.0;
+  let audioCurrentRateMult = 1.0;
+  let audioTargetRateMult = 1.0;
+
+  function ensureAudioContext() {
+    if (!audioCtx || audioCtx.state === 'closed') {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass({ latencyHint: 'interactive' });
+          audioGainNode = audioCtx.createGain();
+          audioGainNode.gain.setValueAtTime(state.audioVolume || 1.0, audioCtx.currentTime);
+          audioGainNode.connect(audioCtx.destination);
+
+          audioAnalyser = audioCtx.createAnalyser();
+          audioAnalyser.fftSize = 64;
+          audioAnalyser.smoothingTimeConstant = 0.75;
+          audioAnalyser.connect(audioGainNode);
+        }
+      } catch (e) {
+        console.warn('AudioContext creation error:', e);
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  function initAudioStreamer() {
+    if (el.btnToggleAudioStream) {
+      el.btnToggleAudioStream.onclick = (e) => {
+        if (e) e.preventDefault();
+        vibrate(20);
+        toggleAudioStreaming();
+      };
+    }
+
+    if (el.audioVolumeSlider) {
+      el.audioVolumeSlider.oninput = () => {
+        const val = parseFloat(el.audioVolumeSlider.value);
+        state.audioVolume = val;
+        if (el.valAudioVolume) el.valAudioVolume.textContent = `${Math.round(val * 100)}%`;
+        if (audioGainNode && audioCtx && audioCtx.state !== 'closed') {
+          audioGainNode.gain.setValueAtTime(val, audioCtx.currentTime);
+        }
+        if (html5AudioFallback) html5AudioFallback.volume = val;
+      };
+    }
+  }
+
+  // Native Android & WebAudio Audio Level Callback (Mic-Style Single VU Meter)
+  window.onNativeAudioVu = (pct) => {
+    if (!audioStreamActive) return;
+    const level = Math.max(0, Math.min(100, pct || 0));
+    const vuFill = document.getElementById('audio-vu-meter-fill');
+    const vuDb = document.getElementById('audio-vu-meter-db');
+    if (vuFill) vuFill.style.width = `${level}%`;
+    if (vuDb) {
+      vuDb.textContent = level > 0 ? `-${Math.max(0, Math.round(60 * (1 - level / 100)))} dB` : '-inf dB';
+    }
+  };
+
+  function updateVisualizerLoop() {
+    if (!audioStreamActive || !audioAnalyser) {
+      const vuFill = document.getElementById('audio-vu-meter-fill');
+      const vuDb = document.getElementById('audio-vu-meter-db');
+      if (vuFill) vuFill.style.width = '0%';
+      if (vuDb) vuDb.textContent = '-inf dB';
+      if (audioVisualizerAnimId) {
+        cancelAnimationFrame(audioVisualizerAnimId);
+        audioVisualizerAnimId = null;
+      }
+      return;
+    }
+
+    const bufferLength = audioAnalyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    audioAnalyser.getByteFrequencyData(dataArray);
+
+    let sum = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      sum += dataArray[i];
+    }
+    const avg = sum / (bufferLength || 1);
+    const pct = Math.min(100, Math.round((avg / 255) * 100));
+
+    const vuFill = document.getElementById('audio-vu-meter-fill');
+    const vuDb = document.getElementById('audio-vu-meter-db');
+    if (vuFill) vuFill.style.width = `${pct}%`;
+    if (vuDb) {
+      vuDb.textContent = pct > 0 ? `-${Math.max(0, Math.round(60 * (1 - pct / 100)))} dB` : '-inf dB';
+    }
+
+    audioVisualizerAnimId = requestAnimationFrame(updateVisualizerLoop);
+  }
+
+  function updateAudioUi(active) {
+    audioStreamActive = active;
+
+    if (el.btnToggleAudioStream) {
+      if (active) {
+        el.btnToggleAudioStream.classList.remove('btn-yellow', 'btn-lime');
+        el.btnToggleAudioStream.classList.add('btn-pink');
+        if (el.audioBtnIcon) el.audioBtnIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>';
+        if (el.audioBtnLabel) el.audioBtnLabel.textContent = 'Stop Audio';
+      } else {
+        el.btnToggleAudioStream.classList.remove('btn-pink');
+        el.btnToggleAudioStream.classList.add('btn-yellow');
+        if (el.audioBtnIcon) el.audioBtnIcon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+        if (el.audioBtnLabel) el.audioBtnLabel.textContent = 'Listen to PC';
+      }
+    }
+
+    const audioStatusBadge = document.getElementById('audio-stream-status-badge') || el.audioStatusPill;
+    if (audioStatusBadge) {
+      audioStatusBadge.textContent = active ? 'LIVE' : 'STANDBY';
+      audioStatusBadge.className = active ? 'mini-status-chip online' : 'mini-status-chip offline';
+    }
+
+    const vuFill = document.getElementById('audio-vu-meter-fill');
+    const vuDb = document.getElementById('audio-vu-meter-db');
+    if (!active) {
+      if (vuFill) vuFill.style.width = '0%';
+      if (vuDb) vuDb.textContent = '-inf dB';
+      if (audioVisualizerAnimId) {
+        cancelAnimationFrame(audioVisualizerAnimId);
+        audioVisualizerAnimId = null;
+      }
+    } else {
+      if (audioAnalyser && !audioVisualizerAnimId) {
+        updateVisualizerLoop();
+      }
+    }
+  }
+
+  function toggleAudioStreaming(forceState) {
+    const isCurrentlyActive = audioStreamActive || audioConnecting;
+    const target = forceState !== undefined ? forceState : !isCurrentlyActive;
+    if (target) {
+      userManuallyStoppedAudio = false;
+      startAudioStream();
+    } else {
+      userManuallyStoppedAudio = true;
+      stopAudioStream(true);
+      showToast('Stopped PC Audio', 'info');
+    }
+  }
+
+  async function startAudioStream() {
+    if (!state.connected || !state.serverHost) {
+      audioConnecting = false;
+      audioStreamActive = false;
+      return;
+    }
+    stopAudioStream(false);
+    const session = ++audioSessionId;
+    userManuallyStoppedAudio = false;
+    audioConnecting = true;
+    updateAudioUi(true);
+
+    // 1. Native Android Low-Latency Hardware Audio Engine (AudioRelay grade)
+    if (window.AndroidApp && typeof window.AndroidApp.startNativeAudioStream === 'function') {
+      try {
+        const targetHost = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+        const ok = window.AndroidApp.startNativeAudioStream(targetHost, 8003);
+        if (ok) {
+          audioStreamActive = true;
+          audioConnecting = false;
+          updateAudioUi(true);
+          showToast('PC Audio Active (Hardware Direct)', 'success');
+          return;
+        }
+      } catch (eNative) {
+        console.warn('[Audio] Native audio start failed, falling back to WebAudio:', eNative);
+      }
+    }
+
+    ensureAudioContext();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      try { await audioCtx.resume(); } catch (e) {}
+    }
+
+    // stopAudioStream() zeroes the gain to silence instantly; restore it for the new session.
+    if (audioGainNode && audioCtx && audioCtx.state !== 'closed') {
+      try {
+        audioGainNode.gain.setValueAtTime(state.audioVolume || 1.0, audioCtx.currentTime);
+      } catch (e) {}
+    }
+
+    const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+    const port = state.serverPort || (window.location.port && window.location.port !== '' ? window.location.port : '8000');
+    const storedToken = localStorage.getItem('pcdeck_token') || '';
+    const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const audioWsUrl = `${wsProto}//${host}:${port}/ws/audio${tokenParam}`;
+
+    try {
+      // Ensure dedicated AudioWorklet thread is initialized BEFORE opening socket
+      await initAudioPlayerEngine();
+      const ws = new WebSocket(audioWsUrl);
+      audioWs = ws;
+      ws.binaryType = 'arraybuffer';
+
+      ws.onopen = () => {
+        if (session !== audioSessionId) {
+          try { ws.close(); } catch (e) {}
+          return;
+        }
+        audioConnecting = false;
+        updateAudioUi(true);
+      };
+
+      ws.onmessage = (event) => {
+        if (session !== audioSessionId || !audioStreamActive) return;
+
+        if (typeof event.data === 'string') {
+          if (event.data.startsWith('cfg,')) {
+            const parts = event.data.split(',');
+            audioSampleRate = parseInt(parts[1] || '48000', 10);
+            audioChannels = parseInt(parts[2] || '2', 10);
+            if (audioWorkletReady && audioWorkletNode) {
+              try {
+                audioWorkletNode.port.postMessage({ type: 'cfg', sampleRate: audioSampleRate, channels: audioChannels });
+              } catch (e) {}
+            }
+          }
+          return;
+        }
+
+        if (event.data instanceof ArrayBuffer) {
+          if (audioWorkletReady && audioWorkletNode) {
+            try {
+              // Direct zero-copy transfer to dedicated background AudioWorklet thread
+              audioWorkletNode.port.postMessage(event.data, [event.data]);
+            } catch (e) {
+              playPcmChunk(event.data);
+            }
+          } else {
+            playPcmChunk(event.data);
+          }
+        }
+      };
+
+      ws.onclose = () => {
+        if (session !== audioSessionId) return;
+        audioConnecting = false;
+        if (audioStreamActive && !userManuallyStoppedAudio) {
+          stopAudioStream(true);
+        }
+      };
+
+      ws.onerror = () => {
+        if (session !== audioSessionId) return;
+        audioConnecting = false;
+        if (!userManuallyStoppedAudio) {
+          startHtml5AudioFallback(session);
+        }
+      };
+
+    } catch (e) {
+      audioConnecting = false;
+      if (session === audioSessionId && !userManuallyStoppedAudio) {
+        startHtml5AudioFallback(session);
+      }
+    }
+  }
+
+  async function initAudioPlayerEngine() {
+    ensureAudioContext();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') {
+      try { await audioCtx.resume(); } catch (e) {}
+    }
+
+    if (audioWorkletNode) {
+      try { audioWorkletNode.disconnect(); } catch (e) {}
+      audioWorkletNode = null;
+    }
+    audioWorkletReady = false;
+
+    // 3. Permanent Solution: Dedicated Real-Time Audio Thread (AudioWorklet)
+    // Runs on dedicated high-priority OS audio thread, immune to 60 FPS video & trackpad swipes
+    if (audioCtx.audioWorklet && typeof audioCtx.audioWorklet.addModule === 'function') {
+      let moduleLoaded = false;
+
+      // 1. Try static asset modules first (works across browser & Android WebView)
+      const moduleCandidates = [
+        'audio-worklet-processor.js',
+        '/audio-worklet-processor.js',
+      ];
+      if (window.location.protocol.startsWith('http')) {
+        const host = state.serverHost || window.location.hostname || '127.0.0.1';
+        const port = state.serverPort || window.location.port || '8000';
+        moduleCandidates.push(`http://${host}:${port}/audio-worklet-processor.js`);
+      }
+
+      for (const candidate of moduleCandidates) {
+        try {
+          await audioCtx.audioWorklet.addModule(candidate);
+          moduleLoaded = true;
+          break;
+        } catch (e) {}
+      }
+
+      // 2. Blob fallback if file access was restricted
+      if (!moduleLoaded) {
+        try {
+          const workletCode = `
+class PCDeckAudioPlayerProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.RING_SIZE = 96000 * 2;
+    this.bufferL = new Float32Array(this.RING_SIZE);
+    this.bufferR = new Float32Array(this.RING_SIZE);
+    this.writePos = 0;
+    this.readPos = 0;
+    this.available = 0;
+    this.fracPos = 0.0;
+    this.srcRate = 48000;
+    this.channels = 2;
+
+    this.isPrebuffering = true;
+    this.fadeGain = 0.0;
+    this.lastSampleL = 0.0;
+    this.lastSampleR = 0.0;
+
+    this.currentRateMult = 1.0;
+    this.targetRateMult = 1.0;
+
+    this.TARGET_BUFFER_MS = 100;
+    this.DEADBAND_LOW_MS = 75;
+    this.DEADBAND_HIGH_MS = 135;
+    this.PREBUFFER_THRESHOLD_MS = 90;
+    this.REBUFFER_THRESHOLD_MS = 60;
+    this.MAX_CEILING_MS = 240;
+
+    this.port.onmessage = (event) => {
+      const msg = event.data;
+      if (!msg) return;
+      if (msg.type === 'cfg') {
+        this.srcRate = msg.sampleRate || 48000;
+        this.channels = msg.channels || 2;
+        return;
+      }
+      if (msg.type === 'reset') {
+        this.writePos = 0;
+        this.readPos = 0;
+        this.available = 0;
+        this.fracPos = 0.0;
+        this.isPrebuffering = true;
+        this.fadeGain = 0.0;
+        this.lastSampleL = 0.0;
+        this.lastSampleR = 0.0;
+        this.currentRateMult = 1.0;
+        this.targetRateMult = 1.0;
+        return;
+      }
+      if (msg instanceof ArrayBuffer) {
+        const int16 = new Int16Array(msg);
+        const ch = this.channels;
+        const frames = Math.floor(int16.length / ch);
+        if (frames <= 0) return;
+        for (let i = 0; i < frames; i++) {
+          const sL = int16[i * ch] / 32768.0;
+          const sR = ch > 1 ? int16[i * ch + 1] / 32768.0 : sL;
+          this.bufferL[this.writePos] = sL;
+          this.bufferR[this.writePos] = sR;
+          this.writePos = (this.writePos + 1) % this.RING_SIZE;
+        }
+        this.available = Math.min(this.RING_SIZE, this.available + frames);
+      }
+    };
+  }
+
+  process(inputs, outputs, parameters) {
+    const output = outputs[0];
+    if (!output || output.length === 0) return true;
+    const outL = output[0];
+    const outR = output.length > 1 ? output[1] : output[0];
+    const bufLen = outL.length;
+
+    const hwRate = typeof sampleRate !== 'undefined' ? sampleRate : 48000;
+    const baseRatio = this.srcRate / hwRate;
+    const bufferedMs = (this.available / this.srcRate) * 1000;
+
+    const neededThreshold = this.isPrebuffering ? 
+      Math.round(this.srcRate * (this.PREBUFFER_THRESHOLD_MS / 1000)) : 
+      Math.round(this.srcRate * (this.REBUFFER_THRESHOLD_MS / 1000));
+
+    if (this.isPrebuffering) {
+      if (this.available < neededThreshold) {
+        outL.fill(0);
+        if (outR !== outL) outR.fill(0);
+        return true;
+      }
+      this.isPrebuffering = false;
+    }
+
+    if (this.available <= 2) {
+      for (let i = 0; i < bufLen; i++) {
+        if (this.fadeGain > 0.0) {
+          this.fadeGain = Math.max(0.0, this.fadeGain - (1.0 / 32));
+          outL[i] = this.lastSampleL * this.fadeGain;
+          if (outR !== outL) outR[i] = this.lastSampleR * this.fadeGain;
+        } else {
+          outL[i] = 0;
+          if (outR !== outL) outR[i] = 0;
+        }
+      }
+      this.lastSampleL = 0.0;
+      this.lastSampleR = 0.0;
+      this.isPrebuffering = true;
+      return true;
+    }
+
+    if (bufferedMs > this.MAX_CEILING_MS) {
+      const targetFrames = Math.round(this.srcRate * (this.TARGET_BUFFER_MS / 1000));
+      const excess = this.available - targetFrames;
+      if (excess > 0) {
+        this.readPos = (this.readPos + excess) % this.RING_SIZE;
+        this.available -= excess;
+      }
+    }
+
+    if (bufferedMs > this.DEADBAND_HIGH_MS) {
+      this.targetRateMult = 1.0 + Math.min(0.012, (bufferedMs - this.DEADBAND_HIGH_MS) * 0.00015);
+    } else if (bufferedMs < this.DEADBAND_LOW_MS) {
+      this.targetRateMult = 1.0 - Math.min(0.012, (this.DEADBAND_LOW_MS - bufferedMs) * 0.00015);
+    } else {
+      this.targetRateMult = 1.0;
+    }
+
+    this.currentRateMult = this.currentRateMult * 0.996 + this.targetRateMult * 0.004;
+    const effectiveRatio = baseRatio * this.currentRateMult;
+
+    for (let i = 0; i < bufLen; i++) {
+      if (this.available <= 1) {
+        this.fadeGain = Math.max(0.0, this.fadeGain - (1.0 / 16));
+        outL[i] = this.lastSampleL * this.fadeGain;
+        if (outR !== outL) outR[i] = this.lastSampleR * this.fadeGain;
+        continue;
+      }
+
+      if (this.fadeGain < 1.0) {
+        this.fadeGain = Math.min(1.0, this.fadeGain + (1.0 / 48));
+      }
+
+      const idx0 = this.readPos;
+      const idx1 = (this.readPos + 1) % this.RING_SIZE;
+      const alpha = this.fracPos;
+
+      const sL = this.bufferL[idx0] * (1.0 - alpha) + this.bufferL[idx1] * alpha;
+      const sR = this.bufferR[idx0] * (1.0 - alpha) + this.bufferR[idx1] * alpha;
+
+      outL[i] = sL * this.fadeGain;
+      if (outR !== outL) outR[i] = sR * this.fadeGain;
+
+      this.lastSampleL = sL;
+      this.lastSampleR = sR;
+
+      this.fracPos += effectiveRatio;
+      if (this.fracPos >= 1.0) {
+        const step = Math.floor(this.fracPos);
+        this.fracPos -= step;
+        this.readPos = (this.readPos + step) % this.RING_SIZE;
+        this.available = Math.max(0, this.available - step);
+      }
+    }
+    return true;
+  }
+}
+try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcessor); } catch(e){}`;
+          const blob = new Blob([workletCode], { type: 'application/javascript' });
+          const blobUrl = URL.createObjectURL(blob);
+          await audioCtx.audioWorklet.addModule(blobUrl);
+          moduleLoaded = true;
+        } catch (e) {}
+      }
+
+      if (moduleLoaded) {
+        try {
+          audioWorkletNode = new AudioWorkletNode(audioCtx, 'pcdeck-audio-player-worklet', {
+            numberOfInputs: 0,
+            numberOfOutputs: 1,
+            outputChannelCount: [2]
+          });
+          if (audioAnalyser) {
+            audioWorkletNode.connect(audioAnalyser);
+          } else if (audioGainNode) {
+            audioWorkletNode.connect(audioGainNode);
+          }
+          audioWorkletReady = true;
+          audioWorkletNode.port.postMessage({ type: 'cfg', sampleRate: audioSampleRate, channels: audioChannels });
+          console.log('[PCDeck Audio] Dedicated Real-Time AudioWorklet Thread active!');
+          return;
+        } catch (err) {
+          console.warn('[PCDeck Audio] AudioWorkletNode creation fallback:', err);
+        }
+      }
+    }
+
+    // Fallback: Resampled continuous ScriptProcessorNode
+    setupContinuousAudioProcessor();
+  }
+
+  function setupContinuousAudioProcessor() {
+    ensureAudioContext();
+    if (!audioCtx) return;
+
+    if (audioContinuousNode) {
+      try { audioContinuousNode.disconnect(); } catch (e) {}
+      audioContinuousNode = null;
+    }
+
+    // Reset ring buffer pointers & pre-buffering gate
+    audioRingWritePos = 0;
+    audioRingReadPos = 0;
+    audioRingAvailable = 0;
+    audioFracPos = 0.0;
+    audioLastSampleL = 0.0;
+    audioLastSampleR = 0.0;
+    audioFadeGain = 0.0;
+    audioCurrentRateMult = 1.0;
+    audioTargetRateMult = 1.0;
+    isAudioPrebuffering = true;
+
+    try {
+      // 2048 buffer gives main UI thread plenty of breathing room (~42ms)
+      const node = audioCtx.createScriptProcessor(2048, 0, 2);
+      audioContinuousNode = node;
+
+      node.onaudioprocess = (e) => {
+        if (!audioStreamActive) return;
+        const outL = e.outputBuffer.getChannelData(0);
+        const outR = e.outputBuffer.getChannelData(1);
+        const bufLen = outL.length;
+
+        const hwRate = (audioCtx && audioCtx.sampleRate) ? audioCtx.sampleRate : 48000;
+        const srcRate = audioSampleRate || 48000;
+        const baseRatio = srcRate / hwRate;
+        const bufferedMs = (audioRingAvailable / srcRate) * 1000;
+
+        // 1. Initial Startup (90ms) / Re-buffer (60ms)
+        const neededThreshold = isAudioPrebuffering ? 
+          Math.round(srcRate * 0.090) : 
+          Math.round(srcRate * 0.060);
+
+        if (isAudioPrebuffering) {
+          if (audioRingAvailable < neededThreshold) {
+            outL.fill(0);
+            outR.fill(0);
+            return;
+          }
+          isAudioPrebuffering = false;
+        }
+
+        // 2. Buffer Underrun / Starvation Handling
+        if (audioRingAvailable <= 2) {
+          for (let i = 0; i < bufLen; i++) {
+            if (audioFadeGain > 0.0) {
+              audioFadeGain = Math.max(0.0, audioFadeGain - (1.0 / 32));
+              outL[i] = audioLastSampleL * audioFadeGain;
+              outR[i] = audioLastSampleR * audioFadeGain;
+            } else {
+              outL[i] = 0;
+              outR[i] = 0;
+            }
+          }
+          audioLastSampleL = 0.0;
+          audioLastSampleR = 0.0;
+          isAudioPrebuffering = true;
+          return;
+        }
+
+        // 3. Ceiling Safety: Drain stale backlog (>240ms)
+        if (bufferedMs > 240) {
+          const excess = audioRingAvailable - Math.round(srcRate * 0.100);
+          if (excess > 0) {
+            audioRingReadPos = (audioRingReadPos + excess) % AUDIO_RING_BUFFER_SIZE;
+            audioRingAvailable -= excess;
+          }
+        }
+
+        // 4. Smooth Phase-Locked Loop (PLL) Drift Tracking with Deadband [75ms, 135ms]
+        if (bufferedMs > 135) {
+          audioTargetRateMult = 1.0 + Math.min(0.012, (bufferedMs - 135) * 0.00015);
+        } else if (bufferedMs < 75) {
+          audioTargetRateMult = 1.0 - Math.min(0.012, (75 - bufferedMs) * 0.00015);
+        } else {
+          audioTargetRateMult = 1.0;
+        }
+
+        audioCurrentRateMult = audioCurrentRateMult * 0.996 + audioTargetRateMult * 0.004;
+        const effectiveRatio = baseRatio * audioCurrentRateMult;
+
+        // 5. High-Fidelity Resampling with Linear Interpolation & Volume Ramp
+        for (let i = 0; i < bufLen; i++) {
+          if (audioRingAvailable <= 1) {
+            audioFadeGain = Math.max(0.0, audioFadeGain - (1.0 / 16));
+            outL[i] = audioLastSampleL * audioFadeGain;
+            outR[i] = audioLastSampleR * audioFadeGain;
+            continue;
+          }
+
+          if (audioFadeGain < 1.0) {
+            audioFadeGain = Math.min(1.0, audioFadeGain + (1.0 / 48));
+          }
+
+          const idx0 = audioRingReadPos;
+          const idx1 = (audioRingReadPos + 1) % AUDIO_RING_BUFFER_SIZE;
+          const alpha = audioFracPos;
+
+          const sL = audioRingBufferL[idx0] * (1.0 - alpha) + audioRingBufferL[idx1] * alpha;
+          const sR = audioRingBufferR[idx0] * (1.0 - alpha) + audioRingBufferR[idx1] * alpha;
+
+          outL[i] = sL * audioFadeGain;
+          outR[i] = sR * audioFadeGain;
+
+          audioLastSampleL = sL;
+          audioLastSampleR = sR;
+
+          audioFracPos += effectiveRatio;
+          if (audioFracPos >= 1.0) {
+            const step = Math.floor(audioFracPos);
+            audioFracPos -= step;
+            audioRingReadPos = (audioRingReadPos + step) % AUDIO_RING_BUFFER_SIZE;
+            audioRingAvailable = Math.max(0, audioRingAvailable - step);
+          }
+        }
+      };
+
+      if (audioAnalyser) {
+        node.connect(audioAnalyser);
+      } else if (audioGainNode) {
+        node.connect(audioGainNode);
+      }
+    } catch (e) {
+      console.warn('Continuous audio node creation error:', e);
+    }
+  }
+
+  function playPcmChunk(arrayBuffer) {
+    if (!audioCtx || !audioStreamActive) return;
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+
+    const int16Array = new Int16Array(arrayBuffer);
+    const numFrames = Math.floor(int16Array.length / audioChannels);
+    if (numFrames <= 0) return;
+
+    for (let i = 0; i < numFrames; i++) {
+      const sL = int16Array[i * audioChannels] / 32768.0;
+      const sR = audioChannels > 1 ? int16Array[i * audioChannels + 1] / 32768.0 : sL;
+
+      audioRingBufferL[audioRingWritePos] = sL;
+      audioRingBufferR[audioRingWritePos] = sR;
+      audioRingWritePos = (audioRingWritePos + 1) % AUDIO_RING_BUFFER_SIZE;
+    }
+    audioRingAvailable = Math.min(AUDIO_RING_BUFFER_SIZE, audioRingAvailable + numFrames);
+  }
+
+  function killScheduledAudioSources() {
+    if (audioWorkletNode) {
+      try { audioWorkletNode.port.postMessage({ type: 'reset' }); } catch (e) {}
+      try { audioWorkletNode.disconnect(); } catch (e) {}
+      audioWorkletNode = null;
+      audioWorkletReady = false;
+    }
+    if (audioContinuousNode) {
+      try { audioContinuousNode.disconnect(); } catch (e) {}
+      audioContinuousNode = null;
+    }
+    audioRingWritePos = 0;
+    audioRingReadPos = 0;
+    audioRingAvailable = 0;
+    audioFracPos = 0.0;
+    audioLastSampleL = 0.0;
+    audioLastSampleR = 0.0;
+    audioFadeGain = 0.0;
+    audioCurrentRateMult = 1.0;
+    audioTargetRateMult = 1.0;
+    isAudioPrebuffering = true;
+  }
+
+  function teardownHtml5Fallback(element) {
+    if (!element) return;
+    try {
+      element.pause();
+      element.removeAttribute('src');
+      element.load();
+    } catch (e) {}
+  }
+
+  function startHtml5AudioFallback(session) {
+    if (session !== undefined && session !== audioSessionId) return;
+    if (!state.connected || !state.serverHost) return;
+
+    teardownHtml5Fallback(html5AudioFallback);
+    html5AudioFallback = null;
+
+    const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+    const port = state.serverPort || (window.location.port && window.location.port !== '' ? window.location.port : '8000');
+    const httpProto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const streamUrl = `${httpProto}//${host}:${port}/api/audio/stream.wav?t=${Date.now()}`;
+    const element = new Audio(streamUrl);
+    html5AudioFallback = element;
+    element.volume = state.audioVolume || 1.0;
+    element.play().then(() => {
+      if (element !== html5AudioFallback || session !== audioSessionId || userManuallyStoppedAudio) {
+        teardownHtml5Fallback(element);
+        if (element === html5AudioFallback) html5AudioFallback = null;
+        return;
+      }
+      audioConnecting = false;
+      updateAudioUi(true);
+    }).catch((e) => {
+      console.warn('HTML5 audio play error:', e);
+      teardownHtml5Fallback(element);
+      if (element === html5AudioFallback) html5AudioFallback = null;
+      if (session !== audioSessionId || userManuallyStoppedAudio) return;
+      stopAudioStream(true);
+      showToast('Could not start audio stream', 'error');
+    });
+  }
+
+  function stopAudioStream(notifyUi = true) {
+    audioSessionId++;
+    audioStreamActive = false;
+    audioConnecting = false;
+    nextAudioPlayTime = 0;
+
+    if (window.AndroidApp && typeof window.AndroidApp.stopNativeAudioStream === 'function') {
+      try { window.AndroidApp.stopNativeAudioStream(); } catch (e) {}
+    }
+
+    if (notifyUi) {
+      updateAudioUi(false);
+    }
+
+    if (audioVisualizerAnimId) {
+      cancelAnimationFrame(audioVisualizerAnimId);
+      audioVisualizerAnimId = null;
+    }
+
+    if (audioGainNode && audioCtx && audioCtx.state !== 'closed') {
+      try {
+        audioGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+        audioGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      } catch (e) {}
+    }
+    killScheduledAudioSources();
+
+    if (audioWs) {
+      audioWs.onopen = null;
+      audioWs.onmessage = null;
+      audioWs.onclose = null;
+      audioWs.onerror = null;
+      try { audioWs.close(); } catch(e) {}
+      audioWs = null;
+    }
+
+    if (html5AudioFallback) {
+      const element = html5AudioFallback;
+      html5AudioFallback = null;
+      teardownHtml5Fallback(element);
+    }
+
+    if (audioCtx && audioCtx.state === 'running') {
+      try {
+        audioCtx.suspend().catch(() => {});
+      } catch(e) {}
+    }
+  }
+
+  // --- Bootstrapping ---
+  /* ==========================================================================
+     PCDeck Pro - Official Lemon Squeezy License API Engine & Chroma Themes
+     ========================================================================== */
+
+  window.isProUnlocked = function() {
+    return localStorage.getItem('pcdeck_pro_active') === 'true' || window.serverProActive === true;
+  };
+
+  function isWesternTier1User() {
+    try {
+      // 1. Android native device country
+      if (window.AndroidApp && typeof window.AndroidApp.getDeviceCountry === 'function') {
+        const country = (window.AndroidApp.getDeviceCountry() || '').trim().toUpperCase();
+        if (country) {
+          const westernCountries = ['US', 'CA', 'GB', 'AU', 'NZ', 'DE', 'FR', 'IT', 'ES', 'NL', 'SE', 'NO', 'DK', 'FI', 'CH', 'AT', 'BE', 'IE', 'LU', 'JP'];
+          return westernCountries.includes(country);
+        }
+      }
+
+      // 2. Timezone identification
+      const tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+      const westernPrefixes = [
+        'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+        'America/Phoenix', 'America/Anchorage', 'America/Honolulu', 'America/Detroit',
+        'America/Indiana', 'America/Boise', 'America/Toronto', 'America/Vancouver',
+        'America/Montreal', 'America/Edmonton', 'America/Winnipeg', 'America/Halifax',
+        'Europe/London', 'Europe/Dublin', 'Europe/Berlin', 'Europe/Paris',
+        'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Madrid', 'Europe/Rome',
+        'Europe/Vienna', 'Europe/Zurich', 'Europe/Stockholm', 'Europe/Oslo',
+        'Europe/Copenhagen', 'Europe/Helsinki', 'Europe/Lisbon', 'Europe/Luxembourg',
+        'Australia/', 'Pacific/Auckland', 'Asia/Tokyo'
+      ];
+      if (westernPrefixes.some(prefix => tz.startsWith(prefix))) {
+        return true;
+      }
+
+      // 3. Fallback: Browser language + timezone offset check
+      const lang = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+      const westernLocales = ['en-US', 'en-CA', 'en-GB', 'en-AU', 'en-NZ', 'de-DE', 'fr-FR', 'it-IT', 'es-ES', 'nl-NL'];
+      const offsetMinutes = new Date().getTimezoneOffset();
+      if (westernLocales.includes(lang) && offsetMinutes >= -120 && offsetMinutes <= 600) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function updatePppBanner() {
+    try {
+      const proLocalPriceWrap = document.getElementById('pro-local-price-wrap');
+      const buyBtnText = document.getElementById('modal-btn-buy-pro-text');
+
+      if (buyBtnText) buyBtnText.textContent = 'Unlock Lifetime Pro — $3.99';
+
+      const isWestern = isWesternTier1User();
+
+      if (proLocalPriceWrap) {
+        // Show "Check your local price" option for ALL non-Western / PPP eligible regions
+        proLocalPriceWrap.style.display = isWestern ? 'none' : 'block';
+      }
+    } catch (e) {
+      console.warn('[PPP] Locale check:', e);
+    }
+  }
+
+  window.openProUpgradeModal = function() {
+    const modal = document.getElementById('pro-upgrade-modal');
+    if (modal) {
+      updatePppBanner();
+      modal.style.display = 'flex';
+      vibrate(20);
+    }
+  };
+
+  window.closeProUpgradeModal = function() {
+    const modal = document.getElementById('pro-upgrade-modal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  function showCelebrationModal() {
+    const modal = document.getElementById('pro-celebration-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      vibrate([50, 50, 100]);
+      setTimeout(() => {
+        if (modal.style.display === 'flex') modal.style.display = 'none';
+      }, 4500);
+    }
+  }
+
+  function updateProUI(notifyServer) {
+    const isPro = window.isProUnlocked();
+    if (window.AndroidApp && typeof window.AndroidApp.setProStatus === 'function') {
+      try { window.AndroidApp.setProStatus(isPro); } catch (e) {}
+    }
+    const statusTitle = document.getElementById('settings-pro-status-title');
+    const statusDesc = document.getElementById('settings-pro-status-desc');
+    const btnUpgrade = document.getElementById('btn-open-pro-upgrade');
+    const keyRow = document.getElementById('settings-pro-key-row');
+    const headerBadge = document.getElementById('header-pro-badge');
+
+    if (headerBadge) {
+      headerBadge.style.display = isPro ? 'inline-block' : 'none';
+    }
+
+    if (statusTitle) {
+      statusTitle.textContent = isPro ? 'PCDeck Pro (Active)' : 'Free Edition';
+      statusTitle.style.color = isPro ? '#ffd700' : '#fff';
+    }
+    if (statusDesc) {
+      statusDesc.textContent = isPro ? '60/120 FPS High-Refresh Streaming, Custom HUD Mapper, Uncapped Bandwidth & OLED Themes Active' : 'Standard 30 FPS screen streaming, default controls & 10 MB/s file sharing';
+    }
+    if (btnUpgrade) {
+      btnUpgrade.style.display = isPro ? 'none' : 'block';
+    }
+    if (keyRow) {
+      keyRow.style.display = isPro ? 'none' : 'flex';
+    }
+    if (notifyServer !== false && mainWs && mainWs.readyState === WebSocket.OPEN) {
+      const authKey = localStorage.getItem('pcdeck_pro_license') || '';
+      const authInst = localStorage.getItem('pcdeck_pro_instance_id') || '';
+      if (authKey && authInst) {
+        mainWs.send(`pro_auth,${authKey},${authInst}`);
+      } else {
+        mainWs.send(`pro_status,${isPro ? '1' : '0'}`);
+      }
+    }
+
+    if (typeof window.syncTransferSpeedButtons === 'function') {
+      window.syncTransferSpeedButtons();
+    }
+    if (typeof window.updateTitlebarActions === 'function') {
+      window.updateTitlebarActions(state.activeTab);
+    }
+  }
+
+  async function activateDirectMobile(cleanKey) {
+    showToast('Activating PCDeck Pro license...', 'info');
+    try {
+      const instanceName = (navigator.userAgent && navigator.userAgent.includes('Android')) 
+        ? 'PCDeck Android Device' 
+        : 'PCDeck Client';
+
+      const response = await fetch('https://live.dodopayments.com/licenses/activate', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          license_key: cleanKey,
+          name: instanceName
+        })
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data) {
+        const instanceId = data.id || data.instance_id || ('inst_' + Date.now());
+        localStorage.setItem('pcdeck_pro_active', 'true');
+        localStorage.setItem('pcdeck_pro_license', cleanKey);
+        localStorage.setItem('pcdeck_pro_instance_id', instanceId);
+        localStorage.setItem('pcdeck_pro_meta', JSON.stringify(data));
+        updateProUI();
+        if (typeof window.closeProUpgradeModal === 'function') window.closeProUpgradeModal();
+        showCelebrationModal();
+        showToast('PCDeck Pro Activated Successfully!', 'success');
+        return true;
+      } else {
+        vibrate([40, 40, 40]);
+        let err = (data && (data.message || data.error || data.detail)) || '';
+        if (!err) {
+          if (response.status === 404) err = 'License key not found. Please check your purchase receipt.';
+          else if (response.status === 422) err = 'License activation limit reached for this key.';
+          else if (response.status === 403) err = 'License key is inactive or revoked.';
+          else err = 'Invalid license key. Please check your purchase receipt.';
+        }
+        showToast(`Activation failed: ${err}`, 'error');
+        return false;
+      }
+    } catch (netErr) {
+      vibrate([40, 40, 40]);
+      showToast('Activation error: Internet connection required to verify license.', 'error');
+      return false;
+    }
+  }
+
+  async function activateKey(keyStr) {
+    if (!keyStr || !keyStr.trim()) {
+      showToast('Please enter your license key', 'warn');
+      return false;
+    }
+    const cleanKey = keyStr.trim().replace(/['"]/g, '').toLowerCase();
+
+    // 1. Idempotency Check: if this client already holds an active license for this key, return immediately
+    if (localStorage.getItem('pcdeck_pro_active') === 'true' && localStorage.getItem('pcdeck_pro_license') === cleanKey) {
+      showToast('PCDeck Pro is already active on this device!', 'info');
+      if (typeof window.closeProUpgradeModal === 'function') window.closeProUpgradeModal();
+      return true;
+    }
+
+    // 2. PC-Forwarding: If connected to PCDeck over Wi-Fi, attempt activating the PC directly
+    // This writes ~/.pcdeck/license.dat to the PC and broadcasts pro_unlocked,1 to all phones for free!
+    if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+      showToast('Activating Pro on connected PC...', 'info');
+      mainWs.send(`pro_auth,${cleanKey}`);
+      return new Promise((resolve) => {
+        const timer = setTimeout(async () => {
+          if (window._proAuthCallback) {
+            window._proAuthCallback = null;
+            console.log('[License] PC activation timed out, trying direct mobile fallback');
+            const fallbackOk = await activateDirectMobile(cleanKey);
+            resolve(fallbackOk);
+          }
+        }, 14000);
+
+        window._proAuthCallback = async (success, errMsg) => {
+          clearTimeout(timer);
+          if (success) {
+            localStorage.setItem('pcdeck_pro_active', 'true');
+            localStorage.setItem('pcdeck_pro_license', cleanKey);
+            updateProUI();
+            if (typeof window.closeProUpgradeModal === 'function') window.closeProUpgradeModal();
+            showCelebrationModal();
+            showToast('PCDeck Pro Activated Successfully on PC and Phone!', 'success');
+            resolve(true);
+          } else {
+            console.log('[License] PC activation error (' + errMsg + '), falling back to direct mobile activation');
+            const fallbackOk = await activateDirectMobile(cleanKey);
+            if (fallbackOk) {
+              resolve(true);
+            } else {
+              vibrate([40, 40, 40]);
+              showToast(`Activation failed: ${errMsg || 'Invalid license key'}`, 'error');
+              resolve(false);
+            }
+          }
+        };
+      });
+    }
+
+    // 3. Standalone Mobile Activation (fallback if PC is not connected)
+    return await activateDirectMobile(cleanKey);
+  }
+
+  const VALID_CHROMA_THEMES = ['default', 'aero', 'y2k', 'crt', 'purple', 'oled'];
+
+  function applyChromaTheme(themeId) {
+    if (!VALID_CHROMA_THEMES.includes(themeId)) {
+      themeId = 'default';
+    }
+    document.body.removeAttribute('data-theme');
+    if (themeId && themeId !== 'default') {
+      document.body.setAttribute('data-theme', themeId);
+    }
+    localStorage.setItem('pcdeck_chroma_theme', themeId);
+  }
+
+  function initProEngine() {
+    updateProUI();
+
+    // Restore saved theme
+    let savedTheme = localStorage.getItem('pcdeck_chroma_theme') || 'default';
+    if (!VALID_CHROMA_THEMES.includes(savedTheme)) {
+      savedTheme = 'default';
+      try { localStorage.setItem('pcdeck_chroma_theme', 'default'); } catch(e){}
+    }
+    if (savedTheme !== 'default' && window.isProUnlocked()) {
+      applyChromaTheme(savedTheme);
+      const sel = document.getElementById('setting-theme-picker');
+      if (sel) sel.value = savedTheme;
+    }
+
+    // Corner Pro Notification Toast / Card (Bottom-Right)
+    let proCornerTimeout = null;
+    window.showProCornerCard = function() {
+      const card = document.getElementById('pro-corner-card');
+      if (card) {
+        card.classList.add('show');
+        vibrate(25);
+        if (proCornerTimeout) clearTimeout(proCornerTimeout);
+        proCornerTimeout = setTimeout(() => {
+          card.classList.remove('show');
+        }, 8000);
+      }
+    };
+
+    window.hideProCornerCard = function() {
+      const card = document.getElementById('pro-corner-card');
+      if (card) card.classList.remove('show');
+      if (proCornerTimeout) clearTimeout(proCornerTimeout);
+    };
+
+    window.openProWebsite = function() {
+      const checkoutUrl = 'https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://getpcdeck.com&singlePage=true';
+      if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
+        window.AndroidApp.openUrl(checkoutUrl);
+      } else {
+        const w = window.open(checkoutUrl, '_blank');
+        if (!w || w.closed || typeof w.closed === 'undefined') {
+          window.location.href = checkoutUrl;
+        }
+      }
+    };
+
+    // Modal buttons
+    const btnOpenPro = document.getElementById('btn-open-pro-upgrade');
+    if (btnOpenPro) btnOpenPro.onclick = window.openProUpgradeModal;
+
+    const btnClosePro = document.getElementById('modal-btn-close-pro');
+    if (btnClosePro) btnClosePro.onclick = window.closeProUpgradeModal;
+
+    const btnBuyPro = document.getElementById('modal-btn-buy-pro');
+    if (btnBuyPro) {
+      btnBuyPro.onclick = window.openProWebsite;
+    }
+
+    const btnCheckLocalPrice = document.getElementById('btn-check-local-price');
+    if (btnCheckLocalPrice) {
+      btnCheckLocalPrice.onclick = window.openProWebsite;
+    }
+
+    const btnCloseCelebration = document.getElementById('btn-close-celebration');
+    if (btnCloseCelebration) {
+      btnCloseCelebration.onclick = () => {
+        const modal = document.getElementById('pro-celebration-modal');
+        if (modal) modal.style.display = 'none';
+      };
+    }
+
+    // Corner Card Buttons
+    const btnCloseCorner = document.getElementById('btn-close-pro-corner');
+    if (btnCloseCorner) btnCloseCorner.onclick = window.hideProCornerCard;
+
+    const btnCornerBuy = document.getElementById('btn-corner-buy-pro');
+    if (btnCornerBuy) btnCornerBuy.onclick = () => {
+      window.hideProCornerCard();
+      window.openProWebsite();
+    };
+
+    const btnCornerModal = document.getElementById('btn-corner-open-modal');
+    if (btnCornerModal) btnCornerModal.onclick = () => {
+      window.hideProCornerCard();
+      window.openProUpgradeModal();
+    };
+
+    // Key activation from modal
+    const btnActModal = document.getElementById('modal-btn-activate-key');
+    const inputKeyModal = document.getElementById('modal-pro-key-input');
+    if (btnActModal && inputKeyModal) {
+      btnActModal.onclick = () => activateKey(inputKeyModal.value);
+    }
+
+    // Key activation from settings tab
+    const btnActSettings = document.getElementById('btn-activate-key-settings');
+    const inputKeySettings = document.getElementById('input-license-key-settings');
+    if (btnActSettings && inputKeySettings) {
+      btnActSettings.onclick = () => activateKey(inputKeySettings.value);
+    }
+
+    // Radio Segmented FPS Toggle in Title Bar
+    window.setStreamFps = function(fpsVal) {
+      const btn30 = document.getElementById('btn-fps-30');
+      const btn60 = document.getElementById('btn-fps-60');
+      const selFps = document.getElementById('setting-stream-fps');
+
+      if (fpsVal === 60 || fpsVal === '60') {
+        if (!window.isProUnlocked()) {
+          // Keep at 30 FPS, open Pro upgrade modal and notify user
+          if (btn60) btn60.classList.remove('active');
+          if (btn30) btn30.classList.add('active');
+          if (selFps) selFps.value = '30';
+          window.openProUpgradeModal();
+          showToast('60 FPS Ultra Streaming requires PCDeck Pro', 'warn');
+          return;
+        }
+        if (btn30) btn30.classList.remove('active');
+        if (btn60) btn60.classList.add('active');
+        if (selFps) selFps.value = '60';
+        state.streamFps = 60;
+        sendStreamConfig();
+        saveAllSettings(false);
+        showToast('Screen streaming set to 60 FPS Ultra', 'success', '<svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg>');
+      } else {
+        if (btn60) btn60.classList.remove('active');
+        if (btn30) btn30.classList.add('active');
+        if (selFps) selFps.value = '30';
+        state.streamFps = 30;
+        sendStreamConfig();
+        saveAllSettings(false);
+        showToast('Screen streaming set to 30 FPS Standard', 'success');
+      }
+    };
+
+    const btnFps30 = document.getElementById('btn-fps-30');
+    const btnFps60 = document.getElementById('btn-fps-60');
+    if (btnFps30) btnFps30.onclick = () => window.setStreamFps(30);
+    if (btnFps60) btnFps60.onclick = () => window.setStreamFps(60);
+
+    // FPS Gate in Settings
+    const selFps = document.getElementById('setting-stream-fps');
+    if (selFps) {
+      selFps.onchange = () => {
+        if ((selFps.value === '60' || selFps.value === '120') && !window.isProUnlocked()) {
+          selFps.value = '30';
+          window.openProUpgradeModal();
+          showToast('60 FPS High-Refresh Streaming requires PCDeck Pro', 'info');
+          return;
+        }
+        window.setStreamFps(selFps.value === '30' ? 30 : 60);
+      };
+    }
+
+    // Adaptive Stream Quality Selector
+    const selClarity = document.getElementById('setting-stream-clarity');
+    if (selClarity) {
+      selClarity.onchange = () => {
+        const val = selClarity.value;
+        state.autoQualityMode = val;
+        if (val === 'auto') {
+          showToast('Auto Dynamic Quality Enabled (Adaptive Streaming)', 'success');
+          updateAdaptiveQuality(state.latency || 25);
+        } else if (val === 'ultrahd') {
+          state.streamQuality = 90;
+          state.streamScale = 1.0;
+          showToast('Ultra HD Crystal Enabled (100% Native · 90Q)', 'success');
+          sendStreamConfig();
+        } else if (val === 'sharp') {
+          state.streamQuality = 80;
+          state.streamScale = 0.90;
+          showToast('High Clarity Fixed (90% Scale · 80Q)', 'success');
+          sendStreamConfig();
+        } else if (val === 'speed') {
+          state.streamQuality = 55;
+          state.streamScale = 0.65;
+          showToast('Low Latency Speed (65% Scale · 55Q)', 'info');
+          sendStreamConfig();
+        } else {
+          state.streamQuality = 70;
+          state.streamScale = 0.80;
+          showToast('Balanced Fast (80% Scale · 70Q)', 'success');
+          sendStreamConfig();
+        }
+        saveAllSettings(false);
+      };
+    }
+
+    // Title Bar Context Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
+    // Title Bar Context Actions (Screen Streaming FPS vs Kinetic Fast Transfer Pill)
+    window.updateTitlebarActions = function(targetTabId) {
+      const activeTab = targetTabId || state.activeTab || 'tab-screen';
+      const fpsGroup = document.getElementById('titlebar-fps-group');
+      const transferPill = document.getElementById('titlebar-transfer-group');
+      const btnGameHud = document.getElementById('btn-screen-gamepad-hud');
+      const btnHeaderGp = document.getElementById('btn-header-gamepad');
+
+      const isNativeApp = !!(window.AndroidApp || window.isNativeApp || (window.navigator && window.navigator.userAgent && window.navigator.userAgent.includes('PCDeckNativeApp')));
+      const isWebBrowser = !isNativeApp && (document.documentElement.classList.contains('is-web-browser') || document.body.classList.contains('is-web-browser'));
+
+      if (typeof updateGamepadHudVisibility === 'function') {
+        updateGamepadHudVisibility();
+      }
+
+      if (activeTab === 'tab-files') {
+        if (fpsGroup) fpsGroup.style.display = 'none';
+        if (transferPill) transferPill.style.display = 'inline-flex';
+        syncTransferSpeedButtons();
+      } else {
+        if (transferPill) transferPill.style.display = 'none';
+        if (fpsGroup) fpsGroup.style.display = 'inline-flex';
+      }
+    };
+
+    // Kinetic Fast Transfer Pill Sync & Toggle
+    function syncTransferSpeedButtons() {
+      const transferPill = document.getElementById('titlebar-transfer-group');
+      const transferLabel = document.getElementById('fast-transfer-label');
+      const selSpeed = document.getElementById('setting-transfer-speed');
+      const isPro = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+      const isTurbo = (state.transferSpeed === 'turbo' || (isPro && state.transferSpeed !== 'standard')) && isPro;
+
+      if (!isPro && state.transferSpeed === 'turbo') {
+        state.transferSpeed = 'standard';
+      }
+
+      if (transferPill) {
+        transferPill.classList.toggle('pro-active', isTurbo);
+        transferPill.title = isPro
+          ? (isTurbo ? 'Fast File Transfer • Gigabit LAN Uncapped (Pro)' : 'Fast File Transfer • Standard 10 MB/s')
+          : 'Fast File Transfer • Tap to unlock Gigabit Turbo';
+      }
+
+      if (transferLabel) {
+        transferLabel.textContent = 'Fast File Transfer';
+      }
+
+      if (selSpeed) selSpeed.value = isTurbo ? 'turbo' : 'standard';
+    }
+    window.syncTransferSpeedButtons = syncTransferSpeedButtons;
+
+    // Toggle Fast Transfer Tier on Pill Click
+    const transferPill = document.getElementById('titlebar-transfer-group');
+    if (transferPill) {
+      transferPill.onclick = () => {
+        vibrate(20);
+        if (!window.isProUnlocked()) {
+          window.openProUpgradeModal();
+          showToast('Uncapped Gigabit LAN File Bandwidth requires PCDeck Pro', 'warn');
+          return;
+        }
+        const nextSpeed = state.transferSpeed === 'turbo' ? 'standard' : 'turbo';
+        window.setTransferSpeed(nextSpeed);
+      };
+    }
+
+    window.setTransferSpeed = function(speedVal) {
+      const selSpeed = document.getElementById('setting-transfer-speed');
+
+      if (speedVal === 'turbo') {
+        if (!window.isProUnlocked()) {
+          if (selSpeed) selSpeed.value = 'standard';
+          window.openProUpgradeModal();
+          showToast('Uncapped Gigabit LAN File Bandwidth requires PCDeck Pro', 'warn');
+          syncTransferSpeedButtons();
+          return;
+        }
+        if (selSpeed) selSpeed.value = 'turbo';
+        state.transferSpeed = 'turbo';
+        saveAllSettings(false);
+        syncTransferSpeedButtons();
+        showToast('Fast Transfer: Turbo Gigabit Mode Active (Uncapped)', 'success');
+      } else {
+        if (selSpeed) selSpeed.value = 'standard';
+        state.transferSpeed = 'standard';
+        saveAllSettings(false);
+        syncTransferSpeedButtons();
+        showToast('Fast Transfer: Standard Mode Active (10 MB/s)', 'info');
+      }
+    };
+
+    // Reflect saved choices in title-bar toggles on startup
+    (function syncTitlebarControls() {
+      const btn30 = document.getElementById('btn-fps-30');
+      const btn60 = document.getElementById('btn-fps-60');
+      const use60 = state.streamFps === 60 && window.isProUnlocked();
+      if (!use60) state.streamFps = 30;
+      if (btn30) btn30.classList.toggle('active', !use60);
+      if (btn60) btn60.classList.toggle('active', use60);
+      if (selFps) selFps.value = use60 ? '60' : '30';
+
+      syncTransferSpeedButtons();
+      window.updateTitlebarActions(state.activeTab);
+    })();
+
+    // Turbo Speed Gate in Settings
+    const selSpeed = document.getElementById('setting-transfer-speed');
+    if (selSpeed) {
+      selSpeed.onchange = () => {
+        if (selSpeed.value === 'turbo' && !window.isProUnlocked()) {
+          selSpeed.value = 'standard';
+          window.openProUpgradeModal();
+          showToast('Uncapped LAN File Bandwidth requires PCDeck Pro', 'info');
+          syncTransferSpeedButtons();
+          return;
+        }
+        window.setTransferSpeed(selSpeed.value === 'turbo' ? 'turbo' : 'standard');
+      };
+    }
+
+    // Theme Picker Gate
+    const selTheme = document.getElementById('setting-theme-picker');
+    if (selTheme) {
+      selTheme.onchange = () => {
+        const val = selTheme.value;
+        if (val !== 'default' && !window.isProUnlocked()) {
+          selTheme.value = 'default';
+          applyChromaTheme('default');
+          window.showProCornerCard();
+          showToast('Custom Aesthetic Themes require PCDeck Pro', 'info');
+        } else {
+          applyChromaTheme(val);
+          const themeNames = {
+            'default': 'Cyber Cyan',
+            'aero': 'Frutiger Aero',
+            'y2k': 'Y2K Chrome',
+            'crt': 'Cool Niece',
+            'purple': 'Synthwave',
+            'gold': 'Solar Gold',
+            'analog': 'Industrial Analog',
+            'oled': 'OLED Pure Dark'
+          };
+          showToast(`Applied Theme: ${themeNames[val] || val}`, 'success');
+        }
+      };
+    }
+  }
+
+  // --- Cyber-Neon Onboarding Carousel & Direct-to-QR Flow ---
+  function initOnboardingEngine() {
+    const modal = document.getElementById('onboarding-modal');
+    if (!modal) return;
+
+    let currentSlide = 1;
+    const totalSlides = 2;
+
+    function showSlide(index) {
+      currentSlide = Math.max(1, Math.min(totalSlides, index));
+      const slides = modal.querySelectorAll('.onboarding-slide');
+      slides.forEach(s => {
+        const slideNum = parseInt(s.getAttribute('data-slide'), 10);
+        s.classList.toggle('active', slideNum === currentSlide);
+      });
+
+      const dots = modal.querySelectorAll('.dot-indicator');
+      dots.forEach(d => {
+        const dotNum = parseInt(d.getAttribute('data-dot'), 10);
+        d.classList.toggle('active', dotNum === currentSlide);
+      });
+
+      const btnPrev = document.getElementById('btn-onboarding-prev');
+      const btnNext = document.getElementById('btn-onboarding-next');
+      if (btnPrev) btnPrev.style.display = currentSlide > 1 ? 'inline-flex' : 'none';
+      if (btnNext) {
+        btnNext.textContent = currentSlide === 1 ? 'NEXT: CONNECT' : 'SCAN PC QR CODE';
+      }
+    }
+
+    window.openOnboardingModal = function() {
+      showSlide(1);
+      modal.classList.add('show');
+      vibrate(20);
+    };
+
+    window.closeOnboardingModal = function(completed = true) {
+      modal.classList.remove('show');
+      if (completed) {
+        localStorage.setItem('pcdeck_onboarding_completed', 'true');
+      }
+      const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+      // If not connected and in native app without saved IP, show connect modal
+      if (!state.connected && !localStorage.getItem('pcdeck_ip') && !localStorage.getItem('neontrack_ip') && isNativeApp) {
+        openConnectModal();
+      }
+    };
+
+    const btnSkip = document.getElementById('btn-skip-onboarding');
+    if (btnSkip) btnSkip.onclick = () => window.closeOnboardingModal(true);
+
+    const btnPrev = document.getElementById('btn-onboarding-prev');
+    if (btnPrev) btnPrev.onclick = () => showSlide(currentSlide - 1);
+
+    const btnNext = document.getElementById('btn-onboarding-next');
+    if (btnNext) {
+      btnNext.onclick = () => {
+        if (currentSlide < totalSlides) {
+          showSlide(currentSlide + 1);
+        } else {
+          window.closeOnboardingModal(true);
+          startQrScanner();
+        }
+      };
+    }
+
+    const dots = modal.querySelectorAll('.dot-indicator');
+    dots.forEach(d => {
+      d.onclick = () => {
+        const dotNum = parseInt(d.getAttribute('data-dot'), 10);
+        if (dotNum) showSlide(dotNum);
+      };
+    });
+
+    const pcWebsiteUrl = 'https://pcdeck-pro.vercel.app';
+    const pcTutorialsUrl = 'https://pcdeck-pro.vercel.app/#install-help';
+
+    const btnOpenSite = document.getElementById('btn-onboarding-open-site');
+    if (btnOpenSite) {
+      btnOpenSite.onclick = () => {
+        if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
+          window.AndroidApp.openUrl(pcWebsiteUrl);
+        } else {
+          window.open(pcWebsiteUrl, '_blank');
+        }
+        showToast('Opening PCDeck Website...', 'success');
+      };
+    }
+
+    const btnTutorials = document.getElementById('btn-onboarding-tutorials');
+    if (btnTutorials) {
+      btnTutorials.onclick = () => {
+        if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
+          window.AndroidApp.openUrl(pcTutorialsUrl);
+        } else {
+          window.open(pcTutorialsUrl, '_blank');
+        }
+        showToast('Opening Setup Guides & Tutorials...', 'success');
+      };
+    }
+
+    const btnShareLink = document.getElementById('btn-onboarding-share-link');
+    if (btnShareLink) {
+      btnShareLink.onclick = () => {
+        if (navigator.share) {
+          navigator.share({
+            title: 'PCDeck for Windows',
+            text: 'Download the free PCDeck Windows client to connect your phone:',
+            url: pcWebsiteUrl
+          }).catch(() => {});
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(pcWebsiteUrl).then(() => {
+            showToast('Copied link: pcdeck-pro.vercel.app', 'success');
+          });
+        } else {
+          showToast('Visit pcdeck-pro.vercel.app on your PC', 'info');
+        }
+      };
+    }
+
+    // Trigger buttons from Connect Modal & Settings
+    const btnOpenGuide = document.getElementById('btn-open-setup-guide');
+    if (btnOpenGuide) {
+      btnOpenGuide.onclick = () => {
+        if (el.connectModal) el.connectModal.classList.remove('show');
+        window.openOnboardingModal();
+      };
+    }
+
+    const btnSettingsGuide = document.getElementById('btn-settings-open-guide');
+    if (btnSettingsGuide) {
+      btnSettingsGuide.onclick = () => {
+        window.openOnboardingModal();
+      };
+    }
+  }
+
+  // =========================================================================
+  // VIRTUAL XBOX GAMEPAD CONTROLLER ENGINE
+  // =========================================================================
+  let gamepadActive = false;
+  const gpStickState = {
+    left: { x: 0, y: 0, active: false, pointerId: null },
+    right: { x: 0, y: 0, active: false, pointerId: null },
+  };
+
+  function initGamepadEngine() {
+    const btnToggle = document.getElementById('btn-gamepad-mode-toggle');
+    const btnReturn = document.getElementById('btn-return-trackpad');
+    const stdTrackpad = document.getElementById('standard-trackpad-view');
+    const gpContainer = document.getElementById('gamepad-container');
+
+    let activeGpPreset = 'universal';
+    let gpSensitivity = 1.0;
+    let gpHaptics = true;
+    let gpHybridMode = true;
+
+    // Presets definitions
+    const GP_PRESETS = {
+      universal: {
+        name: 'Universal (Web & PC)',
+        buttons: { y: 'Y', x: 'X', b: 'B', a: 'A' },
+        sublabels: { y: 'USE', x: 'RELOAD', b: 'BRAKE', a: 'GAS/JUMP' },
+        triggers: { ltTitle: 'LT', ltSub: 'BRAKE', rtTitle: 'RT', rtSub: 'GAS', lbTitle: 'LB', rbTitle: 'RB' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #fbbf24 0%, #f59e0b 60%, #d97706 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ef4444 60%, #b91c1c 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)'
+        },
+        textColors: { y: '#000', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'Universal: Web & PC Games'
+      },
+      xbox: {
+        name: 'Xbox 360',
+        buttons: { y: 'Y', x: 'X', b: 'B', a: 'A' },
+        sublabels: { y: 'USE', x: 'RELOAD', b: 'CROUCH', a: 'JUMP' },
+        triggers: { ltTitle: 'LT', ltSub: 'AIM', rtTitle: 'RT', rtSub: 'FIRE', lbTitle: 'LB', rbTitle: 'RB' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #fbbf24 0%, #f59e0b 60%, #d97706 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ef4444 60%, #b91c1c 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)'
+        },
+        textColors: { y: '#000', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'Virtual Xbox 360: Active'
+      },
+      ps: {
+        name: 'PlayStation',
+        buttons: { y: '△', x: '□', b: '○', a: 'X' },
+        sublabels: { y: 'TRIANGLE', x: 'SQUARE', b: 'CIRCLE', a: 'CROSS' },
+        triggers: { ltTitle: 'L2', ltSub: 'AIM', rtTitle: 'R2', rtSub: 'FIRE', lbTitle: 'L1', rbTitle: 'R1' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ec4899 60%, #be185d 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ef4444 0%, #dc2626 60%, #991b1b 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)'
+        },
+        textColors: { y: '#fff', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'Virtual DualShock 4: Active'
+      },
+      racing: {
+        name: 'Racing Mode',
+        buttons: { y: 'NOS', x: 'GEAR-', b: 'HAND', a: 'GEAR+' },
+        sublabels: { y: 'BOOST', x: 'SHIFT DN', b: 'E-BRAKE', a: 'SHIFT UP' },
+        triggers: { ltTitle: 'BRAKE', ltSub: 'STOP', rtTitle: 'GAS', rtSub: 'ACCEL', lbTitle: 'CLUTCH', rbTitle: 'HORN' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #fbbf24 0%, #f59e0b 60%, #d97706 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ef4444 60%, #b91c1c 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)'
+        },
+        textColors: { y: '#000', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'Racing Wheel & Pedals: Active'
+      },
+      wasd: {
+        name: 'WASD / FPS',
+        buttons: { y: 'E', x: 'R', b: 'C', a: 'SPACE' },
+        sublabels: { y: 'USE', x: 'RELOAD', b: 'CROUCH', a: 'JUMP' },
+        triggers: { ltTitle: 'R-CLICK', ltSub: 'AIM', rtTitle: 'L-CLICK', rtSub: 'SHOOT', lbTitle: 'Q (LEAN)', rbTitle: 'E (LEAN)' },
+        colors: {
+          y: 'radial-gradient(circle at 35% 30%, #fbbf24 0%, #f59e0b 60%, #d97706 100%)',
+          x: 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)',
+          b: 'radial-gradient(circle at 35% 30%, #ff4b72 0%, #ef4444 60%, #b91c1c 100%)',
+          a: 'radial-gradient(circle at 35% 30%, #2ecc71 0%, #10b981 60%, #047857 100%)'
+        },
+        textColors: { y: '#000', x: '#fff', b: '#fff', a: '#fff' },
+        driverLabel: 'WASD FPS Keypad: Active'
+      }
+    };
+
+    function applyGamepadPreset(presetKey) {
+      activeGpPreset = presetKey;
+      const conf = GP_PRESETS[presetKey] || GP_PRESETS.universal;
+      const driverBadge = document.getElementById('gp-driver-text');
+      if (driverBadge) {
+        driverBadge.textContent = conf.driverLabel;
+      }
+
+      const emblemText = document.getElementById('gp-center-emblem-text');
+      if (emblemText) {
+        if (presetKey === 'universal') emblemText.textContent = 'UNIVERSAL DECK';
+        else if (presetKey === 'xbox') emblemText.textContent = 'XBOX 360 PC DECK';
+        else if (presetKey === 'ps') emblemText.textContent = 'PLAYSTATION DECK';
+        else if (presetKey === 'racing') emblemText.textContent = 'RACING SIM DECK';
+        else if (presetKey === 'wasd') emblemText.textContent = 'PC KEYBOARD/MOUSE';
+      }
+
+      const presetChips = document.querySelectorAll('.gp-preset-chip');
+      presetChips.forEach(c => {
+        c.classList.toggle('active', c.dataset.preset === presetKey);
+      });
+
+      // Update diamond buttons label and sublabels
+      const diamonds = document.querySelectorAll('#gp-action-diamond, .gp-abxy-diamond');
+      diamonds.forEach(diamond => {
+        Object.keys(conf.buttons).forEach(btnKey => {
+          const btn = diamond.querySelector(`[data-gp="${btnKey}"]`);
+          if (btn) {
+            const jewel = btn.querySelector('.gp-btn-jewel, .btn-glyph');
+            if (jewel) {
+              jewel.textContent = conf.buttons[btnKey];
+            } else {
+              btn.textContent = conf.buttons[btnKey];
+            }
+            const sub = btn.querySelector('.gp-action-sublabel');
+            if (sub && conf.sublabels && conf.sublabels[btnKey]) {
+              sub.textContent = conf.sublabels[btnKey];
+            }
+            btn.style.background = conf.colors[btnKey];
+            btn.style.color = conf.textColors[btnKey];
+          }
+        });
+      });
+
+      // Update shoulder trigger and bumper labels
+      const ltTitle = document.getElementById('lt-btn-title');
+      const ltSub = document.getElementById('lt-btn-sub');
+      const rtTitle = document.getElementById('rt-btn-title');
+      const rtSub = document.getElementById('rt-btn-sub');
+      const lbTitle = document.getElementById('lb-btn-title');
+      const rbTitle = document.getElementById('rb-btn-title');
+
+      if (conf.triggers) {
+        if (ltTitle) ltTitle.textContent = conf.triggers.ltTitle;
+        if (ltSub) ltSub.textContent = conf.triggers.ltSub;
+        if (rtTitle) rtTitle.textContent = conf.triggers.rtTitle;
+        if (rtSub) rtSub.textContent = conf.triggers.rtSub;
+        if (lbTitle) lbTitle.textContent = conf.triggers.lbTitle;
+        if (rbTitle) rbTitle.textContent = conf.triggers.rbTitle;
+      }
+
+      showToast(`Gamepad Preset: ${conf.name}`, 'success');
+    }
+
+    // Preset chips click
+    const presetChips = document.querySelectorAll('.gp-preset-chip');
+    presetChips.forEach(chip => {
+      chip.onclick = () => {
+        vibrate(15);
+        applyGamepadPreset(chip.dataset.preset);
+      };
+    });
+
+    // Top Header Menu & Console Options Modal
+    const btnTopMenu = document.getElementById('btn-gp-top-menu');
+    const btnGuideOrb = document.getElementById('btn-gp-guide-orb');
+    const btnDriverBadge = document.getElementById('gp-driver-badge');
+    const bottomPresetBar = document.getElementById('gp-bottom-preset-bar');
+    const gpConsoleMenuModal = document.getElementById('gp-console-menu-modal');
+    const btnGpMenuModalClose = document.getElementById('btn-gp-menu-modal-close');
+    const btnGpMenuDone = document.getElementById('btn-gp-menu-done');
+
+    function openGpConsoleMenu() {
+      vibrate(15);
+      if (gpConsoleMenuModal) {
+        gpConsoleMenuModal.style.display = 'flex';
+      }
+    }
+
+    function closeGpConsoleMenu() {
+      vibrate(10);
+      if (gpConsoleMenuModal) {
+        gpConsoleMenuModal.style.display = 'none';
+      }
+    }
+
+    if (btnGpMenuModalClose) {
+      btnGpMenuModalClose.onclick = (e) => {
+        e.preventDefault();
+        closeGpConsoleMenu();
+      };
+    }
+    if (btnGpMenuDone) {
+      btnGpMenuDone.onclick = (e) => {
+        e.preventDefault();
+        closeGpConsoleMenu();
+      };
+    }
+    if (gpConsoleMenuModal) {
+      gpConsoleMenuModal.onclick = (e) => {
+        if (e.target === gpConsoleMenuModal) {
+          closeGpConsoleMenu();
+        }
+      };
+    }
+
+    function toggleBottomConsolePresets() {
+      if (gpConsoleMenuModal) {
+        if (gpConsoleMenuModal.style.display === 'flex') {
+          closeGpConsoleMenu();
+        } else {
+          openGpConsoleMenu();
+        }
+        return;
+      }
+      vibrate(15);
+      if (bottomPresetBar) {
+        bottomPresetBar.classList.add('pulse-highlight');
+        bottomPresetBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => bottomPresetBar.classList.remove('pulse-highlight'), 1200);
+      }
+      showToast('Console Layouts: Xbox 360, PlayStation, Racing, WASD/FPS', 'info');
+    }
+
+    // Input Dispatch Engine Toggle (Universal Web vs Direct Controller)
+    const btnGpHybridToggle = document.getElementById('btn-gp-hybrid-toggle');
+    const gpHybridLabel = document.getElementById('gp-hybrid-status-label');
+    if (btnGpHybridToggle) {
+      btnGpHybridToggle.onclick = () => {
+        vibrate(15);
+        gpHybridMode = !gpHybridMode;
+        btnGpHybridToggle.classList.toggle('active', gpHybridMode);
+        if (gpHybridLabel) {
+          gpHybridLabel.textContent = gpHybridMode ? 'UNIVERSAL HYBRID (WEB + PC)' : 'DIRECT CONTROLLER ONLY';
+        }
+        sendCommand(`gp,hybrid,${gpHybridMode ? 1 : 0}`);
+        showToast(gpHybridMode ? 'Universal Mode: Web + PC Games' : 'Direct Controller: ViGEm Only', 'info');
+      };
+    }
+
+    if (btnTopMenu) {
+      btnTopMenu.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openGpConsoleMenu();
+      };
+    }
+    if (btnGuideOrb) {
+      btnGuideOrb.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleBottomConsolePresets();
+      };
+    }
+    if (btnDriverBadge) {
+      btnDriverBadge.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleBottomConsolePresets();
+      };
+    }
+
+    // Top Back-to-Trackpad Button
+    const btnTopBack = document.getElementById('btn-gp-top-back-trackpad');
+    if (btnTopBack) {
+      btnTopBack.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeGpConsoleMenu();
+        setGamepadMode(false);
+        showToast('Switched to Trackpad', 'info');
+      };
+    }
+
+    // Stick Sensitivity Toggle
+    const btnSens = document.getElementById('btn-gp-sens-toggle');
+    const SENS_OPTIONS = [1.0, 1.5, 2.0];
+    if (btnSens) {
+      btnSens.onclick = () => {
+        vibrate(15);
+        let idx = (SENS_OPTIONS.indexOf(gpSensitivity) + 1) % SENS_OPTIONS.length;
+        gpSensitivity = SENS_OPTIONS[idx];
+        btnSens.textContent = `Sens: ${gpSensitivity.toFixed(1)}x`;
+        showToast(`Stick Sensitivity: ${gpSensitivity.toFixed(1)}x`, 'info', '️');
+      };
+    }
+
+    // Haptics Toggle
+    const btnHaptics = document.getElementById('btn-gp-haptic-toggle');
+    if (btnHaptics) {
+      btnHaptics.onclick = () => {
+        gpHaptics = !gpHaptics;
+        btnHaptics.classList.toggle('active', gpHaptics);
+        btnHaptics.textContent = gpHaptics ? 'Haptics: ON' : 'Haptics: OFF';
+        vibrate(gpHaptics ? 25 : 5);
+      };
+    }
+
+    let isGpLayoutEditing = false;
+    let selectedGpElemId = null;
+
+    // Default Gamepad Layout
+    const DEFAULT_GP_LAYOUT = {
+      elements: {
+        'elem-left-stick': { scale: 1.0, hidden: false, name: 'Left Stick (Move)' },
+        'elem-dpad': { scale: 1.0, hidden: false, name: '3D D-Pad' },
+        'elem-actions': { scale: 1.0, hidden: false, name: 'Action Diamond' },
+        'elem-right-stick': { scale: 1.0, hidden: false, name: 'Right Stick (Aim)' },
+        'elem-lt': { scale: 1.0, hidden: false, name: 'Left Trigger (LT)' },
+        'elem-lb': { scale: 1.0, hidden: false, name: 'Left Bumper (LB)' },
+        'elem-rt': { scale: 1.0, hidden: false, name: 'Right Trigger (RT)' },
+        'elem-rb': { scale: 1.0, hidden: false, name: 'Right Bumper (RB)' },
+        'elem-sys': { scale: 1.0, hidden: false, name: 'System Hub' },
+        'elem-center-spine': { scale: 1.0, hidden: false, name: 'PCDeck Emblem' }
+      },
+      customButtons: []
+    };
+
+    function loadGpLayout() {
+      try {
+        const raw = localStorage.getItem('pcdeck_gamepad_custom_layout');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.elements) return parsed;
+        }
+      } catch (e) {
+        console.warn('[GamepadLayout] Error loading custom layout:', e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_GP_LAYOUT));
+    }
+
+    let gpCustomLayout = loadGpLayout();
+
+    function selectGpElement(elemId) {
+      const prevSelected = document.querySelectorAll('.gp-elem-selected');
+      prevSelected.forEach(el => el.classList.remove('gp-elem-selected'));
+
+      selectedGpElemId = elemId;
+      const titleBadge = document.getElementById('gp-edit-selected-title');
+      const deleteBtn = document.getElementById('btn-gp-delete-selected');
+      const sizeSlider = document.getElementById('gp-size-slider');
+      const sizeValText = document.getElementById('gp-size-val');
+
+      if (!elemId) {
+        if (titleBadge) titleBadge.textContent = 'Tap a Control';
+        if (deleteBtn) deleteBtn.style.display = 'none';
+        return;
+      }
+
+      const targetElem = document.querySelector(`[data-elem-id="${elemId}"]`);
+      if (targetElem) {
+        targetElem.classList.add('gp-elem-selected');
+        let elemName = 'Control';
+        let elemScale = 1.0;
+
+        if (gpCustomLayout.elements[elemId]) {
+          elemName = gpCustomLayout.elements[elemId].name || elemId;
+          elemScale = gpCustomLayout.elements[elemId].scale || 1.0;
+        } else {
+          const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === elemId);
+          if (customEntry) {
+            elemName = customEntry.label || customEntry.key || elemId;
+            elemScale = customEntry.scale || 1.0;
+          }
+        }
+
+        if (titleBadge) titleBadge.textContent = elemName;
+        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+        const sVal = Math.round(elemScale * 100);
+        if (sizeSlider) sizeSlider.value = sVal;
+        if (sizeValText) sizeValText.textContent = `${sVal}%`;
+      }
+    }
+
+    function applyGpLayout() {
+      const customContainer = document.getElementById('gp-custom-elements-container');
+      if (customContainer) customContainer.innerHTML = '';
+
+      // Apply built-in elements layout
+      Object.keys(gpCustomLayout.elements || {}).forEach(elemId => {
+        const conf = gpCustomLayout.elements[elemId];
+        const elElem = document.querySelector(`[data-elem-id="${elemId}"]`);
+        if (elElem) {
+          elElem.style.display = conf.hidden ? 'none' : '';
+          if (conf.left !== undefined && conf.left !== 'auto') {
+            elElem.style.position = 'absolute';
+            elElem.style.left = conf.left;
+            elElem.style.top = conf.top || 'auto';
+            elElem.style.right = conf.right || 'auto';
+            elElem.style.bottom = conf.bottom || 'auto';
+          } else {
+            elElem.style.position = '';
+            elElem.style.left = '';
+            elElem.style.top = '';
+            elElem.style.right = '';
+            elElem.style.bottom = '';
+          }
+          const scale = conf.scale !== undefined ? conf.scale : 1.0;
+          elElem.style.transform = `scale(${scale})`;
+        }
+      });
+
+      // Render custom dynamically added buttons
+      (gpCustomLayout.customButtons || []).forEach(bConf => {
+        renderCustomGpButton(bConf);
+      });
+    }
+
+    function renderCustomGpButton(bConf) {
+      const customContainer = document.getElementById('gp-custom-elements-container');
+      if (!customContainer) return;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'gp-custom-btn';
+      btn.dataset.elemId = bConf.id;
+      btn.dataset.customKey = bConf.key;
+      btn.style.left = bConf.left || '50%';
+      btn.style.top = bConf.top || '50%';
+      btn.style.transform = `scale(${bConf.scale || 1.0})`;
+
+      const mainLabel = document.createElement('span');
+      mainLabel.className = 'gp-custom-btn-main';
+      mainLabel.textContent = (bConf.key || '').toUpperCase();
+
+      const subLabel = document.createElement('span');
+      subLabel.className = 'gp-custom-btn-sub';
+      subLabel.textContent = bConf.label || '';
+
+      btn.appendChild(mainLabel);
+      if (bConf.label && bConf.label !== bConf.key) {
+        btn.appendChild(subLabel);
+      }
+
+      // Pointer event for custom button
+      const onDown = (e) => {
+        if (isGpLayoutEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.add('active');
+        if (gpHaptics) vibrate(12);
+        const k = bConf.key;
+        if (k.startsWith('mouse_')) {
+          sendCommand(`mouse,down,${k.replace('mouse_', '')}`);
+        } else {
+          sendCommand(`key,down,${k}`);
+        }
+      };
+
+      const onUp = (e) => {
+        if (isGpLayoutEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.remove('active');
+        const k = bConf.key;
+        if (k.startsWith('mouse_')) {
+          sendCommand(`mouse,up,${k.replace('mouse_', '')}`);
+        } else {
+          sendCommand(`key,up,${k}`);
+        }
+      };
+
+      btn.addEventListener('pointerdown', onDown);
+      btn.addEventListener('pointerup', onUp);
+      btn.addEventListener('pointercancel', onUp);
+
+      customContainer.appendChild(btn);
+    }
+
+    function setGamepadEditMode(editing) {
+      if (editing && (!window.isProUnlocked || !window.isProUnlocked())) {
+        vibrate(25);
+        if (typeof window.openProUpgradeModal === 'function') {
+          window.openProUpgradeModal();
+        }
+        if (typeof showToast === 'function') {
+          showToast('Custom Gamepad Layout Designer requires PCDeck Pro', 'warn');
+        }
+        return;
+      }
+      isGpLayoutEditing = editing;
+      document.body.classList.toggle('gp-layout-editing', editing);
+      const toolbar = document.getElementById('gp-editor-toolbar');
+      if (toolbar) toolbar.style.display = editing ? 'flex' : 'none';
+
+      if (editing) {
+        showToast('️ Tap any control to drag or resize', 'info');
+        selectGpElement(selectedGpElemId || 'elem-left-stick');
+      } else {
+        selectGpElement(null);
+      }
+    }
+
+    // Initialize Layout Editor Controls
+    const btnEditLayout = document.getElementById('btn-gp-edit-layout');
+    if (btnEditLayout) {
+      btnEditLayout.onclick = () => {
+        closeGpConsoleMenu();
+        if (!window.isProUnlocked || !window.isProUnlocked()) {
+          vibrate(25);
+          if (typeof window.openProUpgradeModal === 'function') {
+            window.openProUpgradeModal();
+          }
+          if (typeof showToast === 'function') {
+            showToast('Custom Gamepad Layout Designer requires PCDeck Pro', 'warn');
+          }
+          return;
+        }
+        setGamepadEditMode(!isGpLayoutEditing);
+      };
+    }
+
+    const btnExitEditor = document.getElementById('btn-gp-exit-editor');
+    if (btnExitEditor) {
+      btnExitEditor.onclick = () => setGamepadEditMode(false);
+    }
+
+    const btnSaveLayout = document.getElementById('btn-gp-save-layout');
+    if (btnSaveLayout) {
+      btnSaveLayout.onclick = () => {
+        vibrate(25);
+        try {
+          localStorage.setItem('pcdeck_gamepad_custom_layout', JSON.stringify(gpCustomLayout));
+          showToast(' Custom Layout Saved!', 'success');
+        } catch (e) {
+          console.error('[GamepadLayout] Save error:', e);
+        }
+        setGamepadEditMode(false);
+      };
+    }
+
+    const btnResetLayout = document.getElementById('btn-gp-reset-layout');
+    if (btnResetLayout) {
+      btnResetLayout.onclick = () => {
+        vibrate(20);
+        localStorage.removeItem('pcdeck_gamepad_custom_layout');
+        gpCustomLayout = JSON.parse(JSON.stringify(DEFAULT_GP_LAYOUT));
+        applyGpLayout();
+        selectGpElement(null);
+        showToast(' Restored Factory Layout', 'info');
+      };
+    }
+
+    // Size adjustment
+    const sizeSlider = document.getElementById('gp-size-slider');
+    const sizeValText = document.getElementById('gp-size-val');
+    const btnSizeDec = document.getElementById('btn-gp-size-dec');
+    const btnSizeInc = document.getElementById('btn-gp-size-inc');
+
+    function updateSelectedSize(scaleVal) {
+      scaleVal = Math.max(0.6, Math.min(2.2, scaleVal));
+      if (!selectedGpElemId) return;
+
+      if (gpCustomLayout.elements[selectedGpElemId]) {
+        gpCustomLayout.elements[selectedGpElemId].scale = scaleVal;
+      } else {
+        const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === selectedGpElemId);
+        if (customEntry) customEntry.scale = scaleVal;
+      }
+
+      const targetElem = document.querySelector(`[data-elem-id="${selectedGpElemId}"]`);
+      if (targetElem) {
+        targetElem.style.transform = `scale(${scaleVal})`;
+      }
+
+      const sVal = Math.round(scaleVal * 100);
+      if (sizeSlider) sizeSlider.value = sVal;
+      if (sizeValText) sizeValText.textContent = `${sVal}%`;
+    }
+
+    if (sizeSlider) {
+      sizeSlider.oninput = () => {
+        const s = parseInt(sizeSlider.value, 10) / 100;
+        updateSelectedSize(s);
+      };
+    }
+
+    const gpSizePills = document.querySelectorAll('.gp-pill-btn');
+    gpSizePills.forEach(pill => {
+      pill.onclick = () => {
+        vibrate(10);
+        gpSizePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const s = parseInt(pill.dataset.gpSize, 10) / 100;
+        updateSelectedSize(s);
+      };
+    });
+
+    if (btnSizeDec) {
+      btnSizeDec.onclick = () => {
+        const cur = (sizeSlider ? parseInt(sizeSlider.value, 10) : 100) / 100;
+        updateSelectedSize(cur - 0.1);
+      };
+    }
+    if (btnSizeInc) {
+      btnSizeInc.onclick = () => {
+        const cur = (sizeSlider ? parseInt(sizeSlider.value, 10) : 100) / 100;
+        updateSelectedSize(cur + 0.1);
+      };
+    }
+
+    // Delete selected element
+    const btnDeleteSelected = document.getElementById('btn-gp-delete-selected');
+    if (btnDeleteSelected) {
+      btnDeleteSelected.onclick = () => {
+        if (!selectedGpElemId) return;
+        vibrate(20);
+        if (gpCustomLayout.elements[selectedGpElemId]) {
+          gpCustomLayout.elements[selectedGpElemId].hidden = true;
+          const elElem = document.querySelector(`[data-elem-id="${selectedGpElemId}"]`);
+          if (elElem) elElem.style.display = 'none';
+        } else {
+          gpCustomLayout.customButtons = (gpCustomLayout.customButtons || []).filter(b => b.id !== selectedGpElemId);
+          const elElem = document.querySelector(`[data-elem-id="${selectedGpElemId}"]`);
+          if (elElem) elElem.remove();
+        }
+        showToast('<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg> Control Removed', 'info');
+        selectGpElement(null);
+      };
+    }
+
+    // Add Control Modal
+    const addModal = document.getElementById('gp-add-control-modal');
+    const btnOpenAddModal = document.getElementById('btn-gp-open-add-modal');
+    const btnModalClose = document.getElementById('btn-gp-modal-close');
+
+    if (btnOpenAddModal && addModal) {
+      btnOpenAddModal.onclick = () => {
+        vibrate(15);
+        addModal.style.display = 'flex';
+      };
+    }
+    if (btnModalClose && addModal) {
+      btnModalClose.onclick = () => {
+        addModal.style.display = 'none';
+      };
+    }
+
+    // Modal Tabs
+    const modalTabs = document.querySelectorAll('.gp-tab-btn');
+    modalTabs.forEach(t => {
+      t.onclick = () => {
+        modalTabs.forEach(tb => tb.classList.remove('active'));
+        t.classList.add('active');
+        const targetTab = t.dataset.tab;
+        const contents = document.querySelectorAll('.gp-add-tab-content');
+        contents.forEach(c => {
+          c.style.display = c.id === `gp-add-tab-${targetTab}` ? 'block' : 'none';
+        });
+      };
+    });
+
+    // Add preset controls (unhide or position)
+    const addPresetCards = document.querySelectorAll('.gp-add-item-card');
+    addPresetCards.forEach(card => {
+      card.onclick = () => {
+        const type = card.dataset.addType;
+        const elemKey = `elem-${type}`;
+        if (gpCustomLayout.elements[elemKey]) {
+          gpCustomLayout.elements[elemKey].hidden = false;
+          gpCustomLayout.elements[elemKey].scale = 1.0;
+          const elElem = document.querySelector(`[data-elem-id="${elemKey}"]`);
+          if (elElem) {
+            elElem.style.display = '';
+            elElem.style.transform = 'scale(1)';
+          }
+        }
+        if (addModal) addModal.style.display = 'none';
+        selectGpElement(elemKey);
+        showToast(` Added ${card.querySelector('.item-name').textContent}`, 'success');
+      };
+    });
+
+    // Add PC Key items
+    const addKeyItems = document.querySelectorAll('.gp-key-item');
+    addKeyItems.forEach(kBtn => {
+      kBtn.onclick = () => {
+        const key = kBtn.dataset.key;
+        const label = kBtn.dataset.label || key.toUpperCase();
+        const customId = `custom-btn-${Date.now()}`;
+        const newBtnConf = {
+          id: customId,
+          key: key,
+          label: label,
+          left: '48%',
+          top: '45%',
+          scale: 1.0
+        };
+        gpCustomLayout.customButtons = gpCustomLayout.customButtons || [];
+        gpCustomLayout.customButtons.push(newBtnConf);
+        renderCustomGpButton(newBtnConf);
+        if (addModal) addModal.style.display = 'none';
+        selectGpElement(customId);
+        showToast(` Added Button: ${label}`, 'success', '️');
+      };
+    });
+
+    // Add Custom Letter / Key Form
+    const btnCustomAddConfirm = document.getElementById('btn-gp-add-custom-confirm');
+    const customKeyNameInput = document.getElementById('gp-custom-key-name');
+    const customKeyLabelInput = document.getElementById('gp-custom-key-label');
+
+    if (btnCustomAddConfirm && customKeyNameInput) {
+      btnCustomAddConfirm.onclick = () => {
+        const keyName = (customKeyNameInput.value || '').trim().toLowerCase();
+        if (!keyName) {
+          showToast('Please enter a key name', 'warning', '️');
+          return;
+        }
+        const label = (customKeyLabelInput.value || '').trim() || keyName.toUpperCase();
+        const customId = `custom-btn-${Date.now()}`;
+        const newBtnConf = {
+          id: customId,
+          key: keyName,
+          label: label,
+          left: '50%',
+          top: '50%',
+          scale: 1.0
+        };
+        gpCustomLayout.customButtons = gpCustomLayout.customButtons || [];
+        gpCustomLayout.customButtons.push(newBtnConf);
+        renderCustomGpButton(newBtnConf);
+        customKeyNameInput.value = '';
+        if (customKeyLabelInput) customKeyLabelInput.value = '';
+        if (addModal) addModal.style.display = 'none';
+        selectGpElement(customId);
+        showToast(` Added Custom Key: ${label}`, 'success', '️');
+      };
+    }
+
+    // Drag-and-Drop Repositioning Engine for Layout Editor (100% Fluid, Zero Snapping & Scale-Invariant)
+    let dragTarget = null;
+    let startPointer = { x: 0, y: 0 };
+    let elemCenter = { x: 0, y: 0 };
+    let isCurrentlyDragging = false;
+
+    const handleDragMove = (e) => {
+      if (!isGpLayoutEditing || !dragTarget || !isCurrentlyDragging) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const containerRect = gpContainer.getBoundingClientRect();
+      const rect = dragTarget.getBoundingClientRect();
+      const halfW = rect.width / 2;
+      const halfH = rect.height / 2;
+
+      const newCenterX = elemCenter.x + (e.clientX - startPointer.x);
+      const newCenterY = elemCenter.y + (e.clientY - startPointer.y);
+
+      // Keep element visual center within container boundaries
+      const clampedCenterX = Math.max(halfW, Math.min(containerRect.width - halfW, newCenterX));
+      const clampedCenterY = Math.max(halfH, Math.min(containerRect.height - halfH, newCenterY));
+
+      const domLeft = clampedCenterX - (dragTarget.offsetWidth / 2);
+      const domTop = clampedCenterY - (dragTarget.offsetHeight / 2);
+
+      dragTarget.style.position = 'absolute';
+      dragTarget.style.left = `${domLeft.toFixed(1)}px`;
+      dragTarget.style.top = `${domTop.toFixed(1)}px`;
+      dragTarget.style.right = 'auto';
+      dragTarget.style.bottom = 'auto';
+    };
+
+    const handleDragEnd = (e) => {
+      if (dragTarget) {
+        dragTarget.classList.remove('gp-is-dragging');
+        const containerRect = gpContainer.getBoundingClientRect();
+        const rect = dragTarget.getBoundingClientRect();
+        const leftPct = (((rect.left - containerRect.left) / containerRect.width) * 100).toFixed(2) + '%';
+        const topPct = (((rect.top - containerRect.top) / containerRect.height) * 100).toFixed(2) + '%';
+        dragTarget.style.position = 'absolute';
+        dragTarget.style.left = leftPct;
+        dragTarget.style.top = topPct;
+        dragTarget.style.right = 'auto';
+        dragTarget.style.bottom = 'auto';
+
+        const elemId = dragTarget.dataset.elemId;
+        if (gpCustomLayout.elements[elemId]) {
+          gpCustomLayout.elements[elemId].left = leftPct;
+          gpCustomLayout.elements[elemId].top = topPct;
+          gpCustomLayout.elements[elemId].right = 'auto';
+          gpCustomLayout.elements[elemId].bottom = 'auto';
+        } else {
+          const customEntry = (gpCustomLayout.customButtons || []).find(b => b.id === elemId);
+          if (customEntry) {
+            customEntry.left = leftPct;
+            customEntry.top = topPct;
+          }
+        }
+        try { dragTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+        dragTarget = null;
+        isCurrentlyDragging = false;
+      }
+      window.removeEventListener('pointermove', handleDragMove);
+      window.removeEventListener('pointerup', handleDragEnd);
+      window.removeEventListener('pointercancel', handleDragEnd);
+    };
+
+    if (gpContainer) {
+      gpContainer.addEventListener('pointerdown', (e) => {
+        if (!isGpLayoutEditing) return;
+        const selectable = e.target.closest('[data-elem-id]');
+        if (selectable && gpContainer.contains(selectable) && !selectable.closest('#gp-editor-toolbar, #gp-bottom-preset-bar')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const elemId = selectable.dataset.elemId;
+          selectGpElement(elemId);
+          dragTarget = selectable;
+          isCurrentlyDragging = true;
+          dragTarget.classList.add('gp-is-dragging');
+
+          startPointer.x = e.clientX;
+          startPointer.y = e.clientY;
+
+          const containerRect = gpContainer.getBoundingClientRect();
+          const rect = selectable.getBoundingClientRect();
+
+          elemCenter.x = (rect.left + rect.width / 2) - containerRect.left;
+          elemCenter.y = (rect.top + rect.height / 2) - containerRect.top;
+
+          const domLeft = elemCenter.x - (selectable.offsetWidth / 2);
+          const domTop = elemCenter.y - (selectable.offsetHeight / 2);
+
+          dragTarget.style.position = 'absolute';
+          dragTarget.style.left = `${domLeft.toFixed(1)}px`;
+          dragTarget.style.top = `${domTop.toFixed(1)}px`;
+          dragTarget.style.right = 'auto';
+          dragTarget.style.bottom = 'auto';
+
+          try { selectable.setPointerCapture(e.pointerId); } catch (_) {}
+          window.addEventListener('pointermove', handleDragMove, { passive: false });
+          window.addEventListener('pointerup', handleDragEnd);
+          window.addEventListener('pointercancel', handleDragEnd);
+        }
+      });
+    }
+
+    // Apply layout on init
+    applyGpLayout();
+
+    function setGamepadMode(active) {
+      gamepadActive = active;
+      document.body.classList.toggle('gamepad-mode-active', active);
+      const tabTrackpad = document.getElementById('tab-trackpad');
+      if (tabTrackpad) tabTrackpad.classList.toggle('gamepad-mode-active', active);
+      const tabGamepad = document.getElementById('tab-gamepad');
+      if (tabGamepad) tabGamepad.classList.toggle('gamepad-mode-active', active);
+      if (btnToggle) {
+        btnToggle.style.background = active ? 'var(--neo-lime)' : 'var(--neo-cyan)';
+        const label = btnToggle.querySelector('span') || btnToggle;
+        label.textContent = active ? 'Trackpad' : 'Gamepad';
+      }
+      const dockGp = document.querySelector('.dock-tab[data-target="tab-gamepad"]');
+      const dockTp = document.querySelector('.dock-tab[data-target="tab-trackpad"]');
+      if (dockGp) dockGp.classList.toggle('active', active);
+      if (dockTp && active) dockTp.classList.add('active');
+
+      if (active) {
+        applyGamepadPreset(activeGpPreset);
+        applyGpLayout();
+        if (gyroEngine && gyroEngine.enabled) gyroEngine.start();
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          mainWs.send('driver_check');
+          mainWs.send(`gp,hybrid,${gpHybridMode ? 1 : 0}`);
+        }
+      } else {
+        setGamepadEditMode(false);
+        if (typeof closeGpConsoleMenu === 'function') closeGpConsoleMenu();
+        if (gyroEngine) gyroEngine.stop();
+      }
+      const btnHeaderGp = document.getElementById('btn-header-gamepad');
+      if (btnHeaderGp) {
+        btnHeaderGp.classList.toggle('active', active);
+      }
+      const btnTrackpadGpToggle = document.getElementById('btn-gamepad-mode-toggle');
+      if (btnTrackpadGpToggle) {
+        btnTrackpadGpToggle.classList.toggle('active', active);
+      }
+      vibrate(20);
+    }
+    window.setGamepadMode = setGamepadMode;
+
+    const btnHeaderGp = document.getElementById('btn-header-gamepad');
+    if (btnHeaderGp) {
+      btnHeaderGp.onclick = () => {
+        vibrate(20);
+        if (state.activeTab === 'tab-gamepad' || (state.activeTab === 'tab-trackpad' && gamepadActive)) {
+          switchTab('tab-trackpad');
+          setGamepadMode(false);
+          showToast('Switched to Trackpad', 'info');
+        } else {
+          switchTab('tab-gamepad');
+          setGamepadMode(true);
+          showToast('Standalone Game Controller Active', 'info');
+        }
+      };
+    }
+
+    const btnTrackpadGpToggle = document.getElementById('btn-gamepad-mode-toggle');
+    if (btnTrackpadGpToggle) {
+      btnTrackpadGpToggle.onclick = () => {
+        vibrate(20);
+        switchTab('tab-gamepad');
+        setGamepadMode(true);
+        showToast('Standalone Game Controller Active', 'info');
+      };
+    }
+
+    if (btnToggle) {
+      btnToggle.onclick = () => setGamepadMode(!gamepadActive);
+    }
+    const returnButtons = document.querySelectorAll(
+      '#btn-return-trackpad, #btn-gp-top-back-trackpad, #btn-gp-close-joystick-top, #btn-gp-editor-close-joystick, .gp-exit-chip'
+    );
+    returnButtons.forEach((btn) => {
+      btn.onclick = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (typeof closeGpConsoleMenu === 'function') closeGpConsoleMenu();
+        if (typeof setGamepadEditMode === 'function') setGamepadEditMode(false);
+        setGamepadMode(false);
+        switchTab('tab-trackpad');
+        showToast('Joystick Closed — Returned to Trackpad', 'info');
+      };
+    });
+
+    const gpDriverBadge = document.getElementById('gp-driver-badge');
+    if (gpDriverBadge) {
+      gpDriverBadge.onclick = () => {
+        vibrate(15);
+        const presetOrder = ['universal', 'xbox', 'ps', 'racing', 'wasd'];
+        const nextIdx = (presetOrder.indexOf(activeGpPreset) + 1) % presetOrder.length;
+        applyGamepadPreset(presetOrder[nextIdx]);
+        showToast(`Layout: ${GP_PRESETS[presetOrder[nextIdx]].name}`, 'info');
+      };
+    }
+
+    const wasdKeyMap = {
+      a: 'space', b: 'c', x: 'z', y: 'r',
+      lb: 'q', rb: 'e',
+      lt: 'left', rt: 'right', // Gas and Brake for web & PC racing games
+      ls_click: 'shift', rs_click: 'alt',
+      back: 'm', start: 'escape', guide: 'win',
+      dpad_up: 'up', dpad_down: 'down', dpad_left: 'left', dpad_right: 'right'
+    };
+
+    function sendGamepadButtonState(code, isPressed) {
+      if (activeGpPreset === 'wasd') {
+        const key = wasdKeyMap[code] || code;
+        if (key.startsWith('mouse_')) {
+          sendCommand(`mouse,${isPressed ? 'down' : 'up'},${key.replace('mouse_', '')}`);
+        } else {
+          sendCommand(`key,${isPressed ? 'down' : 'up'},${key}`);
+        }
+      } else {
+        sendCommand(`gp,btn,${code},${isPressed ? 1 : 0}`);
+      }
+    }
+
+    // =========================================================================
+    //  D-PAD TOUCH & FLUID 8-WAY DRAG ENGINE
+    // =========================================================================
+    const dpadDisc = document.getElementById('gp-dpad-disc');
+    const dpadButtons = {
+      up: document.querySelector('.gp-dpad-up'),
+      down: document.querySelector('.gp-dpad-down'),
+      left: document.querySelector('.gp-dpad-left'),
+      right: document.querySelector('.gp-dpad-right')
+    };
+    let activeDpadDirections = { up: false, down: false, left: false, right: false };
+    let dpadPointerId = null;
+
+    function setDpadDirectionState(dir, isPressed) {
+      if (activeDpadDirections[dir] === isPressed) return;
+      activeDpadDirections[dir] = isPressed;
+      const btn = dpadButtons[dir];
+      if (btn) btn.classList.toggle('active', isPressed);
+      sendGamepadButtonState(`dpad_${dir}`, isPressed);
+      if (isPressed && gpHaptics) vibrate(10);
+    }
+
+    function updateDpadFromCoords(clientX, clientY) {
+      if (!dpadDisc) return;
+      const rect = dpadDisc.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dx = clientX - centerX;
+      const dy = clientY - centerY;
+      const dist = Math.hypot(dx, dy);
+
+      const deadzone = Math.max(8, rect.width * 0.12);
+
+      if (dist < deadzone) {
+        setDpadDirectionState('up', false);
+        setDpadDirectionState('down', false);
+        setDpadDirectionState('left', false);
+        setDpadDirectionState('right', false);
+        return;
+      }
+
+      const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+      const isRight = (angleDeg >= -67.5 && angleDeg <= 67.5);
+      const isLeft = (angleDeg >= 112.5 || angleDeg <= -112.5);
+      const isDown = (angleDeg >= 22.5 && angleDeg <= 157.5);
+      const isUp = (angleDeg >= -157.5 && angleDeg <= -22.5);
+
+      setDpadDirectionState('up', isUp);
+      setDpadDirectionState('down', isDown);
+      setDpadDirectionState('left', isLeft);
+      setDpadDirectionState('right', isRight);
+    }
+
+    if (dpadDisc) {
+      dpadDisc.addEventListener('pointerdown', (e) => {
+        if (isGpLayoutEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        dpadPointerId = e.pointerId;
+        try { dpadDisc.setPointerCapture(e.pointerId); } catch (_) {}
+        updateDpadFromCoords(e.clientX, e.clientY);
+
+        const onDpadMove = (me) => {
+          if (dpadPointerId !== me.pointerId || isGpLayoutEditing) return;
+          me.preventDefault();
+          me.stopPropagation();
+          updateDpadFromCoords(me.clientX, me.clientY);
+        };
+
+        const onDpadUp = (ue) => {
+          if (ue.pointerId !== undefined && ue.pointerId !== dpadPointerId) return;
+          try { dpadDisc.releasePointerCapture(dpadPointerId); } catch (_) {}
+          dpadPointerId = null;
+          window.removeEventListener('pointermove', onDpadMove);
+          window.removeEventListener('pointerup', onDpadUp);
+          window.removeEventListener('pointercancel', onDpadUp);
+
+          setDpadDirectionState('up', false);
+          setDpadDirectionState('down', false);
+          setDpadDirectionState('left', false);
+          setDpadDirectionState('right', false);
+        };
+
+        window.addEventListener('pointermove', onDpadMove, { passive: false });
+        window.addEventListener('pointerup', onDpadUp);
+        window.addEventListener('pointercancel', onDpadUp);
+      });
+    }
+
+    // =========================================================================
+    //  ABXY ACTION DIAMOND FLUID SLIDE & TOUCH ENGINE
+    // =========================================================================
+    const actionDiamond = document.getElementById('gp-action-diamond');
+    let actionActiveBtn = null;
+    let actionPointerId = null;
+
+    if (actionDiamond) {
+      actionDiamond.addEventListener('pointerdown', (e) => {
+        if (isGpLayoutEditing) return;
+        const targetBtn = e.target.closest('.gp-action-btn[data-gp]');
+        if (!targetBtn) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        actionPointerId = e.pointerId;
+        try { actionDiamond.setPointerCapture(e.pointerId); } catch (_) {}
+
+        actionActiveBtn = targetBtn;
+        actionActiveBtn.classList.add('active');
+        sendGamepadButtonState(actionActiveBtn.dataset.gp, true);
+        if (gpHaptics) vibrate(12);
+
+        const onDiamondMove = (me) => {
+          if (me.pointerId !== actionPointerId || isGpLayoutEditing) return;
+          me.preventDefault();
+          me.stopPropagation();
+
+          const underElem = document.elementFromPoint(me.clientX, me.clientY);
+          const newBtn = underElem ? underElem.closest('.gp-action-btn[data-gp]') : null;
+
+          if (newBtn !== actionActiveBtn) {
+            if (actionActiveBtn) {
+              actionActiveBtn.classList.remove('active');
+              sendGamepadButtonState(actionActiveBtn.dataset.gp, false);
+            }
+            if (newBtn && actionDiamond.contains(newBtn)) {
+              actionActiveBtn = newBtn;
+              actionActiveBtn.classList.add('active');
+              sendGamepadButtonState(actionActiveBtn.dataset.gp, true);
+              if (gpHaptics) vibrate(12);
+            } else {
+              actionActiveBtn = null;
+            }
+          }
+        };
+
+        const onDiamondUp = (ue) => {
+          if (ue.pointerId !== undefined && ue.pointerId !== actionPointerId) return;
+          try { actionDiamond.releasePointerCapture(actionPointerId); } catch (_) {}
+          actionPointerId = null;
+          window.removeEventListener('pointermove', onDiamondMove);
+          window.removeEventListener('pointerup', onDiamondUp);
+          window.removeEventListener('pointercancel', onDiamondUp);
+
+          if (actionActiveBtn) {
+            actionActiveBtn.classList.remove('active');
+            sendGamepadButtonState(actionActiveBtn.dataset.gp, false);
+            actionActiveBtn = null;
+          }
+        };
+
+        window.addEventListener('pointermove', onDiamondMove, { passive: false });
+        window.addEventListener('pointerup', onDiamondUp);
+        window.addEventListener('pointercancel', onDiamondUp);
+      });
+    }
+
+    // =========================================================================
+    //  BIND ALL INDIVIDUAL BUTTONS (Triggers, Bumpers, System, Stick Clicks)
+    // =========================================================================
+    const gpButtons = document.querySelectorAll('#gamepad-container [data-gp]');
+    gpButtons.forEach((btn) => {
+      // Skip dpad, abxy, and menu button as they are managed independently
+      if (btn.closest('#gp-dpad-disc') || btn.closest('#gp-action-diamond') || btn.id === 'btn-gp-top-menu') return;
+
+      const code = btn.dataset.gp;
+      let isPressed = false;
+      let btnPointerId = null;
+
+      const pressDown = (e) => {
+        if (isGpLayoutEditing || isPressed) return;
+        e.preventDefault();
+        e.stopPropagation();
+        isPressed = true;
+        btnPointerId = e.pointerId;
+        try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+        btn.classList.add('active');
+        if (gpHaptics) vibrate(12);
+
+        // Analog Trigger Depth Visualizer & ADS Support
+        if (code === 'lt') {
+          const ltMeter = document.getElementById('lt-meter-fill') || document.getElementById('gp-lt-meter');
+          if (ltMeter) ltMeter.style.width = '100%';
+          if (gyroEngine) gyroEngine.setAdsPressed(true);
+        } else if (code === 'rt') {
+          const rtMeter = document.getElementById('rt-meter-fill') || document.getElementById('gp-rt-meter');
+          if (rtMeter) rtMeter.style.width = '100%';
+        }
+
+        sendGamepadButtonState(code, true);
+
+        const onBtnRelease = (ue) => {
+          if (ue.pointerId !== undefined && ue.pointerId !== btnPointerId) return;
+          window.removeEventListener('pointerup', onBtnRelease);
+          window.removeEventListener('pointercancel', onBtnRelease);
+          pressUp(ue);
+        };
+
+        window.addEventListener('pointerup', onBtnRelease);
+        window.addEventListener('pointercancel', onBtnRelease);
+      };
+
+      const pressUp = (e) => {
+        if (!isPressed) return;
+        isPressed = false;
+        try { if (btnPointerId !== null) btn.releasePointerCapture(btnPointerId); } catch (_) {}
+        btnPointerId = null;
+        btn.classList.remove('active');
+
+        // Reset Trigger Depth Visualizer & ADS Support
+        if (code === 'lt') {
+          const ltMeter = document.getElementById('lt-meter-fill') || document.getElementById('gp-lt-meter');
+          if (ltMeter) ltMeter.style.width = '0%';
+          if (gyroEngine) gyroEngine.setAdsPressed(false);
+        } else if (code === 'rt') {
+          const rtMeter = document.getElementById('rt-meter-fill') || document.getElementById('gp-rt-meter');
+          if (rtMeter) rtMeter.style.width = '0%';
+        }
+
+        sendGamepadButtonState(code, false);
+      };
+
+      btn.addEventListener('pointerdown', pressDown);
+    });
+
+    // Setup Dual Analog Sticks (Left & Right) with Full Window Tracking
+    setupAnalogStick('gp-left-stick-zone', 'gp-left-thumb', 'left');
+    setupAnalogStick('gp-right-stick-zone', 'gp-right-thumb', 'right');
+
+    // Initialize Gyro Super Motion Engine
+    gyroEngine = initGyroSuperEngine();
+
+  function setupAnalogStick(zoneId, thumbId, stickKey) {
+    const zone = document.getElementById(zoneId);
+    const thumb = document.getElementById(thumbId);
+    if (!zone || !thumb) return;
+
+    const base = zone.querySelector('.gp-stick-base') || zone;
+    let activePointerId = null;
+    let isInteracting = false;
+    let activeWasd = { up: false, down: false, left: false, right: false };
+
+    function calculateCoords(clientX, clientY) {
+      const rect = base.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      let dx = clientX - centerX;
+      let dy = clientY - centerY;
+      const dist = Math.hypot(dx, dy);
+
+      const maxTravel = Math.max(22, (rect.width / 2) - (thumb.offsetWidth / 2 || 20));
+      if (dist > maxTravel) {
+        dx = (dx / dist) * maxTravel;
+        dy = (dy / dist) * maxTravel;
+      }
+
+      thumb.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
+
+      let normX = dx / maxTravel;
+      let normY = -(dy / maxTravel); // Positive UP, Negative DOWN
+
+      const deadzone = 0.08;
+      if (Math.abs(normX) < deadzone) normX = 0;
+      if (Math.abs(normY) < deadzone) normY = 0;
+
+      normX = Math.max(-1, Math.min(1, normX * gpSensitivity));
+      normY = Math.max(-1, Math.min(1, normY * gpSensitivity));
+
+      return {
+        x: Math.round(normX * 100) / 100,
+        y: Math.round(normY * 100) / 100
+      };
+    }
+
+    function onStickMove(clientX, clientY) {
+      if (!isInteracting) return;
+      const coords = calculateCoords(clientX, clientY);
+      const s = gpStickState[stickKey];
+      s.x = coords.x;
+      s.y = coords.y;
+
+      if (activeGpPreset === 'wasd') {
+        if (stickKey === 'left') {
+          const pressW = coords.y > 0.35;
+          const pressS = coords.y < -0.35;
+          const pressD = coords.x > 0.35;
+          const pressA = coords.x < -0.35;
+          if (pressW !== activeWasd.up) { sendCommand(`key,${pressW ? 'down' : 'up'},w`); activeWasd.up = pressW; }
+          if (pressS !== activeWasd.down) { sendCommand(`key,${pressS ? 'down' : 'up'},s`); activeWasd.down = pressS; }
+          if (pressA !== activeWasd.left) { sendCommand(`key,${pressA ? 'down' : 'up'},a`); activeWasd.left = pressA; }
+          if (pressD !== activeWasd.right) { sendCommand(`key,${pressD ? 'down' : 'up'},d`); activeWasd.right = pressD; }
+        } else {
+          const sens = 14.0 * gpSensitivity;
+          const mdx = Math.round(coords.x * Math.abs(coords.x) * sens);
+          const mdy = Math.round(-coords.y * Math.abs(coords.y) * sens);
+          if (mdx !== 0 || mdy !== 0) {
+            sendCommand(`mouse,move,${mdx},${mdy}`);
+          }
+        }
+      } else {
+        sendCommand(`gp,axis,${stickKey},${s.x},${s.y}`);
+      }
+    }
+
+    function onStickRelease() {
+      if (!isInteracting) return;
+      isInteracting = false;
+      activePointerId = null;
+      const s = gpStickState[stickKey];
+      s.active = false;
+      s.pointerId = null;
+      s.x = 0;
+      s.y = 0;
+      thumb.style.transform = 'translate(0px, 0px)';
+
+      if (activeGpPreset === 'wasd' && stickKey === 'left') {
+        if (activeWasd.up) { sendCommand('key,up,w'); activeWasd.up = false; }
+        if (activeWasd.down) { sendCommand('key,up,s'); activeWasd.down = false; }
+        if (activeWasd.left) { sendCommand('key,up,a'); activeWasd.left = false; }
+        if (activeWasd.right) { sendCommand('key,up,d'); activeWasd.right = false; }
+      } else {
+        sendCommand(`gp,axis,${stickKey},0,0`);
+      }
+    }
+
+    const handlePointerDown = (e) => {
+      if (isGpLayoutEditing) return;
+      if (e.target.closest('.gp-stick-click-btn')) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      isInteracting = true;
+      activePointerId = e.pointerId;
+      const s = gpStickState[stickKey];
+      s.active = true;
+      s.pointerId = e.pointerId;
+
+      try {
+        if (base && typeof base.setPointerCapture === 'function') {
+          base.setPointerCapture(e.pointerId);
+        }
+      } catch (_) {}
+
+      if (gpHaptics) vibrate(10);
+      onStickMove(e.clientX, e.clientY);
+
+      const onWindowPointerMove = (me) => {
+        if (!isInteracting || (activePointerId !== null && me.pointerId !== undefined && me.pointerId !== activePointerId)) return;
+        me.preventDefault();
+        onStickMove(me.clientX, me.clientY);
+      };
+
+      const onWindowPointerUp = (ue) => {
+        if (activePointerId !== null && ue.pointerId !== undefined && ue.pointerId !== activePointerId) return;
+        try {
+          if (base && typeof base.releasePointerCapture === 'function') {
+            base.releasePointerCapture(activePointerId);
+          }
+        } catch (_) {}
+        window.removeEventListener('pointermove', onWindowPointerMove);
+        window.removeEventListener('pointerup', onWindowPointerUp);
+        window.removeEventListener('pointercancel', onWindowPointerUp);
+        onStickRelease();
+      };
+
+      window.addEventListener('pointermove', onWindowPointerMove, { passive: false });
+      window.addEventListener('pointerup', onWindowPointerUp);
+      window.addEventListener('pointercancel', onWindowPointerUp);
+    };
+
+    const handleTouchStart = (e) => {
+      if (isGpLayoutEditing) return;
+      if (e.target.closest('.gp-stick-click-btn')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const touch = e.targetTouches[0];
+      if (!touch) return;
+
+      isInteracting = true;
+      const touchId = touch.identifier;
+      if (gpHaptics) vibrate(10);
+      onStickMove(touch.clientX, touch.clientY);
+
+      const onTouchMove = (te) => {
+        if (!isInteracting) return;
+        for (let i = 0; i < te.touches.length; i++) {
+          if (te.touches[i].identifier === touchId) {
+            te.preventDefault();
+            onStickMove(te.touches[i].clientX, te.touches[i].clientY);
+            break;
+          }
+        }
+      };
+
+      const onTouchEnd = (te) => {
+        let stillActive = false;
+        for (let i = 0; i < te.touches.length; i++) {
+          if (te.touches[i].identifier === touchId) {
+            stillActive = true;
+            break;
+          }
+        }
+        if (!stillActive) {
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onTouchEnd);
+          window.removeEventListener('touchcancel', onTouchEnd);
+          onStickRelease();
+        }
+      };
+
+      window.addEventListener('touchmove', onTouchMove, { passive: false });
+      window.addEventListener('touchend', onTouchEnd);
+      window.addEventListener('touchcancel', onTouchEnd);
+    };
+
+    const handleMouseDown = (e) => {
+      if (isInteracting || isGpLayoutEditing) return;
+      if (e.target.closest('.gp-stick-click-btn')) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      isInteracting = true;
+      activePointerId = 'mouse';
+      const s = gpStickState[stickKey];
+      s.active = true;
+      s.pointerId = 'mouse';
+
+      if (gpHaptics) vibrate(10);
+      onStickMove(e.clientX, e.clientY);
+
+      const onWindowMouseMove = (me) => {
+        if (!isInteracting) return;
+        me.preventDefault();
+        onStickMove(me.clientX, me.clientY);
+      };
+
+      const onWindowMouseUp = () => {
+        window.removeEventListener('mousemove', onWindowMouseMove);
+        window.removeEventListener('mouseup', onWindowMouseUp);
+        onStickRelease();
+      };
+
+      window.addEventListener('mousemove', onWindowMouseMove);
+      window.addEventListener('mouseup', onWindowMouseUp);
+    };
+
+    base.addEventListener('pointerdown', handlePointerDown);
+    zone.addEventListener('pointerdown', handlePointerDown);
+    thumb.addEventListener('pointerdown', handlePointerDown);
+    base.addEventListener('touchstart', handleTouchStart, { passive: false });
+    zone.addEventListener('touchstart', handleTouchStart, { passive: false });
+    thumb.addEventListener('touchstart', handleTouchStart, { passive: false });
+    base.addEventListener('mousedown', handleMouseDown);
+    zone.addEventListener('mousedown', handleMouseDown);
+    thumb.addEventListener('mousedown', handleMouseDown);
+  }
+}
+
+  /* ==========================================================================
+     GYRO SUPER MOTION ENGINE (TILT STEERING & MOTION AIMING)
+     ========================================================================== */
+  let gyroEngine = null;
+
+  function initGyroSuperEngine() {
+    // Config from localStorage
+    const savedConfig = localStorage.getItem('pcdeck_gyro_config');
+    const config = savedConfig ? JSON.parse(savedConfig) : {
+      enabled: true,
+      mode: 'steer',       // 'steer' | 'aim' | 'mouse'
+      trigger: 'always',   // 'always' | 'ads'
+      sens: 1.5,           // 0.5 to 4.0
+      deadzone: 0.8,       // in degrees
+      smoothing: 0.65,     // 0.1 to 0.95 (EMA filter weight)
+      invertX: false,
+      invertY: false
+    };
+
+    let isRunning = false;
+    let isAdsPressed = false;
+    let zeroRoll = 0;
+    let zeroPitch = -25; // Default comfortable landscape tilt
+    let calibrated = false;
+
+    let filteredRoll = 0;
+    let filteredPitch = 0;
+    let lastSentSteer = 0;
+    let lastSentAimX = 0;
+    let lastSentAimY = 0;
+    let prevRollDeg = null;
+    let prevPitchDeg = null;
+
+    let lastSendTime = 0;
+    const SEND_INTERVAL_MS = 16; // ~60Hz transmission
+
+    // DOM Elements
+    const btnTopToggle = document.getElementById('btn-gp-gyro-toggle');
+    const btnBottomChip = document.getElementById('btn-gp-gyro-bottom-chip');
+    const btnTopCalib = document.getElementById('btn-gp-gyro-calib');
+    const btnModalCalib = document.getElementById('btn-modal-gyro-calib');
+    const btnTopSettings = document.getElementById('btn-gp-gyro-settings');
+    const horizonHud = document.getElementById('gp-gyro-horizon-hud');
+    const horizonLine = document.getElementById('gp-gyro-horizon-line');
+    const rollValText = document.getElementById('gp-gyro-roll-val');
+    const pitchValText = document.getElementById('gp-gyro-pitch-val');
+    const modeBadgeText = document.getElementById('gp-gyro-mode-badge');
+
+    // Modal Elements
+    const gyroModal = document.getElementById('gp-gyro-super-modal');
+    const btnModalClose = document.getElementById('btn-gp-gyro-modal-close');
+    const btnModalDone = document.getElementById('btn-gp-gyro-done');
+    const masterEnableCb = document.getElementById('gyro-master-enable');
+    const modeCards = document.querySelectorAll('.gyro-mode-card');
+    const triggerRadios = document.querySelectorAll('input[name="gyro-trigger-type"]');
+    const sensSlider = document.getElementById('gyro-sens-slider');
+    const sensText = document.getElementById('gyro-sens-text');
+    const sensPills = document.querySelectorAll('.gyro-sens-pills .gp-pill-btn');
+    const deadzoneSlider = document.getElementById('gyro-deadzone-slider');
+    const deadzoneText = document.getElementById('gyro-deadzone-text');
+    const smoothSlider = document.getElementById('gyro-smooth-slider');
+    const smoothText = document.getElementById('gyro-smooth-text');
+    const invertXCb = document.getElementById('gyro-invert-x');
+    const invertYCb = document.getElementById('gyro-invert-y');
+    const modalHorizonLine = document.getElementById('modal-gyro-horizon-line');
+    const modalLiveRoll = document.getElementById('modal-live-roll');
+    const modalLivePitch = document.getElementById('modal-live-pitch');
+
+    function saveConfig() {
+      localStorage.setItem('pcdeck_gyro_config', JSON.stringify(config));
+    }
+
+    function updateUIState() {
+      const active = config.enabled;
+      if (btnTopToggle) {
+        btnTopToggle.classList.toggle('gyro-disabled', !active);
+        const statusSpan = btnTopToggle.querySelector('.gp-gyro-status-text');
+        if (statusSpan) statusSpan.textContent = active ? 'GYRO ON' : 'GYRO OFF';
+      }
+      if (btnBottomChip) {
+        btnBottomChip.classList.toggle('active', active);
+        btnBottomChip.textContent = active ? 'Gyro: ON' : 'Gyro: OFF';
+        btnBottomChip.style.background = active ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+        btnBottomChip.style.borderColor = active ? 'var(--neo-lime)' : 'rgba(255, 255, 255, 0.2)';
+        btnBottomChip.style.color = active ? 'var(--neo-lime)' : 'var(--text-muted)';
+      }
+      if (modeBadgeText) {
+        modeBadgeText.textContent = config.mode.toUpperCase();
+      }
+      if (masterEnableCb) {
+        masterEnableCb.checked = active;
+      }
+      modeCards.forEach(c => {
+        c.classList.toggle('active', c.dataset.gyroMode === config.mode);
+      });
+      triggerRadios.forEach(r => {
+        r.checked = (r.value === config.trigger);
+      });
+      if (sensSlider) sensSlider.value = config.sens;
+      if (sensText) sensText.textContent = `${config.sens.toFixed(1)}x`;
+      sensPills.forEach(p => {
+        p.classList.toggle('active', parseFloat(p.dataset.sens) === config.sens);
+      });
+      if (deadzoneSlider) deadzoneSlider.value = config.deadzone;
+      if (deadzoneText) deadzoneText.textContent = `${config.deadzone.toFixed(1)}°`;
+      if (smoothSlider) smoothSlider.value = Math.round(config.smoothing * 100);
+      if (smoothText) smoothText.textContent = `${Math.round(config.smoothing * 100)}%`;
+      if (invertXCb) invertXCb.checked = config.invertX;
+      if (invertYCb) invertYCb.checked = config.invertY;
+    }
+
+    function calibrateNeutral(showFeedback = true) {
+      if (currentRawRoll !== null && currentRawPitch !== null) {
+        zeroRoll = currentRawRoll;
+        zeroPitch = currentRawPitch;
+        calibrated = true;
+      }
+      filteredRoll = 0;
+      filteredPitch = 0;
+      if (showFeedback) {
+        vibrate([15, 40, 20]);
+        showToast(' Gyro Neutral Calibrated', 'success');
+      }
+    }
+
+    let currentRawRoll = null;
+    let currentRawPitch = null;
+
+    // Process raw degrees (roll & pitch) from sensor
+    function processMotionAngles(rawRoll, rawPitch) {
+      currentRawRoll = rawRoll;
+      currentRawPitch = rawPitch;
+
+      if (!calibrated) {
+        zeroRoll = rawRoll;
+        zeroPitch = rawPitch;
+        calibrated = true;
+      }
+
+      // Delta relative to calibrated center
+      let deltaRoll = rawRoll - zeroRoll;
+      let deltaPitch = rawPitch - zeroPitch;
+
+      // Wrap-around normalization
+      if (deltaRoll > 180) deltaRoll -= 360;
+      if (deltaRoll < -180) deltaRoll += 360;
+      if (deltaPitch > 180) deltaPitch -= 360;
+      if (deltaPitch < -180) deltaPitch += 360;
+
+      // Inversions
+      if (config.invertX) deltaRoll = -deltaRoll;
+      if (config.invertY) deltaPitch = -deltaPitch;
+
+      // Deadzone filtering
+      const dz = config.deadzone;
+      let activeRoll = Math.abs(deltaRoll) > dz ? (deltaRoll > 0 ? deltaRoll - dz : deltaRoll + dz) : 0;
+      let activePitch = Math.abs(deltaPitch) > dz ? (deltaPitch > 0 ? deltaPitch - dz : deltaPitch + dz) : 0;
+
+      // Normalize with max angle: 35 degrees = 1.0 deflection
+      const MAX_STEER_ANGLE = 35.0;
+      const MAX_AIM_ANGLE = 28.0;
+
+      let normRoll = (activeRoll / MAX_STEER_ANGLE) * config.sens;
+      let normPitch = (activePitch / MAX_AIM_ANGLE) * config.sens;
+
+      normRoll = Math.max(-1.0, Math.min(1.0, normRoll));
+      normPitch = Math.max(-1.0, Math.min(1.0, normPitch));
+
+      // EMA smoothing filter (alpha = 1 - smoothing)
+      const alpha = Math.max(0.08, 1.0 - config.smoothing);
+      filteredRoll = alpha * normRoll + (1.0 - alpha) * filteredRoll;
+      filteredPitch = alpha * normPitch + (1.0 - alpha) * filteredPitch;
+
+      // Update Live Horizon HUD
+      const tiltDeg = (-filteredRoll * 32).toFixed(1);
+      const pitchPx = (filteredPitch * 14).toFixed(1);
+      if (horizonLine) {
+        horizonLine.style.transform = `rotate(${tiltDeg}deg) translateY(${pitchPx}px)`;
+      }
+      if (modalHorizonLine) {
+        modalHorizonLine.style.transform = `rotate(${tiltDeg}deg) translateY(${pitchPx}px)`;
+      }
+      if (rollValText) rollValText.textContent = `R:${deltaRoll > 0 ? '+' : ''}${deltaRoll.toFixed(0)}°`;
+      if (pitchValText) pitchValText.textContent = `P:${deltaPitch > 0 ? '+' : ''}${deltaPitch.toFixed(0)}°`;
+      if (modalLiveRoll) modalLiveRoll.textContent = `Roll: ${deltaRoll.toFixed(1)}°`;
+      if (modalLivePitch) modalLivePitch.textContent = `Pitch: ${deltaPitch.toFixed(1)}°`;
+
+      // Check transmission condition
+      if (!isRunning || !config.enabled) return;
+
+      // Check ADS trigger condition
+      if (config.trigger === 'ads' && !isAdsPressed) {
+        // If ADS required and not pressed, release active gyro commands
+        if (lastSentSteer !== 0 || lastSentAimX !== 0 || lastSentAimY !== 0) {
+          if (config.mode === 'steer') sendCommand('gyro,steer,0');
+          if (config.mode === 'aim') sendCommand('gyro,aim,0,0');
+          lastSentSteer = 0;
+          lastSentAimX = 0;
+          lastSentAimY = 0;
+        }
+        return;
+      }
+
+      const now = performance.now();
+      if (now - lastSendTime < SEND_INTERVAL_MS) return;
+      lastSendTime = now;
+
+      if (config.mode === 'steer') {
+        const steerOut = Math.round(filteredRoll * 1000) / 1000;
+        if (Math.abs(steerOut - lastSentSteer) > 0.005 || (steerOut === 0 && lastSentSteer !== 0)) {
+          lastSentSteer = steerOut;
+          sendCommand(`gyro,steer,${steerOut}`);
+        }
+      } else if (config.mode === 'aim') {
+        const aimX = Math.round(filteredRoll * 1000) / 1000;
+        const aimY = Math.round(filteredPitch * 1000) / 1000;
+        if (Math.abs(aimX - lastSentAimX) > 0.005 || Math.abs(aimY - lastSentAimY) > 0.005 ||
+           ((aimX === 0 && aimY === 0) && (lastSentAimX !== 0 || lastSentAimY !== 0))) {
+          lastSentAimX = aimX;
+          lastSentAimY = aimY;
+          sendCommand(`gyro,aim,${aimX},${aimY}`);
+        }
+      } else if (config.mode === 'mouse') {
+        if (prevRollDeg !== null && prevPitchDeg !== null) {
+          const dRoll = deltaRoll - prevRollDeg;
+          const dPitch = deltaPitch - prevPitchDeg;
+          const mouseGain = 2.2 * config.sens;
+          const dx = Math.round(dRoll * mouseGain);
+          const dy = Math.round(dPitch * mouseGain);
+          if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
+            sendCommand(`gyro,mouse,${dx},${dy}`);
+          }
+        }
+        prevRollDeg = deltaRoll;
+        prevPitchDeg = deltaPitch;
+      }
+    }
+
+    // Android Native Bridge callback
+    window.onNativeGyroUpdate = function(roll, pitch, yaw) {
+      processMotionAngles(roll, pitch);
+    };
+
+    // W3C Device Orientation Fallback
+    function handleDeviceOrientation(e) {
+      if (!e) return;
+      const screenAngle = (window.screen && window.screen.orientation && window.screen.orientation.angle) || window.orientation || 0;
+      let rollDeg = 0;
+      let pitchDeg = 0;
+
+      if (screenAngle === 90) {
+        rollDeg = -(e.beta || 0);
+        pitchDeg = -(e.gamma || 0);
+      } else if (screenAngle === 270 || screenAngle === -90) {
+        rollDeg = (e.beta || 0);
+        pitchDeg = (e.gamma || 0);
+      } else {
+        rollDeg = (e.gamma || 0);
+        pitchDeg = (e.beta || 0);
+      }
+
+      processMotionAngles(rollDeg, pitchDeg);
+    }
+
+    function start() {
+      if (isRunning) return;
+      isRunning = true;
+      calibrated = false;
+
+      // Try Android hardware native bridge (AndroidApp or AndroidBridge)
+      let startedNative = false;
+      const bridge = window.AndroidApp || window.AndroidBridge;
+      if (bridge && typeof bridge.startNativeGyro === 'function') {
+        try {
+          startedNative = bridge.startNativeGyro();
+        } catch (_) {}
+      }
+
+      // If not native or in browser, listen to W3C deviceorientation
+      if (!startedNative) {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission().then(resp => {
+            if (resp === 'granted') {
+              window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+            }
+          }).catch(() => {});
+        } else {
+          window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+        }
+      }
+    }
+
+    function stop() {
+      if (!isRunning) return;
+      isRunning = false;
+
+      const bridge = window.AndroidApp || window.AndroidBridge;
+      if (bridge && typeof bridge.stopNativeGyro === 'function') {
+        try { bridge.stopNativeGyro(); } catch (_) {}
+      }
+      window.removeEventListener('deviceorientation', handleDeviceOrientation, true);
+
+      // Release any active gyro deflection
+      if (lastSentSteer !== 0) {
+        sendCommand('gyro,steer,0');
+        lastSentSteer = 0;
+      }
+      if (lastSentAimX !== 0 || lastSentAimY !== 0) {
+        sendCommand('gyro,aim,0,0');
+        lastSentAimX = 0;
+        lastSentAimY = 0;
+      }
+      prevRollDeg = null;
+      prevPitchDeg = null;
+    }
+
+    // Bind UI Event Handlers
+    function toggleGyro() {
+      config.enabled = !config.enabled;
+      saveConfig();
+      updateUIState();
+      vibrate(config.enabled ? 25 : 15);
+      showToast(config.enabled ? ' Gyro Super: ON' : 'Gyro Super: OFF', config.enabled ? 'success' : 'info');
+      if (config.enabled && gamepadActive) {
+        start();
+      } else {
+        stop();
+      }
+    }
+
+    if (btnTopToggle) btnTopToggle.onclick = toggleGyro;
+    if (btnBottomChip) btnBottomChip.onclick = toggleGyro;
+    if (btnTopCalib) btnTopCalib.onclick = () => calibrateNeutral(true);
+    if (btnModalCalib) btnModalCalib.onclick = () => calibrateNeutral(true);
+    if (horizonHud) horizonHud.onclick = () => calibrateNeutral(true);
+
+    if (btnTopSettings) {
+      btnTopSettings.onclick = () => {
+        updateUIState();
+        if (gyroModal) gyroModal.style.display = 'flex';
+        vibrate(15);
+      };
+    }
+
+    const closeModal = () => {
+      if (gyroModal) gyroModal.style.display = 'none';
+      vibrate(10);
+    };
+    if (btnModalClose) btnModalClose.onclick = closeModal;
+    if (btnModalDone) btnModalDone.onclick = closeModal;
+
+    if (masterEnableCb) {
+      masterEnableCb.onchange = () => {
+        config.enabled = masterEnableCb.checked;
+        saveConfig();
+        updateUIState();
+        if (config.enabled && gamepadActive) start();
+        else stop();
+      };
+    }
+
+    modeCards.forEach(card => {
+      card.onclick = () => {
+        config.mode = card.dataset.gyroMode;
+        saveConfig();
+        updateUIState();
+        vibrate(15);
+        showToast(`Gyro Mode: ${card.querySelector('.mode-name').textContent}`, 'info');
+      };
+    });
+
+    triggerRadios.forEach(radio => {
+      radio.onchange = () => {
+        if (radio.checked) {
+          config.trigger = radio.value;
+          saveConfig();
+          vibrate(12);
+        }
+      };
+    });
+
+    if (sensSlider) {
+      sensSlider.oninput = () => {
+        config.sens = parseFloat(sensSlider.value);
+        if (sensText) sensText.textContent = `${config.sens.toFixed(1)}x`;
+        sensPills.forEach(p => p.classList.toggle('active', parseFloat(p.dataset.sens) === config.sens));
+        saveConfig();
+      };
+    }
+
+    sensPills.forEach(pill => {
+      pill.onclick = () => {
+        config.sens = parseFloat(pill.dataset.sens);
+        if (sensSlider) sensSlider.value = config.sens;
+        if (sensText) sensText.textContent = `${config.sens.toFixed(1)}x`;
+        sensPills.forEach(p => p.classList.toggle('active', p === pill));
+        saveConfig();
+        vibrate(12);
+      };
+    });
+
+    if (deadzoneSlider) {
+      deadzoneSlider.oninput = () => {
+        config.deadzone = parseFloat(deadzoneSlider.value);
+        if (deadzoneText) deadzoneText.textContent = `${config.deadzone.toFixed(1)}°`;
+        saveConfig();
+      };
+    }
+
+    if (smoothSlider) {
+      smoothSlider.oninput = () => {
+        config.smoothing = parseInt(smoothSlider.value, 10) / 100;
+        if (smoothText) smoothText.textContent = `${Math.round(config.smoothing * 100)}%`;
+        saveConfig();
+      };
+    }
+
+    if (invertXCb) {
+      invertXCb.onchange = () => {
+        config.invertX = invertXCb.checked;
+        saveConfig();
+      };
+    }
+
+    if (invertYCb) {
+      invertYCb.onchange = () => {
+        config.invertY = invertYCb.checked;
+        saveConfig();
+      };
+    }
+
+    updateUIState();
+
+    return {
+      get enabled() { return config.enabled; },
+      start,
+      stop,
+      calibrateNeutral,
+      setAdsPressed(pressed) { isAdsPressed = pressed; }
+    };
+  }
+
+  /* ==========================================================================
+     IN-DISPLAY MOBILE GAMING CONTROLLER HUD (PUBG / COD STYLE)
+     ========================================================================== */
+  function initScreenGamepadHUD() {
+    const btnToggleHud = document.getElementById('btn-screen-gamepad-hud') || document.getElementById('btn-screen-hud-fab');
+    const hudOverlay = document.getElementById('screen-gamepad-overlay');
+    const hudContainer = document.getElementById('hud-elements-container');
+    const btnCloseHud = document.getElementById('btn-hud-close');
+    const btnEditLayout = document.getElementById('btn-hud-edit-layout');
+    const btnModeSwitch = document.getElementById('btn-hud-emulation-mode');
+    const editorToolbar = document.getElementById('hud-editor-toolbar');
+    const selectedElemLabel = document.getElementById('hud-selected-elem-label');
+    const sizeSlider = document.getElementById('hud-size-slider');
+    const sizeValText = document.getElementById('hud-size-val');
+    const btnSizeDec = document.getElementById('btn-hud-size-dec');
+    const btnSizeInc = document.getElementById('btn-hud-size-inc');
+    const opacitySlider = document.getElementById('hud-opacity-slider');
+    const opacityValText = document.getElementById('hud-opacity-val');
+    const btnDeleteSelected = document.getElementById('btn-hud-delete-selected');
+    const btnAddBtn = document.getElementById('btn-hud-add-btn');
+    const btnReset = document.getElementById('btn-hud-reset');
+    const btnSave = document.getElementById('btn-hud-save');
+    const addBtnModal = document.getElementById('hud-add-btn-modal');
+    const btnModalCancel = document.getElementById('btn-hud-modal-cancel');
+    const btnModalAddSelected = document.getElementById('btn-hud-modal-add-selected');
+    const customKeyInput = document.getElementById('hud-custom-key-input');
+    const filterTabs = document.querySelectorAll('.hud-filter-tab');
+    const keyPickBtns = document.querySelectorAll('.hud-key-pick-btn');
+
+    if (!hudOverlay || !hudContainer) return;
+
+    let isEditing = false;
+    let selectedElemId = null;
+    let emulationMode = 'xinput'; // 'xinput' or 'wasd'
+    let customBtnCounter = 0;
+    let chosenPresetBtn = null;
+
+    // Default HUD Elements Layout
+    const DEFAULT_HUD_LAYOUT = {
+      scale: 1.0,
+      opacity: 0.65,
+      mode: 'xinput',
+      elements: {
+        'joystick': { left: '6%', bottom: '18%', top: 'auto', right: 'auto', type: 'joystick', scale: 1.0, label: 'JOYSTICK' },
+        'lt': { left: '6%', top: '14%', right: 'auto', bottom: 'auto', type: 'trigger', gp: 'lt', key: 'mouse_right', scale: 1.0, label: 'LT (AIM)' },
+        'lb': { left: '20%', top: '14%', right: 'auto', bottom: 'auto', type: 'trigger', gp: 'lb', key: 'shift', scale: 1.0, label: 'LB (SPRINT)' },
+        'rt': { right: '6%', top: '14%', left: 'auto', bottom: 'auto', type: 'trigger', gp: 'rt', key: 'mouse_left', scale: 1.0, label: 'RT (FIRE)' },
+        'rb': { right: '20%', top: '14%', left: 'auto', bottom: 'auto', type: 'trigger', gp: 'rb', key: 'ctrl', scale: 1.0, label: 'RB (PRONE)' },
+        'btn-a': { right: '14%', bottom: '12%', left: 'auto', top: 'auto', type: 'circle', gp: 'a', key: 'space', scale: 1.0, label: 'A (JUMP)' },
+        'btn-b': { right: '5%', bottom: '22%', left: 'auto', top: 'auto', type: 'circle', gp: 'b', key: 'c', scale: 1.0, label: 'B (CROUCH)' },
+        'btn-x': { right: '23%', bottom: '22%', left: 'auto', top: 'auto', type: 'circle', gp: 'x', key: 'r', scale: 1.0, label: 'X (RELOAD)' },
+        'btn-y': { right: '14%', bottom: '32%', left: 'auto', top: 'auto', type: 'circle', gp: 'y', key: 'e', scale: 1.0, label: 'Y (USE)' },
+        'btn-1': { right: '33%', bottom: '12%', left: 'auto', top: 'auto', type: 'pill', gp: '1', key: '1', scale: 1.0, label: '1 (PRIMARY)' },
+        'btn-2': { right: '33%', bottom: '24%', left: 'auto', top: 'auto', type: 'pill', gp: '2', key: '2', scale: 1.0, label: '2 (SECONDARY)' },
+        'btn-tab': { left: '33%', bottom: '12%', right: 'auto', top: 'auto', type: 'pill', gp: 'back', key: 'tab', scale: 1.0, label: 'TAB (BAG)' },
+        'btn-esc': { left: '33%', bottom: '24%', right: 'auto', top: 'auto', type: 'pill', gp: 'start', key: 'escape', scale: 1.0, label: 'ESC (MENU)' }
+      }
+    };
+
+    function loadSavedLayout() {
+      try {
+        const raw = localStorage.getItem('pcdeck_gamepad_hud_layout');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.elements) return parsed;
+        }
+      } catch (e) {
+        console.warn('[GamepadHUD] Error loading layout:', e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_HUD_LAYOUT));
+    }
+
+    let currentLayout = loadSavedLayout();
+
+    function getElementFriendlyName(elemId, elElem) {
+      if (!elemId) return 'None';
+      const conf = currentLayout.elements[elemId];
+      if (conf && conf.label) return conf.label;
+      if (elElem && elElem.textContent) {
+        const txt = elElem.textContent.replace('✕', '').trim();
+        if (txt) return txt.substring(0, 14);
+      }
+      return elemId.toUpperCase();
+    }
+
+    function selectHudElement(elemId) {
+      // Clear previous selection
+      const prevSelected = hudContainer.querySelectorAll('.hud-elem-selected');
+      prevSelected.forEach(el => el.classList.remove('hud-elem-selected'));
+
+      selectedElemId = elemId;
+      if (!elemId) {
+        if (selectedElemLabel) selectedElemLabel.textContent = 'Tap a Key';
+        if (btnDeleteSelected) btnDeleteSelected.style.display = 'none';
+        return;
+      }
+
+      const elElem = hudContainer.querySelector(`[data-elem-id="${elemId}"]`);
+      if (elElem) {
+        elElem.classList.add('hud-elem-selected');
+        const friendlyName = getElementFriendlyName(elemId, elElem);
+        if (selectedElemLabel) selectedElemLabel.textContent = friendlyName;
+        if (btnDeleteSelected) btnDeleteSelected.style.display = 'inline-flex';
+
+        const conf = currentLayout.elements[elemId] || {};
+        const elemScale = conf.scale !== undefined ? conf.scale : 1.0;
+        const sVal = Math.round(elemScale * 100);
+        if (sizeSlider) sizeSlider.value = sVal;
+        if (sizeValText) sizeValText.textContent = `${sVal}%`;
+
+        const elemOpacity = conf.opacity !== undefined ? conf.opacity : (currentLayout.opacity || 0.65);
+        const opVal = Math.round(elemOpacity * 100);
+        if (opacitySlider) opacitySlider.value = opVal;
+        if (opacityValText) opacityValText.textContent = `${opVal}%`;
+      } else {
+        selectedElemId = null;
+        if (selectedElemLabel) selectedElemLabel.textContent = 'Tap a Key';
+        if (btnDeleteSelected) btnDeleteSelected.style.display = 'none';
+      }
+    }
+
+    function removeHudElement(elemId) {
+      if (!elemId) return;
+      const elElem = hudContainer.querySelector(`[data-elem-id="${elemId}"]`);
+      if (elElem) {
+        delete currentLayout.elements[elemId];
+        elElem.remove();
+        if (selectedElemId === elemId) {
+          selectHudElement(null);
+        }
+        vibrate(20);
+        showToast(`<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg> Button Removed`, 'info');
+      }
+    }
+
+    function applyLayout(layout) {
+      hudContainer.style.opacity = layout.opacity !== undefined ? layout.opacity : 0.65;
+      emulationMode = layout.mode || 'xinput';
+
+      if (btnModeSwitch) {
+        btnModeSwitch.textContent = emulationMode === 'xinput' ? 'Mode: XInput' : 'Mode: PC Keys';
+      }
+
+      // Sync elements
+      Object.keys(layout.elements).forEach(elemId => {
+        let elElem = hudContainer.querySelector(`[data-elem-id="${elemId}"]`);
+        const conf = layout.elements[elemId];
+        if (!elElem && conf.custom) {
+          elElem = createCustomHudButton(elemId, conf);
+        }
+        if (elElem) {
+          elElem.style.left = conf.left !== 'auto' ? conf.left : 'auto';
+          elElem.style.top = conf.top !== 'auto' ? conf.top : 'auto';
+          elElem.style.right = conf.right !== 'auto' ? conf.right : 'auto';
+          elElem.style.bottom = conf.bottom !== 'auto' ? conf.bottom : 'auto';
+          const scale = conf.scale !== undefined ? conf.scale : 1.0;
+          elElem.style.transform = `scale(${scale})`;
+          if (conf.opacity !== undefined) {
+            elElem.style.opacity = conf.opacity;
+          }
+          if (conf.gp) elElem.dataset.gp = conf.gp;
+          if (conf.key) elElem.dataset.key = conf.key;
+        }
+      });
+
+      // Remove default DOM elements that were deleted by the user from currentLayout
+      const existingDomElems = hudContainer.querySelectorAll('.hud-elem');
+      existingDomElems.forEach(el => {
+        const id = el.dataset.elemId;
+        if (id && !layout.elements[id]) {
+          el.remove();
+        }
+      });
+    }
+
+    function createCustomHudButton(elemId, conf) {
+      const btn = document.createElement('div');
+      btn.className = 'hud-elem hud-tactical-pill is-custom-btn';
+      btn.dataset.elemId = elemId;
+      btn.dataset.gp = conf.gp || 'a';
+      btn.dataset.key = conf.key || 'space';
+      const labelText = conf.label || conf.key.toUpperCase();
+      btn.innerHTML = `<span>${labelText}</span>`;
+      hudContainer.appendChild(btn);
+      bindHudElementEvents(btn);
+      return btn;
+    }
+
+    // Toggle In-Display Gaming HUD (APK Only)
+    function toggleGamepadHUD(forceState) {
+      const isNative = (typeof checkIsNativeApp === 'function') ? checkIsNativeApp() : isNativeApp;
+      if (!isNative && !state.gamepadHudEnabled) {
+        return;
+      }
+      const nextState = forceState !== undefined ? forceState : !state.gamepadHudActive;
+      state.gamepadHudActive = nextState;
+      const btnScreenHudFab = document.getElementById('btn-screen-hud-fab');
+      if (btnScreenHudFab) btnScreenHudFab.classList.toggle('active', nextState);
+      document.body.classList.toggle('gamepad-hud-active', nextState);
+
+      const hudOverlay = document.getElementById('screen-gamepad-overlay');
+      if (hudOverlay) {
+        hudOverlay.style.setProperty('display', nextState ? 'flex' : 'none', 'important');
+      }
+
+      if (nextState) {
+        applyLayout(currentLayout);
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          mainWs.send('driver_check');
+        }
+        vibrate(30);
+        showToast('In-Display Gaming HUD Active (Full Screen View)', 'info');
+      } else {
+        exitEditMode();
+        sendCommand('gr');
+        vibrate(15);
+        showToast('Gaming HUD Closed', 'info');
+      }
+    }
+
+    window.toggleGamepadHUD = toggleGamepadHUD;
+    if (typeof updateGamepadHudVisibility === 'function') {
+      updateGamepadHudVisibility();
+    }
+
+    const handleHudToggle = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      toggleGamepadHUD();
+    };
+
+    const hudButtons = [document.getElementById('btn-screen-hud-fab')];
+    hudButtons.forEach(btn => {
+      if (!btn) return;
+      btn.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+      }, { passive: true });
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleHudToggle(e);
+      }, { passive: false });
+      btn.onclick = handleHudToggle;
+    });
+
+    if (btnCloseHud) {
+      btnCloseHud.addEventListener('touchstart', (e) => { e.stopPropagation(); }, { passive: true });
+      btnCloseHud.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleGamepadHUD(false);
+      }, { passive: false });
+      btnCloseHud.onclick = () => toggleGamepadHUD(false);
+    }
+
+    const btnHudInstallDriver = document.getElementById('btn-hud-install-driver');
+    if (btnHudInstallDriver) {
+      btnHudInstallDriver.onclick = () => {
+        const hudDriverBanner = document.getElementById('hud-driver-banner');
+        if (hudDriverBanner) hudDriverBanner.style.display = 'block';
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          vibrate(20);
+          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info');
+          mainWs.send('install_gamepad_driver_request');
+        } else {
+          showToast('PC not connected', 'error', '️');
+        }
+      };
+    }
+
+    const btnHudDriverAction = document.getElementById('btn-hud-driver-action');
+    if (btnHudDriverAction) {
+      btnHudDriverAction.onclick = () => {
+        if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+          vibrate(20);
+          showToast('Requesting PC Virtual Gamepad Driver installation...', 'info');
+          mainWs.send('install_gamepad_driver_request');
+        } else {
+          showToast('PC not connected', 'error', '️');
+        }
+      };
+    }
+
+    if (btnModeSwitch) {
+      btnModeSwitch.onclick = () => {
+        vibrate(15);
+        emulationMode = emulationMode === 'xinput' ? 'wasd' : 'xinput';
+        currentLayout.mode = emulationMode;
+        btnModeSwitch.textContent = emulationMode === 'xinput' ? 'Mode: XInput' : 'Mode: PC Keys';
+        showToast(`Emulation Mode: ${emulationMode === 'xinput' ? 'Virtual Xbox 360' : 'PC Keyboard/Mouse'}`, 'info', '️');
+      };
+    }
+
+    // Layout Customizer Mode (PUBG / CoD Style)
+    function enterEditMode() {
+      if (!window.isProUnlocked || !window.isProUnlocked()) {
+        vibrate(25);
+        if (typeof window.openProUpgradeModal === 'function') {
+          window.openProUpgradeModal();
+        }
+        if (typeof showToast === 'function') {
+          showToast('Custom HUD Key Mapping & Designer requires PCDeck Pro', 'warn');
+        }
+        return;
+      }
+      isEditing = true;
+      state.gamepadHudEditing = true;
+      hudContainer.classList.add('hud-editing');
+      editorToolbar.style.display = 'flex';
+      btnEditLayout.textContent = 'Exit Edit';
+      btnEditLayout.classList.add('active');
+
+      // Auto-select first available element
+      const firstElem = hudContainer.querySelector('.hud-elem');
+      if (firstElem) {
+        selectHudElement(firstElem.dataset.elemId);
+      }
+      showToast('️ Tap any key to resize, or drag to position', 'info', '️');
+    }
+
+    function exitEditMode() {
+      isEditing = false;
+      state.gamepadHudEditing = false;
+      hudContainer.classList.remove('hud-editing');
+      editorToolbar.style.display = 'none';
+      btnEditLayout.textContent = 'Edit Layout';
+      btnEditLayout.classList.remove('active');
+      selectHudElement(null);
+    }
+
+    if (btnEditLayout) {
+      btnEditLayout.onclick = () => {
+        vibrate(15);
+        if (isEditing) {
+          exitEditMode();
+        } else {
+          if (!window.isProUnlocked || !window.isProUnlocked()) {
+            if (typeof window.openProUpgradeModal === 'function') {
+              window.openProUpgradeModal();
+            }
+            if (typeof showToast === 'function') {
+              showToast('Custom HUD Key Mapping & Designer requires PCDeck Pro', 'warn');
+            }
+            return;
+          }
+          enterEditMode();
+        }
+      };
+    }
+
+    // Per-Key Size Control (Slider + Buttons)
+    function setElementScale(scaleRatio) {
+      if (!selectedElemId) {
+        showToast('Tap a button on screen to select it first', 'warn');
+        return;
+      }
+      const elElem = hudContainer.querySelector(`[data-elem-id="${selectedElemId}"]`);
+      if (elElem) {
+        scaleRatio = Math.max(0.5, Math.min(2.2, scaleRatio));
+        if (!currentLayout.elements[selectedElemId]) {
+          currentLayout.elements[selectedElemId] = { scale: 1.0 };
+        }
+        currentLayout.elements[selectedElemId].scale = scaleRatio;
+        elElem.style.transform = `scale(${scaleRatio})`;
+        const sVal = Math.round(scaleRatio * 100);
+        if (sizeSlider) sizeSlider.value = sVal;
+        if (sizeValText) sizeValText.textContent = `${sVal}%`;
+      }
+    }
+
+    if (sizeSlider) {
+      sizeSlider.oninput = (e) => {
+        const val = parseInt(e.target.value, 10);
+        setElementScale(val / 100);
+      };
+    }
+
+    const hudSizePills = document.querySelectorAll('[data-hud-size]');
+    hudSizePills.forEach(pill => {
+      pill.onclick = () => {
+        vibrate(10);
+        hudSizePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const s = parseInt(pill.dataset.hudSize, 10) / 100;
+        setElementScale(s);
+      };
+    });
+
+    if (btnSizeDec) {
+      btnSizeDec.onclick = () => {
+        const curVal = sizeSlider ? parseInt(sizeSlider.value, 10) : 100;
+        setElementScale((curVal - 5) / 100);
+      };
+    }
+
+    if (btnSizeInc) {
+      btnSizeInc.onclick = () => {
+        const curVal = sizeSlider ? parseInt(sizeSlider.value, 10) : 100;
+        setElementScale((curVal + 5) / 100);
+      };
+    }
+
+    // Opacity Control
+    if (opacitySlider) {
+      opacitySlider.oninput = (e) => {
+        const opVal = parseInt(e.target.value, 10) / 100;
+        currentLayout.opacity = opVal;
+        hudContainer.style.opacity = opVal;
+        if (opacityValText) opacityValText.textContent = `${parseInt(e.target.value, 10)}%`;
+      };
+    }
+
+    const hudOpacityPills = document.querySelectorAll('[data-hud-opacity]');
+    hudOpacityPills.forEach(pill => {
+      pill.onclick = () => {
+        vibrate(10);
+        hudOpacityPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const opVal = parseInt(pill.dataset.hudOpacity, 10) / 100;
+        currentLayout.opacity = opVal;
+        hudContainer.style.opacity = opVal;
+        if (opacitySlider) opacitySlider.value = parseInt(pill.dataset.hudOpacity, 10);
+        if (opacityValText) opacityValText.textContent = `${parseInt(pill.dataset.hudOpacity, 10)}%`;
+      };
+    });
+
+    const btnExitHudEditor = document.getElementById('btn-hud-exit-editor');
+    if (btnExitHudEditor) {
+      btnExitHudEditor.onclick = () => exitEditMode();
+    }
+
+    // Delete Selected Button
+    if (btnDeleteSelected) {
+      btnDeleteSelected.onclick = () => {
+        if (selectedElemId) {
+          removeHudElement(selectedElemId);
+        }
+      };
+    }
+
+    // Save Layout
+    if (btnSave) {
+      btnSave.onclick = () => {
+        vibrate(30);
+        const allElems = hudContainer.querySelectorAll('.hud-elem');
+        const containerRect = hudContainer.getBoundingClientRect();
+        allElems.forEach(el => {
+          const elemId = el.dataset.elemId;
+          const rect = el.getBoundingClientRect();
+          const leftPct = ((rect.left - containerRect.left) / containerRect.width * 100).toFixed(1) + '%';
+          const topPct = ((rect.top - containerRect.top) / containerRect.height * 100).toFixed(1) + '%';
+          if (!currentLayout.elements[elemId]) {
+            currentLayout.elements[elemId] = { custom: true, gp: el.dataset.gp, key: el.dataset.key, label: el.textContent.replace('✕', '').trim() };
+          }
+          currentLayout.elements[elemId].left = leftPct;
+          currentLayout.elements[elemId].top = topPct;
+          currentLayout.elements[elemId].right = 'auto';
+          currentLayout.elements[elemId].bottom = 'auto';
+        });
+        currentLayout.mode = emulationMode;
+
+        localStorage.setItem('pcdeck_gamepad_hud_layout', JSON.stringify(currentLayout));
+        exitEditMode();
+        showToast(' Gaming HUD Layout Saved Permanently!', 'success');
+      };
+    }
+
+    // Reset Layout
+    if (btnReset) {
+      btnReset.onclick = () => {
+        vibrate(20);
+        currentLayout = JSON.parse(JSON.stringify(DEFAULT_HUD_LAYOUT));
+        localStorage.removeItem('pcdeck_gamepad_hud_layout');
+        hudContainer.innerHTML = `
+          <div id="hud-elem-joystick" class="hud-elem hud-joystick-zone" data-elem-id="joystick" style="left: 6%; bottom: 18%;">
+            <div class="hud-joystick-base">
+              <div class="hud-joystick-stick" id="hud-joystick-thumb"></div>
+              <span class="hud-joystick-label">LS / WASD</span>
+            </div>
+          </div>
+          <div id="hud-elem-lt" class="hud-elem hud-trigger-btn hud-trigger-lt" data-elem-id="lt" data-gp="lt" style="left: 6%; top: 14%;">
+            <span class="hud-btn-text">LT</span>
+            <span class="hud-btn-sub">AIM / ADS</span>
+          </div>
+          <div id="hud-elem-lb" class="hud-elem hud-trigger-btn hud-trigger-lb" data-elem-id="lb" data-gp="lb" style="left: 20%; top: 14%;">
+            <span class="hud-btn-text">LB</span>
+            <span class="hud-btn-sub">SPRINT</span>
+          </div>
+          <div id="hud-elem-rt" class="hud-elem hud-trigger-btn hud-trigger-rt" data-elem-id="rt" data-gp="rt" style="right: 6%; top: 14%;">
+            <span class="hud-btn-text">RT</span>
+            <span class="hud-btn-sub">FIRE</span>
+          </div>
+          <div id="hud-elem-rb" class="hud-elem hud-trigger-btn hud-trigger-rb" data-elem-id="rb" data-gp="rb" style="right: 20%; top: 14%;">
+            <span class="hud-btn-text">RB</span>
+            <span class="hud-btn-sub">PRONE</span>
+          </div>
+          <div id="hud-elem-btn-a" class="hud-elem hud-action-circle btn-hud-a" data-elem-id="btn-a" data-gp="a" style="right: 14%; bottom: 12%;">
+            <span class="hud-circle-glyph">A</span>
+            <span class="hud-circle-sub">JUMP</span>
+          </div>
+          <div id="hud-elem-btn-b" class="hud-elem hud-action-circle btn-hud-b" data-elem-id="btn-b" data-gp="b" style="right: 5%; bottom: 22%;">
+            <span class="hud-circle-glyph">B</span>
+            <span class="hud-circle-sub">CROUCH</span>
+          </div>
+          <div id="hud-elem-btn-x" class="hud-elem hud-action-circle btn-hud-x" data-elem-id="btn-x" data-gp="x" style="right: 23%; bottom: 22%;">
+            <span class="hud-circle-glyph">X</span>
+            <span class="hud-circle-sub">RELOAD</span>
+          </div>
+          <div id="hud-elem-btn-y" class="hud-elem hud-action-circle btn-hud-y" data-elem-id="btn-y" data-gp="y" style="right: 14%; bottom: 32%;">
+            <span class="hud-circle-glyph">Y</span>
+            <span class="hud-circle-sub">USE</span>
+          </div>
+          <div id="hud-elem-btn-1" class="hud-elem hud-tactical-pill" data-elem-id="btn-1" data-gp="1" style="right: 33%; bottom: 12%;">
+            <span>1️⃣ PRIM</span>
+          </div>
+          <div id="hud-elem-btn-2" class="hud-elem hud-tactical-pill" data-elem-id="btn-2" data-gp="2" style="right: 33%; bottom: 24%;">
+            <span>2️⃣ SEC</span>
+          </div>
+          <div id="hud-elem-btn-tab" class="hud-elem hud-tactical-pill" data-elem-id="btn-tab" data-gp="back" style="left: 33%; bottom: 12%;">
+            <span>TAB</span>
+          </div>
+          <div id="hud-elem-btn-esc" class="hud-elem hud-tactical-pill" data-elem-id="btn-esc" data-gp="start" style="left: 33%; bottom: 24%;">
+            <span>ESC</span>
+          </div>
+        `;
+        const newElems = hudContainer.querySelectorAll('.hud-elem');
+        newElems.forEach(bindHudElementEvents);
+        initJoystick();
+        applyLayout(currentLayout);
+        selectHudElement('btn-a');
+        showToast('↺ Restored Default Controller Layout', 'info', '↺');
+      };
+    }
+
+    // Add Button Modal & Category Filtering
+    if (btnAddBtn && addBtnModal) {
+      btnAddBtn.onclick = () => {
+        vibrate(15);
+        if (!window.isProUnlocked || !window.isProUnlocked()) {
+          if (typeof window.openProUpgradeModal === 'function') {
+            window.openProUpgradeModal();
+          }
+          if (typeof showToast === 'function') {
+            showToast('Custom Key Mapping requires PCDeck Pro', 'warn');
+          }
+          return;
+        }
+        chosenPresetBtn = null;
+        if (customKeyInput) customKeyInput.value = '';
+        keyPickBtns.forEach(b => b.classList.remove('selected'));
+        addBtnModal.style.display = 'flex';
+      };
+    }
+
+    if (btnModalCancel && addBtnModal) {
+      btnModalCancel.onclick = () => {
+        addBtnModal.style.display = 'none';
+      };
+    }
+
+    if (filterTabs) {
+      filterTabs.forEach(tab => {
+        tab.onclick = () => {
+          filterTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const filter = tab.dataset.filter;
+          keyPickBtns.forEach(btn => {
+            if (filter === 'all' || btn.dataset.category === filter) {
+              btn.style.display = 'block';
+            } else {
+              btn.style.display = 'none';
+            }
+          });
+        };
+      });
+    }
+
+    keyPickBtns.forEach(pick => {
+      pick.onclick = () => {
+        keyPickBtns.forEach(b => b.classList.remove('selected'));
+        pick.classList.add('selected');
+        chosenPresetBtn = pick;
+        if (customKeyInput) customKeyInput.value = '';
+      };
+    });
+
+    if (btnModalAddSelected) {
+      btnModalAddSelected.onclick = () => {
+        let key = '';
+        let label = '';
+        let gp = 'a';
+
+        const customVal = customKeyInput ? customKeyInput.value.trim().toLowerCase() : '';
+        if (customVal) {
+          key = customVal;
+          label = customVal.toUpperCase();
+          gp = 'a';
+        } else if (chosenPresetBtn) {
+          key = chosenPresetBtn.dataset.key;
+          label = chosenPresetBtn.dataset.label || key.toUpperCase();
+          gp = chosenPresetBtn.dataset.gp || 'a';
+        } else {
+          showToast('Please select a button or type a custom key', 'warn', '️');
+          return;
+        }
+
+        customBtnCounter++;
+        const customId = `custom-btn-${customBtnCounter}-${Date.now()}`;
+        currentLayout.elements[customId] = {
+          left: '45%',
+          top: '45%',
+          right: 'auto',
+          bottom: 'auto',
+          custom: true,
+          key: key,
+          gp: gp,
+          label: label,
+          scale: 1.0
+        };
+
+        const elNew = createCustomHudButton(customId, currentLayout.elements[customId]);
+        const containerRect = hudContainer.getBoundingClientRect();
+        const initLeftPx = Math.max(10, Math.round((containerRect.width - (elNew.offsetWidth || 64)) / 2));
+        const initTopPx = Math.max(10, Math.round((containerRect.height - (elNew.offsetHeight || 44)) / 2));
+        const leftPct = ((initLeftPx / containerRect.width) * 100).toFixed(2) + '%';
+        const topPct = ((initTopPx / containerRect.height) * 100).toFixed(2) + '%';
+        elNew.style.left = leftPct;
+        elNew.style.top = topPct;
+        elNew.style.right = 'auto';
+        elNew.style.bottom = 'auto';
+        elNew.style.transform = 'scale(1.0)';
+        currentLayout.elements[customId].left = leftPct;
+        currentLayout.elements[customId].top = topPct;
+        currentLayout.elements[customId].right = 'auto';
+        currentLayout.elements[customId].bottom = 'auto';
+        addBtnModal.style.display = 'none';
+        selectHudElement(customId);
+        showToast(` Added "${label}" (Drag to reposition)`, 'success');
+        vibrate(25);
+      };
+    }
+
+    // Multi-Touch Button & Drag Engine (100% Fluid, Zero Snapping & Scale-Invariant)
+    function bindHudElementEvents(elElem) {
+      let isDragging = false;
+      let startX = 0, startY = 0;
+      let elemCenterX = 0, elemCenterY = 0;
+      let currentDomLeft = 0, currentDomTop = 0;
+
+      elElem.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isEditing) {
+          const rect = elElem.getBoundingClientRect();
+          // Check if delete handle tapped (top-right corner 28px region)
+          if (e.clientX > rect.right - 28 && e.clientY < rect.top + 28) {
+            removeHudElement(elElem.dataset.elemId);
+            return;
+          }
+
+          // Select this element
+          selectHudElement(elElem.dataset.elemId);
+
+          // Fluid Drag Mode
+          isDragging = true;
+          elElem.classList.add('is-dragging');
+          try { elElem.setPointerCapture(e.pointerId); } catch (_) {}
+          startX = e.clientX;
+          startY = e.clientY;
+
+          const containerRect = hudContainer.getBoundingClientRect();
+          // Visual center of element relative to hudContainer
+          elemCenterX = (rect.left + rect.width / 2) - containerRect.left;
+          elemCenterY = (rect.top + rect.height / 2) - containerRect.top;
+
+          // Compute unscaled DOM left/top so center remains invariant under scale
+          currentDomLeft = elemCenterX - (elElem.offsetWidth / 2);
+          currentDomTop = elemCenterY - (elElem.offsetHeight / 2);
+
+          elElem.style.position = 'absolute';
+          elElem.style.left = `${currentDomLeft.toFixed(1)}px`;
+          elElem.style.top = `${currentDomTop.toFixed(1)}px`;
+          elElem.style.right = 'auto';
+          elElem.style.bottom = 'auto';
+          return;
+        }
+
+        // Gameplay Button Press Mode
+        if (elElem.dataset.elemId === 'joystick') return;
+
+        elElem.classList.add('active-pressed');
+        if (state.hapticsEnabled) vibrate(12);
+
+        const gpCode = elElem.dataset.gp;
+        const key = elElem.dataset.key;
+
+        if (emulationMode === 'wasd') {
+          if (key && key.startsWith('mouse_')) {
+            sendCommand(`mouse,down,${key.replace('mouse_', '')}`);
+          } else if (key) {
+            sendCommand(`key,down,${key}`);
+          }
+        } else {
+          if (gpCode === 'lt' || gpCode === 'rt') {
+            sendCommand(`gt,${gpCode},1.0`);
+          } else if (gpCode) {
+            sendCommand(`gp,btn,${gpCode},1`);
+          }
+        }
+      });
+
+      elElem.addEventListener('pointermove', (e) => {
+        if (isEditing && isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          const containerRect = hudContainer.getBoundingClientRect();
+          const rect = elElem.getBoundingClientRect();
+          const halfW = rect.width / 2;
+          const halfH = rect.height / 2;
+
+          const newCenterX = elemCenterX + (e.clientX - startX);
+          const newCenterY = elemCenterY + (e.clientY - startY);
+
+          // Keep element within container boundaries
+          const clampedCenterX = Math.max(halfW, Math.min(containerRect.width - halfW, newCenterX));
+          const clampedCenterY = Math.max(halfH, Math.min(containerRect.height - halfH, newCenterY));
+
+          currentDomLeft = clampedCenterX - (elElem.offsetWidth / 2);
+          currentDomTop = clampedCenterY - (elElem.offsetHeight / 2);
+
+          elElem.style.left = `${currentDomLeft.toFixed(1)}px`;
+          elElem.style.top = `${currentDomTop.toFixed(1)}px`;
+          elElem.style.right = 'auto';
+          elElem.style.bottom = 'auto';
+        }
+      });
+
+      const onPointerRelease = (e) => {
+        if (isEditing && isDragging) {
+          isDragging = false;
+          elElem.classList.remove('is-dragging');
+          try { elElem.releasePointerCapture(e.pointerId); } catch (_) {}
+          const containerRect = hudContainer.getBoundingClientRect();
+          const leftPct = ((currentDomLeft / containerRect.width) * 100).toFixed(2) + '%';
+          const topPct = ((currentDomTop / containerRect.height) * 100).toFixed(2) + '%';
+          elElem.style.left = leftPct;
+          elElem.style.top = topPct;
+          elElem.style.right = 'auto';
+          elElem.style.bottom = 'auto';
+          if (currentLayout.elements[elElem.dataset.elemId]) {
+            currentLayout.elements[elElem.dataset.elemId].left = leftPct;
+            currentLayout.elements[elElem.dataset.elemId].top = topPct;
+            currentLayout.elements[elElem.dataset.elemId].right = 'auto';
+            currentLayout.elements[elElem.dataset.elemId].bottom = 'auto';
+          }
+          return;
+        }
+
+        if (elElem.dataset.elemId === 'joystick') return;
+
+        elElem.classList.remove('active-pressed');
+        const gpCode = elElem.dataset.gp;
+        const key = elElem.dataset.key;
+
+        if (emulationMode === 'wasd') {
+          if (key && key.startsWith('mouse_')) {
+            sendCommand(`mouse,up,${key.replace('mouse_', '')}`);
+          } else if (key) {
+            sendCommand(`key,up,${key}`);
+          }
+        } else {
+          if (gpCode === 'lt' || gpCode === 'rt') {
+            sendCommand(`gt,${gpCode},0.0`);
+          } else if (gpCode) {
+            sendCommand(`gp,btn,${gpCode},0`);
+          }
+        }
+      };
+
+      elElem.addEventListener('pointerup', onPointerRelease);
+      elElem.addEventListener('pointercancel', onPointerRelease);
+    }
+
+    // Bind all initial elements
+    const initialElems = hudContainer.querySelectorAll('.hud-elem');
+    initialElems.forEach(bindHudElementEvents);
+
+    // ️ Virtual Joystick Engine
+    let joystickActive = false;
+    let joystickPointerId = null;
+    let lastStickX = 0, lastStickY = 0;
+    const maxStickRadius = 40;
+    let activeKeys = { w: false, a: false, s: false, d: false };
+
+    function initJoystick() {
+      const joystickZone = document.getElementById('hud-elem-joystick');
+      const joystickThumb = document.getElementById('hud-joystick-thumb');
+      if (!joystickZone || !joystickThumb) return;
+
+      const onJoystickMove = (e) => {
+        if (!joystickActive || joystickPointerId !== e.pointerId || isEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        updateJoystickPosition(e.clientX, e.clientY);
+      };
+
+      const onJoystickRelease = (e) => {
+        if (!joystickActive || (e && e.pointerId !== undefined && joystickPointerId !== e.pointerId)) return;
+        joystickActive = false;
+        joystickPointerId = null;
+        try { joystickZone.releasePointerCapture(e.pointerId); } catch (_) {}
+        window.removeEventListener('pointermove', onJoystickMove);
+        window.removeEventListener('pointerup', onJoystickRelease);
+        window.removeEventListener('pointercancel', onJoystickRelease);
+        joystickThumb.style.transform = 'translate(0px, 0px)';
+
+        if (emulationMode === 'wasd') {
+          ['w', 'a', 's', 'd'].forEach(k => {
+            if (activeKeys[k]) {
+              sendCommand(`key,up,${k}`);
+              activeKeys[k] = false;
+            }
+          });
+        } else {
+          sendCommand('ga,left,0,0');
+        }
+      };
+
+      joystickZone.addEventListener('pointerdown', (e) => {
+        if (isEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        joystickActive = true;
+        joystickPointerId = e.pointerId;
+        try { joystickZone.setPointerCapture(e.pointerId); } catch (_) {}
+        if (state.hapticsEnabled) vibrate(15);
+
+        window.addEventListener('pointermove', onJoystickMove, { passive: false });
+        window.addEventListener('pointerup', onJoystickRelease);
+        window.addEventListener('pointercancel', onJoystickRelease);
+
+        updateJoystickPosition(e.clientX, e.clientY);
+      });
+
+      function updateJoystickPosition(clientX, clientY) {
+        const rect = joystickZone.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        let dx = clientX - centerX;
+        let dy = clientY - centerY;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > maxStickRadius) {
+          dx = (dx / dist) * maxStickRadius;
+          dy = (dy / dist) * maxStickRadius;
+        }
+
+        joystickThumb.style.transform = `translate(${dx}px, ${dy}px)`;
+
+        let normX = dx / maxStickRadius;
+        let normY = -(dy / maxStickRadius);
+
+        const deadzone = 0.12;
+        if (Math.abs(normX) < deadzone) normX = 0;
+        if (Math.abs(normY) < deadzone) normY = 0;
+
+        if (emulationMode === 'wasd') {
+          const pressW = normY > 0.35;
+          const pressS = normY < -0.35;
+          const pressD = normX > 0.35;
+          const pressA = normX < -0.35;
+
+          if (pressW !== activeKeys.w) { sendCommand(`key,${pressW ? 'down' : 'up'},w`); activeKeys.w = pressW; }
+          if (pressS !== activeKeys.s) { sendCommand(`key,${pressS ? 'down' : 'up'},s`); activeKeys.s = pressS; }
+          if (pressA !== activeKeys.a) { sendCommand(`key,${pressA ? 'down' : 'up'},a`); activeKeys.a = pressA; }
+          if (pressD !== activeKeys.d) { sendCommand(`key,${pressD ? 'down' : 'up'},d`); activeKeys.d = pressD; }
+        } else {
+          normX = Math.round(normX * 100) / 100;
+          normY = Math.round(normY * 100) / 100;
+          if (normX !== lastStickX || normY !== lastStickY) {
+            lastStickX = normX;
+            lastStickY = normY;
+            sendCommand(`ga,left,${normX},${normY}`);
+          }
+        }
+      }
+    }
+
+    initJoystick();
+
+    // Apply layout on startup
+    applyLayout(currentLayout);
+  }
+
+  // =========================================================================
+  // WIRELESS PC MICROPHONE MODULE
+  // =========================================================================
+  let micWs = null;
+  let micAudioContext = null;
+  let micMediaStream = null;
+  let micProcessorNode = null;
+  let micGainNode = null;
+  let micActive = false;
+  let micMuted = false;
+
+  function initWirelessMicrophone() {
+    const btnToggle = document.getElementById('btn-toggle-mic');
+    const btnMute = document.getElementById('btn-mute-mic');
+    const statusBadge = document.getElementById('mic-status-badge');
+    const vuFill = document.getElementById('vu-meter-fill');
+    const vuDb = document.getElementById('vu-meter-db');
+    const gainSlider = document.getElementById('mic-gain-slider');
+    const gainVal = document.getElementById('mic-gain-val');
+
+
+
+    const btnUpdateApk = document.getElementById('btn-update-apk');
+    if (btnUpdateApk) {
+      btnUpdateApk.onclick = () => {
+        const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+        const port = state.serverPort || 8000;
+        const apkUrl = `http://${host}:${port}/PCDeck.apk`;
+        showToast(`Downloading and installing PCDeck v${CURRENT_APP_VERSION_NAME} update...`, 'info', '⬇️');
+        if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
+          window.AndroidApp.downloadAndInstallApk(apkUrl);
+        } else {
+          window.location.href = apkUrl;
+        }
+      };
+    }
+
+    if (gainSlider && gainVal) {
+      gainSlider.oninput = (e) => {
+        gainVal.textContent = `${e.target.value}%`;
+        if (micGainNode) micGainNode.gain.value = e.target.value / 100;
+      };
+    }
+
+    async function startMic() {
+      let host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+      if (host && host.includes(':')) {
+        host = host.split(':')[0];
+      }
+
+      // 1. Native Android Hardware Microphone Pipeline (100% immune to Chromium/WebView origin bugs)
+      if (window.AndroidApp && typeof window.AndroidApp.startNativeMic === 'function') {
+        try {
+          if (typeof window.AndroidApp.hasMicPermission === 'function' && !window.AndroidApp.hasMicPermission()) {
+            window.onNativeMicPermissionResult = (granted) => {
+              if (granted) {
+                startMic();
+              } else {
+                showToast('Microphone permission required for voice input', 'warning', '️');
+              }
+            };
+            window.AndroidApp.startNativeMic(host, 8002);
+            return;
+          }
+
+          const ok = window.AndroidApp.startNativeMic(host, 8002);
+          if (ok) {
+            micActive = true;
+            window.onNativeMicVu = (pct) => {
+              if (!micActive) return;
+              if (vuFill) vuFill.style.width = `${pct}%`;
+              if (vuDb) vuDb.textContent = `${pct > 0 ? '-' + (100 - pct) : '-inf'} dB`;
+            };
+            if (btnToggle) {
+              btnToggle.className = 'neo-btn btn-pink';
+              btnToggle.innerHTML = '<span id="mic-btn-icon" class="btn-svg-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></span><span id="mic-btn-text">Stop Mic</span>';
+            }
+            if (btnMute) btnMute.style.display = 'inline-flex';
+            if (statusBadge) {
+              statusBadge.className = 'mini-status-chip online';
+              statusBadge.textContent = 'LIVE';
+            }
+            const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
+            if (quickMicBtn) {
+              quickMicBtn.style.background = 'var(--neo-pink)';
+              quickMicBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Mic: ON</span>';
+            }
+            const toolMicSub = document.getElementById('tool-mic-status');
+            if (toolMicSub) toolMicSub.textContent = 'Active (Native Direct)';
+            showToast('Microphone Active (Hardware Low-Latency)', 'success', '️');
+            return;
+          }
+        } catch (nativeErr) {
+          console.warn('[Mic] Native mic start failed, falling back to WebAudio', nativeErr);
+        }
+      }
+
+      // 2. Browser WebAudio Fallback
+      try {
+        let stream = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: false, // Prevents aggressive gating/clipping of soft speech
+              autoGainControl: true
+            }
+          });
+        } catch (e1) {
+          console.warn('[Mic] Custom audio constraints failed, trying basic audio:true...', e1);
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+        micMediaStream = stream;
+
+        try {
+          micAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+        } catch (eCtx) {
+          micAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        if (micAudioContext.state === 'suspended') {
+          await micAudioContext.resume();
+        }
+        const source = micAudioContext.createMediaStreamSource(stream);
+
+        micGainNode = micAudioContext.createGain();
+        if (gainSlider) micGainNode.gain.value = gainSlider.value / 100;
+
+        const analyser = micAudioContext.createAnalyser();
+        analyser.fftSize = 64;
+        source.connect(micGainNode);
+        micGainNode.connect(analyser);
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const port = state.serverPort || 8000;
+        const storedToken = localStorage.getItem('pcdeck_token') || '';
+        const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+        const wsUrl = `${protocol}//${host}:${port}/ws/mic${tokenParam}`;
+        micWs = new WebSocket(wsUrl);
+        micWs.binaryType = 'arraybuffer';
+
+        micWs.onopen = () => {
+          console.log('[Mic] WebSocket connected to', wsUrl);
+        };
+        micWs.onerror = (e) => {
+          console.warn('[Mic] WebSocket connection error:', e);
+        };
+
+        // Stream 16-bit PCM Audio
+        const scriptNode = micAudioContext.createScriptProcessor(2048, 1, 1);
+        const pcmData = new Int16Array(2048);
+        scriptNode.onaudioprocess = (e) => {
+          if (!micActive || micMuted || !micWs || micWs.readyState !== WebSocket.OPEN) return;
+          const input = e.inputBuffer.getChannelData(0);
+          for (let i = 0; i < input.length; i++) {
+            let s = Math.max(-1, Math.min(1, input[i]));
+            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
+          micWs.send(pcmData.buffer);
+        };
+
+        micGainNode.connect(scriptNode);
+        scriptNode.connect(micAudioContext.destination);
+        micProcessorNode = scriptNode;
+
+        // VU meter ticker
+        const pcmBuffer = new Uint8Array(analyser.frequencyBinCount);
+        const updateVu = () => {
+          if (!micActive) return;
+          analyser.getByteFrequencyData(pcmBuffer);
+          let sum = 0;
+          for (let i = 0; i < pcmBuffer.length; i++) sum += pcmBuffer[i];
+          let avg = sum / pcmBuffer.length;
+          let pct = Math.min(100, Math.round((avg / 128) * 100));
+          if (vuFill) vuFill.style.width = `${pct}%`;
+          if (vuDb) vuDb.textContent = `${pct > 0 ? '-' + (100 - pct) : '-inf'} dB`;
+          requestAnimationFrame(updateVu);
+        };
+
+        micActive = true;
+        if (btnToggle) {
+          btnToggle.className = 'neo-btn btn-pink';
+          btnToggle.innerHTML = '<span id="mic-btn-icon" class="btn-svg-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></span><span id="mic-btn-text">Stop Mic</span>';
+        }
+        if (btnMute) btnMute.style.display = 'inline-flex';
+        if (statusBadge) {
+          statusBadge.className = 'mini-status-chip online';
+          statusBadge.textContent = 'LIVE';
+        }
+        const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
+        if (quickMicBtn) {
+          quickMicBtn.style.background = 'var(--neo-pink)';
+          quickMicBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Mic: ON</span>';
+        }
+        const toolMicSub = document.getElementById('tool-mic-status');
+        if (toolMicSub) toolMicSub.textContent = 'Active';
+
+        showToast('Microphone Active (Streaming to PC)', 'success', '️');
+        updateVu();
+      } catch (err) {
+        console.error('[Mic] Start error:', err);
+        const msg = (err && err.message) ? err.message : String(err);
+        if (err.name === 'NotAllowedError' || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('permission')) {
+          showToast('Mic Permission Needed: Allow in Phone Settings > Apps > PCDeck', 'error', '️');
+          if (window.AndroidApp && typeof window.AndroidApp.openAppPermissionsSettings === 'function') {
+            setTimeout(() => {
+              window.AndroidApp.openAppPermissionsSettings();
+            }, 800);
+          }
+        } else {
+          showToast('Mic Access Denied: ' + msg, 'error', '️');
+        }
+      }
+    }
+
+    function stopMic() {
+      micActive = false;
+      if (window.AndroidApp && typeof window.AndroidApp.stopNativeMic === 'function') {
+        try { window.AndroidApp.stopNativeMic(); } catch (e) {}
+      }
+      if (micMediaStream) {
+        micMediaStream.getTracks().forEach(t => t.stop());
+        micMediaStream = null;
+      }
+      if (micAudioContext) {
+        micAudioContext.close();
+        micAudioContext = null;
+      }
+      if (micWs) {
+        micWs.close();
+        micWs = null;
+      }
+      if (btnToggle) {
+        btnToggle.className = 'neo-btn btn-lime';
+        btnToggle.innerHTML = '<span id="mic-btn-icon" class="btn-svg-wrap"><svg class="deck-icon" width="18" height="18"><use href="#icon-mic"/></svg></span><span id="mic-btn-text">Transmit Mic</span>';
+      }
+      if (btnMute) btnMute.style.display = 'none';
+      if (statusBadge) {
+        statusBadge.className = 'mini-status-chip offline';
+        statusBadge.textContent = 'STANDBY';
+      }
+      if (vuFill) vuFill.style.width = '0%';
+
+      const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
+      if (quickMicBtn) {
+        quickMicBtn.style.background = 'var(--neo-lime)';
+        quickMicBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg><span>Mic</span>';
+      }
+      const toolMicSub = document.getElementById('tool-mic-status');
+      if (toolMicSub) toolMicSub.textContent = 'Offline';
+    }
+
+    const toggleMicHandler = () => {
+      vibrate(15);
+      if (micActive) stopMic(); else startMic();
+    };
+
+    if (btnToggle) btnToggle.onclick = toggleMicHandler;
+
+    const quickMicBtn = document.getElementById('btn-quick-mic-toggle');
+    if (quickMicBtn) quickMicBtn.onclick = toggleMicHandler;
+
+    const toolMicBtn = document.getElementById('tool-mic-quick');
+    if (toolMicBtn) toolMicBtn.onclick = () => {
+      toggleMicHandler();
+      if (el.quickToolsDrawer) el.quickToolsDrawer.classList.remove('open');
+    };
+
+    if (btnMute) {
+      btnMute.onclick = () => {
+        vibrate(15);
+        micMuted = !micMuted;
+        btnMute.textContent = micMuted ? 'UNMUTE' : 'MUTE';
+        btnMute.style.background = micMuted ? 'var(--neo-yellow)' : '';
+      };
+    }
+  }
+
+  // =========================================================================
+  // WIRELESS HD WEBCAM MODULE WITH MULTI-LENS & TORCH SUPPORT
+  // =========================================================================
+  let camWs = null;
+  let camMediaStream = null;
+  let camActive = false;
+  let camFacingMode = 'environment';
+  let camSelectedDeviceId = '';
+  let camTargetRes = 720;
+  let camFps = 30;
+  let camTorchActive = false;
+  let availableVideoDevices = [];
+
+  function initWirelessWebcam() {
+    const btnToggle = document.getElementById('btn-toggle-cam');
+    const btnSwitch = document.getElementById('btn-switch-cam-lens');
+    const btnTorch = document.getElementById('btn-toggle-torch');
+    const deviceSelect = document.getElementById('cam-device-select');
+    const statusBadge = document.getElementById('cam-status-badge');
+    const videoPreview = document.getElementById('webcam-preview-video');
+    const placeholder = document.getElementById('cam-idle-placeholder');
+    const liveBadge = document.getElementById('cam-live-indicator');
+    const resChips = document.querySelectorAll('.cam-res-selector .neo-chip-toggle');
+
+    // Enumerate hardware cameras
+    async function enumerateCameras() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        availableVideoDevices = devices.filter(d => d.kind === 'videoinput');
+
+        if (deviceSelect && availableVideoDevices.length > 0) {
+          deviceSelect.innerHTML = '';
+          availableVideoDevices.forEach((dev, idx) => {
+            const opt = document.createElement('option');
+            opt.value = dev.deviceId;
+            let label = dev.label || `Camera ${idx + 1}`;
+            if (label.toLowerCase().includes('back') || label.toLowerCase().includes('rear') || label.toLowerCase().includes('environment')) {
+              opt.textContent = `Rear: ${label}`;
+            } else if (label.toLowerCase().includes('front') || label.toLowerCase().includes('user')) {
+              opt.textContent = `Front: ${label}`;
+            } else {
+              opt.textContent = label;
+            }
+            deviceSelect.appendChild(opt);
+          });
+          if (camSelectedDeviceId) deviceSelect.value = camSelectedDeviceId;
+        }
+      } catch (e) {
+        console.warn('Camera enumeration error:', e);
+      }
+    }
+
+
+    const btnCamRear = document.getElementById('btn-cam-rear');
+    const btnCamFront = document.getElementById('btn-cam-front');
+
+    function applyFacingMode(mode) {
+      camFacingMode = mode;
+      camSelectedDeviceId = '';
+      if (btnCamRear && btnCamFront) {
+        btnCamRear.classList.toggle('active', mode === 'environment');
+        btnCamFront.classList.toggle('active', mode === 'user');
+      }
+      if (videoPreview) {
+        videoPreview.style.transform = mode === 'user' ? 'scaleX(-1)' : 'none';
+      }
+      if (camActive) {
+        stopCam();
+        startCam();
+      }
+    }
+
+    if (btnCamRear) btnCamRear.onclick = () => { if (typeof vibrate === 'function') vibrate(15); applyFacingMode('environment'); };
+    if (btnCamFront) btnCamFront.onclick = () => { if (typeof vibrate === 'function') vibrate(15); applyFacingMode('user'); };
+
+    if (deviceSelect) {
+      deviceSelect.onchange = () => {
+        camSelectedDeviceId = deviceSelect.value;
+        if (camActive) {
+          stopCam();
+          startCam();
+        }
+      };
+    }
+
+    resChips.forEach((chip) => {
+      chip.onclick = () => {
+        const targetRes = parseInt(chip.dataset.res, 10) || 720;
+        if (targetRes === 1080 && (!window.isProUnlocked || !window.isProUnlocked())) {
+          if (typeof vibrate === 'function') vibrate(25);
+          if (typeof window.openProUpgradeModal === 'function') {
+            window.openProUpgradeModal();
+          }
+          if (typeof showToast === 'function') {
+            showToast('1080p 60 FPS HD Webcam requires PCDeck Pro', 'warn');
+          }
+          return;
+        }
+        resChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        camTargetRes = targetRes;
+        camFps = camTargetRes === 1080 ? 60 : (camTargetRes === 480 ? 60 : 30);
+        if (typeof vibrate === 'function') vibrate(15);
+        if (camActive) {
+          stopCam();
+          startCam();
+        }
+      };
+    });
+
+    async function startCam() {
+      try {
+        let width = 1280;
+        let height = 720;
+        if (camTargetRes === 1080) { width = 1920; height = 1080; }
+        else if (camTargetRes === 480) { width = 854; height = 480; }
+
+        const videoConstraints = {
+          width: { ideal: width },
+          height: { ideal: height },
+          frameRate: { ideal: camFps }
+        };
+
+        if (camSelectedDeviceId) {
+          videoConstraints.deviceId = { exact: camSelectedDeviceId };
+        } else {
+          videoConstraints.facingMode = camFacingMode;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+        camMediaStream = stream;
+
+        // Re-enumerate to get full device labels once permission is granted
+        await enumerateCameras();
+
+        if (videoPreview) {
+          videoPreview.style.display = 'block';
+          videoPreview.srcObject = stream;
+          videoPreview.play();
+        }
+        if (placeholder) placeholder.style.display = 'none';
+        if (liveBadge) liveBadge.style.display = 'inline-flex';
+
+        // Check torch capabilities
+        const track = stream.getVideoTracks()[0];
+        if (track && typeof track.getCapabilities === 'function') {
+          const caps = track.getCapabilities();
+          if (caps && caps.torch && btnTorch) {
+            btnTorch.style.display = 'inline-block';
+          }
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const storedToken = localStorage.getItem('pcdeck_token') || '';
+        const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+        const wsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/cam${tokenParam}`;
+        camWs = new WebSocket(wsUrl);
+
+        camWs.onopen = () => {
+          console.log('[PCDeck Webcam] Stream connected to PC');
+        };
+        camWs.onerror = (e) => {
+          console.warn('[PCDeck Webcam] Socket error:', e);
+        };
+        camWs.onclose = () => {
+          console.log('[PCDeck Webcam] Socket disconnected');
+        };
+
+        // Hardware-accelerated canvas frame grabber
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'medium';
+
+        const frameInterval = 1000 / camFps;
+        let lastFrameTime = 0;
+        let isEncodingFrame = false;
+
+        const captureFrame = (time) => {
+          if (!camActive) return;
+          // 4ms cadence margin prevents frame drops on 60Hz/120Hz display refresh intervals
+          if (time - lastFrameTime >= (frameInterval - 4) && camWs && camWs.readyState === WebSocket.OPEN && videoPreview && videoPreview.readyState >= 2) {
+            // Buffer protection: if network backlogs over 256KB, skip frame to keep zero-latency real-time video
+            if (camWs.bufferedAmount > 262144) {
+              requestAnimationFrame(captureFrame);
+              return;
+            }
+            if (!isEncodingFrame) {
+              lastFrameTime = time;
+              isEncodingFrame = true;
+              // Aspect-Fit (Pillarbox/Letterbox): Natural physical view, NO ZOOM-IN, NO STRETCHING
+              const srcW = videoPreview.videoWidth || canvas.width;
+              const srcH = videoPreview.videoHeight || canvas.height;
+              const srcAspect = srcW / srcH;
+              const dstAspect = canvas.width / canvas.height;
+
+              // Solid black backdrop
+              ctx.fillStyle = '#000000';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+              let dw = canvas.width;
+              let dh = canvas.height;
+              let dx = 0;
+              let dy = 0;
+
+              if (srcAspect < dstAspect) {
+                // Portrait camera (phone vertical): Fit full height (720), pillarbox sides
+                // Gives 100% full view of head to shoulders, zero zoom-in, exactly proportional!
+                dw = canvas.height * srcAspect;
+                dx = (canvas.width - dw) / 2;
+              } else if (srcAspect > dstAspect) {
+                // Extra-wide landscape: Fit full width, letterbox top/bottom
+                dh = canvas.width / srcAspect;
+                dy = (canvas.height - dh) / 2;
+              }
+
+              // Mirror only for front selfie lens, natural view for rear camera
+              const shouldMirror = (camFacingMode === 'user');
+              if (shouldMirror) {
+                ctx.save();
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(videoPreview, 0, 0, srcW, srcH, canvas.width - dx - dw, dy, dw, dh);
+                ctx.restore();
+              } else {
+                ctx.drawImage(videoPreview, 0, 0, srcW, srcH, dx, dy, dw, dh);
+              }
+
+              // Fast JPEG compression (0.52 gives 40KB packets, <15ms encode, ultra-fluid response)
+              canvas.toBlob((blob) => {
+                try {
+                  if (blob && camWs && camWs.readyState === WebSocket.OPEN) {
+                    camWs.send(blob);
+                  }
+                } catch (e) {
+                  console.warn('[PCDeck Webcam] Send error:', e);
+                } finally {
+                  isEncodingFrame = false;
+                }
+              }, 'image/jpeg', 0.52);
+            }
+          }
+          requestAnimationFrame(captureFrame);
+        };
+
+        camActive = true;
+        if (btnToggle) {
+          btnToggle.className = 'neo-btn btn-pink';
+          btnToggle.innerHTML = '<span id="cam-btn-icon" class="btn-svg-wrap"><svg class="deck-icon" width="18" height="18"><use href="#icon-close"/></svg></span><span id="cam-btn-text">Stop Camera</span>';
+        }
+        if (btnSwitch) btnSwitch.style.display = 'inline-flex';
+        if (statusBadge) {
+          statusBadge.className = 'mini-status-chip online';
+          statusBadge.textContent = 'LIVE ' + camTargetRes + 'p';
+        }
+        const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
+        if (quickCamBtn) {
+          quickCamBtn.style.background = 'var(--neo-pink)';
+          quickCamBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Cam: ON</span>';
+        }
+        const toolCamSub = document.getElementById('tool-cam-status');
+        if (toolCamSub) toolCamSub.textContent = 'Active';
+
+        showToast('Camera Broadcasting to PC', 'success');
+        requestAnimationFrame(captureFrame);
+      } catch (err) {
+        showToast('Camera Access Denied: ' + err.message, 'error', '️');
+      }
+    }
+
+    function stopCam() {
+      camActive = false;
+      camTorchActive = false;
+      if (btnTorch) {
+        btnTorch.style.display = 'none';
+        btnTorch.style.background = '';
+      }
+      if (camMediaStream) {
+        camMediaStream.getTracks().forEach(t => t.stop());
+        camMediaStream = null;
+      }
+      if (videoPreview) {
+        videoPreview.srcObject = null;
+        videoPreview.style.display = 'none';
+      }
+      if (placeholder) placeholder.style.display = 'flex';
+      if (liveBadge) liveBadge.style.display = 'none';
+      if (camWs) {
+        camWs.close();
+        camWs = null;
+      }
+      if (btnToggle) {
+        btnToggle.className = 'neo-btn btn-cyan';
+        btnToggle.innerHTML = '<span id="cam-btn-icon" class="btn-svg-wrap"><svg class="deck-icon" width="18" height="18"><use href="#icon-camera"/></svg></span><span id="cam-btn-text">Start Camera</span>';
+      }
+      if (btnSwitch) btnSwitch.style.display = 'inline-flex';
+      if (statusBadge) {
+        statusBadge.className = 'mini-status-chip offline';
+        statusBadge.textContent = 'STANDBY';
+      }
+      const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
+      if (quickCamBtn) {
+        quickCamBtn.style.background = 'var(--neo-cyan)';
+        quickCamBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Cam</span>';
+      }
+      const toolCamSub = document.getElementById('tool-cam-status');
+      if (toolCamSub) toolCamSub.textContent = 'Offline';
+    }
+
+    // Torch Toggle
+    if (btnTorch) {
+      btnTorch.onclick = async () => {
+        vibrate(15);
+        if (!camMediaStream) return;
+        const track = camMediaStream.getVideoTracks()[0];
+        if (track) {
+          try {
+            camTorchActive = !camTorchActive;
+            await track.applyConstraints({ advanced: [{ torch: camTorchActive }] });
+            btnTorch.style.background = camTorchActive ? 'var(--neo-lime)' : 'var(--neo-yellow)';
+            btnTorch.style.color = '#000';
+            showToast(`Torch: ${camTorchActive ? 'ON' : 'OFF'}`, 'info');
+          } catch (e) {
+            console.warn('Torch toggle error:', e);
+          }
+        }
+      };
+    }
+
+    // Cycle Next Lens / Flip Camera
+    if (btnSwitch) {
+      btnSwitch.onclick = () => {
+        vibrate(15);
+        if (availableVideoDevices.length > 1) {
+          let currentIdx = availableVideoDevices.findIndex(d => d.deviceId === camSelectedDeviceId);
+          let nextIdx = (currentIdx + 1) % availableVideoDevices.length;
+          camSelectedDeviceId = availableVideoDevices[nextIdx].deviceId;
+          if (deviceSelect) deviceSelect.value = camSelectedDeviceId;
+          let label = (availableVideoDevices[nextIdx].label || '').toLowerCase();
+          if (label.includes('front') || label.includes('user')) {
+            applyFacingMode('user');
+          } else {
+            applyFacingMode('environment');
+          }
+        } else {
+          applyFacingMode(camFacingMode === 'user' ? 'environment' : 'user');
+        }
+      };
+    }
+
+    const toggleCamHandler = () => {
+      vibrate(15);
+      if (camActive) stopCam(); else startCam();
+    };
+
+    if (btnToggle) btnToggle.onclick = toggleCamHandler;
+
+    const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
+    if (quickCamBtn) quickCamBtn.onclick = toggleCamHandler;
+
+    const toolCamBtn = document.getElementById('tool-cam-quick');
+    if (toolCamBtn) toolCamBtn.onclick = () => {
+      toggleCamHandler();
+      if (el.quickToolsDrawer) el.quickToolsDrawer.classList.remove('open');
+    };
+
+    enumerateCameras();
+  }
+
+  function bootstrap() {
+    initDomElements();
+    loadSettings();
+    initScreenTouchDisplay();
+    initPinchZoomGestures();
+    initTrackpad();
+    initVirtualKeyboard();
+    initFunctionKeyModifiers();
+    initScreenKeyboard();
+    initScreenMonitorSwitcher();
+    initQuickTools();
+    initFileManager();
+    initMediaPlayerEvents();
+    initAudioStreamer();
+    initEventHandlers();
+    initProEngine();
+    initOnboardingEngine();
+    initGamepadEngine();
+    initScreenGamepadHUD();
+    initWirelessMicrophone();
+    initWirelessWebcam();
+
+    // Trigger zero-config background UDP discovery and fast subnet probe immediately (< 5ms)
+    triggerDiscoveryAndSweep();
+
+    // Flexible Onboarding & Auto-Connection for Web vs App
+    const isHttp = window.location.protocol.startsWith('http') && window.location.hostname;
+    const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+    const onboardingDone = localStorage.getItem('pcdeck_onboarding_completed');
+    const savedIp = localStorage.getItem('pcdeck_ip') || localStorage.getItem('neontrack_ip') || (isHttp ? `${state.serverHost}:${state.serverPort}` : null);
+
+    if (isNativeApp) {
+      document.body.classList.add('is-native-app');
+      document.body.classList.remove('is-web-browser');
+    } else {
+      document.body.classList.add('is-web-browser');
+      document.body.classList.remove('is-native-app');
+    }
+    if (typeof updateGamepadHudVisibility === 'function') {
+      updateGamepadHudVisibility();
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTab = urlParams.get('tab');
+    let savedLastTab = '';
+    if (window.AndroidApp && typeof window.AndroidApp.getLastTab === 'function') {
+      try { savedLastTab = window.AndroidApp.getLastTab() || ''; } catch (e) {}
+    }
+    if (!savedLastTab) {
+      try {
+        savedLastTab = localStorage.getItem('pcdeck_last_active_tab') || '';
+      } catch (e) {}
+    }
+
+    let targetTab = 'tab-screen';
+    if (urlTab) {
+      targetTab = urlTab.startsWith('tab-') ? urlTab : `tab-${urlTab}`;
+    } else if (savedLastTab && document.getElementById(savedLastTab)) {
+      targetTab = savedLastTab;
+    }
+
+    renderRecentPCs();
+
+    if (isHttp && !isNativeApp) {
+      // In web browser mode: seamlessly auto-connect with ZERO modal popups and open ready-to-use tab (defaults to live Screen)
+      if (el.connectModal) el.connectModal.classList.remove('show');
+      const obModal = document.getElementById('onboarding-modal');
+      if (obModal) obModal.classList.remove('show');
+      switchTab(targetTab);
+      connect();
+    } else if (savedIp) {
+      switchTab(targetTab);
+      connect();
+    } else if (isNativeApp && !onboardingDone) {
+      if (typeof window.openOnboardingModal === 'function') {
+        window.openOnboardingModal();
+      }
+    } else {
+      if (el.connectModal) openConnectModal();
+    }
+
+    if (window.AndroidApp && typeof window.AndroidApp.getPendingSharedFiles === 'function') {
+      try {
+        const rawPending = window.AndroidApp.getPendingSharedFiles();
+        if (rawPending && rawPending !== '[]') {
+          const parsed = JSON.parse(rawPending);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            window.handleSharedFiles(parsed);
+          }
+        }
+      } catch (e) {}
+    }
+
+    document.addEventListener('fullscreenchange', updateQuickToolsUi);
+    document.addEventListener('webkitfullscreenchange', updateQuickToolsUi);
+    window.addEventListener('resize', updateQuickToolsUi);
+    window.addEventListener('orientationchange', updateQuickToolsUi);
+
+    // Dynamic Wake-Up & Proactive Instant Reconnection Engine
+    function checkAndResumeConnection() {
+      if (document.visibilityState === 'visible') {
+        if (!state.connected || !mainWs || mainWs.readyState !== WebSocket.OPEN) {
+          reconnectAttempts = 0;
+          triggerDiscoveryAndSweep();
+          connect();
+        } else if (!screenWs || screenWs.readyState !== WebSocket.OPEN) {
+          connectScreenWs();
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', checkAndResumeConnection);
+    window.addEventListener('focus', checkAndResumeConnection);
+    window.addEventListener('pageshow', checkAndResumeConnection);
+    window.addEventListener('online', () => {
+      if (!state.connected || !mainWs || mainWs.readyState !== WebSocket.OPEN) {
+        reconnectAttempts = 0;
+        triggerDiscoveryAndSweep();
+        connect(true);
+      }
+    });
+    window.onAppResume = checkAndResumeConnection;
+
+    // Initialize In-App OTA Auto-Updater System
+    initAppUpdater();
+  }
+
+  // ==========================================
+  // IN-APP OTA AUTO-UPDATER SYSTEM
+  // ==========================================
+  const CURRENT_APP_VERSION_CODE = 278;
+  const CURRENT_APP_VERSION_NAME = '2.7.8';
+  let updateDownloadApkUrl = 'https://getpcdeck.com/PCDeck.apk';
+
+  function initAppUpdater() {
+    const btnCheckUpdates = document.getElementById('btn-check-for-updates');
+    const updateStatusText = document.getElementById('app-update-status-text');
+    const appVersionLabel = document.getElementById('app-current-version-label');
+    const updateModal = document.getElementById('update-modal');
+    const btnUpdateNow = document.getElementById('btn-update-now');
+    const btnUpdateLater = document.getElementById('btn-update-later');
+    const progressContainer = document.getElementById('update-progress-container');
+    const progressBar = document.getElementById('update-progress-bar');
+    const progressPercent = document.getElementById('update-progress-percent');
+    const actionsRow = document.getElementById('update-actions-row');
+
+    if (appVersionLabel) {
+      if (window.AndroidApp && typeof window.AndroidApp.getAppVersionName === 'function') {
+        appVersionLabel.innerText = 'v' + window.AndroidApp.getAppVersionName();
+      } else {
+        appVersionLabel.innerText = 'v' + CURRENT_APP_VERSION_NAME;
+      }
+    }
+
+    window.onApkUpdateProgress = function(percent) {
+      if (progressContainer) progressContainer.style.display = 'block';
+      if (progressBar) progressBar.style.width = percent + '%';
+      if (progressPercent) progressPercent.innerText = percent + '%';
+      if (percent >= 100) {
+        if (updateStatusText) updateStatusText.innerText = 'Installing update...';
+      }
+    };
+
+    let targetUpdateUrl = 'https://getpcdeck.com';
+    let isPlayStoreTarget = false;
+
+    async function checkVersionUpdates(isManual = false) {
+      try {
+        if (updateStatusText && isManual) updateStatusText.innerText = 'Checking for updates...';
+        
+        // In web browser mode, do not auto-check for APK updates
+        const isNativeApp = !!window.AndroidApp || window.location.protocol === 'file:';
+        if (!isNativeApp && !isManual) {
+          if (updateStatusText) updateStatusText.innerText = 'Web Client v' + CURRENT_APP_VERSION_NAME + ' (Latest)';
+          return;
+        }
+
+        let localCode = CURRENT_APP_VERSION_CODE;
+        if (window.AndroidApp && typeof window.AndroidApp.getAppVersionCode === 'function') {
+          localCode = window.AndroidApp.getAppVersionCode();
+        }
+
+        // Fetch version info from API (logs ping) or fallback to static version.json
+        let res;
+        try {
+          res = await fetch('https://getpcdeck.com/api/version/?_t=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) throw new Error('API HTTP ' + res.status);
+        } catch (apiErr) {
+          res = await fetch('https://getpcdeck.com/version.json?_t=' + Date.now(), { cache: 'no-store' });
+        }
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        if (data && data.versionCode && data.versionCode > localCode) {
+          const hasPlayStore = !!(data.playStoreUrl && data.playStoreUrl.trim());
+          isPlayStoreTarget = hasPlayStore;
+          targetUpdateUrl = hasPlayStore ? data.playStoreUrl.trim() : (data.websiteUrl || 'https://getpcdeck.com');
+
+          if (updateStatusText) updateStatusText.innerText = `New update available (v${data.versionName || data.versionCode})`;
+          
+          // Populate modal
+          const modalTitle = document.getElementById('update-modal-title');
+          const modalSubtitle = document.getElementById('update-modal-subtitle');
+          const modalNotes = document.getElementById('update-modal-notes');
+          const btnNowLabel = document.getElementById('btn-update-now-label');
+
+          if (modalTitle) modalTitle.innerText = `PCDeck v${data.versionName || data.versionCode}`;
+          if (modalSubtitle) {
+            modalSubtitle.innerText = hasPlayStore ? 'A new update is available on Google Play!' : 'A new version is ready to download from our website!';
+          }
+          if (modalNotes && data.releaseNotes) modalNotes.innerText = data.releaseNotes;
+          if (btnNowLabel) {
+            btnNowLabel.innerText = hasPlayStore ? 'OPEN PLAY STORE' : 'GET UPDATE ON WEBSITE';
+          }
+
+          // ONLY display the modal if the user explicitly clicked "Check for updates" in Settings.
+          // Never interrupt the user's active control screen with an automatic popup.
+          if (isManual) {
+            if (updateModal) {
+              updateModal.style.display = 'flex';
+              updateModal.classList.add('show');
+            }
+            vibrate(30);
+          } else {
+            // Background check: show non-intrusive badge/status only
+            const settingsBadge = document.querySelector('.nav-item[data-tab="tab-settings"] .nav-dot');
+            if (settingsBadge) settingsBadge.style.display = 'block';
+          }
+        } else {
+          if (updateStatusText) updateStatusText.innerText = 'PCDeck is up to date (v' + (data.versionName || CURRENT_APP_VERSION_NAME) + ')';
+          if (isManual) {
+            showToast('You are on the latest version of PCDeck!', 'success');
+          }
+        }
+      } catch (err) {
+        if (isManual) {
+          showToast('Could not check for updates. Check internet.', 'warn');
+        }
+        if (updateStatusText) updateStatusText.innerText = 'Latest version verified';
+      }
+    }
+
+    window.onApkUpdateError = function(err) {
+      if (progressContainer) progressContainer.style.display = 'none';
+      if (updateStatusText) {
+        updateStatusText.innerText = `Update error: ${err}`;
+        updateStatusText.style.color = '#ff2a85';
+      }
+      showToast(`Update failed: ${err}`, 'warn', '️');
+    };
+
+    if (btnCheckUpdates) {
+      btnCheckUpdates.onclick = async () => {
+        vibrate(15);
+        if (updateStatusText) updateStatusText.innerText = 'Checking PC for updates...';
+        
+        // Priority 1: If connected to PC or PC is reachable on LAN, update directly from PC
+        const host = state.serverHost || (localStorage.getItem('pcdeck_ip') || '').split(':')[0] || '10.189.70.215';
+        const port = state.serverPort || '8000';
+        try {
+          const pcPing = await fetch(`http://${host}:${port}/api/ping`, { mode: 'cors', cache: 'no-store' });
+          if (pcPing.ok) {
+            const pcApkUrl = `http://${host}:${port}/PCDeck.apk`;
+            showToast('Downloading latest update from PC...', 'success');
+            if (updateStatusText) updateStatusText.innerText = 'Downloading update from PC...';
+            if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
+              window.AndroidApp.downloadAndInstallApk(pcApkUrl);
+              return;
+            } else {
+              window.open(pcApkUrl, '_blank');
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('PC update probe failed, falling back to web check', e);
+        }
+
+        // Priority 2: Web version check
+        checkVersionUpdates(true);
+      };
+    }
+
+    if (btnUpdateLater && updateModal) {
+      btnUpdateLater.onclick = () => {
+        vibrate(10);
+        updateModal.classList.remove('show');
+        updateModal.style.display = 'none';
+      };
+    }
+
+    if (btnUpdateNow) {
+      btnUpdateNow.onclick = () => {
+        vibrate(25);
+        if (updateModal) {
+          updateModal.classList.remove('show');
+          updateModal.style.display = 'none';
+        }
+
+        const host = state.serverHost || (localStorage.getItem('pcdeck_ip') || '').split(':')[0] || '10.189.70.215';
+        const port = state.serverPort || '8000';
+        const pcApkUrl = `http://${host}:${port}/PCDeck.apk`;
+
+        if (window.AndroidApp && typeof window.AndroidApp.downloadAndInstallApk === 'function') {
+          showToast('Downloading update from PC...', 'success');
+          window.AndroidApp.downloadAndInstallApk(pcApkUrl);
+        } else if (window.AndroidApp && typeof window.AndroidApp.openUrl === 'function') {
+          showToast(isPlayStoreTarget ? 'Opening Google Play Store...' : 'Opening PCDeck Website...', 'success');
+          window.AndroidApp.openUrl(targetUpdateUrl);
+        } else {
+          window.open(targetUpdateUrl, '_blank');
+        }
+      };
+    }
+
+    // Auto-check 4 seconds after launch in background
+    setTimeout(() => {
+      checkVersionUpdates(false);
+    }, 4000);
+
+    // App Lifecycle & Interruption Release Guard (Phone calls, screen lock, app switching)
+    const purgeActiveInputsOnInterruption = () => {
+      if (mainWs && mainWs.readyState === WebSocket.OPEN) {
+        try {
+          mainWs.send("gr"); // Reset all gamepad axes and held buttons on PC server
+        } catch (e) {}
+      }
+    };
+    window.onAppPause = purgeActiveInputsOnInterruption;
+    window.addEventListener('blur', purgeActiveInputsOnInterruption);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) purgeActiveInputsOnInterruption();
+    });
+    window.addEventListener('pagehide', purgeActiveInputsOnInterruption);
+    initCrtWheelNav();
+    initCrtKeyboardHandlers();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
+  }
+})();
+

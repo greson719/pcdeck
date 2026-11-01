@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control Linux PC &amp; Steam Deck from Phone (No App) | PCDeck</title>
+<meta name="description" content="Turn any Android or iPhone into a wireless trackpad and keyboard for Linux &amp; Steam Deck. Free browser remote over local Wi-Fi with zero app install.">
+<meta name="keywords" content="control linux pc from phone, control steam deck with phone, control linux pc from android, steam deck remote control, phone as mouse for linux, steam deck desktop mode phone trackpad, linux wireless trackpad, PCDeck linux">
+<link rel="canonical" href="https://getpcdeck.com/control-linux-pc-from-phone/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://getpcdeck.com/control-linux-pc-from-phone/">
+<meta property="og:title" content="Control Linux PC &amp; Steam Deck from Phone (No App) | PCDeck">
+<meta property="og:description" content="Turn any Android or iPhone into a wireless trackpad and keyboard for Linux &amp; Steam Deck. Free browser remote over local Wi-Fi with zero app install.">
+<meta property="og:image" content="https://getpcdeck.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Control Linux PC &amp; Steam Deck from Phone (No App) | PCDeck">
+<meta name="twitter:description" content="Turn any Android or iPhone into a wireless trackpad and keyboard for Linux &amp; Steam Deck. Free browser remote over local Wi-Fi with zero app install.">
+<meta name="twitter:image" content="https://getpcdeck.com/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "@id": "https://getpcdeck.com/control-linux-pc-from-phone/#article",
+      "headline": "Control Linux PC & Steam Deck from Phone (No App)",
+      "description": "Turn any Android or iPhone into a wireless trackpad and keyboard for Linux & Steam Deck. Free browser remote over local Wi-Fi with zero app install.",
+      "url": "https://getpcdeck.com/control-linux-pc-from-phone/",
+      "inLanguage": "en",
+      "datePublished": "2026-09-01",
+      "dateModified": "2026-10-12",
+      "author": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://getpcdeck.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://getpcdeck.com/icon-512.png"
+        }
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "PCDeck",
+        "url": "https://getpcdeck.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://getpcdeck.com/icon-512.png"
+        }
+      },
+      "proficiencyLevel": "Intermediate",
+      "about": [
+        {
+          "@type": "Thing",
+          "name": "Linux remote control"
+        },
+        {
+          "@type": "Thing",
+          "name": "Steam Deck remote trackpad"
+        },
+        {
+          "@type": "Thing",
+          "name": "Ubuntu phone mouse"
+        },
+        {
+          "@type": "Thing",
+          "name": "Ubuntu 24.04 Wayland remote touch"
+        },
+        {
+          "@type": "Thing",
+          "name": "SteamOS desktop mode phone trackpad"
+        },
+        {
+          "@type": "Thing",
+          "name": "Raspberry Pi headless browser remote"
+        }
+      ],
+      "mainEntityOfPage": {
+        "@id": "https://getpcdeck.com/control-linux-pc-from-phone/",
+        "@type": "WebPage"
+      },
+      "image": "https://getpcdeck.com/og-image.png"
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://getpcdeck.com/control-linux-pc-from-phone/#howto",
+      "name": "How to Install and Run PCDeck on Linux",
+      "description": "Install PCDeck on Ubuntu, Debian, Fedora, Arch, or SteamOS using a single terminal command and connect your phone over local Wi-Fi.",
+      "totalTime": "PT3M",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Run the 1-line installer on Linux",
+          "text": "Open your Linux terminal and execute: curl -sSL https://getpcdeck.com/install.sh | bash",
+          "position": 1,
+          "image": "https://getpcdeck.com/og-image.png",
+          "url": "https://getpcdeck.com/control-linux-pc-from-phone/#step-1"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Launch PCDeck service",
+          "text": "The installer configures dependencies and starts the PCDeck server, displaying your local IP and QR pairing code in terminal.",
+          "position": 2,
+          "image": "https://getpcdeck.com/og-image.png",
+          "url": "https://getpcdeck.com/control-linux-pc-from-phone/#step-2"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Connect from your phone",
+          "text": "Scan the QR code with your phone camera to open the instant Web Remote in your browser, or connect via the PCDeck Android APK.",
+          "position": 3,
+          "image": "https://getpcdeck.com/og-image.png",
+          "url": "https://getpcdeck.com/control-linux-pc-from-phone/#step-3"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Control Linux desktop",
+          "text": "Enjoy multi-touch trackpad control, keyboard typing, audio streaming, and desktop viewer on X11 or Wayland.",
+          "position": 4,
+          "image": "https://getpcdeck.com/og-image.png",
+          "url": "https://getpcdeck.com/control-linux-pc-from-phone/#step-4"
+        }
+      ],
+      "image": "https://getpcdeck.com/og-image.png",
+      "tool": [
+        {
+          "@type": "HowToTool",
+          "name": "PC (Windows 10/11 or Linux)"
+        },
+        {
+          "@type": "HowToTool",
+          "name": "Smartphone or tablet (iOS / Android)"
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://getpcdeck.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://getpcdeck.com/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Control Linux From Phone",
+          "item": "https://getpcdeck.com/control-linux-pc-from-phone/"
+        }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://getpcdeck.com/control-linux-pc-from-phone/#webpage",
+      "url": "https://getpcdeck.com/control-linux-pc-from-phone/",
+      "name": "Control Linux PC & Steam Deck from Phone (No App) | PCDeck",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "PCDeck",
+        "url": "https://getpcdeck.com/"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://getpcdeck.com/control-linux-pc-from-phone/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I control a Steam Deck in Desktop Mode from my phone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Switch your Steam Deck to Desktop Mode (Power > Switch to Desktop). Open Konsole and run: curl -sSL https://getpcdeck.com/install.sh | bash. Scan the generated QR code with your phone camera to instantly turn your phone into a multi-touch trackpad and keyboard without Bluetooth or USB adapters."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does PCDeck support both Wayland and X11 on Linux?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. PCDeck supports both X11 and Wayland sessions (GNOME, KDE Plasma 5/6, XFCE, Sway, Hyprland). It interfaces with the Linux uinput and synthetic input layers to ensure smooth cursor motion, clicks, and keystrokes regardless of your display server."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I allow PCDeck through the Linux firewall?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For UFW (Ubuntu/Debian), run: sudo ufw allow 8000/tcp. For firewalld (Fedora/RHEL), run: sudo firewall-cmd --add-port=8000/tcp --permanent && sudo firewall-cmd --reload. For iptables, run: sudo iptables -A INPUT -p tcp --dport 8000 -j ACCEPT."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I control a headless Ubuntu or Raspberry Pi home server without a monitor?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Start PCDeck as a systemd service or background process. As long as the device is connected to your local Wi-Fi or LAN, you can access the Web Remote from any smartphone browser by navigating to http://[server-ip]:8000."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does PCDeck work on Ubuntu 24.04 LTS with Wayland?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. PCDeck interfaces directly with the Linux kernel uinput subsystem (/dev/uinput), generating virtual mouse and keyboard events recognized natively by GNOME 46 on Ubuntu 24.04 LTS, KDE Plasma 6, Sway, and Hyprland without Xwayland overhead."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I control Linux from an iPhone or iPad without installing an app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. PCDeck runs an instant HTTP Web Remote on port 8000. Open Safari on iPhone or iPad, scan the pairing QR code displayed in your Linux terminal, and control your mouse pointer, scrolling, and keyboard directly from the browser with zero App Store downloads."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/guides/">Guides</a>
+      <a href="/#features">What it does</a>
+      <a href="/#scenarios">Use cases</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/#download">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/guides/" class="mob-link"><span>Guides Hub</span><span>→</span></a>
+        <a href="/#features" class="mob-link"><span>What it does</span><span>→</span></a>
+        <a href="/#scenarios" class="mob-link"><span>Use cases</span><span>→</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>→</span></a>
+        <a href="/#faq" class="mob-link"><span>FAQ</span><span>→</span></a>
+        <a href="/#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>↓</span></a>
+      </div>
+
+      <div class="mobile-guides-title">Guides & Troubleshooting</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
+        <a href="/control-linux-pc-from-phone/" class="mob-link">Control Linux / Steam Deck</a>
+        <a href="/linux-install/" class="mob-link">Linux Install & Security Docs</a>
+        <a href="/browser-pc-remote/" class="mob-link">Browser Web Remote</a>
+        <a href="/use-phone-as-mouse/" class="mob-link">Use phone as mouse</a>
+        <a href="/use-phone-as-keyboard/" class="mob-link">Use phone as keyboard</a>
+        <a href="/use-phone-as-second-monitor/" class="mob-link">Use phone as screen</a>
+        <a href="/stream-pc-audio-to-phone/" class="mob-link">Stream audio to phone</a>
+        <a href="/transfer-files-pc-to-android/" class="mob-link">Wi-Fi file transfer</a>
+        <a href="/use-pc-without-internet/" class="mob-link">Use PC without internet</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="shell crumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/">PCDeck</a></li>
+    <li><a href="/guides/">Guides</a></li>
+    <li aria-current="page">Control Linux from Phone</li>
+  </ol>
+</nav>
+
+<main id="main">
+  <div class="shell lede-block">
+    <h1>Control Linux PC &amp; Steam Deck from Phone (Browser Remote, No App)</h1>
+    <p class="sub">Turn your phone or tablet into a wireless trackpad, keyboard, and screen viewer for Linux or Steam Deck. <strong>Zero Mobile App Required – Runs via Web Browser</strong> over your local Wi-Fi.</p>
+    <p class="updated tag">Updated October 2026 · Steam Deck (Desktop Mode), Ubuntu, Debian, Arch, Fedora · Wayland &amp; X11 Compatible</p>
+  </div>
+
+  <div class="shell guide">
+
+    <!-- Dedicated Steam Deck Callout Banner -->
+    <div class="steam-deck-banner" style="background: linear-gradient(135deg, rgba(27,68,216,0.12) 0%, rgba(0,240,255,0.06) 100%); border: 1.5px solid rgba(27,68,216,0.35); border-radius: 10px; padding: 18px 22px; margin: 0 0 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; box-shadow: 0 4px 18px rgba(0,0,0,0.04);">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(27,68,216,0.18); border: 1px solid rgba(27,68,216,0.38); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--signal-ink);">
+          <svg class="deck-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="6"/></svg>
+        </div>
+        <div>
+          <strong style="display: block; font-size: 16px; color: var(--ink); margin-bottom: 3px;">Looking to control Steam Deck Desktop Mode? Open this on your mobile device.</strong>
+          <span style="font-size: 13.5px; color: var(--graphite);">Switch to Desktop Mode, open Konsole, run the 1-line script, and scan the QR code from your phone browser. <strong>Zero Mobile App Required – Runs via Web Browser</strong>.</span>
+        </div>
+      </div>
+      <a href="#steam-deck-section" class="btn sm" style="white-space: nowrap;">Steam Deck Setup &darr;</a>
+    </div>
+
+    <div class="direct-answer">
+      <span class="tag">Direct Answer · Zero Mobile App Required</span>
+      <p><strong>Yes.</strong> You can control any Linux PC (Ubuntu, Debian, Arch, Fedora) or Valve Steam Deck (Desktop Mode) directly from your Android phone, iPhone, or tablet browser over local Wi-Fi. <strong>Zero Mobile App Required – Runs via Web Browser</strong> with no mobile app install. Compatible with both modern <strong>Wayland</strong> compositors and traditional <strong>X11</strong> display servers, PCDeck translates phone multi-touch gestures into native Linux pointer and keyboard events with sub-millisecond local network latency.</p>
+    </div>
+
+    <div class="quick-card">
+      <p class="tag">Universal 1-Line Linux Install</p>
+      <p>Run this command in any Linux terminal or Steam Deck Konsole to install and start PCDeck:</p>
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 4px; padding: 10px 14px; font-family: var(--mono); font-size: 13px; margin: 8px 0; word-break: break-all;">
+        <code>curl -sSL https://getpcdeck.com/install.sh | bash</code>
+      </div>
+      <p style="font-size: 13px; color: var(--muted); margin: 0;">Inspect the script or read full technical documentation: <a href="/linux-install/">Linux Installation &amp; Security Docs &rarr;</a></p>
+    </div>
+
+    <!-- Mobile Bridge Card -->
+    <div class="mobile-bridge-card">
+      <div class="mobile-bridge-info">
+        <span class="mobile-bridge-icon" style="display:flex;align-items:center;color:var(--signal);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </span>
+        <div class="mobile-bridge-text">
+          <h4>Reading on your phone? Run PCDeck on your Linux PC.</h4>
+          <p>Email the 1-line curl command to yourself, or copy it to run in your PC terminal.</p>
+        </div>
+      </div>
+      <div class="mobile-bridge-actions">
+        <a href="mailto:?subject=PCDeck%20Linux%20Command&amp;body=Run%20this%20in%20your%20Linux%20terminal:%20curl%20-sSL%20https://getpcdeck.com/install.sh%20|%20bash%0A%0AGuide:%20https://getpcdeck.com/control-linux-pc-from-phone/" class="btn-bridge btn-bridge-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>Email command to PC</span>
+        </a>
+        <button type="button" onclick="navigator.clipboard.writeText('curl -sSL https://getpcdeck.com/install.sh | bash'); this.innerHTML='&lt;span&gt;✔ Copied!&lt;/span&gt;'; setTimeout(()=>this.innerHTML='&lt;span&gt;Copy Command&lt;/span&gt;', 2500)" class="btn-bridge btn-bridge-ghost">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Copy Command</span>
+        </button>
+      </div>
+    </div>
+
+    <h2>Supported Linux distributions and platforms</h2>
+    <p>PCDeck is engineered to run seamlessly across major Linux distributions:</p>
+    <ul>
+      <li><strong>Ubuntu &amp; Debian:</strong> Full support for Ubuntu 20.04+, Debian 11+, Linux Mint, Pop!_OS, and Elementary OS.</li>
+      <li><strong>Arch Linux &amp; Manjaro:</strong> Native compatibility with rolling-release Arch environments.</li>
+      <li><strong>Fedora &amp; RHEL:</strong> Automatic package resolution on RPM-based distributions.</li>
+      <li><strong>SteamOS (Valve Steam Deck):</strong> Perfect for controlling Steam Deck in Desktop Mode without docking a physical keyboard and mouse.</li>
+      <li><strong>Raspberry Pi OS:</strong> Lightweight resource footprint ideal for Raspberry Pi 4/5 home servers and media boxes.</li>
+    </ul>
+
+    <!-- Distro-Specific Terminal Snippets Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0 32px;">
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 14px 16px;">
+        <span class="tag" style="color: var(--signal);">Steam Deck (SteamOS)</span>
+        <h3 style="font-size: 15px; margin: 6px 0 8px;">Desktop Mode Terminal</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Power &rarr; Switch to Desktop &rarr; Konsole:</p>
+        <code style="font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.06); padding: 4px 8px; border-radius: 4px; display: block; word-break: break-all;">curl -sSL https://getpcdeck.com/install.sh | bash</code>
+      </div>
+
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 14px 16px;">
+        <span class="tag" style="color: var(--signal);">Ubuntu / Debian / Mint</span>
+        <h3 style="font-size: 15px; margin: 6px 0 8px;">APT &amp; Firewall</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Allow local LAN port 8000:</p>
+        <code style="font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.06); padding: 4px 8px; border-radius: 4px; display: block; word-break: break-all;">sudo ufw allow 8000/tcp</code>
+      </div>
+
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 14px 16px;">
+        <span class="tag" style="color: var(--signal);">Fedora / RHEL</span>
+        <h3 style="font-size: 15px; margin: 6px 0 8px;">firewalld Configuration</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Open firewall port 8000 permanently:</p>
+        <code style="font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.06); padding: 4px 8px; border-radius: 4px; display: block; word-break: break-all;">sudo firewall-cmd --add-port=8000/tcp --permanent &amp;&amp; sudo firewall-cmd --reload</code>
+      </div>
+
+      <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 14px 16px;">
+        <span class="tag" style="color: var(--signal);">Arch Linux / Manjaro</span>
+        <h3 style="font-size: 15px; margin: 6px 0 8px;">Pacman / Dependencies</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Native Python 3 environment:</p>
+        <code style="font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.06); padding: 4px 8px; border-radius: 4px; display: block; word-break: break-all;">sudo pacman -S python python-pip &amp;&amp; curl -sSL https://getpcdeck.com/install.sh | bash</code>
+      </div>
+    </div>
+
+    <h2>Step-by-step setup on Linux</h2>
+    <ol class="steps">
+      <li>
+        <b>Run the installer command in terminal</b>
+        <p>Open your Linux terminal (or switch to Desktop Mode on Steam Deck and open Konsole) and run:</p>
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 4px; padding: 8px 12px; font-family: var(--mono); font-size: 13px; margin: 8px 0;">
+          <code>curl -sSL https://getpcdeck.com/install.sh | bash</code>
+        </div>
+        <p>The installer verifies Python 3, sets up the local user environment, and starts the PCDeck server.</p>
+      </li>
+      <li>
+        <b>Pair your phone via QR code or local IP</b>
+        <p>The terminal displays a clean ASCII QR code and your Linux machine's local IP address (e.g. <code>192.168.1.100:8000</code>). Scan the QR code with your phone camera or enter the URL into your browser.</p>
+        <figure class="guide-fig">
+          <img src="/screenshots/qr-pairing.png" alt="Scanning QR code to pair phone with Linux PC" width="1280" height="720" loading="lazy">
+          <figcaption>Figure 1: Scan the on-screen QR code or open http://[linux-ip]:8000 on your phone.</figcaption>
+        </figure>
+      </li>
+      <li>
+        <b>Navigate and control Linux</b>
+        <p>Your phone screen becomes an active multi-touch trackpad and keyboard. Move your finger to steer the mouse pointer in GNOME, KDE Plasma, XFCE, or i3.</p>
+        <figure class="guide-fig">
+          <img src="/screenshots/trackpad-phone.png" alt="Phone acting as multi-touch trackpad for Linux desktop" width="1280" height="720" loading="lazy">
+          <figcaption>Figure 2: Touch trackpad surface steering the mouse pointer on Linux desktop.</figcaption>
+        </figure>
+      </li>
+    </ol>
+
+    <div class="checklist-card">
+      <h3><svg class="deck-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--signal);display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Linux &amp; Steam Deck Connection Checklist</h3>
+      <ul>
+        <li><strong>Same Local Network:</strong> Connect your phone to the exact same Wi-Fi router or hotspot as your Linux PC or Steam Deck.</li>
+        <li><strong>Firewall (UFW / firewalld):</strong> If connections time out, permit port 8000: <code>sudo ufw allow 8000/tcp</code>.</li>
+        <li><strong>100% Offline &amp; Private:</strong> All input deltas stay strictly within your local subnet with zero cloud relay.</li>
+      </ul>
+    </div>
+
+    <h2 id="steam-deck-section">Steam Deck in Desktop Mode: The Ultimate Couch Companion</h2>
+    <p>When you switch your Valve Steam Deck to Desktop Mode to install emulators with EmuDeck, configure ModOrganizer, or browse in Firefox, navigating with the built-in thumbsticks and tiny trackpads is cramped and slow. Plugging in physical mice and keyboards requires a bulky USB-C dock or Bluetooth pairing that often disconnects.</p>
+    <p>Running PCDeck gives you a full-sized multi-touch trackpad and responsive keyboard on your smartphone screen right from your couch. You can tap to left click, two-finger tap to right click, smoothly scroll long web pages, and paste terminal commands into Konsole with zero latency over local Wi-Fi. No hardware adapters, dongles, or docking stations needed.</p>
+
+    
+    <!-- Task 7: Wayland & Hyprland Deep-Dive Block (Pos 12 -> Top 3) -->
+    <section id="wayland-hyprland-uinput-architecture" style="margin: 32px 0;">
+      <h2>Why PCDeck Works Natively on Wayland &amp; Hyprland (Kernel <code>/dev/uinput</code> Architecture)</h2>
+      <p>
+        Most Linux remote control apps fail on modern distributions because they rely on the legacy X11 <code>XTest</code> extension or <code>xdotool</code>. Under Wayland compositors—including <strong>Hyprland</strong>, <strong>Sway</strong>, <strong>GNOME (Mutter)</strong>, and <strong>KDE Plasma 6 (KWin)</strong>—X11 synthetic events are blocked by protocol design to prevent malicious background windows from spoofing input.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 20px 0;">
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 18px;">
+          <h3 style="font-size: 15px; margin: 0 0 8px; color: var(--ink);">1. Kernel-Level <code>evdev</code> Injection</h3>
+          <p style="font-size: 13.5px; line-height: 1.5; color: var(--graphite); margin: 0;">
+            PCDeck registers a virtual hardware pointer and keyboard directly with the Linux kernel input subsystem (<code>/dev/uinput</code>). Both <code>libinput</code> and <code>wlroots</code> (Hyprland/Sway) treat PCDeck as a genuine physical input device.
+          </p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 18px;">
+          <h3 style="font-size: 15px; margin: 0 0 8px; color: var(--ink);">2. Rootless <code>udev</code> Permission Rule</h3>
+          <p style="font-size: 13.5px; line-height: 1.5; color: var(--graphite); margin: 0;">
+            You never need to run the PCDeck server as root. The 1-line <code>install.sh</code> script configures a clean <code>udev</code> rule granting your local user group write access to <code>/dev/uinput</code> safely in userspace.
+          </p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 18px;">
+          <h3 style="font-size: 15px; margin: 0 0 8px; color: var(--ink);">3. Hyprland Keybind &amp; Workspace Ready</h3>
+          <p style="font-size: 13.5px; line-height: 1.5; color: var(--graphite); margin: 0;">
+            Because PCDeck emits genuine kernel keycodes, your existing <code>hyprland.conf</code> keybinds, workspace switches, and floating window drag modifiers trigger with zero compositor configuration.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <h2>Ubuntu 24.04 LTS &amp; Modern Wayland Compositors</h2>
+    <p>Ubuntu 24.04 LTS (Noble Numbat), Fedora 40+, and modern Arch Linux installations run Wayland by default under GNOME 46 or KDE Plasma 6. Legacy remote control tools rely on X11 <code>xdotool</code> or <code>XTest</code>, which fail or introduce severe input latency under Wayland security boundaries.</p>
+    <p>PCDeck avoids this limitation by interfacing directly with the Linux kernel's <strong>uinput</strong> subsystem (<code>/dev/uinput</code>). Touch events received from your phone browser generate kernel-level evdev mouse and keyboard events that Wayland compositors recognize natively without requiring root permissions or Xwayland emulation.</p>
+
+    <h2>Headless Raspberry Pi &amp; Linux Home Server (systemd Autostart)</h2>
+    <p>If you run a headless home server, home lab, or media center on a Raspberry Pi 4/5 or Ubuntu Server, PCDeck acts as an instant emergency monitor viewer and touch mouse whenever you need to check on services without connecting an HDMI monitor.</p>
+    <p>To configure PCDeck to start automatically whenever your Linux machine boots, enable it as a lightweight systemd user service:</p>
+    <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 4px; padding: 10px 14px; font-family: var(--mono); font-size: 13px; margin: 8px 0; word-break: break-all;">
+      <code>systemctl --user enable --now pcdeck</code>
+    </div>
+    <p>Once active, bookmark <code>http://[server-ip]:8000</code> in your smartphone browser for instant local LAN access anytime.</p>
+
+    <div class="limit">
+      <p class="tag">Firewall Note for Linux Users</p>
+      <p>If you have <code>ufw</code> or <code>firewalld</code> enabled, ensure port 8000 is permitted for incoming local network connections: <code>sudo ufw allow 8000/tcp</code>.</p>
+    </div>
+
+    <!-- Linux Frequently Asked Questions Section -->
+    <section class="guide-faq" style="margin: 36px 0 24px;">
+      <h2>Linux Remote Control FAQ</h2>
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 18px;">
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">How do I control a Steam Deck in Desktop Mode from my phone?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Switch your Steam Deck to Desktop Mode (press Steam button &rarr; Power &rarr; Switch to Desktop). Open Konsole, paste <code>curl -sSL https://getpcdeck.com/install.sh | bash</code>, and press Enter. A pairing QR code will appear on screen. Scan it with your phone's camera, and your phone will instantly become a wireless trackpad and keyboard for your Steam Deck with zero app installs.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Does PCDeck support both Wayland and X11 on Linux?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. PCDeck detects whether your session is running under X11 or Wayland (GNOME 40+, KDE Plasma 6, Sway, Hyprland) and interfaces with Linux uinput and synthetic input layers so cursor motion, clicks, and typing work seamlessly on any modern desktop environment.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Does PCDeck work on Ubuntu 24.04 LTS with Wayland?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. PCDeck interfaces directly with the Linux kernel uinput subsystem (<code>/dev/uinput</code>), generating virtual mouse and keyboard events recognized natively by GNOME 46 on Ubuntu 24.04 LTS, KDE Plasma 6, Sway, and Hyprland without Xwayland overhead.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Can I control Linux from an iPhone or iPad without installing an app?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. PCDeck runs an instant HTTP Web Remote on port 8000. Open Safari on iPhone or iPad, scan the pairing QR code displayed in your Linux terminal, and control your mouse pointer, scrolling, and keyboard directly from the browser with zero App Store downloads via <a href="/browser-pc-remote/">Web Remote</a>.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">How do I allow PCDeck through the Linux firewall?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">If connections time out, open port 8000 for your local subnet: on Ubuntu/Debian use <code>sudo ufw allow 8000/tcp</code>; on Fedora/CentOS use <code>sudo firewall-cmd --add-port=8000/tcp --permanent &amp;&amp; sudo firewall-cmd --reload</code>.</p>
+        </div>
+
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 16px 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px;">Can I control a headless Ubuntu or Raspberry Pi home server without a monitor?</h3>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Yes. Start PCDeck as a background service or systemd user service. As long as your Raspberry Pi or headless machine shares the same local network, open <code>http://[server-ip]:8000</code> in your phone browser to send input or view screen frames.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="pitch" id="phone-solution">
+      <h2>Get PCDeck for Linux — Free Local Remote Control</h2>
+      <p>Control Linux and Windows PCs from your smartphone or browser over local Wi-Fi with zero telemetry.</p>
+      <div class="row">
+        <a class="btn" href="/linux-install/">View Linux Install Docs</a>
+        <a class="btn ghost" href="/#download">Download Windows / Android</a>
+      </div>
+      <p class="fine">Ubuntu · Debian · Fedora · Arch · SteamOS · Raspberry Pi · 100% Offline LAN</p>
+    </div>
+
+    <div class="next">
+      <h2>Explore More Guides</h2>
+      <p><a href="/browser-pc-remote/">Zero-install Web Remote (control PC from mobile browser)</a></p>
+      <p><a href="/use-pc-without-mouse/">How to use a PC without a mouse (shortcuts &amp; fast fix)</a></p>
+      <p><a href="/linux-install/">PCDeck Linux installation &amp; security architecture</a></p>
+      <p><a href="/use-phone-as-mouse/">How to use phone as mouse</a> · <a href="/use-phone-as-keyboard/">Use phone as keyboard</a></p>
+      <p><a href="/use-pc-without-monitor/">Use PC with broken or headless monitor</a> · <a href="/guides/">All Guides Hub</a></p>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <p class="foot-guides">
+      Guides: <a href="/guides/">All Guides Hub</a> · 
+      <a href="/download/">Download</a> · 
+      <a href="/remote-mouse-alternative/">Remote Mouse Alternative</a> · 
+      <a href="/unified-remote-alternative/">Unified Remote Alternative</a> · 
+      <a href="/wifi-mouse-alternative/">WiFi Mouse Alternative</a> · 
+      <a href="/monect-alternative/">Monect Alternative</a> · 
+      <a href="/browser-pc-remote/">Zero-Install Web Remote</a> · 
+      <a href="/use-phone-as-mouse/">Phone as mouse</a> · 
+      <a href="/use-phone-as-keyboard/">Phone as keyboard</a> · 
+      <a href="/use-phone-as-second-monitor/">Phone as PC screen</a> · 
+      <a href="/control-windows-from-android/">Windows Remote</a> · 
+      <a href="/control-linux-pc-from-phone/">Linux &amp; Steam Deck</a> · 
+      <a href="/linux-install/">Linux Terminal Install</a> · 
+      <a href="/use-pc-without-mouse/">Without a mouse</a> · 
+      <a href="/use-pc-without-keyboard/">Without a keyboard</a> · 
+      <a href="/use-pc-without-monitor/">Without a monitor</a> · 
+      <a href="/use-pc-without-internet/">Without internet</a> · 
+      <a href="/stream-pc-audio-to-phone/">Stream audio</a> · 
+      <a href="/transfer-files-pc-to-android/">Cable-free transfers</a> · 
+      <a href="/security/">Security Architecture</a> · 
+      <a href="/privacy_policy.html">Privacy Policy</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      menu.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+    } else {
+      menu.classList.remove('active');
+      menu.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+  document.addEventListener('click', function (e) {
+    if (menu.classList.contains('active') && !menu.contains(e.target) && e.target !== toggle) {
+      toggleMenu(false);
+    }
+  });
+})();
+</script>
+<script defer src=/va.js></script>
+</body>
+</html>

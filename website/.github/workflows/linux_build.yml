@@ -1,0 +1,71 @@
+﻿name: PCDeck Cross-Platform Linux & Windows CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test-and-build-linux:
+    name: Build & Test on Ubuntu Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-tk \
+            python3-dev \
+            libx11-dev \
+            libxtst-dev \
+            libasound2-dev \
+            libportaudio2 \
+            x11-utils \
+            xvfb
+
+      - name: Install uv Package Manager
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install Python Dependencies
+        run: uv sync
+
+      - name: Run Cross-Platform Test Suite (with Xvfb virtual display)
+        run: |
+          xvfb-run -a uv run pytest tests
+
+      - name: Build Standalone Linux Executable (PCDeck-Linux-x86_64)
+        run: |
+          uv run pyinstaller \
+            --onefile \
+            --name PCDeck-Linux-x86_64 \
+            --add-data "static:static" \
+            --hidden-import "uvicorn.loops" \
+            --hidden-import "uvicorn.loops.auto" \
+            --hidden-import "uvicorn.protocols.http.auto" \
+            --hidden-import "uvicorn.protocols.websockets.auto" \
+            --hidden-import "pynput" \
+            --hidden-import "mss" \
+            server/main.py
+
+      - name: Verify Compiled Linux Executable
+        run: |
+          ls -lh dist/PCDeck-Linux-x86_64
+          chmod +x dist/PCDeck-Linux-x86_64
+
+      - name: Upload Linux Binary Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PCDeck-Linux-x86_64
+          path: dist/PCDeck-Linux-x86_64
+          retention-days: 30

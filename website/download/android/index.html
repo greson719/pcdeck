@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Downloading PCDeck APK for Android | PCDeck</title>
+<meta name="description" content="Thank you for downloading PCDeck for Android. Follow these quick steps to install the lightweight APK and connect to your PC over local Wi-Fi.">
+<link rel="canonical" href="https://getpcdeck.com/download/android/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://getpcdeck.com/download/android/">
+<meta property="og:title" content="Downloading PCDeck APK for Android | PCDeck">
+<meta property="og:description" content="Thank you for downloading PCDeck for Android. Follow these quick steps to install the lightweight APK and connect to your PC over local Wi-Fi.">
+<meta property="og:image" content="https://getpcdeck.com/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<style>
+.thankyou-box {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 12px;
+  padding: 36px 32px;
+  margin: 32px 0 28px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.04);
+}
+.dl-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--signal-wash);
+  border: 1px solid rgba(27,68,216,0.25);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+}
+.spinner-pulse {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--signal-wash);
+  border-top-color: var(--signal);
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.step-card {
+  background: var(--paper);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  padding: 20px;
+}
+.step-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #0a8a4b;
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+</style>
+
+<script>
+window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+
+function triggerDownload() {
+  var a = document.createElement('a');
+  a.href = '/PCDeck.apk';
+  a.download = 'PCDeck.apk';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  try {
+    window.va('event', { name: 'download_android', data: { file: 'PCDeck.apk', platform: 'android' } });
+  } catch (e) {}
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+  setTimeout(triggerDownload, 600);
+});
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/features/">Features</a>
+      <a href="/guides/">Guides</a>
+      <a href="/#features">Capabilities</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/download/">All Downloads</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/">Home</a>
+        <a href="/features/">Features &amp; Controls</a>
+        <a href="/guides/">Guides Hub</a>
+        <a href="/security/">Security Architecture</a>
+        <a href="/download/">All Downloads</a>
+      </div>
+      <div class="mobile-guides-title">Downloads</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/download/windows/">Download for Windows (.exe)</a>
+        <a href="/download/android/">Download Android APK</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="shell" style="max-width: 840px; padding-top: 36px;">
+    
+    <div class="dl-status-banner">
+      <div class="spinner-pulse"></div>
+      <div>
+        <h2 style="font-size: 18px; margin: 0 0 4px; color: var(--signal-ink);">Your PCDeck APK download has started!</h2>
+        <p style="margin: 0; font-size: 14px; color: var(--graphite);">
+          If the download didn't start automatically, <a href="/PCDeck.apk" download="PCDeck.apk" style="font-weight: 700; text-decoration: underline;" onclick="triggerDownload()">click here to download PCDeck.apk directly &rarr;</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="thankyou-box">
+      <span class="tag">Android Setup</span>
+      <h1 style="font-size: 26px; margin: 6px 0 12px;">How to Install PCDeck APK</h1>
+      <p style="margin: 0 0 20px; font-size: 15.5px; color: var(--graphite);">
+        PCDeck is distributed directly as an ultra-lightweight APK (1.5 MB) with zero tracking, zero ads, and zero account requirements.
+      </p>
+
+      <div class="step-grid">
+        <div class="step-card">
+          <span class="step-badge">STEP 1</span>
+          <h3 style="font-size: 15px; margin: 0 0 8px;">Tap Downloaded APK</h3>
+          <p style="font-size: 13.5px; color: var(--graphite); margin: 0;">
+            Open your phone's notification bar or Downloads folder and tap <code>PCDeck.apk</code> to begin installation.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-badge">STEP 2</span>
+          <h3 style="font-size: 15px; margin: 0 0 8px;">Allow Unknown Sources</h3>
+          <p style="font-size: 13.5px; color: var(--graphite); margin: 0;">
+            If Android prompts "Install unknown apps", tap <strong>Settings</strong> and allow permission for Chrome or your file manager. If Play Protect appears, select <strong>Install anyway</strong>.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-badge">STEP 3</span>
+          <h3 style="font-size: 15px; margin: 0 0 8px;">Instant LAN Discovery</h3>
+          <p style="font-size: 13.5px; color: var(--graphite); margin: 0;">
+            Ensure your phone and PC are connected to the same Wi-Fi. Open PCDeck on Android &rarr; it automatically finds your PC server or lets you scan the QR code.
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--grid); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <span style="font-family: var(--mono); font-size: 12px; color: var(--muted);">Version: v2.7.0 (Android 5.0+)</span>
+        <div style="display: flex; gap: 16px; font-size: 13.5px;">
+          <a href="/features/">Explore All Features &rarr;</a>
+          <a href="/download/windows/">Download Windows PC Client &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Developer Feedback & Community Support -->
+      <div style="margin-top: 22px; padding: 18px 22px; background: var(--panel); border: 1px solid var(--grid); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <strong style="font-size: 14px; color: var(--ink); display: block; margin-bottom: 2px;">Questions, Suggestions or Bug Reports?</strong>
+          <span style="font-size: 13px; color: var(--graphite);">Talk directly with the developer — every message gets a personal reply.</span>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <a class="btn ghost sm" href="https://www.reddit.com/user/Old_Boysenberry_4008/comments/1wkh5v0/pcdeck_official_feedback_bug_reports_feature/" target="_blank" rel="noopener" style="font-size: 13px; padding: 8px 14px; color: #ff4500; border-color: rgba(255, 69, 0, 0.45);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.56 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.56 12 8 12.56 8 13.25c0 .688.56 1.25 1.25 1.25.688 0 1.25-.562 1.25-1.25 0-.69-.562-1.25-1.25-1.25zm5.5 0c-.688 0-1.25.56-1.25 1.25 0 .688.56 1.25 1.25 1.25.688 0 1.25-.562 1.25-1.25 0-.69-.562-1.25-1.25-1.25zm-5.465 4.148c-.085.17-.035.38.12.49.98.69 2.14.99 3.095.99.954 0 2.115-.3 3.095-.99a.377.377 0 0 0 .12-.49.38.38 0 0 0-.49-.12c-.78.55-1.77.8-2.725.8-.956 0-1.945-.25-2.725-.8a.384.384 0 0 0-.49.12z"/></svg>
+            Reddit Message
+          </a>
+          <a class="btn sm" href="mailto:gresonparichha719@gmail.com?subject=%5BPCDeck%5D%20Feedback%20%26%20Suggestion&body=Hi%20Greson%2C%0A%0AHere%20is%20my%20feedback%20%2F%20bug%20report%3A%0A" style="font-size: 13px; padding: 8px 14px; background: var(--signal); border-color: var(--signal); color: var(--signal-ink);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email Developer
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="shell foot">
+    <p>© 2026 PCDeck · Runs offline. No account, no telemetry.</p>
+    <div>
+      <a href="/features/">Features &amp; Controls</a> · 
+      <a href="/guides/">All Guides</a> · 
+      <a href="/security/">Security Architecture</a> · 
+      <a href="/privacy_policy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+
+  function toggleMenu(open) {
+    var willOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (willOpen) {
+      menu.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    } else {
+      menu.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menu.addEventListener('click', function (e) {
+    if (e.target === menu || e.target.closest('a')) {
+      toggleMenu(false);
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && menu.classList.contains('active')) {
+      toggleMenu(false);
+    }
+  });
+
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 900 && menu.classList.contains('active')) {
+      toggleMenu(false);
+    }
+  });
+})();
+</script>
+<script defer src="/va.js"></script>
+</body>
+</html>

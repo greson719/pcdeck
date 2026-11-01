@@ -1,0 +1,12 @@
+{
+  "versionCode": 278,
+  "versionName": "2.7.8",
+  "exeSize": "37.5 MB",
+  "apkSize": "983 KB",
+  "apkUrl": "https://getpcdeck.com/PCDeck.apk",
+  "websiteUrl": "https://getpcdeck.com",
+  "playStoreUrl": "",
+  "releaseNotes": "• Resilient Pro Licensing: Automatic lowercase UUID normalization and instant local Wi-Fi auto-unlock\n• Native Microsoft Store Review: Instant review dialog trigger on PC with 3s debounce\n• Multi-PC Dedup: Clean recent computers list with intelligent generic name filtering\n• Asynchronous Licensing & Fast Media: Zero-blocking activation and full HTTP 206 byte-range streaming",
+  "minVersionCode": 1,
+  "publishedAt": "2026-11-01"
+}

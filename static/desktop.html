@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCDeck Pro — Control Center &amp; Server Hub</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #060911;
+      --bg-surface: rgba(14, 20, 33, 0.88);
+      --bg-surface-elevated: rgba(22, 31, 51, 0.95);
+      --bg-card-glow: rgba(0, 240, 255, 0.04);
+      --bg-input: #0b101c;
+
+      --neo-cyan: #00f0ff;
+      --neo-cyan-glow: rgba(0, 240, 255, 0.35);
+      --neo-yellow: #ffe600;
+      --neo-pink: #ff2a85;
+      --neo-lime: #00ff66;
+      --neo-lime-glow: rgba(0, 255, 102, 0.35);
+      --neo-dark: #000000;
+      --neo-border: rgba(0, 240, 255, 0.22);
+
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --shadow-brutal: 4px 4px 0px #000000;
+      --shadow-cyan: 0 0 20px rgba(0, 240, 255, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(ellipse at top left, rgba(0, 240, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(255, 42, 133, 0.06) 0%, transparent 50%),
+        radial-gradient(rgba(255, 255, 255, 0.06) 1.2px, transparent 1.2px);
+      background-size: 100% 100%, 100% 100%, 24px 24px;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Cyber Header */
+    header.hub-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 2px solid var(--neo-border);
+      border-radius: 16px;
+      padding: 16px 24px;
+      box-shadow: var(--shadow-brutal), 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-box img {
+      width: 42px;
+      height: 42px;
+      border: 2px solid var(--neo-cyan);
+      border-radius: 10px;
+      box-shadow: 0 0 12px var(--neo-cyan-glow);
+    }
+
+    .brand-title {
+      font-family: var(--font-heading);
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-title span.accent {
+      color: var(--neo-cyan);
+      text-shadow: 0 0 10px var(--neo-cyan-glow);
+    }
+
+    .header-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 255, 102, 0.12);
+      border: 2px solid var(--neo-lime);
+      color: var(--neo-lime);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-family: var(--font-heading);
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      box-shadow: 0 0 16px rgba(0, 255, 102, 0.2);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--neo-lime);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--neo-lime);
+      animation: pulse-dot 1.8s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+
+    /* Main 2-Column Grid */
+    .grid-hub {
+      display: grid;
+      grid-template-columns: 1.15fr 1.25fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 840px) {
+      .grid-hub { grid-template-columns: 1fr; }
+    }
+
+    .cyber-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 2px solid var(--neo-border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow-brutal), 0 12px 36px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    .card-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--neo-yellow);
+      color: #000000;
+      border: 2px solid var(--neo-dark);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      box-shadow: 2px 2px 0px var(--neo-dark);
+    }
+
+    .card-badge.pink {
+      background: var(--neo-pink);
+      color: #ffffff;
+    }
+
+    /* QR Frame with Cyber Brackets */
+    .qr-bracket-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 16px;
+      background: var(--bg-surface-elevated);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      position: relative;
+    }
+
+    .qr-frame {
+      position: relative;
+      padding: 8px;
+      background: #000000;
+      border: 2px solid var(--neo-cyan);
+      border-radius: 12px;
+      box-shadow: 0 0 20px var(--neo-cyan-glow);
+    }
+
+    .qr-image {
+      width: 190px;
+      height: 190px;
+      display: block;
+      border-radius: 6px;
+      background: #000;
+    }
+
+    .ip-display-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      background: var(--bg-input);
+      border: 2px solid var(--neo-dark);
+      border-radius: 10px;
+      padding: 8px 12px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .ip-text {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--neo-cyan);
+      letter-spacing: 0.5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Buttons */
+    .neo-btn {
+      height: 44px;
+      background: var(--neo-cyan);
+      color: var(--neo-dark);
+      border: 2px solid var(--neo-dark);
+      border-radius: 10px;
+      font-family: var(--font-heading);
+      font-size: 0.86rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      padding: 0 16px;
+      box-shadow: var(--shadow-brutal);
+      transition: all 0.12s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .neo-btn:hover {
+      transform: translate(-1.5px, -1.5px);
+      box-shadow: 5.5px 5.5px 0px #000000;
+    }
+
+    .neo-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #000000;
+    }
+
+    .btn-lime {
+      background: var(--neo-lime);
+      color: #000000;
+      box-shadow: var(--shadow-brutal), 0 0 16px var(--neo-lime-glow);
+    }
+
+    .btn-yellow {
+      background: var(--neo-yellow);
+      color: #000000;
+    }
+
+    .btn-pink {
+      background: var(--neo-pink);
+      color: #ffffff;
+    }
+
+    .btn-dark {
+      background: #192237;
+      color: #e2e8f0;
+      border-color: var(--neo-dark);
+    }
+
+    .btn-launch-hero {
+      height: 50px;
+      font-size: 0.96rem;
+      background: linear-gradient(135deg, #00ff66 0%, #00f0ff 100%);
+      color: #000000;
+      box-shadow: var(--shadow-brutal), 0 0 24px rgba(0, 255, 102, 0.4);
+    }
+
+    /* Diagnostics Table */
+    .diag-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.82rem;
+      background: var(--bg-input);
+      border: 2px solid var(--neo-dark);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .diag-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .diag-table tr:last-child td { border-bottom: none; }
+    .diag-key {
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .diag-val {
+      color: var(--neo-cyan);
+      font-family: var(--font-mono);
+      font-weight: 800;
+      text-align: right;
+    }
+
+    /* Radio Setting Option Group */
+    .setting-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 14px;
+    }
+
+    .setting-group:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .group-label {
+      font-family: var(--font-heading);
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .radio-pill-deck {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .radio-card {
+      position: relative;
+    }
+
+    .radio-card input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .radio-card label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface-elevated);
+      border: 2px solid var(--neo-dark);
+      border-radius: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      box-shadow: 2px 2px 0px var(--neo-dark);
+      transition: all 0.12s ease;
+    }
+
+    .radio-card input:checked + label {
+      background: var(--neo-cyan);
+      color: var(--neo-dark);
+      border-color: var(--neo-dark);
+      box-shadow: 3px 3px 0px var(--neo-dark);
+      transform: translateY(-1px);
+    }
+
+    .radio-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1.5px solid var(--neo-dark);
+      background: var(--bg-input);
+      flex-shrink: 0;
+    }
+
+    .radio-card input:checked + label .radio-dot {
+      background: var(--neo-pink);
+    }
+
+    /* Quick Tools Deck */
+    .tools-deck {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .tool-chip {
+      background: var(--bg-surface-elevated);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      text-decoration: none;
+    }
+
+    .tool-chip:hover {
+      background: rgba(0, 240, 255, 0.12);
+      border-color: var(--neo-cyan);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* Footer */
+    footer.hub-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      padding: 0 6px;
+    }
+
+    footer.hub-footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+
+    footer.hub-footer a:hover {
+      color: var(--neo-cyan);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="hub-header">
+      <div class="brand-box">
+        <img src="icon.png" alt="PCDeck Logo">
+        <div>
+          <div class="brand-title">PC<span class="accent">Deck</span> Control Hub</div>
+          <div class="header-sub">Ultra-Low-Latency Display Streaming &amp; Input Simulator</div>
+        </div>
+      </div>
+      <div class="status-badge" id="server-status-pill">
+        <span class="status-dot"></span>
+        <span id="server-status-text">SERVER ONLINE</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="grid-hub">
+      <!-- Left Column: Mobile Connect Gateway & QR Code -->
+      <div class="cyber-card">
+        <div class="card-header-bar">
+          <span class="card-badge">Instant Connect Gateway</span>
+          <span style="font-size: 0.75rem; color: var(--neo-cyan); font-weight: 800; font-family: var(--font-mono);">PORT 8000</span>
+        </div>
+
+        <div class="qr-bracket-box">
+          <div class="qr-frame">
+            <img src="/api/qr" alt="Connection QR Code" class="qr-image" id="qr-img">
+          </div>
+          <div class="ip-display-bar">
+            <span class="ip-text" id="ip-text">Detecting Local IP...</span>
+            <button class="neo-btn btn-yellow" id="btn-copy-ip" style="height: 32px; padding: 0 12px; font-size: 0.75rem;">COPY IP</button>
+          </div>
+          <p style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-align: center; line-height: 1.4;">
+            Scan with your phone camera or PCDeck app to control this PC instantly over local Wi-Fi.
+          </p>
+        </div>
+
+        <!-- Launch Web Control Hero Button -->
+        <a href="/?tab=screen" target="_blank" id="btn-desktop-web" class="neo-btn btn-launch-hero">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>LAUNCH WEB CONTROL</span>
+        </a>
+
+        <!-- Download Buttons: Direct uncompressed APK & Pro Package -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <a href="/PCDeck.apk" download="PCDeck.apk" id="btn-desktop-apk" class="neo-btn" style="padding: 0 10px; font-size: 0.8rem; background: var(--neo-cyan);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>DOWNLOAD APK</span>
+          </a>
+          <a href="https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://getpcdeck.com&singlePage=true" target="_blank" id="btn-desktop-pro" class="neo-btn btn-yellow" style="padding: 0 10px; font-size: 0.8rem;">
+            <span>UPGRADE PRO ⚡</span>
+          </a>
+        </div>
+
+        <!-- Optional Regional PPP Local Price for Desktop Web Launcher -->
+        <div id="desktop-local-price-wrap" style="display: none; text-align: center; margin-top: 6px;">
+          <a href="https://checkout.dodopayments.com/buy/pdt_0Np7oiRe7Art1gb9IAx8K?quantity=1&redirect_url=https://getpcdeck.com&singlePage=true" target="_blank" style="color: var(--neo-cyan); font-size: 0.74rem; font-weight: 700; text-decoration: underline;">
+            Check your local price at checkout (PPP enabled) &rarr;
+          </a>
+        </div>
+
+        <!-- Live Diagnostics -->
+        <table class="diag-table">
+          <tr>
+            <td class="diag-key">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Connected Clients
+            </td>
+            <td class="diag-val" id="diag-clients">0 Active</td>
+          </tr>
+          <tr>
+            <td class="diag-key">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+              Screen Resolution
+            </td>
+            <td class="diag-val" id="diag-screen">Detecting...</td>
+          </tr>
+          <tr>
+            <td class="diag-key">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              Local LAN IP
+            </td>
+            <td class="diag-val" id="diag-ip">...</td>
+          </tr>
+          <tr>
+            <td class="diag-key">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+              Network Latency
+            </td>
+            <td class="diag-val" id="diag-latency">Standby</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Right Column: Controls, Tools & Preferences -->
+      <div class="cyber-card">
+        <div class="card-header-bar">
+          <span class="card-badge pink">PC Server Controls &amp; Tools</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">v2.1.0 High-Perf</span>
+        </div>
+
+        <!-- Setting 1: Screen Stream FPS Engine -->
+        <div class="setting-group">
+          <div class="group-label">
+            <span>Screen Streaming Refresh Rate</span>
+            <span style="font-size: 0.72rem; color: var(--neo-cyan); font-family: var(--font-mono);">Adaptive Engine</span>
+          </div>
+          <div class="radio-pill-deck">
+            <div class="radio-card">
+              <input type="radio" id="fps-60" name="fps-mode" value="60">
+              <label for="fps-60">
+                <span class="radio-dot"></span>
+                <span>Ultra (60 FPS)</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="fps-30" name="fps-mode" value="30" checked>
+              <label for="fps-30">
+                <span class="radio-dot"></span>
+                <span>Balanced (30 FPS)</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="fps-20" name="fps-mode" value="20">
+              <label for="fps-20">
+                <span class="radio-dot"></span>
+                <span>Eco (20 FPS)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Setting 2: Start with Windows -->
+        <div class="setting-group">
+          <div class="group-label">
+            <span>Start With Windows Boot</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Background Daemon</span>
+          </div>
+          <div class="radio-pill-deck">
+            <div class="radio-card">
+              <input type="radio" id="boot-enabled" name="win-boot" value="true" checked>
+              <label for="boot-enabled">
+                <span class="radio-dot"></span>
+                <span>Auto-Start on Boot</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="boot-disabled" name="win-boot" value="false">
+              <label for="boot-disabled">
+                <span class="radio-dot"></span>
+                <span>Manual Only</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Setting 3: Reconnection Policy -->
+        <div class="setting-group">
+          <div class="group-label">
+            <span>Trusted Phone Reconnect Policy</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Cryptographic Pairing</span>
+          </div>
+          <div class="radio-pill-deck">
+            <div class="radio-card">
+              <input type="radio" id="reconn-auto" name="reconn-policy" value="auto" checked>
+              <label for="reconn-auto">
+                <span class="radio-dot"></span>
+                <span>Auto-Accept Saved</span>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="radio" id="reconn-prompt" name="reconn-policy" value="prompt">
+              <label for="reconn-prompt">
+                <span class="radio-dot"></span>
+                <span>Prompt PIN</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick PC System Shortcuts -->
+        <div class="setting-group">
+          <div class="group-label">Quick PC System Actions</div>
+          <div class="tools-deck">
+            <button type="button" class="tool-chip" id="btn-tool-open-folder">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>Received Files</span>
+            </button>
+            <a href="/api/screen/shot.jpg" target="_blank" class="tool-chip" id="btn-tool-screenshot">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <span>Take Snapshot</span>
+            </a>
+            <a href="/PCDeck.apk" download="PCDeck.apk" class="tool-chip">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
+              <span>Download Android APK</span>
+            </a>
+            <a href="/connect" target="_blank" class="tool-chip">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+              <span>Mobile Connect Gateway</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 10px; margin-top: 4px;">
+          <button class="neo-btn btn-lime" id="btn-save-pc-settings" style="flex: 1;">
+            <span>SAVE PREFERENCES</span>
+          </button>
+          <button class="neo-btn btn-pink" id="btn-restart-stream" style="flex: 1;">
+            <span>RESTART STREAM</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestions, Complaints & Direct Feedback Card -->
+    <div class="cyber-card" style="border-color: rgba(0, 240, 255, 0.4); margin-top: 4px;">
+      <div class="card-header-bar">
+        <span class="card-badge" style="background: var(--neo-cyan); color: #000;">Direct Creator Channel</span>
+        <span style="font-size: 0.75rem; color: var(--neo-lime); font-weight: 800; font-family: var(--font-mono);">SUPPORT &amp; FEEDBACK</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <h3 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-main);">
+          Suggestions, Complaints &amp; Bug Reports
+        </h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+          Encountered a bug, lag, or have an idea to make PCDeck better? Talk directly with the developer — every message receives a personal reply.
+        </p>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <a href="https://www.reddit.com/user/Old_Boysenberry_4008/comments/1wkh5v0/pcdeck_official_feedback_bug_reports_feature/" target="_blank" rel="noopener" class="neo-btn" style="background: rgba(255, 69, 0, 0.15); border: 1.5px solid #ff4500; color: #ff4500; font-size: 0.78rem; font-weight: 800; padding: 8px 16px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.56 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.56 12 8 12.56 8 13.25c0 .688.56 1.25 1.25 1.25.688 0 1.25-.562 1.25-1.25 0-.69-.562-1.25-1.25-1.25zm5.5 0c-.688 0-1.25.56-1.25 1.25 0 .688.56 1.25 1.25 1.25.688 0 1.25-.562 1.25-1.25 0-.69-.562-1.25-1.25-1.25zm-5.465 4.148c-.085.17-.035.38.12.49.98.69 2.14.99 3.095.99.954 0 2.115-.3 3.095-.99a.377.377 0 0 0 .12-.49.38.38 0 0 0-.49-.12c-.78.55-1.77.8-2.725.8-.956 0-1.945-.25-2.725-.8a.384.384 0 0 0-.49.12z"/></svg>
+          <span>Reddit Official Thread</span>
+        </a>
+        <button type="button" id="btn-copy-hub-email" class="neo-btn" style="background: rgba(0, 240, 255, 0.12); border: 1.5px solid var(--neo-cyan); color: var(--neo-cyan); font-size: 0.78rem; font-weight: 800; padding: 8px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span id="label-hub-email">Copy Email (gresonparichha719@gmail.com)</span>
+        </button>
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=gresonparichha719@gmail.com&su=%5BPCDeck%5D%20Suggestion%20%2F%20Complaint" target="_blank" rel="noopener" class="neo-btn btn-yellow" style="font-size: 0.78rem; font-weight: 800; padding: 8px 16px; text-decoration: none;">
+          Open Web Gmail &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="hub-footer">
+      <div>🔒 100% Peer-to-Peer • End-to-End Encrypted over your Private Local Wi-Fi</div>
+      <div>PCDeck Pro &copy; 2026 • <a href="https://getpcdeck.com" target="_blank">Official Website</a></div>
+    </footer>
+  </div>
+
+  <!-- In-Place Instant Media Player Modal -->
+  <div id="media-player-modal" class="modal-backdrop" style="display: none; z-index: 10005;">
+    <div class="media-player-card" style="width: min(94vw, 760px); max-height: 90vh; background: #0b1120; border: 2px solid var(--neo-cyan); border-radius: 16px; padding: 16px; box-shadow: 0 0 35px rgba(6,182,212,0.3); display: flex; flex-direction: column; gap: 12px; position: relative;">
+      
+      <!-- Top Title Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+          <span class="mini-status-chip online" style="background: var(--neo-cyan); color: #000; font-weight: 900; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px;">STREAM</span>
+          <span id="media-player-title" style="font-weight: 800; font-size: 0.92rem; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50vw;">Now Playing</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" id="btn-media-audio-boost" class="neo-btn btn-dark" style="font-size: 0.72rem; padding: 4px 8px; height: 30px; font-weight: 800;" title="Audio Boost (200%)">BOOST 100%</button>
+          <button type="button" id="btn-media-pip" class="neo-btn btn-dark" style="font-size: 0.72rem; padding: 4px 8px; height: 30px;" title="Picture in Picture">PiP</button>
+          <button type="button" id="btn-close-media-player" class="onboarding-skip-btn" style="position: static; font-size: 1.1rem; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">&times;</button>
+        </div>
+      </div>
+
+      <!-- Video / Audio Element -->
+      <div style="position: relative; width: 100%; background: #020617; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 220px; max-height: 56vh;">
+        <video id="media-stream-video" playsinline controls preload="metadata" style="width: 100%; height: 100%; max-height: 56vh; object-fit: contain; outline: none;">
+          <track id="media-stream-track" kind="subtitles" srclang="en" label="Subtitles" default>
+        </video>
+      </div>
+
+      <!-- Quick Action / Speed / Quality bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); padding-top: 4px;">
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <span style="color: var(--neo-yellow); font-weight: 800;">Speed:</span>
+          <button type="button" class="neo-btn btn-dark media-speed-btn active" data-speed="1.0" style="padding: 2px 7px; height: 26px; font-size: 0.72rem;">1.0x</button>
+          <button type="button" class="neo-btn btn-dark media-speed-btn" data-speed="1.25" style="padding: 2px 7px; height: 26px; font-size: 0.72rem;">1.25x</button>
+          <button type="button" class="neo-btn btn-dark media-speed-btn" data-speed="1.5" style="padding: 2px 7px; height: 26px; font-size: 0.72rem;">1.5x</button>
+          <button type="button" class="neo-btn btn-dark media-speed-btn" data-speed="2.0" style="padding: 2px 7px; height: 26px; font-size: 0.72rem;">2.0x</button>
+        </div>
+        <div style="font-size: 0.72rem; color: var(--text-muted);">
+          <span id="media-stream-codec-info">Local Wi-Fi Direct</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentToken = '';
+
+    async function fetchInfo() {
+      try {
+        const res = await fetch('/api/info');
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        const ipText = data.url || (data.ip ? `http://${data.ip}:${data.port || 8000}` : '127.0.0.1:8000');
+        document.getElementById('ip-text').textContent = ipText;
+        document.getElementById('diag-ip').textContent = data.ip || '127.0.0.1';
+        document.getElementById('diag-clients').textContent = `${data.clients_connected || 0} Active`;
+        
+        if (data.screen && data.screen.width) {
+          document.getElementById('diag-screen').textContent = `${data.screen.width} x ${data.screen.height}`;
+        }
+
+        if (data.token) {
+          currentToken = data.token;
+          try { localStorage.setItem('pcdeck_token', data.token); } catch (e) {}
+          
+          const webBtn = document.getElementById('btn-desktop-web');
+          if (webBtn) {
+            webBtn.href = `/?tab=screen&token=${encodeURIComponent(data.token)}`;
+          }
+        }
+
+        if (data.network && document.getElementById('diag-latency')) {
+          const n = data.network;
+          const latEl = document.getElementById('diag-latency');
+          if (n.active) {
+            const hw = n.hardware && n.hardware.speed_mbps ? ` • ${n.hardware.band || 'Wi-Fi'} (${Math.round(n.hardware.speed_mbps)} Mbps)` : '';
+            latEl.textContent = `${n.rtt_ms} ms (${n.status})${hw}`;
+            latEl.style.color = n.color || 'var(--neo-cyan)';
+          } else {
+            const hw = n.hardware && n.hardware.speed_mbps ? `${n.hardware.band || 'Wi-Fi'} (${Math.round(n.hardware.speed_mbps)} Mbps) • ` : '';
+            latEl.textContent = `${hw}Standby`;
+            latEl.style.color = 'var(--text-muted)';
+          }
+        }
+      } catch (e) {
+        console.warn('Status poll:', e);
+      }
+    }
+
+    // Copy IP with instant visual feedback
+    const btnCopyIp = document.getElementById('btn-copy-ip');
+    if (btnCopyIp) {
+      btnCopyIp.onclick = () => {
+        const text = document.getElementById('ip-text').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          btnCopyIp.textContent = 'COPIED!';
+          btnCopyIp.style.background = 'var(--neo-lime)';
+          setTimeout(() => {
+            btnCopyIp.textContent = 'COPY IP';
+            btnCopyIp.style.background = 'var(--neo-yellow)';
+          }, 2000);
+        }).catch(() => {
+          btnCopyIp.textContent = 'COPIED!';
+          setTimeout(() => btnCopyIp.textContent = 'COPY IP', 1500);
+        });
+      };
+    }
+
+    // Direct Feedback Email Copy
+    const btnCopyHubEmail = document.getElementById('btn-copy-hub-email');
+    if (btnCopyHubEmail) {
+      btnCopyHubEmail.onclick = () => {
+        navigator.clipboard.writeText('gresonparichha719@gmail.com').then(() => {
+          const lbl = document.getElementById('label-hub-email');
+          if (lbl) {
+            const orig = lbl.textContent;
+            lbl.textContent = '✔ Email Copied to Clipboard!';
+            setTimeout(() => { lbl.textContent = orig; }, 2500);
+          }
+        }).catch(() => {});
+      };
+    }
+
+    // Save preferences
+    const btnSave = document.getElementById('btn-save-pc-settings');
+    if (btnSave) {
+      btnSave.onclick = () => {
+        const fps = document.querySelector('input[name="fps-mode"]:checked')?.value || '30';
+        try { localStorage.setItem('pcdeck_server_fps', fps); } catch (e) {}
+        btnSave.innerHTML = '<span>SAVED! ✓</span>';
+        setTimeout(() => btnSave.innerHTML = '<span>SAVE PREFERENCES</span>', 2000);
+      };
+    }
+
+    // Restart Stream action
+    const btnRestart = document.getElementById('btn-restart-stream');
+    if (btnRestart) {
+      btnRestart.onclick = async () => {
+        btnRestart.innerHTML = '<span>RESTARTING...</span>';
+        try {
+          await fetch('/api/screen/shot.jpg?q=10&scale=0.2');
+        } catch (e) {}
+        setTimeout(() => {
+          btnRestart.innerHTML = '<span>STREAM ACTIVE ✓</span>';
+          setTimeout(() => btnRestart.innerHTML = '<span>RESTART STREAM</span>', 2000);
+        }, 600);
+      };
+    }
+
+    // Open Transfers Folder
+    const btnOpenFolder = document.getElementById('btn-tool-open-folder');
+    if (btnOpenFolder) {
+      btnOpenFolder.onclick = () => {
+        fetch('/api/fs/open-transfers-folder', { method: 'POST' }).catch(() => {});
+      };
+    }
+
+    // Launch Web Control auto-inject token
+    const webBtn = document.getElementById('btn-desktop-web');
+    if (webBtn) {
+      webBtn.addEventListener('click', function(e) {
+        const tok = currentToken || localStorage.getItem('pcdeck_token');
+        if (tok && !this.href.includes('token=')) {
+          this.href = `/?tab=screen&token=${encodeURIComponent(tok)}`;
+        }
+      });
+    }
+
+    // Regional PPP banner check
+    try {
+      const tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+      const westernPrefixes = [
+        'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+        'America/Phoenix', 'America/Anchorage', 'America/Honolulu', 'America/Detroit',
+        'America/Indiana', 'America/Boise', 'America/Toronto', 'America/Vancouver',
+        'America/Montreal', 'America/Edmonton', 'America/Winnipeg', 'America/Halifax',
+        'Europe/London', 'Europe/Dublin', 'Europe/Berlin', 'Europe/Paris',
+        'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Madrid', 'Europe/Rome',
+        'Europe/Vienna', 'Europe/Zurich', 'Europe/Stockholm', 'Europe/Oslo',
+        'Europe/Copenhagen', 'Europe/Helsinki', 'Europe/Lisbon', 'Europe/Luxembourg',
+        'Australia/', 'Pacific/Auckland', 'Asia/Tokyo'
+      ];
+      const isWestern = westernPrefixes.some(p => tz.startsWith(p));
+      const pppWrap = document.getElementById('desktop-local-price-wrap');
+      if (pppWrap) pppWrap.style.display = isWestern ? 'none' : 'block';
+    } catch (e) {}
+
+    fetchInfo();
+    setInterval(fetchInfo, 2500);
+  </script>
+</body>
+</html>
