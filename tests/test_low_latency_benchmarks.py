@@ -269,3 +269,29 @@ def test_socket_tcp_nodelay_and_buffer_tuning():
     conn.close()
     client_sock.close()
     server_sock.close()
+
+
+def test_screen_stream_pipelining_and_ack_flow_control():
+    """Verify /ws/screen delivers continuous frames when client returns ACKs and does not close or raise UnboundLocalError."""
+    from starlette.testclient import TestClient
+    from server.main import app
+
+    client = TestClient(app)
+    with client.websocket_connect("/ws/screen") as ws:
+        frame1 = ws.receive_bytes()
+        assert len(frame1) > 100
+        text = ws.receive_text()
+        assert text.startswith("monitors,")
+        ws.send_text("a")
+
+        received_frames = 0
+        t0 = time.time()
+        while time.time() - t0 < 0.4:
+            msg = ws.receive()
+            if "bytes" in msg and msg["bytes"]:
+                received_frames += 1
+                ws.send_text("a")
+            elif msg.get("type") == "websocket.close":
+                break
+        assert received_frames >= 5, f"Expected at least 5 frames in 0.4s, got {received_frames}"
+

@@ -1173,7 +1173,7 @@
         // Windows WHEEL_DELTA (120) averages ~110px in modern browsers/apps (~1.08 wheel units per PC pixel).
         const scaleY = canvasH / rectH;
         const scaleX = canvasW / rectW;
-        const speedMultiplier = 1.08 * (state.scrollSpeed ? (state.scrollSpeed / 1.4) : 1.0);
+        const speedMultiplier = 1.55 * (state.scrollSpeed ? (state.scrollSpeed / 1.4) : 1.0);
 
         const wheelDy = scrollDy * scaleY * speedMultiplier * scrollFactor;
         const wheelDx = scrollDx * scaleX * speedMultiplier * scrollFactor;
@@ -1282,11 +1282,11 @@
           const scrollFactor = state.invertScroll ? -1 : 1;
           const scaleY = canvasH / rectH;
           const scaleX = canvasW / rectW;
-          const speedMultiplier = 1.08 * (state.scrollSpeed ? (state.scrollSpeed / 1.4) : 1.0);
+          const speedMultiplier = 1.55 * (state.scrollSpeed ? (state.scrollSpeed / 1.4) : 1.0);
 
-          const maxVelocity = 2.5; // Cap velocity to prevent wild overshoot
-          let momentumVy = Math.max(-maxVelocity, Math.min(maxVelocity, vy)) * 0.70;
-          let momentumVx = Math.max(-maxVelocity, Math.min(maxVelocity, vx)) * 0.70;
+          const maxVelocity = 3.6; // Cap velocity to prevent wild overshoot
+          let momentumVy = Math.max(-maxVelocity, Math.min(maxVelocity, vy)) * 0.88;
+          let momentumVx = Math.max(-maxVelocity, Math.min(maxVelocity, vx)) * 0.88;
           let lastMomentumTime = performance.now();
 
           const stepMomentum = (curTime) => {
@@ -1295,7 +1295,7 @@
             lastMomentumTime = curTime;
 
             // Natural mobile touchscreen deceleration curve (half-life ~300ms)
-            const friction = Math.pow(0.92, dt / 16.67);
+            const friction = Math.pow(0.935, dt / 16.67);
             momentumVy *= friction;
             momentumVx *= friction;
 
@@ -1424,8 +1424,8 @@
       }
       const norm = getNormalizedCoords(e.clientX, e.clientY);
       const scrollFactor = state.invertScroll ? -1 : 1;
-      const dy = -e.deltaY * 1.2 * state.scrollSpeed * scrollFactor;
-      const dx = -e.deltaX * 1.2 * state.scrollSpeed * scrollFactor;
+      const dy = -e.deltaY * 1.5 * state.scrollSpeed * scrollFactor;
+      const dx = -e.deltaX * 1.5 * state.scrollSpeed * scrollFactor;
       sendBinaryScrollAbs(norm.x, norm.y, dx, dy);
       e.preventDefault();
     }, { passive: false });
@@ -3099,7 +3099,7 @@
     nextFrameBuffer = null;
 
     if (!screenCtx) {
-      screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
+      screenCtx = el.screenCanvas.getContext('2d', { alpha: false });
       if (screenCtx) {
         screenCtx.imageSmoothingEnabled = false;
       }
@@ -3107,57 +3107,62 @@
 
     let renderedOk = false;
     try {
-      const blob = (data instanceof Blob) ? data : new Blob([data], { type: 'image/jpeg' });
+      // Explicitly enforce 'image/jpeg' MIME type on blob so createImageBitmap succeeds in all WebViews
+      const blob = (data instanceof Blob && data.type === 'image/jpeg')
+        ? data
+        : new Blob([data], { type: 'image/jpeg' });
 
       // Primary Decoder: Hardware-Accelerated createImageBitmap
       if (window.createImageBitmap) {
         try {
           const bmp = await createImageBitmap(blob);
-          if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
-            el.screenCanvas.width = bmp.width;
-            el.screenCanvas.height = bmp.height;
-            screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
-            if (screenCtx) screenCtx.imageSmoothingEnabled = false;
-            updateScreenPerfHud();
-          }
-          if (screenCtx) {
-            screenCtx.drawImage(bmp, 0, 0);
-            renderedOk = true;
-          }
-          if (bmp.close) bmp.close();
-        } catch (bmpErr) {}
-      }
-
-      // Secondary Decoder: HTML5 Image element fallback
-      if (!renderedOk) {
-        await new Promise((resolve) => {
-          if (activeBlobUrl) URL.revokeObjectURL(activeBlobUrl);
-          activeBlobUrl = URL.createObjectURL(blob);
-          cachedScreenImg.onload = () => {
-            if (el.screenCanvas.width !== cachedScreenImg.naturalWidth || el.screenCanvas.height !== cachedScreenImg.naturalHeight) {
-              el.screenCanvas.width = cachedScreenImg.naturalWidth;
-              el.screenCanvas.height = cachedScreenImg.naturalHeight;
-              screenCtx = el.screenCanvas.getContext('2d', { alpha: false, desynchronized: true });
+          if (bmp && bmp.width > 0 && bmp.height > 0) {
+            if (el.screenCanvas.width !== bmp.width || el.screenCanvas.height !== bmp.height) {
+              el.screenCanvas.width = bmp.width;
+              el.screenCanvas.height = bmp.height;
+              screenCtx = el.screenCanvas.getContext('2d', { alpha: false });
+              if (screenCtx) screenCtx.imageSmoothingEnabled = false;
               updateScreenPerfHud();
             }
             if (screenCtx) {
-              screenCtx.drawImage(cachedScreenImg, 0, 0);
+              screenCtx.drawImage(bmp, 0, 0);
+              renderedOk = true;
+            }
+          }
+          if (bmp && bmp.close) bmp.close();
+        } catch (bmpErr) {}
+      }
+
+      // Secondary Decoder: HTML5 Image element fallback with per-frame isolated URL
+      if (!renderedOk) {
+        await new Promise((resolve) => {
+          const img = new Image();
+          const blobUrl = URL.createObjectURL(blob);
+          img.onload = () => {
+            URL.revokeObjectURL(blobUrl);
+            if (el.screenCanvas.width !== img.naturalWidth || el.screenCanvas.height !== img.naturalHeight) {
+              el.screenCanvas.width = img.naturalWidth;
+              el.screenCanvas.height = img.naturalHeight;
+              screenCtx = el.screenCanvas.getContext('2d', { alpha: false });
+              if (screenCtx) screenCtx.imageSmoothingEnabled = false;
+              updateScreenPerfHud();
+            }
+            if (screenCtx) {
+              screenCtx.drawImage(img, 0, 0);
               renderedOk = true;
             }
             resolve();
           };
-          cachedScreenImg.onerror = (err) => {
+          img.onerror = () => {
+            URL.revokeObjectURL(blobUrl);
             resolve();
           };
-          cachedScreenImg.src = activeBlobUrl;
+          img.src = blobUrl;
         });
       }
 
       if (renderedOk) {
         recordStreamFrameRendered();
-      }
-
-      if (renderedOk || screenFirstFrameSeen) {
         hideScreenLoader();
       }
     } catch (e) {
@@ -5616,6 +5621,15 @@
             try { activeUploadXhr.abort(); } catch (_) {}
             activeUploadXhr = null;
           }
+          // Cancel native Android transfers if present
+          if (window.AndroidApp) {
+            if (typeof window.AndroidApp.cancelDownload === 'function') {
+              try { window.AndroidApp.cancelDownload(); } catch (_) {}
+            }
+            if (typeof window.AndroidApp.cancelPhoneUpload === 'function') {
+              try { window.AndroidApp.cancelPhoneUpload(); } catch (_) {}
+            }
+          }
           // Cancel active download batch
           if (activeDownloadBatch && activeDownloadBatch.active) {
             activeDownloadBatch.active = false;
@@ -5884,50 +5898,85 @@
         const filename = path.split('/').pop().split('\\').pop();
         currentIndex++;
         activeBatchTransfer.current = currentIndex;
-        phoneUploadStartTime = Date.now();
-        let lastActivityTime = Date.now();
 
-        showTransferProgress({
-          badge: `[${currentIndex}/${totalCount}]`,
-          badgeClass: 'badge-upload',
-          filename: filename,
-          percent: 0,
-          status: `[${currentIndex}/${totalCount}] Starting ${filename}...`,
-          speed: '-- MB/s',
-          isDownload: false
-        });
+        let initRetryCount = 0;
+        const MAX_INIT_RETRIES = 3;
 
-        let completed = false;
-        // Watchdog: only timeout if ZERO bytes / progress events occurred for 180 consecutive seconds
-        const watchdog = setInterval(() => {
-          if (Date.now() - lastActivityTime > 180000) {
-            console.warn(`Upload stalled on ${filename}, advancing queue`);
-            showToast(`Stalled transfer on ${filename}`, 'warn', '️');
-            onDoneOnce(false);
-          }
-        }, 15000);
+        function attemptPhoneUpload() {
+          phoneUploadStartTime = Date.now();
+          let lastActivityTime = Date.now();
+          let transferInitiated = false;
+          let completed = false;
 
-        const onDoneOnce = (success = true) => {
-          if (completed) return;
-          completed = true;
-          clearInterval(watchdog);
-          if (!success) errorOccurred = true;
-          setTimeout(uploadNext, 200);
-        };
+          const retryNotice = initRetryCount > 0 ? ` (Retry ${initRetryCount}/${MAX_INIT_RETRIES})` : '';
+          showTransferProgress({
+            badge: `[${currentIndex}/${totalCount}]`,
+            badgeClass: 'badge-upload',
+            filename: filename,
+            percent: 0,
+            status: `[${currentIndex}/${totalCount}] Starting ${filename}${retryNotice}...`,
+            speed: initRetryCount > 0 ? 'Retrying...' : '-- MB/s',
+            isDownload: false
+          });
 
-        const originalProgress = window.onPhoneUploadProgress;
-        window.onPhoneUploadProgress = function(percent, loaded, total, fname) {
-          lastActivityTime = Date.now();
-          if (typeof originalProgress === 'function') {
-            originalProgress(percent, loaded, total, fname);
-          }
-        };
+          // Watchdog: timeout if ZERO bytes / progress events occurred for 45 consecutive seconds
+          const watchdog = setInterval(() => {
+            if (Date.now() - lastActivityTime > 45000) {
+              clearInterval(watchdog);
+              if (!completed && activeBatchTransfer && activeBatchTransfer.active) {
+                if (initRetryCount < MAX_INIT_RETRIES) {
+                  initRetryCount++;
+                  console.warn(`Upload stalled on ${filename}, auto-retrying (${initRetryCount}/${MAX_INIT_RETRIES})`);
+                  showToast(`Stalled transfer on ${filename}. Auto-resuming...`, 'warn');
+                  if (window.AndroidApp && typeof window.AndroidApp.cancelPhoneUpload === 'function') {
+                    try { window.AndroidApp.cancelPhoneUpload(); } catch (_) {}
+                  }
+                  setTimeout(attemptPhoneUpload, 500);
+                } else {
+                  console.warn(`Upload stalled on ${filename}, advancing queue`);
+                  showToast(`Stalled transfer on ${filename}`, 'warn');
+                  onDoneOnce(false);
+                }
+              }
+            }
+          }, 8000);
 
-        onPhoneUploadQueueDone = (success) => {
-          onDoneOnce(success);
-        };
+          const onDoneOnce = (success = true) => {
+            if (completed) return;
+            completed = true;
+                        clearInterval(watchdog);
+            if (!success) {
+              if (initRetryCount < MAX_INIT_RETRIES && activeBatchTransfer && activeBatchTransfer.active) {
+                initRetryCount++;
+                console.warn(`[SmartTransfer] Error uploading ${filename}. Auto-retrying (${initRetryCount}/${MAX_INIT_RETRIES})...`);
+                showToast(`Auto-retrying "${filename}" to PC (Attempt ${initRetryCount + 1})...`, 'info');
+                setTimeout(attemptPhoneUpload, 500);
+                return;
+              }
+              errorOccurred = true;
+            }
+            setTimeout(uploadNext, 200);
+          };
 
-        window.AndroidApp.uploadPhoneFileToPc(path, destDir, serverUrl);
+          const originalProgress = window.onPhoneUploadProgress;
+          window.onPhoneUploadProgress = function(percent, loaded, total, fname) {
+            lastActivityTime = Date.now();
+            if (loaded > 0 || percent > 0) {
+              transferInitiated = true;
+                          }
+            if (typeof originalProgress === 'function') {
+              originalProgress(percent, loaded, total, fname);
+            }
+          };
+
+          onPhoneUploadQueueDone = (success) => {
+            onDoneOnce(success);
+          };
+
+          window.AndroidApp.uploadPhoneFileToPc(path, destDir, serverUrl);
+        }
+
+        attemptPhoneUpload();
       }
 
       uploadNext();
@@ -6024,6 +6073,12 @@
       activeDownloadBatch.active = false;
     }
 
+    if (!activeDownloadBatch.active) {
+      if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+        try { screenWs.send('resume'); } catch (e) {}
+      }
+    }
+
     if (typeof onNativeDownloadDoneCallback === 'function') {
       const cb = onNativeDownloadDoneCallback;
       onNativeDownloadDoneCallback = null;
@@ -6049,6 +6104,12 @@
     if (!isBatch || activeDownloadBatch.current >= activeDownloadBatch.total) {
       hideTransferProgress(8000);
       activeDownloadBatch.active = false;
+    }
+
+    if (!activeDownloadBatch.active) {
+      if (screenWs && screenWs.readyState === WebSocket.OPEN) {
+        try { screenWs.send('resume'); } catch (e) {}
+      }
     }
 
     if (typeof onNativeDownloadDoneCallback === 'function') {
@@ -6185,6 +6246,9 @@
         if (completed) return;
         completed = true;
         clearInterval(watchdog);
+        if (typeof origNativeProgress === 'function') {
+          window.onNativeDownloadProgress = origNativeProgress;
+        }
         setTimeout(downloadNext, 300);
       };
 
@@ -7295,85 +7359,119 @@
 
       const file = files[currentIndex];
       currentIndex++;
-      const startTime = Date.now();
-      let lastProgressTime = Date.now();
+      let initRetryCount = 0;
+      const MAX_INIT_RETRIES = 3;
 
-      showTransferProgress({
-        badge: `${currentIndex}/${files.length}`,
-        badgeClass: 'badge-upload',
-        filename: file.name,
-        percent: 0,
-        status: `Starting stream (${file.name})...`,
-        speed: 'Connecting...',
-        isDownload: false
-      });
+      function attemptUpload() {
+        if (activeUploadCancelled) return;
+        const startTime = Date.now();
+        let lastProgressTime = Date.now();
+        let transferInitiated = false;
+        let done = false;
 
-      const uploadUrl = `http://${state.serverHost}:${state.serverPort}/api/fs/upload-stream?filename=${encodeURIComponent(file.name)}&dest_dir=${encodeURIComponent(state.currentFsPath || '')}`;
-      const xhr = new XMLHttpRequest();
-      activeUploadXhr = xhr; // expose for X button cancellation
-      xhr.open('POST', uploadUrl, true);
-      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-      xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
-      xhr.setRequestHeader('X-Dest-Dir', encodeURIComponent(state.currentFsPath || ''));
-      xhr.timeout = 0; // 0 = Infinite timeout for large multi-gigabyte files
+        const retryNotice = initRetryCount > 0 ? ` (Retry ${initRetryCount}/${MAX_INIT_RETRIES})` : '';
+        showTransferProgress({
+          badge: `${currentIndex}/${files.length}`,
+          badgeClass: 'badge-upload',
+          filename: file.name,
+          percent: 0,
+          status: `Starting stream (${file.name})${retryNotice}...`,
+          speed: initRetryCount > 0 ? 'Retrying...' : 'Connecting...',
+          isDownload: false
+        });
 
-      let done = false;
-      const watchdog = setInterval(() => {
-        if (Date.now() - lastProgressTime > 60000) {
-          clearInterval(watchdog);
-          if (!done) {
-            done = true;
-            errorOccurred = true;
-            showToast(`Upload stalled on "${file.name}"`, 'warn', '️');
-            xhr.abort();
-            uploadNext();
+        // Pre-flight ping to flush stale keep-alive sockets before launching file stream
+        try {
+          fetch(`http://${state.serverHost}:${state.serverPort}/api/ping?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => {});
+        } catch (_) {}
+
+        const uploadUrl = `http://${state.serverHost}:${state.serverPort}/api/fs/upload-stream?filename=${encodeURIComponent(file.name)}&dest_dir=${encodeURIComponent(state.currentFsPath || '')}&_t=${Date.now()}`;
+        const xhr = new XMLHttpRequest();
+        activeUploadXhr = xhr; // expose for X button cancellation
+        xhr.open('POST', uploadUrl, true);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+        xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
+        xhr.setRequestHeader('X-Dest-Dir', encodeURIComponent(state.currentFsPath || ''));
+        xhr.timeout = 0; // 0 = Infinite timeout for large multi-gigabyte files
+
+        // Active Stall Watchdog: Detects stall during data transfer (30s inactivity)
+        const stallWatchdog = setInterval(() => {
+          if (Date.now() - lastProgressTime > 30000) {
+            clearInterval(stallWatchdog);
+            if (!done && !activeUploadCancelled) {
+              done = true;
+              if (initRetryCount < MAX_INIT_RETRIES) {
+                initRetryCount++;
+                showToast(`Upload stalled on "${file.name}". Auto-resuming (${initRetryCount}/${MAX_INIT_RETRIES})...`, 'warn');
+                try { xhr.abort(); } catch (_) {}
+                setTimeout(attemptUpload, 500);
+              } else {
+                errorOccurred = true;
+                showToast(`Upload stalled on "${file.name}"`, 'warn');
+                try { xhr.abort(); } catch (_) {}
+                uploadNext();
+              }
+            }
           }
-        }
-      }, 10000);
+        }, 5000);
 
-      const finishUpload = (success) => {
-        if (done) return;
-        done = true;
-        clearInterval(watchdog);
-        if (!success) errorOccurred = true;
-        uploadNext();
-      };
+        const finishUpload = (success) => {
+          if (done) return;
+          done = true;
+          clearInterval(stallWatchdog);
+          if (!success) {
+            if (initRetryCount < MAX_INIT_RETRIES && !activeUploadCancelled) {
+              initRetryCount++;
+              console.warn(`[SmartTransfer] Upload error for "${file.name}". Auto-retrying (${initRetryCount}/${MAX_INIT_RETRIES})...`);
+              showToast(`Auto-retrying upload "${file.name}" (Attempt ${initRetryCount + 1})...`, 'info');
+              setTimeout(attemptUpload, 500);
+              return;
+            }
+            errorOccurred = true;
+          }
+          uploadNext();
+        };
 
-      xhr.upload.onprogress = (e) => {
-        lastProgressTime = Date.now();
-        if (e.lengthComputable && e.total > 0) {
-          const percent = Math.min(100, Math.round((e.loaded / e.total) * 100));
-          const loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
-          const totalMB = (e.total / (1024 * 1024)).toFixed(1);
-          const duration = (Date.now() - startTime) / 1000;
-          const speedMB = duration > 0.1 ? (e.loaded / (1024 * 1024) / duration).toFixed(1) : '--';
-          showTransferProgress({
-            badge: `${currentIndex}/${files.length}`,
-            badgeClass: 'badge-upload',
-            filename: file.name,
-            percent: percent,
-            status: `Uploading ${loadedMB} MB of ${totalMB} MB (${percent}%)`,
-            speed: `${speedMB} MB/s`,
-            isDownload: false
-          });
-        }
-      };
+        xhr.upload.onprogress = (e) => {
+          lastProgressTime = Date.now();
+          if (e.loaded > 0) {
+            transferInitiated = true;
+          }
+          if (e.lengthComputable && e.total > 0) {
+            const percent = Math.min(100, Math.round((e.loaded / e.total) * 100));
+            const loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
+            const totalMB = (e.total / (1024 * 1024)).toFixed(1);
+            const duration = (Date.now() - startTime) / 1000;
+            const speedMB = duration > 0.1 ? (e.loaded / (1024 * 1024) / duration).toFixed(1) : '--';
+            showTransferProgress({
+              badge: `${currentIndex}/${files.length}`,
+              badgeClass: 'badge-upload',
+              filename: file.name,
+              percent: percent,
+              status: `Uploading ${loadedMB} MB of ${totalMB} MB (${percent}%)`,
+              speed: `${speedMB} MB/s`,
+              isDownload: false
+            });
+          }
+        };
 
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          finishUpload(true);
-        } else {
-          showToast(`Error uploading "${file.name}" (HTTP ${xhr.status})`, 'error');
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            finishUpload(true);
+          } else {
+            showToast(`Error uploading "${file.name}" (HTTP ${xhr.status})`, 'error');
+            finishUpload(false);
+          }
+        };
+
+        xhr.onerror = () => {
           finishUpload(false);
-        }
-      };
+        };
 
-      xhr.onerror = () => {
-        showToast(`Network error uploading "${file.name}"`, 'error');
-        finishUpload(false);
-      };
+        xhr.send(file);
+      }
 
-      xhr.send(file);
+      attemptUpload();
     }
 
     uploadNext();
@@ -13533,8 +13631,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
   // ==========================================
   // IN-APP OTA AUTO-UPDATER SYSTEM
   // ==========================================
-  const CURRENT_APP_VERSION_CODE = 278;
-  const CURRENT_APP_VERSION_NAME = '2.7.8';
+  const CURRENT_APP_VERSION_CODE = 279;
+  const CURRENT_APP_VERSION_NAME = '2.7.9';
   let updateDownloadApkUrl = 'https://getpcdeck.com/PCDeck.apk';
 
   function initAppUpdater() {

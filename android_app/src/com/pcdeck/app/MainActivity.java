@@ -585,7 +585,7 @@ public class MainActivity extends Activity {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
             } catch (Exception e) {
-                return 274;
+                return 279;
             }
         }
 
@@ -594,7 +594,7 @@ public class MainActivity extends Activity {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
             } catch (Exception e) {
-                return "2.7.4";
+                return "2.7.9";
             }
         }
 
@@ -838,7 +838,7 @@ public class MainActivity extends Activity {
                             URL url = new URL(currentUrl);
                             connection = (HttpURLConnection) url.openConnection();
                             connection.setInstanceFollowRedirects(true);
-                            connection.setRequestProperty("User-Agent", "PCDeck-Android-App/2.7.8");
+                            connection.setRequestProperty("User-Agent", "PCDeck-Android-App/2.7.9");
                             connection.setConnectTimeout(15000);
                             connection.setReadTimeout(30000);
                             connection.connect();
@@ -1039,250 +1039,333 @@ public class MainActivity extends Activity {
             return currentOrientation == Configuration.ORIENTATION_LANDSCAPE ? "landscape" : "portrait";
         }
 
+        private volatile HttpURLConnection mCurrentDownloadConn = null;
+        private volatile boolean mDownloadCancelled = false;
+        private final Object mDownloadLock = new Object();
+
+        @JavascriptInterface
+        public void cancelDownload() {
+            mDownloadCancelled = true;
+            final HttpURLConnection conn = mCurrentDownloadConn;
+            if (conn != null) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            conn.disconnect();
+                        } catch (Exception ignored) {}
+                    }
+                }).start();
+            }
+        }
+
         @JavascriptInterface
         public void saveFileToDownloads(final String fileUrl, final String fileName) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    acquireTransferLocks();
-                    java.io.OutputStream output = null;
-                    Uri insertedUri = null;
-                    File writtenFile = null;
-                    File targetFile = null;
-                    boolean isDirectFile = false;
-
-                    try {
-                        if (Build.VERSION.SDK_INT >= 33) {
-                            if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        requestNotificationPermissionIfNeeded();
-                                    }
-                                });
-                            }
-                        }
-
-                        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "PCDeck");
-                        if (!dir.exists()) dir.mkdirs();
-                        targetFile = new File(dir, fileName);
-
-                        // Try direct file access first, fallback to MediaStore on Android 10+ scoped storage
-                        try {
-                            output = new java.io.BufferedOutputStream(new FileOutputStream(targetFile, false), 131072);
-                            writtenFile = targetFile;
-                            isDirectFile = true;
-                        } catch (Exception eDirect) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                ContentValues values = new ContentValues();
-                                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-                                values.put(MediaStore.MediaColumns.MIME_TYPE, getMimeType(fileName));
-                                values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Download/PCDeck");
-                                values.put(MediaStore.MediaColumns.IS_PENDING, 1);
-                                insertedUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-                                if (insertedUri == null) {
-                                    throw new Exception("Cannot create download storage stream");
-                                }
-                                output = new java.io.BufferedOutputStream(getContentResolver().openOutputStream(insertedUri, "w"), 131072);
-                                isDirectFile = false;
-                            } else {
-                                throw eDirect;
-                            }
-                        }
-
-                        int maxRetries = 5;
-                        int retryCount = 0;
+                    synchronized (mDownloadLock) {
+                        mDownloadCancelled = false;
+                        acquireTransferLocks();
+                        java.io.OutputStream output = null;
+                        Uri insertedUri = null;
+                        File writtenFile = null;
+                        File targetFile = null;
+                        boolean isDirectFile = false;
                         long total = 0;
                         long fileLength = -1;
-                        boolean downloadCompleted = false;
-                        long startTime = System.currentTimeMillis();
-                        long lastWebUpdate = startTime;
-                        long lastNotifUpdate = startTime;
 
-                        while (retryCount < maxRetries && !downloadCompleted) {
-                            HttpURLConnection conn = null;
-                            java.io.InputStream input = null;
+                        try {
+                            if (Build.VERSION.SDK_INT >= 33) {
+                                if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            requestNotificationPermissionIfNeeded();
+                                        }
+                                    });
+                                }
+                            }
+
+                            File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "PCDeck");
+                            if (!dir.exists()) dir.mkdirs();
+                            targetFile = new File(dir, fileName);
+
+                            // Test if direct file writing is possible, fallback to MediaStore on Android 10+ scoped storage
                             try {
-                                URL url = new URL(fileUrl);
-                                conn = (HttpURLConnection) url.openConnection();
-                                conn.setRequestProperty("Connection", "Keep-Alive");
-                                conn.setRequestProperty("Accept-Encoding", "identity");
-                                conn.setRequestProperty("User-Agent", "PCDeck/2.7");
-                                conn.setConnectTimeout(20000);
-                                conn.setReadTimeout(60000); // 60s read timeout
-
-                                if (total > 0) {
-                                    conn.setRequestProperty("Range", "bytes=" + total + "-");
-                                    final int resumeProg = (fileLength > 0) ? (int)(total * 100 / fileLength) : 0;
-                                    updateTransferNotification("🔄 Resuming " + fileName, "Auto-reconnecting at " + formatSize(total) + " (" + resumeProg + "%)...", resumeProg, true);
+                                if (targetFile.exists() || targetFile.createNewFile()) {
+                                    writtenFile = targetFile;
+                                    isDirectFile = true;
                                 } else {
-                                    updateTransferNotification("📥 Downloading " + fileName, "Connecting to PC...", 0, true);
+                                    throw new Exception("Cannot create direct file");
                                 }
-
-                                conn.connect();
-                                int responseCode = conn.getResponseCode();
-                                if (responseCode != 200 && responseCode != 206) {
-                                    throw new Exception("HTTP " + responseCode);
-                                }
-
-                                if (fileLength <= 0) {
-                                    long cl = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) ? conn.getContentLengthLong() : conn.getContentLength();
-                                    if (cl > 0) {
-                                        fileLength = (responseCode == 206) ? (cl + total) : cl;
+                            } catch (Exception eDirect) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    ContentValues values = new ContentValues();
+                                    values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                                    values.put(MediaStore.MediaColumns.MIME_TYPE, getMimeType(fileName));
+                                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Download/PCDeck");
+                                    values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+                                    insertedUri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                                    if (insertedUri == null) {
+                                        throw new Exception("Cannot create download storage stream");
                                     }
+                                    isDirectFile = false;
+                                } else {
+                                    throw eDirect;
                                 }
+                            }
 
-                                // If output was closed or reset during retry, reopen in append mode
-                                if (output == null) {
-                                    if (isDirectFile && targetFile != null) {
-                                        output = new java.io.BufferedOutputStream(new FileOutputStream(targetFile, total > 0), 131072);
-                                    } else if (insertedUri != null) {
-                                        output = new java.io.BufferedOutputStream(getContentResolver().openOutputStream(insertedUri, total > 0 ? "wa" : "w"), 131072);
+                            int maxRetries = 4;
+                            int retryCount = 0;
+                            boolean downloadCompleted = false;
+                            long startTime = System.currentTimeMillis();
+                            long lastWebUpdate = startTime;
+                            long lastNotifUpdate = startTime;
+
+                            while (retryCount < maxRetries && !downloadCompleted && !mDownloadCancelled) {
+                                HttpURLConnection conn = null;
+                                java.io.InputStream input = null;
+                                try {
+                                    URL url = new URL(fileUrl);
+                                    conn = (HttpURLConnection) url.openConnection();
+                                    mCurrentDownloadConn = conn;
+                                    conn.setRequestProperty("Connection", "close");
+                                    conn.setRequestProperty("Accept-Encoding", "identity");
+                                    conn.setRequestProperty("User-Agent", "PCDeck/2.7");
+                                    conn.setConnectTimeout(8000);
+                                    conn.setReadTimeout(12000);
+
+                                    if (total > 0) {
+                                        conn.setRequestProperty("Range", "bytes=" + total + "-");
+                                        final int resumeProg = (fileLength > 0) ? (int)(total * 100 / fileLength) : 0;
+                                        updateTransferNotification("Resuming " + fileName, "Auto-reconnecting at " + formatSize(total) + " (" + resumeProg + "%)...", resumeProg, true);
+                                    } else {
+                                        updateTransferNotification("Downloading " + fileName, "Connecting to PC...", 0, true);
                                     }
-                                }
 
-                                input = new java.io.BufferedInputStream(conn.getInputStream(), 131072);
-                                byte[] data = new byte[131072]; // 128KB smooth buffer
-                                int count;
+                                    conn.connect();
+                                    if (mDownloadCancelled) break;
 
-                                while ((count = input.read(data)) != -1) {
-                                    total += count;
-                                    if (output != null) output.write(data, 0, count);
+                                    int responseCode = conn.getResponseCode();
+                                    if (responseCode != 200 && responseCode != 206) {
+                                        throw new Exception("HTTP " + responseCode);
+                                    }
 
-                                    final int progress = fileLength > 0 ? (int) (total * 100 / fileLength) : 0;
-                                    final long currentTotal = total;
-                                    final long finalFileLength = fileLength;
+                                    // If server returns HTTP 200 on a resume attempt, it sent the whole file from 0!
+                                    // Reset total and reopen output in overwrite mode
+                                    if (responseCode == 200 && total > 0) {
+                                        total = 0;
+                                        if (output != null) {
+                                            try { output.close(); } catch (Exception ignored) {}
+                                            output = null;
+                                        }
+                                    }
 
-                                    long now = System.currentTimeMillis();
-                                    boolean isFinished = (progress == 100 || (fileLength > 0 && total >= fileLength));
+                                    if (fileLength <= 0) {
+                                        long cl = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) ? conn.getContentLengthLong() : conn.getContentLength();
+                                        if (cl > 0) {
+                                            fileLength = (responseCode == 206) ? (cl + total) : cl;
+                                        }
+                                    }
 
-                                    if (now - lastWebUpdate > 250 || isFinished) {
-                                        lastWebUpdate = now;
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                if (webView != null) {
-                                                    webView.evaluateJavascript("if(window.onNativeDownloadProgress) window.onNativeDownloadProgress(" + progress + ", " + currentTotal + ", " + finalFileLength + ");", null);
+                                    // Open or reopen output stream safely
+                                    if (output == null) {
+                                        if (isDirectFile && targetFile != null) {
+                                            output = new java.io.BufferedOutputStream(new FileOutputStream(targetFile, total > 0), 131072);
+                                        } else if (insertedUri != null) {
+                                            if (total > 0) {
+                                                try {
+                                                    ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(insertedUri, "rw");
+                                                    if (pfd != null) {
+                                                        FileOutputStream fos = new FileOutputStream(pfd.getFileDescriptor());
+                                                        fos.getChannel().position(total);
+                                                        output = new java.io.BufferedOutputStream(fos, 131072);
+                                                    } else {
+                                                        output = new java.io.BufferedOutputStream(getContentResolver().openOutputStream(insertedUri, "wa"), 131072);
+                                                    }
+                                                } catch (Exception eAppend) {
+                                                    output = new java.io.BufferedOutputStream(getContentResolver().openOutputStream(insertedUri, "wa"), 131072);
                                                 }
+                                            } else {
+                                                output = new java.io.BufferedOutputStream(getContentResolver().openOutputStream(insertedUri, "w"), 131072);
                                             }
-                                        });
+                                        }
                                     }
 
-                                    if (now - lastNotifUpdate > 1200 || isFinished) {
-                                        lastNotifUpdate = now;
-                                        double elapsedSec = (now - startTime) / 1000.0;
-                                        double speedMb = elapsedSec > 0.2 ? (total / 1048576.0) / elapsedSec : 0;
-                                        final String speedStr = speedMb > 0 ? String.format(java.util.Locale.US, "%.1f MB/s", speedMb) : "--";
+                                    input = new java.io.BufferedInputStream(conn.getInputStream(), 131072);
+                                    byte[] data = new byte[131072]; // 128KB smooth buffer
+                                    int count;
 
-                                        updateTransferNotification(
-                                            "📥 Downloading " + fileName,
-                                            progress + "% (" + formatSize(currentTotal) + " of " + formatSize(fileLength) + ") • " + speedStr,
-                                            progress,
-                                            true
-                                        );
+                                    while ((count = input.read(data)) != -1) {
+                                        if (mDownloadCancelled) break;
+                                        total += count;
+                                        if (output != null) output.write(data, 0, count);
+
+                                        final int progress = fileLength > 0 ? (int) (total * 100 / fileLength) : 0;
+                                        final long currentTotal = total;
+                                        final long finalFileLength = fileLength;
+
+                                        long now = System.currentTimeMillis();
+                                        boolean isFinished = (progress == 100 || (fileLength > 0 && total >= fileLength));
+
+                                        if (now - lastWebUpdate > 250 || isFinished) {
+                                            lastWebUpdate = now;
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    if (webView != null) {
+                                                        webView.evaluateJavascript("if(window.onNativeDownloadProgress) window.onNativeDownloadProgress(" + progress + ", " + currentTotal + ", " + finalFileLength + ");", null);
+                                                    }
+                                                }
+                                            });
+                                        }
+
+                                        if (now - lastNotifUpdate > 1200 || isFinished) {
+                                            lastNotifUpdate = now;
+                                            double elapsedSec = (now - startTime) / 1000.0;
+                                            double speedMb = elapsedSec > 0.2 ? (total / 1048576.0) / elapsedSec : 0;
+                                            final String speedStr = speedMb > 0 ? String.format(java.util.Locale.US, "%.1f MB/s", speedMb) : "--";
+
+                                            updateTransferNotification(
+                                                "Downloading " + fileName,
+                                                progress + "% (" + formatSize(currentTotal) + " of " + formatSize(fileLength) + ") • " + speedStr,
+                                                progress,
+                                                true
+                                            );
+                                        }
                                     }
-                                }
 
-                                if (output != null) {
-                                    output.flush();
-                                }
+                                    if (output != null) {
+                                        output.flush();
+                                    }
 
-                                if (fileLength <= 0 || total >= fileLength) {
-                                    downloadCompleted = true;
-                                    break;
-                                } else {
-                                    // Connection closed before complete: auto-resume remaining bytes
+                                    if (mDownloadCancelled) {
+                                        break;
+                                    }
+
+                                    if (fileLength <= 0 || total >= fileLength) {
+                                        downloadCompleted = true;
+                                        break;
+                                    } else {
+                                        // Stream closed prematurely; auto-resume remaining bytes
+                                        retryCount++;
+                                        android.util.Log.w("PCDeck-Download", "Stream ended before complete: read " + total + " of " + fileLength + ". Auto-resuming (" + retryCount + "/" + maxRetries + ")...");
+                                        try { Thread.sleep(400); } catch (InterruptedException ignored) {}
+                                    }
+                                } catch (Exception err) {
+                                    if (mDownloadCancelled) break;
                                     retryCount++;
-                                    android.util.Log.w("PCDeck-Download", "Stream ended before complete: read " + total + " of " + fileLength + ". Auto-resuming (" + retryCount + "/" + maxRetries + ")...");
+                                    android.util.Log.w("PCDeck-Download", "Download interrupted at " + total + " bytes (" + err.getMessage() + "). Auto-resuming (" + retryCount + "/" + maxRetries + ")...");
+                                    if (output != null) {
+                                        try { output.flush(); output.close(); } catch (Exception ignored) {}
+                                        output = null; // force clean reopen on next attempt
+                                    }
+                                    if (retryCount >= maxRetries) {
+                                        throw err;
+                                    }
                                     try { Thread.sleep(600); } catch (InterruptedException ignored) {}
+                                } finally {
+                                    mCurrentDownloadConn = null;
+                                    if (input != null) {
+                                        try { input.close(); } catch (Exception ignored) {}
+                                    }
+                                    if (conn != null) {
+                                        try { conn.disconnect(); } catch (Exception ignored) {}
+                                    }
                                 }
-                            } catch (Exception err) {
-                                retryCount++;
-                                android.util.Log.w("PCDeck-Download", "Download interrupted at " + total + " bytes (" + err.getMessage() + "). Auto-resuming (" + retryCount + "/" + maxRetries + ")...");
+                            }
+
+                            if (mDownloadCancelled) {
                                 if (output != null) {
-                                    try { output.flush(); } catch (Exception ignored) {}
+                                    try { output.close(); } catch (Exception ignored) {}
+                                    output = null;
                                 }
-                                if (retryCount >= maxRetries) {
-                                    throw err;
+                                if (insertedUri != null) {
+                                    try { getContentResolver().delete(insertedUri, null, null); } catch (Exception ignored) {}
+                                } else if (targetFile != null && targetFile.exists() && (fileLength <= 0 || total < fileLength)) {
+                                    try { targetFile.delete(); } catch (Exception ignored) {}
                                 }
-                                try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
-                            } finally {
-                                if (input != null) {
-                                    try { input.close(); } catch (Exception ignored) {}
-                                }
-                                if (conn != null) {
-                                    try { conn.disconnect(); } catch (Exception ignored) {}
-                                }
+                                updateTransferNotification("Transfer Cancelled", "Download of " + fileName + " was cancelled", 0, false);
+                                return;
                             }
-                        }
 
-                        if (!downloadCompleted && fileLength > 0 && total < fileLength) {
-                            throw new Exception("Download incomplete after " + maxRetries + " resume attempts (" + total + "/" + fileLength + " bytes)");
-                        }
-
-                        if (output != null) {
-                            output.flush();
-                            output.close();
-                            output = null;
-                        }
-
-                        // Complete pending MediaStore entry or scan file
-                        if (insertedUri != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            try {
-                                ContentValues values = new ContentValues();
-                                values.put(MediaStore.MediaColumns.IS_PENDING, 0);
-                                getContentResolver().update(insertedUri, values, null, null);
-                            } catch (Exception ignored) {}
-                        }
-
-                        if (writtenFile != null && writtenFile.exists()) {
-                            try {
-                                android.media.MediaScannerConnection.scanFile(
-                                    MainActivity.this,
-                                    new String[]{writtenFile.getAbsolutePath()},
-                                    new String[]{getMimeType(fileName)},
-                                    null
-                                );
-                            } catch (Exception ignored) {}
-                        }
-
-                        final boolean verified = (fileLength <= 0 || total >= fileLength);
-                        updateTransferNotification(
-                            "✅ Download Verified & Saved",
-                            "Saved " + fileName + " (" + formatSize(total) + ")",
-                            100,
-                            false
-                        );
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(MainActivity.this, "Saved to Downloads/PCDeck/" + fileName + " (Verified)", Toast.LENGTH_SHORT).show();
-                                if (webView != null) {
-                                    webView.evaluateJavascript("if(window.onNativeDownloadComplete) window.onNativeDownloadComplete('" + fileName.replace("'", "\\'") + "', " + verified + ");", null);
-                                }
+                            if (!downloadCompleted && fileLength > 0 && total < fileLength) {
+                                throw new Exception("Download incomplete after " + maxRetries + " resume attempts (" + total + "/" + fileLength + " bytes)");
                             }
-                        });
-                    } catch (final Exception e) {
-                        if (insertedUri != null) {
-                            try { getContentResolver().delete(insertedUri, null, null); } catch (Exception ignored) {}
-                        }
-                        updateTransferNotification("❌ Download Failed", "Error on " + fileName + ": " + e.getMessage(), 0, false);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(MainActivity.this, "Download error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                if (webView != null) {
-                                    webView.evaluateJavascript("if(window.onNativeDownloadError) window.onNativeDownloadError('" + (e.getMessage() != null ? e.getMessage().replace("'", "\\'") : "Download error") + "');", null);
-                                }
+
+                            if (output != null) {
+                                output.flush();
+                                output.close();
+                                output = null;
                             }
-                        });
-                    } finally {
-                        releaseTransferLocks();
-                        try { if (output != null) output.close(); } catch (Exception ignored) {}
+
+                            // Complete pending MediaStore entry or scan file
+                            if (insertedUri != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                try {
+                                    ContentValues values = new ContentValues();
+                                    values.put(MediaStore.MediaColumns.IS_PENDING, 0);
+                                    getContentResolver().update(insertedUri, values, null, null);
+                                } catch (Exception ignored) {}
+                            }
+
+                            if (writtenFile != null && writtenFile.exists()) {
+                                try {
+                                    android.media.MediaScannerConnection.scanFile(
+                                        MainActivity.this,
+                                        new String[]{writtenFile.getAbsolutePath()},
+                                        new String[]{getMimeType(fileName)},
+                                        null
+                                    );
+                                } catch (Exception ignored) {}
+                            }
+
+                            final boolean verified = (fileLength <= 0 || total >= fileLength);
+                            updateTransferNotification(
+                                "Download Verified & Saved",
+                                "Saved " + fileName + " (" + formatSize(total) + ")",
+                                100,
+                                false
+                            );
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MainActivity.this, "Saved to Downloads/PCDeck/" + fileName + " (Verified)", Toast.LENGTH_SHORT).show();
+                                    if (webView != null) {
+                                        webView.evaluateJavascript("if(window.onNativeDownloadComplete) window.onNativeDownloadComplete('" + fileName.replace("'", "\\'") + "', " + verified + ");", null);
+                                    }
+                                }
+                            });
+                        } catch (final Exception e) {
+                            if (mDownloadCancelled) return;
+                            if (output != null) {
+                                try { output.close(); } catch (Exception ignored) {}
+                                output = null;
+                            }
+                            if (insertedUri != null) {
+                                try { getContentResolver().delete(insertedUri, null, null); } catch (Exception ignored) {}
+                            } else if (targetFile != null && targetFile.exists() && (fileLength <= 0 || total < fileLength)) {
+                                try { targetFile.delete(); } catch (Exception ignored) {}
+                            }
+                            updateTransferNotification("Download Failed", "Error on " + fileName + ": " + e.getMessage(), 0, false);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MainActivity.this, "Download error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    if (webView != null) {
+                                        webView.evaluateJavascript("if(window.onNativeDownloadError) window.onNativeDownloadError('" + (e.getMessage() != null ? e.getMessage().replace("'", "\\'") : "Download error") + "');", null);
+                                    }
+                                }
+                            });
+                        } finally {
+                            mCurrentDownloadConn = null;
+                            releaseTransferLocks();
+                            try { if (output != null) output.close(); } catch (Exception ignored) {}
+                        }
                     }
                 }
-            }).start();
+            }, "PCDeck-NativeDownload").start();
         }
 
         private String getMimeType(String fileName) {

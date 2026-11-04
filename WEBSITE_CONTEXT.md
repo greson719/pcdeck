@@ -358,6 +358,17 @@ To avoid erroneous optimization assumptions, all web decisions must align with v
   - Launch targets: `r/SideProject`, `r/windows`, `r/pcmasterrace`, YouTube Shorts, TikTok.
   - Destination link: Strictly `https://getpcdeck.com` (with fallback to Microsoft Store).
 
+---
+
+## 19. Production Release v2.7.9.0 & Store Submission 10 (November 4, 2026)
+- **Store Submission**: Submission 10 generated with package identity `GresonParichha.PCDeck_2.7.9.0_X64_`.
+- **System Synchronization**: Aligned across `version.json` (Code `279`), `server/main.py`, `server/gui.py`, `static/app.js`, `android_app/AndroidManifest.xml`, and website mirrors.
+- **Active Binary Checksums (v2.7.9.0)**:
+  - `PCDeck.exe`: `37.5 MB`
+  - `PCDeck.apk`: `986.8 KB` (SHA256: `A54ADE60B7ABC50F7CD4C13F75BE8D44BF5A61FA24513B653CD62F9280DC93A3`)
+  - `dist/PCDeck_Store_Upload.msix`: `39.45 MB` (SHA256: `EB4D4B08AC1A4E0D750B4F70D6089E635801A47EEC95FCBD44D9317E8785EDF3`)
+
+
 
 
 

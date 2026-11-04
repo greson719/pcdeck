@@ -12,17 +12,17 @@ export default function handler(req, res) {
   console.log(`[PCDeck Ping] Client: ${userAgent} | Country: ${country}`);
 
   return res.status(200).json({
-    versionCode: 276,
-    versionName: "2.7.6",
-    exeSize: "36.3 MB",
-    apkSize: "691 KB",
+    versionCode: 279,
+    versionName: "2.7.9",
+    exeSize: "37.5 MB",
+    apkSize: "983 KB",
     apkUrl: "https://getpcdeck.com/PCDeck.apk",
     websiteUrl: "https://getpcdeck.com",
     playStoreUrl: "",
     msStoreUrl: "https://apps.microsoft.com/detail/9P4BK16LBGLS",
     msStoreDirectUrl: "https://get.microsoft.com/installer/download/9P4BK16LBGLS",
-    releaseNotes: "• Real-time connection updates & direct community suggestions channels\n• Optimized above-the-fold download layout for Windows and Android\n• 100% Native 1.0x Resolution & fluid 1:1 sub-pixel touch scrolling\n• Full Spanish & Portuguese localized documentation\n• Instant QR-Code Web Controller for iPhone, iPad, Mac & Linux",
+    releaseNotes: "• Resilient Pro Licensing: Automatic lowercase UUID normalization and instant local Wi-Fi auto-unlock\n• Native Microsoft Store Review: Instant review dialog trigger on PC with 3s debounce\n• Multi-PC Dedup: Clean recent computers list with intelligent generic name filtering\n• Asynchronous Licensing & Fast Media: Zero-blocking activation and full HTTP 206 byte-range streaming",
     minVersionCode: 1,
-    publishedAt: "2026-09-21"
+    publishedAt: "2026-11-01"
   });
 }

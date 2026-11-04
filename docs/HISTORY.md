@@ -1483,6 +1483,29 @@ Before committing or releasing updates:
   - `PCDeck.exe`: 37.46 MB (Standalone portable).
   - `PCDeck.apk`: 982.8 KB (Signed & aligned Android package).
 
+---
+
+## 55. Production Release v2.7.9.0 & Store Submission 10 (November 4, 2026)
+
+### 55.1 Screen Streaming & Kinetic Touch Fluidity
+- Fixed `frame_event.clear()` ordering in `server/main.py` so motion frames are never stalled when the screen settles.
+- Replaced `setTimeout(0)` with `requestAnimationFrame` on mobile/web canvas decoding to lock draw operations to the display V-SYNC refresh rate.
+- Raised dynamic write-buffer threshold in `server/main.py` to `max(131072, frame_len * 2)` to eliminate false frame drops on high-detail 1080p frames.
+- Calibrated touch trackpad kinetic momentum (`speedMultiplier = 1.55`, momentum decay = `0.88`, friction = `0.935`) for responsive, fluid scrolling during screen mirroring.
+
+### 55.2 Smart File Transfer & WebView Connection Pooling
+- Resolved Android WebView stale keep-alive connection blocking on file uploads by adding `Connection: close` and pre-flight health checks.
+- Prevented byte-offset file truncation in `MainActivity.java` by strictly restarting retries from byte 0 when headers lack `Content-Range` append support.
+
+### 55.3 Cross-Platform Version Parity (v2.7.9 / Code 279)
+- Resolved desktop server & GUI version desync, synchronizing all components to `2.7.9` (`versionCode: 279`, MSIX `2.7.9.0`).
+- Partner Center Submission 10 package identity generated: `GresonParichha.PCDeck_2.7.9.0_X64_`.
+- **v2.7.9.0 Artifacts**:
+  - `dist/PCDeck_Store_Upload.msix`: 39.45 MB (SHA256: `EB4D4B08AC1A4E0D750B4F70D6089E635801A47EEC95FCBD44D9317E8785EDF3`).
+  - `PCDeck.exe`: 37.5 MB (Standalone portable).
+  - `PCDeck.apk`: 986.8 KB (Signed & aligned Android package, SHA256: `A54ADE60B7ABC50F7CD4C13F75BE8D44BF5A61FA24513B653CD62F9280DC93A3`).
+
+
 
 
 

@@ -514,7 +514,7 @@ def get_local_ip() -> str:
 
 LOCAL_IP = get_local_ip()
 SERVER_PORT = 8000
-SERVER_VERSION = "2.7.7"
+SERVER_VERSION = "2.7.9"
 SERVER_URL = f"http://{LOCAL_IP}:{SERVER_PORT}"
 
 # ---------------------------------------------------------------------------
@@ -885,6 +885,7 @@ def _safe_open_for_write(target_directory: str, filename: str, offset: int = 0) 
             f = open(dest_path, mode, buffering=1048576)
             if offset > 0 and mode == "r+b":
                 f.seek(offset)
+                f.truncate()
             return f, dest_path
         except (PermissionError, OSError):
             # If offset is 0 and the file is locked or in use by another app, roll over to next name
@@ -1225,24 +1226,30 @@ async def upload_file_stream(
         await asyncio.to_thread(f.flush)
 
         final_size = os.path.getsize(dest_path)
-        return {
-            "status": "success",
-            "name": os.path.basename(dest_path),
-            "size": final_size,
-            "size_formatted": format_bytes(final_size),
-            "path": dest_path,
-            "folder": target_directory,
-        }
+        return JSONResponse(
+            content={
+                "status": "success",
+                "name": os.path.basename(dest_path),
+                "size": final_size,
+                "size_formatted": format_bytes(final_size),
+                "path": dest_path,
+                "folder": target_directory,
+            },
+            headers={"Connection": "close"},
+        )
     except (asyncio.CancelledError, GeneratorExit):
         final_size = os.path.getsize(dest_path) if os.path.exists(dest_path) else 0
-        return {
-            "status": "partial",
-            "name": os.path.basename(dest_path),
-            "size": final_size,
-            "size_formatted": format_bytes(final_size),
-            "path": dest_path,
-            "folder": target_directory,
-        }
+        return JSONResponse(
+            content={
+                "status": "partial",
+                "name": os.path.basename(dest_path),
+                "size": final_size,
+                "size_formatted": format_bytes(final_size),
+                "path": dest_path,
+                "folder": target_directory,
+            },
+            headers={"Connection": "close"},
+        )
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": f"Stream upload interrupted: {e}"})
     finally:
@@ -1304,14 +1311,17 @@ async def upload_file_to_folder(
         except Exception:
             pass
 
-    return {
-        "status": "success",
-        "name": os.path.basename(dest_path),
-        "size": bytes_written,
-        "size_formatted": format_bytes(bytes_written),
-        "path": dest_path,
-        "folder": target_directory,
-    }
+    return JSONResponse(
+        content={
+            "status": "success",
+            "name": os.path.basename(dest_path),
+            "size": bytes_written,
+            "size_formatted": format_bytes(bytes_written),
+            "path": dest_path,
+            "folder": target_directory,
+        },
+        headers={"Connection": "close"},
+    )
 
 
 @app.api_route("/api/fs/stat", methods=["GET", "POST", "OPTIONS", "HEAD"])
@@ -1405,8 +1415,10 @@ async def download_any_file(
             media_type="application/octet-stream",
             content_disposition_type="attachment",
             headers={
+                "Accept-Ranges": "bytes",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "X-Content-Type-Options": "nosniff",
+                "Connection": "close",
             },
         )
     except Exception as e:
@@ -3379,11 +3391,13 @@ async def websocket_screen_endpoint(websocket: WebSocket):
     client_has_acked_frame = False
     is_paused = False
     in_flight_count = 0
-    max_in_flight = 2 if streamer.fps_limit >= 60 else 1
+    max_in_flight = 3 if streamer.fps_limit >= 60 else 2
     last_ack_time = time.time()
 
+    cur_max_in_flight = 3 if streamer.fps_limit >= 60 else 2
+
     async def send_frames():
-        nonlocal client_has_acked_frame
+        nonlocal client_has_acked_frame, in_flight_count, last_ack_time, cur_max_in_flight
         last_sent_id = -1
         last_keepalive_at = time.time()
         last_sent_time = time.time()
@@ -3395,15 +3409,22 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     await asyncio.sleep(0.12)
                     continue
 
-                # Wait for instant async frame notification (0ms delay, zero executor overhead)
-                try:
-                    await asyncio.wait_for(frame_event.wait(), timeout=0.8)
-                except asyncio.TimeoutError:
-                    pass
-                frame_event.clear()
-
                 now = time.time()
                 jpeg, frame_id = streamer.get_latest_frame()
+
+                # If no newer frame is ready yet, wait on the async frame_event with a tight timeout
+                if (frame_id == last_sent_id or not jpeg) and not (initial_burst > 0):
+                    wait_timeout = max(0.015, 1.0 / max(10, streamer.fps_limit))
+                    try:
+                        await asyncio.wait_for(frame_event.wait(), timeout=wait_timeout)
+                    except asyncio.TimeoutError:
+                        pass
+                    frame_event.clear()
+                    now = time.time()
+                    jpeg, frame_id = streamer.get_latest_frame()
+                else:
+                    frame_event.clear()
+
                 if not jpeg and not client_has_acked_frame:
                     try:
                         jpeg, _, _ = streamer.grab_single_frame(quality=streamer.quality, scale=streamer.scale)
@@ -3421,37 +3442,41 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     if is_burst:
                         initial_burst -= 1
 
-                    # Credit window flow control: wait if in-flight count reached max_in_flight
-                    if in_flight_count >= max_in_flight:
-                        # 0.5s deadlock watchdog: reset credit if an ACK was dropped over Wi-Fi
-                        if (now - last_ack_time) > 0.5:
+                    cur_max_in_flight = 3 if streamer.fps_limit >= 60 else 2
+
+                    # Credit window flow control: wait if in-flight count reached cur_max_in_flight
+                    if in_flight_count >= cur_max_in_flight:
+                        # 0.25s deadlock watchdog: reset credit if an ACK was dropped over Wi-Fi
+                        if (now - last_ack_time) > 0.25:
                             in_flight_count = 0
                             client_ready_event.set()
                         else:
                             try:
-                                await asyncio.wait_for(client_ready_event.wait(), timeout=0.035)
+                                await asyncio.wait_for(client_ready_event.wait(), timeout=0.02)
                             except asyncio.TimeoutError:
                                 pass
-                            if in_flight_count >= max_in_flight and (time.time() - last_ack_time) <= 0.5:
-                                await asyncio.sleep(0.003)
+                            if in_flight_count >= cur_max_in_flight and (time.time() - last_ack_time) <= 0.25:
+                                await asyncio.sleep(0.002)
                                 continue
 
-                    # Prevent TCP bufferbloat: verify transport write buffer is not congested
-                    is_congested = wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket)
+                    # Prevent TCP bufferbloat: check if transport write buffer exceeds 2 full frames or 128KB cushion
+                    frame_len = len(jpeg) if jpeg else 65536
+                    max_buf = max(131072, frame_len * 2)
+                    is_congested = wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket, max_buffered_bytes=max_buf)
                     if is_congested:
                         # Transport is backing up: wait for in-flight ACK or buffer drain
-                        ack_timeout = wifi_latency_manager.get_frame_drop_timeout() if wifi_latency_manager else 0.035
+                        ack_timeout = wifi_latency_manager.get_frame_drop_timeout() if wifi_latency_manager else 0.025
                         try:
                             await asyncio.wait_for(client_ready_event.wait(), timeout=ack_timeout)
                         except asyncio.TimeoutError:
                             pass
-                        if wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket):
+                        if wifi_latency_manager and wifi_latency_manager.is_transport_congested(websocket, max_buffered_bytes=max_buf):
                             # Still congested -> drop frame to prevent bufferbloat
-                            await asyncio.sleep(0.005)
+                            await asyncio.sleep(0.003)
                             continue
 
                     in_flight_count += 1
-                    if in_flight_count >= max_in_flight:
+                    if in_flight_count >= cur_max_in_flight:
                         client_ready_event.clear()
 
                     last_sent_id = frame_id
@@ -3468,7 +3493,7 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                 break
 
     async def receive_cmds():
-        nonlocal is_paused, client_has_acked_frame
+        nonlocal is_paused, client_has_acked_frame, in_flight_count, last_ack_time, cur_max_in_flight
         try:
             while True:
                 msg = await websocket.receive()
@@ -3488,7 +3513,8 @@ async def websocket_screen_endpoint(websocket: WebSocket):
                     client_has_acked_frame = True
                     last_ack_time = time.time()
                     in_flight_count = max(0, in_flight_count - 1)
-                    if in_flight_count < max_in_flight:
+                    cur_max = 3 if streamer.fps_limit >= 60 else 2
+                    if in_flight_count < cur_max:
                         client_ready_event.set()
                 elif data == "req_frame" or data == "refresh":
                     client_ready_event.set()

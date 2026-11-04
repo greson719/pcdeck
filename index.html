@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PCDeck - Use Phone as Mouse &amp; Keyboard for PC (Free)</title>
 <meta name="description" content="Mouse or keyboard broken? Turn your phone into an instant PC trackpad, remote keyboard, and controller. Free, fast setup via Wi-Fi for Windows 10 &amp; 11.">
-<meta name="keywords" content="PCDeck, PC Deck, use phone as mouse, use phone as keyboard for pc, how to use pc without mouse, turn phone into trackpad, wireless mouse for pc, broken mouse replacement, broken keyboard replacement, right click without mouse, remote control for pc, wifi trackpad">
 <link rel="canonical" href="https://getpcdeck.com/">
 <link rel="alternate" hreflang="x-default" href="https://getpcdeck.com/">
 <link rel="alternate" hreflang="en" href="https://getpcdeck.com/">
@@ -1539,13 +1538,13 @@ footer{padding:44px 0 56px}
             </div>
           </div>
 
-          <div class="hero-linux-box" style="margin-top: 14px; background: var(--panel); border: 1px solid var(--grid); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 12.5px;">
+          <a href="/linux-install/" class="hero-linux-box" style="margin-top: 14px; background: var(--panel); border: 1px solid var(--grid); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 12.5px; text-decoration: none; color: var(--ink);">
             <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              <span style="color: var(--signal); font-weight: 700;">Linux Terminal:</span>
-              <code style="color: var(--ink); user-select: all;">curl -sSL https://getpcdeck.com/install.sh | bash</code>
+              <span style="color: var(--signal); font-weight: 700;">Linux &amp; Steam Deck:</span>
+              <span style="color: var(--muted); font-size: 12px;">Universal 1-line installation script &rarr;</span>
             </div>
-            <button onclick="navigator.clipboard.writeText('curl -sSL https://getpcdeck.com/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--signal); color: #fff; border: 0; padding: 5px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
-          </div>
+            <span style="background: var(--signal); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;">View Guide</span>
+          </a>
 
           <p class="get-note" style="margin-top: 14px;">
             <b>Works on all phones:</b> iPhone, iPad, Android, Mac &amp; tablets. Connects directly over your local Wi-Fi or mobile hotspot. Zero cloud, zero sign-up. <a href="#install-help">View setup guide &amp; checksums</a>.
@@ -2198,7 +2197,7 @@ footer{padding:44px 0 56px}
         </details>
         <details>
           <summary>Does PCDeck support Linux and Steam Deck?</summary>
-          <p>Yes! PCDeck runs natively on Ubuntu, Debian, Fedora, Arch, Raspberry Pi OS, and SteamOS (Steam Deck). Simply run <code>curl -sSL https://getpcdeck.com/install.sh | bash</code> in your Linux terminal to launch it immediately with multi-touch trackpad, keyboard, and screen streaming support.</p>
+          <p>Yes! PCDeck runs natively on Ubuntu, Debian, Fedora, Arch, Raspberry Pi OS, and SteamOS (Steam Deck). See our <a href="/linux-install/" style="color: var(--signal); font-weight: 600; text-decoration: underline;">Linux Installation &amp; Security Guide</a> for terminal setup commands, package verification, and native X11/Wayland support.</p>
         </details>
         <details>
           <summary>Which Windows, Linux and Android versions are supported?</summary>
@@ -2228,7 +2227,7 @@ footer{padding:44px 0 56px}
         <div class="card" id="card-exe" style="border: 2px solid var(--signal); position: relative;">
           <div style="position: absolute; top: -11px; right: 16px; background: var(--signal); color: #fff; font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; letter-spacing: .08em; text-transform: uppercase;">Primary · Instant Run</div>
           <p class="tag">PC · Windows</p>
-          <h3>PCDeck for Windows (v2.7.7)</h3>
+          <h3>PCDeck for Windows (v2.7.9)</h3>
           <p>The main PC app for Windows 10 &amp; 11. Run it, scan the QR code with your phone camera, and control immediately.</p>
           <ul class="spec">
             <li>Windows 10 or 11 (64-bit)</li>
@@ -2243,7 +2242,7 @@ footer{padding:44px 0 56px}
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;">
               <a id="dl-exe" href="/PCDeck.exe" download="PCDeck.exe" style="color: var(--signal-ink); background: rgba(27,68,216,0.08); border: 1px solid rgba(27,68,216,0.22); padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Alternative: Standalone .exe (36.3 MB) &darr;</span>
+                <span>Alternative: Standalone .exe (37.5 MB) &darr;</span>
               </a>
               <span style="color: var(--muted); font-size: 12px;">Portable · No install wizard</span>
             </div>
@@ -2254,42 +2253,39 @@ footer{padding:44px 0 56px}
         <div class="card" id="card-apk">
           <span class="card-icon"><img src="icon.png" alt="PCDeck app icon" width="48" height="48"></span>
           <p class="tag">Phone · Android App (Optional)</p>
-          <h3>PCDeck for Android (v2.7.7)</h3>
+          <h3>PCDeck for Android (v2.7.9)</h3>
           <p>Optional companion app for Android home screen. (Or simply use your browser by scanning the QR code).</p>
           <ul class="spec">
             <li>Android 5.0 or newer</li>
-            <li>Direct APK download (v2.7.7 · 691 KB)</li>
+            <li>Direct APK download (v2.7.9 · 983 KB)</li>
             <li>Zero cloud accounts needed</li>
           </ul>
           <a class="btn ghost" id="dl-apk" href="/download/android/">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
-            <span>Download APK (Optional · 691 KB)</span>
+            <span>Download APK (Optional · 983 KB)</span>
           </a>
         </div>
 
         <div class="card" id="card-linux">
           <p class="tag">PC · Linux &amp; Steam Deck</p>
-          <h3>PCDeck for Linux (v2.7.7)</h3>
-          <p>Universal 1-line install for Ubuntu, Debian, Arch, Fedora &amp; SteamOS.</p>
+          <h3>PCDeck for Linux (v2.7.9)</h3>
+          <p>Universal launcher for Ubuntu, Debian, Arch, Fedora &amp; SteamOS.</p>
           <ul class="spec">
             <li>Zero configuration · Native X11/Wayland</li>
-            <li>Automated dependency resolution (v2.7.7)</li>
+            <li>Automated dependency resolution (v2.7.9)</li>
           </ul>
-          <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 11.5px; margin-bottom: 12px; flex-wrap: wrap;">
-            <code style="color: var(--ink); user-select: all; overflow-x: auto; max-width: 100%; white-space: nowrap;">curl -sSL https://getpcdeck.com/install.sh | bash</code>
-            <button onclick="navigator.clipboard.writeText('curl -sSL https://getpcdeck.com/install.sh | bash'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 2000)" style="background: var(--signal); color: #fff; border: 0; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;">Copy</button>
-          </div>
-          <a class="btn ghost" id="dl-linux" href="run_linux.sh" download="run_linux.sh">
+          <a class="btn ghost" id="dl-linux" href="run_linux.sh" download="run_linux.sh" style="margin-bottom: 8px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
             <span>Download Launcher (.sh)</span>
           </a>
+          <a href="/linux-install/" style="font-size: 12px; color: var(--signal); text-decoration: underline; display: block; text-align: center;">View Terminal Install Command &amp; Security Docs &rarr;</a>
         </div>
       </div>
 
       <!-- Mobile Bridge Card -->
       <div style="margin-top: 18px; background: linear-gradient(135deg, rgba(27,68,216,0.08) 0%, rgba(0,240,255,0.05) 100%); border: 1px solid rgba(27,68,216,0.28); border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 22px; flex-shrink: 0;">📱</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--signal); flex-shrink: 0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
           <div>
             <h3 style="font-size: 14.5px; margin: 0 0 2px; color: var(--ink); font-weight: 700;">Browsing on your phone? PCDeck installs on your PC.</h3>
             <p style="font-size: 13px; margin: 0; color: var(--graphite); line-height: 1.4;">Send the download link to your email to open on your Windows computer, or copy the link.</p>
@@ -2297,10 +2293,12 @@ footer{padding:44px 0 56px}
         </div>
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <a href="mailto:?subject=Download%20PCDeck%20for%20Windows&amp;body=Here%20is%20the%20link%20to%20download%20PCDeck%20on%20your%20PC:%20https://getpcdeck.com/download/" class="btn sm" style="background: var(--signal); color: #fff; font-size: 12.5px; padding: 7px 13px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
-            <span>✉️ Email link to PC</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span>Email link to PC</span>
           </a>
-          <button type="button" onclick="navigator.clipboard.writeText('https://getpcdeck.com/download/'); this.innerHTML='&lt;span&gt;✔ Copied!&lt;/span&gt;'; setTimeout(()=>this.innerHTML='&lt;span&gt;📋 Copy PC Link&lt;/span&gt;', 2500)" class="btn sm ghost" style="font-size: 12.5px; padding: 7px 13px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border: 1px solid var(--grid);">
-            <span>📋 Copy PC Link</span>
+          <button type="button" onclick="navigator.clipboard.writeText('https://getpcdeck.com/download/'); this.innerHTML='<span>✔ Copied!</span>'; setTimeout(()=>this.innerHTML='<span>Copy PC Link</span>', 2500)" class="btn sm ghost" style="font-size: 12.5px; padding: 7px 13px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border: 1px solid var(--grid);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Copy PC Link</span>
           </button>
         </div>
       </div>
@@ -2404,21 +2402,6 @@ footer{padding:44px 0 56px}
     </div>
 
     <div class="emergency-modal-body">
-      <!-- 1-Click PowerShell Direct Launch Option (ExecutionPolicy Bypass) -->
-      <div class="emergency-ps-box">
-        <div class="emergency-ps-head">
-          <span class="emergency-ps-tag">⚡ Bulletproof Quick-Launch (PowerShell)</span>
-          <span>Press <kbd>Win</kbd> + <kbd>R</kbd>, type <kbd>powershell</kbd>, hit <kbd>Enter</kbd>, then paste:</span>
-        </div>
-        <div class="emergency-ps-code-row">
-          <code id="ps-cmd-text">powershell -ExecutionPolicy Bypass -Command "irm https://getpcdeck.com/install.ps1 | iex"</code>
-          <button type="button" id="btn-copy-ps" class="emergency-copy-btn" title="Copy bulletproof PowerShell command">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            <span>Copy Command</span>
-          </button>
-        </div>
-      </div>
-
       <!-- 4 Step Card Sequence in Semantic <ol> -->
       <ol class="emergency-steps-list">
         <!-- Step 1 -->
@@ -2486,7 +2469,7 @@ footer{padding:44px 0 56px}
 
 <footer>
   <div class="shell foot">
-    <p>© 2026 PCDeck · Runs offline. No account, no telemetry. · <a href="#community" style="color:var(--signal);font-weight:600;">Suggestions &amp; Complaints</a> · <button type="button" id="btn-analytics-toggle" onclick="window.togglePcdeckAnalytics()" style="background:none;border:none;color:var(--muted);font-family:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline;">🛡️ Analytics: Loading...</button></p>
+    <p>© 2026 PCDeck · Runs offline. No account, no telemetry. · <a href="#community" style="color:var(--signal);font-weight:600;">Suggestions &amp; Complaints</a> · <a href="/privacy_policy.html" style="color:var(--muted);font-size:12px;text-decoration:underline;">Privacy &amp; Analytics Opt-Out</a></p>
     <p class="foot-guides">
       <a href="/features/">Features &amp; Controls</a> · 
       Guides: <a href="/guides/">All Guides Hub</a> · 
@@ -2887,9 +2870,9 @@ footer{padding:44px 0 56px}
   fetch('/version.json?t=' + Date.now(), { cache: 'no-cache' })
     .then(function(res) { return res.json(); })
     .then(function(meta) {
-      var ver = meta.versionName ? 'v' + meta.versionName : 'v2.7.7';
-      var exeSize = meta.exeSize || '36.3 MB';
-      var apkSize = meta.apkSize || '691 KB';
+      var ver = meta.versionName ? 'v' + meta.versionName : 'v2.7.9';
+      var exeSize = meta.exeSize || '37.5 MB';
+      var apkSize = meta.apkSize || '983 KB';
 
       var heroExe = document.querySelector('#hero-exe small');
       if (heroExe) heroExe.textContent = ver + ' · Windows 10 / 11 · ' + exeSize + ' · No Install Needed';
@@ -2970,7 +2953,6 @@ footer{padding:44px 0 56px}
   var modalCard = document.getElementById('emergency-modal-card');
   var closeBtn = document.getElementById('emergency-modal-close');
   var doneBtn = document.getElementById('emergency-modal-done-btn');
-  var copyPsBtn = document.getElementById('btn-copy-ps');
   var modalDlBtn = document.getElementById('modal-direct-dl-btn');
   if (!modal) return;
 
@@ -2983,8 +2965,6 @@ footer{padding:44px 0 56px}
     // Immediate Initial Focus on Direct Download button for 1-keypress download
     if (modalDlBtn) {
       modalDlBtn.focus();
-    } else if (copyPsBtn) {
-      copyPsBtn.focus();
     } else if (closeBtn) {
       closeBtn.focus();
     } else if (modalCard) {
@@ -3077,23 +3057,6 @@ footer{padding:44px 0 56px}
       }
     }
   });
-
-  // PowerShell Bulletproof 1-Click Copy
-  if (copyPsBtn) {
-    copyPsBtn.addEventListener('click', function () {
-      var cmd = 'powershell -ExecutionPolicy Bypass -Command "irm https://getpcdeck.com/install.ps1 | iex"';
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(cmd).then(function () {
-          var span = copyPsBtn.querySelector('span');
-          if (span) {
-            var old = span.textContent;
-            span.textContent = 'Copied!';
-            setTimeout(function () { span.textContent = old; }, 2000);
-          }
-        }).catch(function () {});
-      }
-    });
-  }
 
   // Developer Email 1-Click Copy
   var copyEmailBtn = document.getElementById('btn-copy-web-email');

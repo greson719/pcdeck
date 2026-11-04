@@ -404,8 +404,8 @@ C_SUCCESS = THEME_DARK["C_SUCCESS"]
 C_WARNING = THEME_DARK["C_WARNING"]
 C_DANGER = THEME_DARK["C_DANGER"]         # Stop / error crimson
 
-CURRENT_DESKTOP_VERSION_CODE = 277
-CURRENT_DESKTOP_VERSION_NAME = "2.7.7"
+CURRENT_DESKTOP_VERSION_CODE = 279
+CURRENT_DESKTOP_VERSION_NAME = "2.7.9"
 
 # Typography: one family, hierarchy carried by size and weight rather than
 # setting everything to 8px bold.

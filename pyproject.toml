@@ -1,6 +1,6 @@
 [project]
 name = "pcdeck"
-version = "2.7.7"
+version = "2.7.9"
 description = "PCDeck Pro - Wireless PC Touch Deck, Trackpad, Streamer & Controller"
 readme = "README.md"
 requires-python = ">=3.10"
