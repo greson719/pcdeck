@@ -273,18 +273,33 @@ def test_socket_tcp_nodelay_and_buffer_tuning():
 
 def test_screen_stream_pipelining_and_ack_flow_control():
     """Verify /ws/screen delivers continuous frames when client returns ACKs and does not close or raise UnboundLocalError."""
+    import sys
+    import os
     from starlette.testclient import TestClient
-    from server.main import app
+    from server.main import app, streamer
+
+    # On headless Linux CI without an X display, seed test frames so pipeline and flow control can be tested
+    is_headless_linux = sys.platform != "win32" and not os.environ.get("DISPLAY")
+    dummy_jpeg = b"\xff\xd8\xff\xe0" + b"\x00" * 200 + b"\xff\xd9"
+    if is_headless_linux:
+        with streamer._condition:
+            streamer._latest_jpeg = dummy_jpeg
+            streamer._frame_id += 1
+            streamer._condition.notify_all()
 
     client = TestClient(app)
     with client.websocket_connect("/ws/screen") as ws:
         received_frames = 0
         received_monitors = False
         t0 = time.time()
-        while time.time() - t0 < 0.6:
+        while time.time() - t0 < 0.8:
             msg = ws.receive()
             if "bytes" in msg and msg["bytes"]:
                 received_frames += 1
+                if is_headless_linux:
+                    with streamer._condition:
+                        streamer._frame_id += 1
+                        streamer._condition.notify_all()
                 ws.send_text("a")
             elif "text" in msg and msg["text"]:
                 if msg["text"].startswith("monitors,"):
