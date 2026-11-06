@@ -2654,10 +2654,16 @@
       connectScreenWs();
     }
 
-    // Send Pro status to PC Server
+    // Automatically transmit license key to PC server on connect to auto-activate the PC
     const isProActive = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+    const authKey = localStorage.getItem('pcdeck_pro_license') || '';
+    const authInst = localStorage.getItem('pcdeck_pro_instance_id') || '';
     if (mainWs && mainWs.readyState === WebSocket.OPEN) {
-      mainWs.send(isProActive ? 'pro_status,1' : 'pro_check');
+      if (isProActive && authKey) {
+        mainWs.send(`pro_auth,${authKey},${authInst}`);
+      } else {
+        mainWs.send(isProActive ? 'pro_status,1' : 'pro_check');
+      }
     }
 
     // Auto-enable PC audio streaming if enabled in preferences.
@@ -4637,7 +4643,7 @@
         const folderName = prompt('Enter new folder name:');
         if (folderName && folderName.trim()) {
           vibrate(20);
-          fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/mkdir?parent_dir=${encodeURIComponent(state.currentFsPath)}&folder_name=${encodeURIComponent(folderName.trim())}`, { method: 'POST' })
+          fetch(getPcApiUrl(`/api/fs/mkdir?parent_dir=${encodeURIComponent(state.currentFsPath)}&folder_name=${encodeURIComponent(folderName.trim())}`), { method: 'POST' })
             .then(r => r.json())
             .then(data => {
               if (data.status === 'created') {
@@ -4719,7 +4725,7 @@
         if (count === 0) return;
         if (confirm(`Delete ${count} marked item(s) on PC?`)) {
           vibrate(25);
-          fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/delete-batch`, {
+          fetch(getPcApiUrl('/api/fs/delete-batch'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(Array.from(state.markedFsPaths)),
@@ -4744,8 +4750,29 @@
     }
   }
 
+  function getPcApiUrl(endpoint) {
+    let host = state.serverHost;
+    let port = state.serverPort;
+    if (!host) {
+      const saved = localStorage.getItem('pcdeck_ip') || '';
+      if (saved && saved.includes(':')) {
+        const parts = saved.split(':');
+        host = parts[0];
+        port = parts[1];
+      } else if (window.location.hostname && window.location.hostname !== '') {
+        host = window.location.hostname;
+        port = window.location.port || '8000';
+      } else {
+        host = '127.0.0.1';
+        port = '8000';
+      }
+    }
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    return `http://${host}:${port || '8000'}${cleanEndpoint}`;
+  }
+
   function loadFsPlaces() {
-    fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/places`)
+    fetch(getPcApiUrl('/api/fs/places'))
       .then(r => r.json())
       .then(data => {
         if (data.status === 'ok' && el.fsPlacesStrip) {
@@ -4814,7 +4841,7 @@
       </div>
     `;
 
-    fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/browse?path=${encodeURIComponent(path || '')}`)
+    fetch(getPcApiUrl(`/api/fs/browse?path=${encodeURIComponent(path || '')}`))
       .then(r => r.json())
       .then(data => {
         if (data.status === 'ok') {
@@ -5009,7 +5036,7 @@
         e.stopPropagation();
         if (confirm(`Delete folder "${folder.name}" and all its contents on PC?`)) {
           vibrate(25);
-          fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/delete?path=${encodeURIComponent(folder.path)}`, { method: 'POST' })
+          fetch(getPcApiUrl(`/api/fs/delete?path=${encodeURIComponent(folder.path)}`), { method: 'POST' })
             .then(r => r.json())
             .then(() => {
               showToast('Folder deleted', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
@@ -5130,7 +5157,7 @@
       card.querySelector('[data-action="open-pc"]').onclick = (e) => {
         e.stopPropagation();
         vibrate(15);
-        fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/open?path=${encodeURIComponent(file.path)}`, { method: 'POST' })
+        fetch(getPcApiUrl(`/api/fs/open?path=${encodeURIComponent(file.path)}`), { method: 'POST' })
           .then(r => r.json())
           .then(() => showToast(`Opened "${file.name}" on PC!`, 'success', '<svg class="deck-icon" width="13" height="13"><use href="#icon-pc"/></svg>'))
           .catch(() => showToast('Could not open on PC', 'error'));
@@ -5148,7 +5175,7 @@
         e.stopPropagation();
         if (confirm(`Delete "${file.name}" on PC?`)) {
           vibrate(20);
-          fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/delete?path=${encodeURIComponent(file.path)}`, { method: 'POST' })
+          fetch(getPcApiUrl(`/api/fs/delete?path=${encodeURIComponent(file.path)}`), { method: 'POST' })
             .then(r => r.json())
             .then(() => {
               showToast('File deleted', 'warn', '<svg class="deck-icon" width="13" height="13"><use href="#icon-trash"/></svg>');
@@ -6131,7 +6158,7 @@
       isDownload: true
     });
 
-    const downloadUrl = `http://${state.serverHost}:${state.serverPort}/api/fs/download?path=${encodeURIComponent(filePath)}`;
+    const downloadUrl = getPcApiUrl(`/api/fs/download?path=${encodeURIComponent(filePath)}`);
 
     // Prioritize 100% Wi-Fi bandwidth for file transfer by putting any background screen stream to sleep
     if (screenWs && screenWs.readyState === WebSocket.OPEN) {
@@ -6283,7 +6310,7 @@
   function openLocationOnPc(targetPath) {
     vibrate(25);
     const target = targetPath || state.currentFsPath || '';
-    fetch(`http://${state.serverHost}:${state.serverPort}/api/fs/open-location`, {
+    fetch(getPcApiUrl('/api/fs/open-location'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: target })
@@ -6500,10 +6527,8 @@
     const extLower = ext.toLowerCase();
     if (codecInfo) codecInfo.textContent = `${ext || 'MEDIA'} • DIRECT WI-FI`;
 
-    const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
-    const port = state.serverPort || (window.location.port && window.location.port !== '' ? window.location.port : '8000');
-    const streamUrl = `http://${host}:${port}/api/fs/stream?path=${encodeURIComponent(filePath)}`;
-    const subUrl = `http://${host}:${port}/api/fs/subtitles?path=${encodeURIComponent(filePath)}`;
+    const streamUrl = getPcApiUrl(`/api/fs/stream?path=${encodeURIComponent(filePath)}`);
+    const subUrl = getPcApiUrl(`/api/fs/subtitles?path=${encodeURIComponent(filePath)}`);
 
     const audioExts = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'opus', 'wma', 'alac', 'aiff'];
     const isAudio = audioExts.includes(extLower);
@@ -7382,10 +7407,10 @@
 
         // Pre-flight ping to flush stale keep-alive sockets before launching file stream
         try {
-          fetch(`http://${state.serverHost}:${state.serverPort}/api/ping?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => {});
+          fetch(getPcApiUrl(`/api/ping?_t=${Date.now()}`), { cache: 'no-store' }).catch(() => {});
         } catch (_) {}
 
-        const uploadUrl = `http://${state.serverHost}:${state.serverPort}/api/fs/upload-stream?filename=${encodeURIComponent(file.name)}&dest_dir=${encodeURIComponent(state.currentFsPath || '')}&_t=${Date.now()}`;
+        const uploadUrl = getPcApiUrl(`/api/fs/upload-stream?filename=${encodeURIComponent(file.name)}&dest_dir=${encodeURIComponent(state.currentFsPath || '')}&_t=${Date.now()}`);
         const xhr = new XMLHttpRequest();
         activeUploadXhr = xhr; // expose for X button cancellation
         xhr.open('POST', uploadUrl, true);
@@ -9530,8 +9555,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       } else {
         vibrate([40, 40, 40]);
         let err = (data && (data.message || data.error || data.detail)) || '';
-        if (!err) {
-          if (response.status === 404) err = 'License key not found. Please check your purchase receipt.';
+        if (!err || response.status === 404) {
+          if (response.status === 404) err = 'License key not found. Please verify you entered the 36-character UUID from your email (not the Payment ID).';
           else if (response.status === 422) err = 'License activation limit reached for this key.';
           else if (response.status === 403) err = 'License key is inactive or revoked.';
           else err = 'Invalid license key. Please check your purchase receipt.';
@@ -9551,7 +9576,24 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       showToast('Please enter your license key', 'warn');
       return false;
     }
-    const cleanKey = keyStr.trim().replace(/['"]/g, '').toLowerCase();
+    const cleanKey = keyStr.replace(/\s+/g, '').replace(/['"]/g, '').toLowerCase();
+
+    if (cleanKey.includes('..')) {
+      vibrate([40, 40, 40]);
+      showToast("Entered key is truncated (contains '...'). Click the Copy icon next to the key in your dashboard to copy the full 36-character key.", 'error');
+      return false;
+    }
+
+    if (cleanKey.startsWith('pay_')) {
+      vibrate([40, 40, 40]);
+      showToast('Entered string is a Payment ID (starts with pay_). Please enter your 36-character license key (UUID) from your confirmation email.', 'error');
+      return false;
+    }
+    if (cleanKey.startsWith('lic_')) {
+      vibrate([40, 40, 40]);
+      showToast('Entered string is a License ID (starts with lic_). Please enter your 36-character license key from your confirmation email.', 'error');
+      return false;
+    }
 
     // 1. Idempotency Check: if this client already holds an active license for this key, return immediately
     if (localStorage.getItem('pcdeck_pro_active') === 'true' && localStorage.getItem('pcdeck_pro_license') === cleanKey) {
@@ -9591,8 +9633,6 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
             if (fallbackOk) {
               resolve(true);
             } else {
-              vibrate([40, 40, 40]);
-              showToast(`Activation failed: ${errMsg || 'Invalid license key'}`, 'error');
               resolve(false);
             }
           }
@@ -9807,10 +9847,11 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
 
     // Title Bar Context Actions (Screen Streaming FPS vs File Transfer Pro Toggle)
-    // Title Bar Context Actions (Screen Streaming FPS vs Kinetic Fast Transfer Pill)
+    // Title Bar Context Actions (Contextual: Screen FPS, Webcam Resolution, Fast Transfer Pill)
     window.updateTitlebarActions = function(targetTabId) {
       const activeTab = targetTabId || state.activeTab || 'tab-screen';
       const fpsGroup = document.getElementById('titlebar-fps-group');
+      const camGroup = document.getElementById('titlebar-cam-group');
       const transferPill = document.getElementById('titlebar-transfer-group');
       const btnGameHud = document.getElementById('btn-screen-gamepad-hud');
       const btnHeaderGp = document.getElementById('btn-header-gamepad');
@@ -9822,14 +9863,28 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         updateGamepadHudVisibility();
       }
 
-      if (activeTab === 'tab-files') {
-        if (fpsGroup) fpsGroup.style.display = 'none';
+      // Hide all context actions first
+      if (fpsGroup) fpsGroup.style.display = 'none';
+      if (camGroup) camGroup.style.display = 'none';
+      if (transferPill) transferPill.style.display = 'none';
+
+      // Contextually display relevant actions strictly per tab:
+      if (activeTab === 'tab-screen') {
+        // Screen streaming: 30 FPS vs 60 FPS Ultra
+        if (fpsGroup) fpsGroup.style.display = 'inline-flex';
+      } else if (activeTab === 'tab-media') {
+        // Media / Webcam: 720p HD vs 1080p Pro
+        if (camGroup) camGroup.style.display = 'inline-flex';
+        if (typeof window.syncCameraResButtons === 'function') {
+          window.syncCameraResButtons();
+        }
+      } else if (activeTab === 'tab-files') {
+        // File sharing: Fast File Transfer / Turbo
         if (transferPill) transferPill.style.display = 'inline-flex';
         syncTransferSpeedButtons();
-      } else {
-        if (transferPill) transferPill.style.display = 'none';
-        if (fpsGroup) fpsGroup.style.display = 'inline-flex';
       }
+      // On tab-keys, tab-trackpad, and tab-settings, context actions remain hidden
+      // giving maximum clean touch surface and zero irrelevant clutter!
     };
 
     // Kinetic Fast Transfer Pill Sync & Toggle
@@ -10030,8 +10085,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
     });
 
-    const pcWebsiteUrl = 'https://pcdeck-pro.vercel.app';
-    const pcTutorialsUrl = 'https://pcdeck-pro.vercel.app/#install-help';
+    const pcWebsiteUrl = 'https://getpcdeck.com';
+    const pcTutorialsUrl = 'https://getpcdeck.com/#download';
 
     const btnOpenSite = document.getElementById('btn-onboarding-open-site');
     if (btnOpenSite) {
@@ -10068,10 +10123,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
           }).catch(() => {});
         } else if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(pcWebsiteUrl).then(() => {
-            showToast('Copied link: pcdeck-pro.vercel.app', 'success');
+            showToast('Copied link: getpcdeck.com', 'success');
           });
         } else {
-          showToast('Visit pcdeck-pro.vercel.app on your PC', 'info');
+          showToast('Visit getpcdeck.com on your PC', 'info');
         }
       };
     }
@@ -13216,6 +13271,64 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
     }
 
+    function syncCameraResButtons() {
+      const btn720 = document.getElementById('btn-titlebar-cam-720');
+      const btn1080 = document.getElementById('btn-titlebar-cam-1080');
+      const isPro = typeof window.isProUnlocked === 'function' ? window.isProUnlocked() : false;
+      const is1080 = (camTargetRes === 1080) && isPro;
+
+      if (btn720) btn720.classList.toggle('active', !is1080);
+      if (btn1080) {
+        btn1080.classList.toggle('active', is1080);
+        btn1080.classList.toggle('turbo-active', is1080);
+      }
+
+      resChips.forEach(c => {
+        const r = parseInt(c.dataset.res, 10);
+        c.classList.toggle('active', r === camTargetRes);
+      });
+    }
+    window.syncCameraResButtons = syncCameraResButtons;
+
+    const btnTitlebarCam720 = document.getElementById('btn-titlebar-cam-720');
+    const btnTitlebarCam1080 = document.getElementById('btn-titlebar-cam-1080');
+
+    if (btnTitlebarCam720) {
+      btnTitlebarCam720.onclick = () => {
+        if (typeof vibrate === 'function') vibrate(15);
+        camTargetRes = 720;
+        camFps = 30;
+        syncCameraResButtons();
+        if (camActive) {
+          stopCam();
+          startCam();
+        }
+      };
+    }
+
+    if (btnTitlebarCam1080) {
+      btnTitlebarCam1080.onclick = () => {
+        if (!window.isProUnlocked || !window.isProUnlocked()) {
+          if (typeof vibrate === 'function') vibrate(25);
+          if (typeof window.openProUpgradeModal === 'function') {
+            window.openProUpgradeModal();
+          }
+          if (typeof showToast === 'function') {
+            showToast('1080p 60 FPS HD Webcam requires PCDeck Pro', 'warn');
+          }
+          return;
+        }
+        if (typeof vibrate === 'function') vibrate(15);
+        camTargetRes = 1080;
+        camFps = 60;
+        syncCameraResButtons();
+        if (camActive) {
+          stopCam();
+          startCam();
+        }
+      };
+    }
+
     resChips.forEach((chip) => {
       chip.onclick = () => {
         const targetRes = parseInt(chip.dataset.res, 10) || 720;
@@ -13233,6 +13346,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         chip.classList.add('active');
         camTargetRes = targetRes;
         camFps = camTargetRes === 1080 ? 60 : (camTargetRes === 480 ? 60 : 30);
+        syncCameraResButtons();
         if (typeof vibrate === 'function') vibrate(15);
         if (camActive) {
           stopCam();

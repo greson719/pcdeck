@@ -311,6 +311,10 @@ def check_dodo_license_valid(key_str: str) -> Tuple[bool, str]:
     clean_key = (key_str or "").strip().lower()
     if not clean_key or len(clean_key) < 5:
         return False, "Invalid license key format."
+    if clean_key.startswith("pay_"):
+        return False, "Entered string is a Payment ID (starts with pay_). Please enter your 36-character license key (UUID) from your purchase email or receipt."
+    if clean_key.startswith("lic_"):
+        return False, "Entered string is a License ID (starts with lic_). Please enter your 36-character license key (UUID) from your purchase email or receipt."
     if clean_key.upper().startswith("PCDECK-DEV") or clean_key.upper().startswith("PCDECK-LOCALDEV"):
         return False, "Developer test key."
 
@@ -378,9 +382,15 @@ def activate_license_online(key_str: str) -> Tuple[bool, str, Dict[str, Any]]:
     it immediately verifies key entitlement via /licenses/validate and
     binds the valid license to this machine without trapping the user.
     """
-    clean_key = (key_str or "").strip().lower()
+    clean_key = "".join((key_str or "").strip().split()).replace("'", "").replace('"', "").lower()
     if not clean_key:
         return False, "Please enter a valid license key.", {}
+    if ".." in clean_key:
+        return False, "Entered key is truncated (contains '...'). Click the Copy icon next to the key in your dashboard to copy the full 36-character key.", {}
+    if clean_key.startswith("pay_"):
+        return False, "Entered string is a Payment ID (starts with pay_). Please enter your 36-character license key (UUID) from your purchase email or receipt.", {}
+    if clean_key.startswith("lic_"):
+        return False, "Entered string is a License ID (starts with lic_). Please enter your 36-character license key (UUID) from your purchase email or receipt.", {}
 
     hwid = get_machine_hwid()
     instance_name = f"PCDeck Windows Host ({hwid[:8]})"
@@ -464,9 +474,9 @@ def activate_license_online(key_str: str) -> Tuple[bool, str, Dict[str, Any]]:
         except Exception:
             pass
 
-        if not err_msg:
+        if not err_msg or e.code == 404:
             if e.code == 404:
-                err_msg = "License key not found. Please check your purchase receipt."
+                err_msg = "License key not found. Please verify you entered the 36-character UUID from your email (not the Payment ID)."
             elif e.code == 422:
                 err_msg = "License activation limit reached for this key."
             elif e.code == 403:

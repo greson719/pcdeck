@@ -182,6 +182,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import qrcode
 from uvicorn import Config, Server
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.datastructures import Headers
 
 
 class SmartGZipMiddleware:
@@ -651,6 +652,59 @@ def is_origin_allowed(headers: Any, client_ip: str = "") -> bool:
                 return False
     # Absence of Origin header corresponds to native app, curl, or desktop test client
     return True
+
+
+class AndroidWebViewCorsMiddleware:
+    """
+    Ensure Android WebView (file:///android_asset/ which sends Origin: null)
+    receives valid CORS headers for local LAN API requests while strictly
+    blocking desktop cross-site iframes according to is_origin_allowed.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        headers = Headers(scope=scope)
+        origin = headers.get("origin")
+        if origin and origin.strip().lower() == "null":
+            client = scope.get("client")
+            client_ip = client[0] if client else ""
+            if is_origin_allowed(headers, client_ip):
+                method = scope.get("method", "").upper()
+                if method == "OPTIONS":
+                    res = Response(
+                        status_code=200,
+                        headers={
+                            "Access-Control-Allow-Origin": "null",
+                            "Access-Control-Allow-Credentials": "true",
+                            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD",
+                            "Access-Control-Allow-Headers": headers.get("access-control-request-headers", "*") or "*",
+                            "Access-Control-Max-Age": "600",
+                        }
+                    )
+                    await res(scope, receive, send)
+                    return
+
+                async def custom_send(message):
+                    if message["type"] == "http.response.start":
+                        m_headers = list(message.get("headers", []))
+                        m_headers.append((b"access-control-allow-origin", b"null"))
+                        m_headers.append((b"access-control-allow-credentials", b"true"))
+                        m_headers.append((b"vary", b"Origin"))
+                        message["headers"] = m_headers
+                    await send(message)
+
+                await self.app(scope, receive, custom_send)
+                return
+
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(AndroidWebViewCorsMiddleware)
 
 
 def is_trusted_client(client_ip: Optional[str], token: Optional[str]) -> bool:
@@ -1508,7 +1562,7 @@ async def stream_media_file(
                 "Access-Control-Allow-Headers": "Range, Accept-Ranges, Content-Range, Content-Type, Origin, Accept",
                 "Access-Control-Expose-Headers": "Content-Range, Content-Length, Accept-Ranges",
                 "Accept-Ranges": "bytes",
-                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Cache-Control": "public, max-age=3600",
                 "X-Content-Type-Options": "nosniff",
             },
         )
@@ -1527,7 +1581,7 @@ async def get_sidecar_subtitles(
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Range, Accept-Ranges, Content-Type, Origin, Accept",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Cache-Control": "public, max-age=3600",
     }
     if request.method == "OPTIONS":
         return Response(status_code=200, headers=cors_sub_headers)
@@ -1796,68 +1850,24 @@ def serve_resumable(
     media_type: str,
     range_header: Optional[str] = None,
 ):
-    """Stream a file with byte-range resume support.
+    """Stream a file with native asynchronous byte-range resume support.
 
-    Large artifacts (the 60 MB exe and package zip) were previously served with a
-    plain FileResponse. Over a phone hotspot or a budget USB dongle the TCP
-    connection drops mid-transfer, and without Accept-Ranges the client has no
-    way to resume - Android's DownloadManager simply hangs at whatever percent it
-    reached. Advertising ranges and honouring them turns a stuck download into
-    one that picks up where it left off.
+    Uses Starlette's FileResponse which natively handles:
+    - Non-blocking async file streaming via anyio (preventing generator deadlocks)
+    - Full HTTP byte-range slicing (206 Partial Content, Range, Accept-Ranges: bytes)
+    - Reliable mobile browser and Android DownloadManager downloads over Wi-Fi
     """
     if not path or not os.path.exists(path) or not os.path.isfile(path):
         return JSONResponse(status_code=404, content={"error": f"{download_name} not found"})
 
-    file_size = os.path.getsize(path)
-    stat = os.stat(path)
-    etag = f'"{int(stat.st_mtime)}-{file_size}"'
-    last_modified = email.utils.formatdate(stat.st_mtime, usegmt=True)
-
-    start, end, satisfiable = _parse_range(range_header, file_size)
-    if not satisfiable:
-        return JSONResponse(
-            status_code=416,
-            content={"error": "Requested range not satisfiable"},
-            headers={"Content-Range": f"bytes */{file_size}", "Accept-Ranges": "bytes"},
-        )
-
-    is_partial = bool(range_header) and (start, end) != (0, file_size - 1)
-    content_length = end - start + 1
-
-    def file_iterator():
-        # 64 KB chunks for fast, low-overhead Wi-Fi transfer
-        chunk_size = 65536
-        try:
-            with open(path, "rb", buffering=chunk_size) as handle:
-                handle.seek(start)
-                remaining = content_length
-                while remaining > 0:
-                    chunk = handle.read(min(chunk_size, remaining))
-                    if not chunk:
-                        break
-                    remaining -= len(chunk)
-                    yield chunk
-        except (BrokenPipeError, ConnectionResetError, GeneratorExit):
-            # The phone walked out of range or cancelled - not an error.
-            return
-
     headers = {
-        "Content-Length": str(content_length),
-        "Content-Disposition": f'attachment; filename="{download_name}"',
-        "Content-Type": media_type,
-        "Accept-Ranges": "bytes",
-        "ETag": etag,
-        "Last-Modified": last_modified,
         "Cache-Control": "public, max-age=3600",
         "X-Content-Type-Options": "nosniff",
-        "Content-Encoding": "identity",
+        "Access-Control-Allow-Origin": "*",
     }
-    if is_partial:
-        headers["Content-Range"] = f"bytes {start}-{end}/{file_size}"
-
-    return StreamingResponse(
-        file_iterator(),
-        status_code=206 if is_partial else 200,
+    return FileResponse(
+        path=path,
+        filename=download_name,
         media_type=media_type,
         headers=headers,
     )
@@ -3139,7 +3149,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 continue
             elif data.startswith("pro_auth,"):
                 parts = data.split(",")
-                from server.license_manager import verify_license, activate_license_online
+                from server.license_manager import verify_license, activate_license_online, check_dodo_license_valid
                 host_pro = verify_license().get("pro_active", False)
                 if host_pro:
                     set_pro_client(True)
@@ -3151,9 +3161,16 @@ async def websocket_endpoint(websocket: WebSocket):
                         set_pro_client(True)
                         await websocket.send_text("pro_unlocked,1")
                     else:
-                        set_pro_client(False)
-                        clean_err = (msg or "Activation failed").replace(",", ";")
-                        await websocket.send_text(f"pro_unlocked,0,{clean_err}")
+                        is_valid = False
+                        if len(parts) >= 3 and parts[2].strip().startswith("lki_"):
+                            is_valid, _ = await asyncio.to_thread(check_dodo_license_valid, client_key)
+                        if is_valid:
+                            set_pro_client(True)
+                            await websocket.send_text("pro_unlocked,1")
+                        else:
+                            set_pro_client(False)
+                            clean_err = (msg or "Activation failed").replace(",", ";")
+                            await websocket.send_text(f"pro_unlocked,0,{clean_err}")
                 else:
                     set_pro_client(False)
                     await websocket.send_text("pro_unlocked,0,Invalid license key format")

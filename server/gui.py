@@ -4137,6 +4137,12 @@ class PCDeckProGUI:
             if not k:
                 messagebox.showwarning("PCDeck License", "Please enter a license key.", parent=dlg)
                 return
+            if k.lower().startswith("pay_"):
+                messagebox.showwarning("Payment ID Detected", "You entered a Payment ID (starts with 'pay_').\n\nPlease enter the 36-character License Key (UUID) sent in your Dodo Payments confirmation email or receipt.", parent=dlg)
+                return
+            if k.lower().startswith("lic_"):
+                messagebox.showwarning("License ID Detected", "You entered a License ID (starts with 'lic_').\n\nPlease enter the 36-character License Key (UUID) sent in your Dodo Payments confirmation email or receipt.", parent=dlg)
+                return
 
             ok, msg, _ = activate_license_online(k)
             if ok:

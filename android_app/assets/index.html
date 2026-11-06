@@ -341,7 +341,7 @@
               <svg class="deck-icon" width="14" height="14"><use href="#icon-pc"/></svg>
               <span>DOWNLOAD PC SERVER</span>
             </button>
-            <span class="onboarding-subtext">Visit <b>pcdeck-pro.vercel.app</b> on your computer</span>
+            <span class="onboarding-subtext">Visit <b>getpcdeck.com</b> on your computer</span>
           </div>
         </div>
 
@@ -627,6 +627,12 @@
         <div class="titlebar-fps-group" id="titlebar-fps-group" title="Screen Streaming Refresh Rate">
           <button type="button" class="fps-radio-btn active" id="btn-fps-30">30 FPS</button>
           <button type="button" class="fps-radio-btn" id="btn-fps-60">60 FPS</button>
+        </div>
+
+        <!-- Radio-style Segmented Camera Resolution in Title Bar (Media / Webcam Tab) -->
+        <div class="titlebar-cam-group" id="titlebar-cam-group" style="display: none;" title="Webcam Broadcast Resolution">
+          <button type="button" class="fps-radio-btn active" id="btn-titlebar-cam-720">720p HD</button>
+          <button type="button" class="fps-radio-btn" id="btn-titlebar-cam-1080" style="color: #ffd700;">1080p Pro</button>
         </div>
 
         <!-- Kinetic Fast File Transfer Capsule in Title Bar (File Sharing Tab) -->
@@ -2695,7 +2701,7 @@
 
           <!-- License Key Activation -->
           <div id="settings-pro-key-row" style="display: flex; gap: 6px; margin: 10px 0; width: 100%; box-sizing: border-box;">
-            <input type="text" id="input-license-key-settings" class="cyber-input" placeholder="PCDK-XXXX-YYYY-ZZZZ" style="font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; flex: 1 1 auto; min-width: 0; box-sizing: border-box;">
+            <input type="text" id="input-license-key-settings" class="cyber-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style="font-family: var(--font-mono); font-size: 0.78rem; flex: 1 1 auto; min-width: 0; box-sizing: border-box;">
             <button id="btn-activate-key-settings" class="neo-btn btn-yellow" style="flex: 0 0 auto; padding: 0 14px; font-size: 0.74rem; font-weight: 800; white-space: nowrap;">ACTIVATE</button>
           </div>
 
@@ -3092,9 +3098,9 @@
 
       <!-- License Key Entry Box -->
       <div style="margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 12px;">
-        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">ENTER LICENSE KEY</div>
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">ENTER 36-CHAR LICENSE KEY (UUID)</div>
         <div class="pro-key-input-box">
-          <input type="text" id="modal-pro-key-input" class="pro-key-input" placeholder="PCDK-XXXX-YYYY-ZZZZ">
+          <input type="text" id="modal-pro-key-input" class="pro-key-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
           <button id="modal-btn-activate-key" class="neo-btn btn-yellow" style="padding: 0 14px; font-weight: 800; font-size: 0.78rem;">ACTIVATE</button>
         </div>
       </div>

@@ -406,6 +406,8 @@ def test_websocket_pair_response_on_authenticated_client(client):
         # Client sends pair command
         ws.send_text(f"pair,{token}")
         reply = ws.receive_text()
+        if reply == "pro_unlocked,1":
+            reply = ws.receive_text()
         assert reply == "pair_ok,1"
 
 

@@ -5141,7 +5141,8 @@ body[data-theme="aero"] .status-dot.connected {
   50% { transform: scale(1.25); box-shadow: 0 0 12px rgba(16, 185, 129, 0.95); }
 }
 
-body[data-theme="aero"] .titlebar-fps-group {
+body[data-theme="aero"] .titlebar-fps-group,
+body[data-theme="aero"] .titlebar-cam-group {
   background: rgba(255, 255, 255, 0.65) !important;
   border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
   border-radius: 9999px !important;
@@ -5149,7 +5150,8 @@ body[data-theme="aero"] .titlebar-fps-group {
   padding: 2px !important;
 }
 
-body[data-theme="aero"] #titlebar-fps-group[style*="display: none"] {
+body[data-theme="aero"] #titlebar-fps-group[style*="display: none"],
+body[data-theme="aero"] #titlebar-cam-group[style*="display: none"] {
   display: none !important;
 }
 
@@ -6199,8 +6201,9 @@ body[data-theme="y2k"] .nav-status-pill {
   text-shadow: 0 1px 0 #ffffff !important;
 }
 
-/* FPS Radio Toggle in Titlebar - Sculpted Chrome Capsule */
-body[data-theme="y2k"] .titlebar-fps-group {
+/* FPS & Camera Radio Toggle in Titlebar - Sculpted Chrome Capsule */
+body[data-theme="y2k"] .titlebar-fps-group,
+body[data-theme="y2k"] .titlebar-cam-group {
   background: rgba(148, 163, 184, 0.4) !important;
   border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
   border-radius: 9999px !important;
@@ -7213,7 +7216,8 @@ body[data-theme="crt"] .nav-status-pill {
   box-shadow: 0 0 8px rgba(0, 255, 102, 0.3), inset 0 0 4px rgba(0, 255, 102, 0.2) !important;
 }
 
-body[data-theme="crt"] .titlebar-fps-group {
+body[data-theme="crt"] .titlebar-fps-group,
+body[data-theme="crt"] .titlebar-cam-group {
   background: #020c05 !important;
   border: 1.5px solid #00ff66 !important;
   box-shadow: inset 0 0 6px rgba(0, 255, 102, 0.3) !important;
@@ -8692,7 +8696,8 @@ body[data-theme="purple"] .btn-header-hide {
   color: #f5d0fe !important;
 }
 
-body[data-theme="purple"] .titlebar-fps-group {
+body[data-theme="purple"] .titlebar-fps-group,
+body[data-theme="purple"] .titlebar-cam-group {
   background: rgba(19, 8, 43, 0.9) !important;
   border: 1px solid rgba(217, 70, 239, 0.3) !important;
 }
@@ -9054,7 +9059,9 @@ body[data-theme="lime"] .status-dot.connected {
 }
 
 body[data-theme="analog"] .titlebar-fps-group,
-body[data-theme="lime"] .titlebar-fps-group {
+body[data-theme="lime"] .titlebar-fps-group,
+body[data-theme="analog"] .titlebar-cam-group,
+body[data-theme="lime"] .titlebar-cam-group {
   background: #08090c !important;
   border: 1px solid rgba(255, 170, 0, 0.35) !important;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.9) !important;
@@ -9692,8 +9699,9 @@ body[data-theme="oled"] {
   --shadow-lg: 0 0 0 transparent;
 }
 
-/* Radio-style Segmented FPS Toggle in Title Bar */
-.titlebar-fps-group {
+/* Radio-style Segmented FPS & Camera Resolution Toggles in Title Bar */
+.titlebar-fps-group,
+.titlebar-cam-group {
   display: inline-flex;
   align-items: center;
   background: rgba(15, 21, 35, 0.85);

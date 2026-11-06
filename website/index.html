@@ -35,7 +35,7 @@
 <meta name="twitter:image" content="https://getpcdeck.com/og-image.png">
 <meta name="twitter:image:alt" content="PCDeck - Use Phone as Mouse &amp; Keyboard for PC (Free)">
 
-<meta name="theme-color" content="#05070A">
+<meta name="theme-color" content="#EEF0F3">
 
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="shortcut icon" href="/favicon.ico">
@@ -45,7 +45,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <script type="application/ld+json">
 {
@@ -301,35 +301,37 @@
 
 <style>
 /* ==========================================================================
-   PCDeck — Cyber-Neon Obsidian Glassmorphism Design System
-   Engineered for extreme visual authority, high-contrast legibility, and premium feel.
+   PCDeck — design tokens
+   Direction: an instrument panel, not a neon gaming page. The visitor is often
+   someone whose monitor just died and who then has to trust an unsigned .exe,
+   so the page is built for credibility and legibility: cool paper, hairline
+   structure, mono annotations, and exactly one accent colour.
    ========================================================================== */
 :root{
-  --paper:#080b11;      /* deep obsidian dark ground */
-  --panel:#0d121c;      /* elevated frosted glass card surface */
-  --panel-hover:#131a27;
-  --ink:#f1f5f9;        /* crisp readable high-contrast foreground */
-  --graphite:#94a3b8;   /* secondary type */
-  --muted:#64748b;      /* subtle metadata & descriptions */
-  --grid:rgba(255, 255, 255, 0.08); /* clean translucent glass borders */
-  --grid-soft:rgba(255, 255, 255, 0.04);
-  --signal:#2563eb;     /* vibrant cobalt */
-  --signal-ink:#60a5fa; /* glowing link & badge accent */
-  --signal-wash:rgba(37, 99, 235, 0.14);
-  --caution:#f59e0b;
-  --caution-wash:rgba(245, 158, 11, 0.1);
-  --caution-line:rgba(245, 158, 11, 0.3);
+  --paper:#eef0f3;      /* cool blue-grey ground, deliberately not warm cream */
+  --panel:#ffffff;
+  --ink:#12161c;        /* primary type */
+  --graphite:#4a5361;   /* secondary type */
+  --muted:#6b7480;
+  --grid:#d5dae1;       /* hairlines */
+  --grid-soft:#e3e7ec;
+  --signal:#1b44d8;     /* the single accent: links, cursor, active state */
+  --signal-ink:#12308f;
+  --signal-wash:#e8ecfb;
+  --caution:#8a5200;    /* semantic only — install warnings, never decoration */
+  --caution-wash:#fdf3e3;
+  --caution-line:#e6cda2;
 
-  --accent:#00f0ff;     /* electric cyan glow */
-  --fg:#f1f5f9;
-  --bg:#05070a;
+  --accent:#1b44d8;
+  --fg:#12161c;
+  --bg:#ffffff;
 
-  --display:'Outfit',system-ui,sans-serif;
-  --body:'Inter',system-ui,sans-serif;
+  --display:'Archivo',system-ui,sans-serif;
+  --body:'Instrument Sans',system-ui,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,monospace;
 
   --shell:1180px;
-  --r:8px;              /* refined modern radius */
+  --r:4px;              /* restrained radius; this is instrumentation, not candy */
 }
 
 *{box-sizing:border-box}
@@ -339,29 +341,26 @@ section[id], .sec, [id]{scroll-margin-top:84px}
 
 body{
   margin:0;
-  background:var(--bg);
+  background:var(--paper);
   color:var(--ink);
   font-family:var(--body);
-  font-size:16.5px;
-  line-height:1.65;
+  font-size:17px;
+  line-height:1.6;
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
 
-/* Deep obsidian ambient radial glows + crisp dark grid */
+/* Faint engineering grid. Sits behind everything, never competes. */
 body::before{
   content:"";
   position:fixed;
   inset:0;
   pointer-events:none;
   z-index:0;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(37, 99, 235, 0.16), transparent 70%),
-    radial-gradient(circle 600px at 85% 15%, rgba(0, 240, 255, 0.07), transparent 60%),
-    linear-gradient(var(--grid-soft) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-soft) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
-  opacity: 1;
+  background-image:linear-gradient(var(--grid-soft) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--grid-soft) 1px,transparent 1px);
+  background-size:64px 64px;
+  opacity:.5;
 }
 
 .shell{width:100%;max-width:var(--shell);margin:0 auto;padding:0 28px;position:relative;z-index:1}
@@ -390,9 +389,9 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 /* ==================== header ==================== */
 .top{
   position:sticky;top:0;z-index:100;
-  background:rgba(8, 11, 17, 0.85);
-  backdrop-filter:saturate(180%) blur(16px);
-  -webkit-backdrop-filter:saturate(180%) blur(16px);
+  background:color-mix(in srgb,var(--paper) 92%,transparent);
+  backdrop-filter:saturate(140%) blur(12px);
+  -webkit-backdrop-filter:saturate(140%) blur(12px);
   border-bottom:1px solid var(--grid);
 }
 .top-in{display:flex;align-items:center;justify-content:space-between;gap:16px;height:62px}
@@ -567,17 +566,16 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 .hero-meta span{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink)}
 
 /* ---------- SIGNATURE: the live trackpad & interactive mock desktop ---------- */
-.rig{background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 40px rgba(0,0,0,0.4)}
+.rig{background:var(--panel);border:1px solid var(--grid);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
 .rig-head{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:11px 14px;border-bottom:1px solid var(--grid);background:rgba(255,255,255,0.02);
+  padding:11px 14px;border-bottom:1px solid var(--grid);background:#fbfcfd;
 }
 .rig-body{display:flex;flex-direction:column;flex:1;min-height:0}
 
 /* ---------- the desk scene ---------- */
 .desk{
-  border-top:1px solid var(--grid);
-  background:linear-gradient(180deg, rgba(13, 18, 28, 0.7) 0%, rgba(8, 11, 17, 0.9) 100%);
+  border-top:1px solid var(--grid);background:#fbfcfd;
   padding:24px 24px 16px;flex:1;display:flex;flex-direction:column;justify-content:center;
 }
 .monitor{position:relative;padding-bottom:44px}
@@ -626,7 +624,7 @@ h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-
 /* Windows */
 .win{
   position:absolute;left:16%;top:10%;width:58%;
-  background:#121824;border:1px solid #2d3b52;border-radius:5px;
+  background:#f7f8fa;border:1px solid #454e5a;border-radius:5px;
   box-shadow:0 12px 34px rgba(0,0,0,.45);
   z-index:4;
   transition:transform .18s cubic-bezier(0.16, 1, 0.3, 1), opacity .18s ease;
@@ -908,7 +906,7 @@ kbd{
 }
 table{width:100%;border-collapse:collapse;min-width:620px}
 th,td{text-align:left;padding:14px 18px;border-bottom:1px solid var(--grid-soft);font-size:15.5px}
-thead th{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:500;background:rgba(255,255,255,0.03)}
+thead th{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:500;background:#fbfcfd}
 tbody th{font-weight:600;color:var(--ink)}
 td.y{color:var(--signal-ink);font-weight:600}
 td.n{color:var(--muted)}
@@ -925,7 +923,7 @@ summary{
 summary::-webkit-details-marker{display:none}
 summary::after{content:"+";margin-left:auto;font-family:var(--mono);color:var(--signal);font-size:19px;font-weight:400;flex:none}
 details[open] summary::after{content:"–"}
-summary:hover{background:rgba(255,255,255,0.03)}
+summary:hover{background:#fbfcfd}
 details p{margin:0 22px 20px;color:var(--graphite);font-size:15.5px;max-width:76ch}
 
 /* ==================== download ==================== */
@@ -1259,7 +1257,7 @@ footer{padding:44px 0 56px}
   /* Original Signature Live Demo on Mobile */
   .rig{margin-top:20px;border-radius:8px;width:100%;box-sizing:border-box}
   .rig-head{padding:9px 12px}
-  .desk{padding:18px 14px 14px;background:rgba(255,255,255,0.03);overflow:hidden}
+  .desk{padding:18px 14px 14px;background:#fbfcfd;overflow:hidden}
   .desk-lede{font-size:13.5px;margin-bottom:14px;line-height:1.45}
   .monitor{position:relative;padding-bottom:38px;width:100%}
   .screen{
@@ -1345,13 +1343,13 @@ footer{padding:44px 0 56px}
 
   .tbl-wrap{position:relative;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tbl-wrap::after{
-    content:"Scroll table horizontally →";
+    content:"Scroll table horizontally â†’";
     display:block;
     padding:6px 10px;
     font-family:var(--mono);
     font-size:10.5px;
     color:var(--muted);
-    background:rgba(255,255,255,0.03);
+    background:#fbfcfd;
     border-top:1px solid var(--grid-soft);
     text-align:right;
   }
@@ -1384,8 +1382,7 @@ footer{padding:44px 0 56px}
 
   .floating-feedback-pill{position:fixed;bottom:24px;right:24px;z-index:99;background:var(--ink);color:#ffffff;font-family:var(--mono);font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 16px rgba(0,0,0,0.25);text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:transform 0.15s ease,background 0.15s ease}
   .floating-feedback-pill:hover{background:var(--signal);transform:translateY(-2px)}
-  @media (max-width:600px){.floating-feedback-pill{bottom:16px;right:16px;font-size:11.5px;padding:6px 12px}}
-</style>
+  @media (max-width:600px){.floating-feedback-pill{bottom:16px;right:16px;font-size:11.5px;padding:6px 12px}}</style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -3113,6 +3110,56 @@ footer{padding:44px 0 56px}
       }, 150);
     });
   }
+
+  // Handle return redirect from Dodo Payments checkout
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var paymentId = params.get('payment_id') || '';
+    var licKey = params.get('license_key') || '';
+    var status = (params.get('status') || '').toLowerCase();
+    if (status === 'succeeded' || licKey || paymentId) {
+      window.addEventListener('DOMContentLoaded', function() {
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(5,7,11,0.88);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+        var modal = document.createElement('div');
+        modal.style.cssText = 'background:#0f1523;border:1px solid #ffd700;border-radius:12px;padding:28px 24px;max-width:480px;width:100%;box-shadow:0 0 35px rgba(255,215,0,0.25);color:#fff;font-family:inherit;text-align:center;box-sizing:border-box;';
+        
+        var html = '<div style="font-size:12px;font-weight:800;color:#ffd700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">PURCHASE CONFIRMED</div>';
+        if (licKey) {
+          html += '<h2 style="font-size:20px;font-weight:800;margin:0 0 8px 0;color:#fff;">PCDeck Pro License Key</h2>';
+          html += '<p style="font-size:13px;color:#94a3b8;margin:0 0 16px 0;line-height:1.5;">Thank you for your purchase! Copy your license key below and enter it in PCDeck (Settings &gt; System &amp; License) to activate Pro.</p>';
+          html += '<div style="display:flex;gap:8px;margin-bottom:16px;background:#182030;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);align-items:center;">';
+          html += '<input id="dodo-ret-key" type="text" readonly value="' + licKey.replace(/"/g, '&quot;') + '" style="background:transparent;border:none;color:#00f0ff;font-family:monospace;font-size:13px;flex:1;min-width:0;padding:6px;outline:none;" />';
+          html += '<button id="dodo-copy-btn" type="button" style="background:#ffd700;color:#000;border:none;border-radius:6px;padding:8px 14px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;">COPY</button>';
+          html += '</div>';
+        } else {
+          html += '<h2 style="font-size:20px;font-weight:800;margin:0 0 8px 0;color:#fff;">Payment Received</h2>';
+          html += '<p style="font-size:13px;color:#94a3b8;margin:0 0 16px 0;line-height:1.5;">Payment ID: <strong style="color:#00f0ff;font-family:monospace;">' + (paymentId ? paymentId.replace(/"/g, '&quot;') : 'Confirmed') + '</strong><br>Your license key has been dispatched to your email address. If not received within 2 minutes, contact gresonparichha719@gmail.com.</p>';
+        }
+        html += '<button id="dodo-close-btn" type="button" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:8px 24px;font-weight:700;font-size:13px;cursor:pointer;">CLOSE</button>';
+        modal.innerHTML = html;
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        var copyBtn = document.getElementById('dodo-copy-btn');
+        if (copyBtn) {
+          copyBtn.onclick = function() {
+            var input = document.getElementById('dodo-ret-key');
+            if (input) {
+              input.select();
+              try { navigator.clipboard.writeText(input.value); } catch(e) {}
+              copyBtn.textContent = 'COPIED!';
+              setTimeout(function() { copyBtn.textContent = 'COPY'; }, 2000);
+            }
+          };
+        }
+        var closeBtn = document.getElementById('dodo-close-btn');
+        if (closeBtn) {
+          closeBtn.onclick = function() { overlay.remove(); };
+        }
+      });
+    }
+  } catch(e) {}
 })();
 </script>
 <script defer src="/va.js"></script>
