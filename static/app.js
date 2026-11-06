@@ -365,7 +365,6 @@
       qrCanvas: document.getElementById('qr-canvas'),
       btnCloseScanner: document.getElementById('btn-close-scanner'),
       btnSwitchCamera: document.getElementById('btn-switch-camera'),
-      btnToggleTorch: document.getElementById('btn-toggle-torch'),
       toastMsg: document.getElementById('toast-msg'),
       toastIcon: document.getElementById('toast-icon'),
       toastText: document.getElementById('toast-text'),
@@ -7848,8 +7847,6 @@
     }
     const qrLoader = document.getElementById('qr-camera-loading');
     if (qrLoader) qrLoader.classList.remove('hidden');
-    state.torchActive = false;
-    if (el.btnToggleTorch) el.btnToggleTorch.textContent = 'Flashlight';
     if (el.qrScannerModal) el.qrScannerModal.classList.remove('show');
   }
 
@@ -7980,23 +7977,6 @@
         state.currentFacingMode = state.currentFacingMode === 'environment' ? 'user' : 'environment';
         stopQrScanner();
         startQrScanner();
-      };
-    }
-
-    if (el.btnToggleTorch) {
-      el.btnToggleTorch.onclick = async () => {
-        if (!state.qrStream) return;
-        const track = state.qrStream.getVideoTracks()[0];
-        if (track) {
-          try {
-            state.torchActive = !state.torchActive;
-            await track.applyConstraints({ advanced: [{ torch: state.torchActive }] });
-            el.btnToggleTorch.textContent = state.torchActive ? 'Flash: ON' : 'Flashlight';
-            vibrate(15);
-          } catch (e) {
-            showToast('Flashlight not available on this lens', 'warn');
-          }
-        }
       };
     }
 
@@ -13201,7 +13181,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
   function initWirelessWebcam() {
     const btnToggle = document.getElementById('btn-toggle-cam');
     const btnSwitch = document.getElementById('btn-switch-cam-lens');
-    const btnTorch = document.getElementById('btn-toggle-torch');
+    const btnTorch = document.getElementById('btn-cam-torch');
     const deviceSelect = document.getElementById('cam-device-select');
     const statusBadge = document.getElementById('cam-status-badge');
     const videoPreview = document.getElementById('webcam-preview-video');
