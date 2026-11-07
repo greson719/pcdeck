@@ -1,13 +1,13 @@
-# PROJECT_CONTEXT.md — PCDeck Live System Architecture (v2.7.9.0)
+# PROJECT_CONTEXT.md — PCDeck Live System Architecture (v2.8.0.0)
 
-> **State-Only Specification**: This document describes the active production architecture, hardware pipelines, network protocols, and operational invariants as of version **2.7.9.0**. For historical release notes, chronological milestones, and resolved bug post-mortems, see [`docs/HISTORY.md`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/docs/HISTORY.md).
+> **State-Only Specification**: This document describes the active production architecture, hardware pipelines, network protocols, and operational invariants as of version **2.8.0.0**. For historical release notes, chronological milestones, and resolved bug post-mortems, see [`docs/HISTORY.md`](file:///c:/Users/GRESON/Documents/mobile_tracpad_for_pc/docs/HISTORY.md).
 
 ---
 
 ## 1. System Identity & Distribution Model
 - **Product Name**: PCDeck (formerly Mobile Trackpad for PC)
 - **Developer**: Greson Parichha | **Canonical Domain**: `https://getpcdeck.com`
-- **Current Production Version**: `2.7.9` | **Version Code**: `279` | **MSIX Version**: `2.7.9.0`
+- **Current Production Version**: `2.7.9` | **Version Code**: `279` | **MSIX Version**: `2.8.0.0`
 - **Distribution Channels (Strict 3-Card Architecture)**:
   1. **Windows**:
      - *Microsoft Store*: Containerized, test-signed (`dist/PCDeck.msix`) and store upload (`dist/PCDeck_Store_Upload.msix`, Store ID: `9P4BK16LBGLS`).

@@ -594,7 +594,7 @@ public class MainActivity extends Activity {
             try {
                 return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
             } catch (Exception e) {
-                return "2.7.9";
+                return "2.8.0";
             }
         }
 
@@ -838,7 +838,7 @@ public class MainActivity extends Activity {
                             URL url = new URL(currentUrl);
                             connection = (HttpURLConnection) url.openConnection();
                             connection.setInstanceFollowRedirects(true);
-                            connection.setRequestProperty("User-Agent", "PCDeck-Android-App/2.7.9");
+                            connection.setRequestProperty("User-Agent", "PCDeck-Android-App/2.8.0");
                             connection.setConnectTimeout(15000);
                             connection.setReadTimeout(30000);
                             connection.connect();

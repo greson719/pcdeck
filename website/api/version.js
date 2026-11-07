@@ -12,8 +12,8 @@ export default function handler(req, res) {
   console.log(`[PCDeck Ping] Client: ${userAgent} | Country: ${country}`);
 
   return res.status(200).json({
-    versionCode: 279,
-    versionName: "2.7.9",
+    versionCode: 280,
+    versionName: "2.8.0",
     exeSize: "37.5 MB",
     apkSize: "983 KB",
     apkUrl: "https://getpcdeck.com/PCDeck.apk",

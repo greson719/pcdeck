@@ -368,6 +368,20 @@ To avoid erroneous optimization assumptions, all web decisions must align with v
   - `PCDeck.apk`: `986.8 KB` (SHA256: `A54ADE60B7ABC50F7CD4C13F75BE8D44BF5A61FA24513B653CD62F9280DC93A3`)
   - `dist/PCDeck_Store_Upload.msix`: `39.45 MB` (SHA256: `EB4D4B08AC1A4E0D750B4F70D6089E635801A47EEC95FCBD44D9317E8785EDF3`)
 
+---
+
+## 20. Production Release v2.8.0.0 & Store Submission 11 (November 7, 2026)
+- **Store Submission**: Submission 11 generated with package identity `GresonParichha.PCDeck_2.8.0.0_X64_`.
+- **System Synchronization**: Aligned across `version.json` (Code `280`), `server/main.py`, `server/gui.py`, `static/app.js`, `android_app/AndroidManifest.xml`, and website mirrors.
+- **High-Contrast Theme Restoration**: Re-established clean cool-paper `#eef0f3` design tokens, fixing button contrast and text readability.
+- **Active Binary Checksums (v2.8.0.0)**:
+  - `PCDeck.exe`: `37.5 MB` (SHA256: `8FD1C04BF7765A054031B84076BB3B1FAF418F2FB00ECC64E7E435413CECCC60`)
+  - `PCDeck.apk`: `986.8 KB` (SHA256: `C8C55F246CCC4C7B052D73BD6E8341D76F7C38EE983DAD4F26772739D2233D00`)
+  - `PCDeck.aab`: `980.6 KB` (SHA256: `D02EDCAA263EA88340BBC1C1416D7001128FA6A3B6F52CB5D4C83F3685A82DE5`)
+  - `dist/PCDeck_Store_Upload.msix`: `39.45 MB` (SHA256: `A72B6D6F1A62A56F010D19C6E8C63349AA7C6924D8968F43CA8A95B26C27AD84`)
+
+
+
 
 
 

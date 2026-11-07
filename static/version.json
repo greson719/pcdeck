@@ -1,6 +1,6 @@
 {
-  "versionCode": 279,
-  "versionName": "2.7.9",
+  "versionCode": 280,
+  "versionName": "2.8.0",
   "exeSize": "37.5 MB",
   "apkSize": "983 KB",
   "apkUrl": "https://getpcdeck.com/PCDeck.apk",
@@ -8,5 +8,5 @@
   "playStoreUrl": "",
   "releaseNotes": "• High-Refresh Screen Mirroring: Optimized display pipeline with V-SYNC frame pacing and adaptive flow control\n• Responsive Touch Scrolling: Accelerated kinetic momentum and calibrated scroll sensitivity\n• Reliable File Transfers: Upgraded local network socket handling with intelligent auto-retry\n• Resilient Pro Licensing: Automatic lowercase UUID normalization and instant local Wi-Fi auto-unlock\n• Clean Multi-PC Switcher: Intelligent device deduplication for dynamic IP networks",
   "minVersionCode": 1,
-  "publishedAt": "2026-11-04"
+  "publishedAt": "2026-11-07"
 }

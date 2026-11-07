@@ -515,7 +515,7 @@ def get_local_ip() -> str:
 
 LOCAL_IP = get_local_ip()
 SERVER_PORT = 8000
-SERVER_VERSION = "2.7.9"
+SERVER_VERSION = "2.8.0"
 SERVER_URL = f"http://{LOCAL_IP}:{SERVER_PORT}"
 
 # ---------------------------------------------------------------------------

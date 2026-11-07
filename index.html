@@ -2224,7 +2224,7 @@ footer{padding:44px 0 56px}
         <div class="card" id="card-exe" style="border: 2px solid var(--signal); position: relative;">
           <div style="position: absolute; top: -11px; right: 16px; background: var(--signal); color: #fff; font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; letter-spacing: .08em; text-transform: uppercase;">Primary · Instant Run</div>
           <p class="tag">PC · Windows</p>
-          <h3>PCDeck for Windows (v2.7.9)</h3>
+          <h3>PCDeck for Windows (v2.8.0)</h3>
           <p>The main PC app for Windows 10 &amp; 11. Run it, scan the QR code with your phone camera, and control immediately.</p>
           <ul class="spec">
             <li>Windows 10 or 11 (64-bit)</li>
@@ -2250,11 +2250,11 @@ footer{padding:44px 0 56px}
         <div class="card" id="card-apk">
           <span class="card-icon"><img src="icon.png" alt="PCDeck app icon" width="48" height="48"></span>
           <p class="tag">Phone · Android App (Optional)</p>
-          <h3>PCDeck for Android (v2.7.9)</h3>
+          <h3>PCDeck for Android (v2.8.0)</h3>
           <p>Optional companion app for Android home screen. (Or simply use your browser by scanning the QR code).</p>
           <ul class="spec">
             <li>Android 5.0 or newer</li>
-            <li>Direct APK download (v2.7.9 · 983 KB)</li>
+            <li>Direct APK download (v2.8.0 · 983 KB)</li>
             <li>Zero cloud accounts needed</li>
           </ul>
           <a class="btn ghost" id="dl-apk" href="/download/android/">
@@ -2265,11 +2265,11 @@ footer{padding:44px 0 56px}
 
         <div class="card" id="card-linux">
           <p class="tag">PC · Linux &amp; Steam Deck</p>
-          <h3>PCDeck for Linux (v2.7.9)</h3>
+          <h3>PCDeck for Linux (v2.8.0)</h3>
           <p>Universal launcher for Ubuntu, Debian, Arch, Fedora &amp; SteamOS.</p>
           <ul class="spec">
             <li>Zero configuration · Native X11/Wayland</li>
-            <li>Automated dependency resolution (v2.7.9)</li>
+            <li>Automated dependency resolution (v2.8.0)</li>
           </ul>
           <a class="btn ghost" id="dl-linux" href="run_linux.sh" download="run_linux.sh" style="margin-bottom: 8px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -2867,7 +2867,7 @@ footer{padding:44px 0 56px}
   fetch('/version.json?t=' + Date.now(), { cache: 'no-cache' })
     .then(function(res) { return res.json(); })
     .then(function(meta) {
-      var ver = meta.versionName ? 'v' + meta.versionName : 'v2.7.9';
+      var ver = meta.versionName ? 'v' + meta.versionName : 'v2.8.0';
       var exeSize = meta.exeSize || '37.5 MB';
       var apkSize = meta.apkSize || '983 KB';
 

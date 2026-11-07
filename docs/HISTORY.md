@@ -1505,6 +1505,30 @@ Before committing or releasing updates:
   - `PCDeck.exe`: 37.5 MB (Standalone portable).
   - `PCDeck.apk`: 986.8 KB (Signed & aligned Android package, SHA256: `A54ADE60B7ABC50F7CD4C13F75BE8D44BF5A61FA24513B653CD62F9280DC93A3`).
 
+---
+
+## 56. Production Release v2.8.0.0 & Store Submission 11 (November 7, 2026)
+
+### 56.1 Scanner & Media Stream Calibration
+- Removed non-functional flashlight toggle from camera QR scanner viewfinder in `static/index.html` and `android_app/assets/index.html`.
+- Implemented contextual segmented webcam resolution control (`[ 720p HD | 1080p Pro ]`) directly within Media tab header for frictionless Pro upselling.
+- Cleaned Trackpad and Keyboard headers by eliminating redundant FPS metrics for a distraction-free layout.
+
+### 56.2 Website High-Contrast Theme & Payment Return
+- Restored original cool-paper high-contrast engineering theme (`#eef0f3`) on `getpcdeck.com`.
+- Fixed white-on-white text readability bugs across navigation Download button, emergency 30-second keyboard guide banner, and floating feedback pill.
+- Integrated automated client-side Dodo Payments return redirect modal with copy-to-clipboard license key workflow.
+
+### 56.3 System Synchronization & Release Packaging (v2.8.0 / Code 280)
+- Synchronized all platform components to `2.8.0` (`versionCode: 280`, MSIX `2.8.0.0`).
+- Microsoft Store Submission 11 package identity: `GresonParichha.PCDeck_2.8.0.0_X64_`.
+- **v2.8.0.0 Artifacts**:
+  - `dist/PCDeck_Store_Upload.msix`: 39.45 MB (SHA256: `A72B6D6F1A62A56F010D19C6E8C63349AA7C6924D8968F43CA8A95B26C27AD84`).
+  - `PCDeck.exe`: 37.5 MB (Standalone portable, SHA256: `8FD1C04BF7765A054031B84076BB3B1FAF418F2FB00ECC64E7E435413CECCC60`).
+  - `PCDeck.apk`: 986.8 KB (Signed & aligned Android package, SHA256: `C8C55F246CCC4C7B052D73BD6E8341D76F7C38EE983DAD4F26772739D2233D00`).
+  - `PCDeck.aab`: 980.6 KB (Signed Play Store App Bundle, SHA256: `D02EDCAA263EA88340BBC1C1416D7001128FA6A3B6F52CB5D4C83F3685A82DE5`).
+
+
 
 
 
