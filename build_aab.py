@@ -60,9 +60,9 @@ def ensure_bundletool():
         urllib.request.urlretrieve(url, BUNDLETOOL_JAR)
         print("    OK: bundletool downloaded.")
 
-def run_cmd(cmd, check=True):
+def run_cmd(cmd, check=True, cwd=None):
     print(f"    Running: {cmd if isinstance(cmd, str) else ' '.join(cmd)}")
-    res = subprocess.run(cmd, shell=isinstance(cmd, str), capture_output=True, text=True)
+    res = subprocess.run(cmd, shell=isinstance(cmd, str), capture_output=True, text=True, cwd=cwd)
     if res.returncode != 0 and check:
         print(f"[-] ERROR: Command failed with code {res.returncode}")
         print("STDOUT:\n" + res.stdout)
@@ -132,10 +132,10 @@ def main():
     for r, _, files in os.walk(OBJ_DIR):
         for f in files:
             if f.endswith(".class"):
-                class_files.append(os.path.join(r, f))
+                class_files.append(os.path.relpath(os.path.join(r, f), OBJ_DIR))
 
     cmd_d8 = [D8, "--output", DEX_DIR] + class_files
-    run_cmd(cmd_d8)
+    run_cmd(cmd_d8, cwd=OBJ_DIR)
 
     # 5. Extract proto APK and assemble base module structure
     print("\n[+] 5. Assembling App Bundle Base Module Structure...")
