@@ -1528,6 +1528,27 @@ Before committing or releasing updates:
   - `PCDeck.apk`: 986.8 KB (Signed & aligned Android package, SHA256: `C8C55F246CCC4C7B052D73BD6E8341D76F7C38EE983DAD4F26772739D2233D00`).
   - `PCDeck.aab`: 980.6 KB (Signed Play Store App Bundle, SHA256: `D02EDCAA263EA88340BBC1C1416D7001128FA6A3B6F52CB5D4C83F3685A82DE5`).
 
+### 56.4 Mandatory Bilingual Partner Center Release Notes
+- **English (`en-US`) — What's new in this version**:
+  ```text
+  • Contextual Webcam Resolution: Select between 720p HD and 1080p Pro directly in the Media tab header.
+  • Streamlined Touch Interface: Cleaner, distraction-free Virtual Keyboard and Trackpad layouts.
+  • Calibrated QR Scanner: Refined camera scanner viewfinder for instant, reliable device pairing.
+  • Instant License Activation: Streamlined purchase return workflow with 1-click license key copy.
+  • Performance & Touch Calibration: Micro-calibrated kinetic momentum and low-latency display frame pacing.
+  • High-Contrast Legibility: Enhanced button contrast and typography across the web remote companion.
+  ```
+- **German (`de-DE`) — Neuigkeiten in dieser Version**:
+  ```text
+  • Kontextuelle Webcam-Auflösung: Direkte Auswahl zwischen 720p HD und 1080p Pro im Kopfbereich des Medien-Tabs.
+  • Optimierte Touch-Bedienung: Aufgeräumte, ablenkungsfreie Benutzeroberfläche für virtuelle Tastatur und Touchpad.
+  • Kalibrierter QR-Scanner: Verbesserter Kamera-Sucher für blitzschnelles und zuverlässiges Koppeln.
+  • Sofortige Lizenzaktivierung: Nahtloser Ablauf nach dem Kauf mit 1-Klick-Kopierfunktion für den Lizenzschlüssel.
+  • Performance & Touch-Kalibrierung: Feinjustierte kinetische Trägheit und verzögerungsarme Bildübertragung.
+  • Hoher Kontrast & Lesbarkeit: Verbesserter Tasten-Kontrast und optimierte Schriftdarstellung im Web-Remote.
+  ```
+
+
 
 
 
