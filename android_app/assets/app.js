@@ -3924,38 +3924,29 @@
 
     function processInputDelta() {
       if (isComposing) return;
-      const cur = inputEl.value;
+      const cur = inputEl.value || '';
       if (cur === prevVal) return;
 
-      if (cur.startsWith(prevVal)) {
-        // New characters added to end (typed or pasted)
-        const added = cur.slice(prevVal.length);
-        if (added) {
-          sendCommand(`t,${added}`);
-        }
-      } else if (prevVal.startsWith(cur)) {
-        // Characters deleted (backspace)
-        const deletedCount = prevVal.length - cur.length;
-        for (let i = 0; i < deletedCount; i++) {
-          sendCommand('k,backspace');
-        }
-      } else {
-        // Replacement / auto-correct / pasted text
-        for (let i = 0; i < prevVal.length; i++) {
-          sendCommand('k,backspace');
-        }
-        if (cur) {
-          sendCommand(`t,${cur}`);
-        }
+      // Robust prefix-preserving diff: prevents mass backspaces on mobile autocorrect/suggestions
+      let commonPrefixLen = 0;
+      const minLen = Math.min(prevVal.length, cur.length);
+      while (commonPrefixLen < minLen && prevVal[commonPrefixLen] === cur[commonPrefixLen]) {
+        commonPrefixLen++;
+      }
+
+      // Backspace only the divergence suffix from previous value
+      const deletedCount = prevVal.length - commonPrefixLen;
+      for (let i = 0; i < deletedCount; i++) {
+        sendCommand('k,backspace');
+      }
+
+      // Send newly appended or replaced characters from divergence point
+      const added = cur.slice(commonPrefixLen);
+      if (added) {
+        sendCommand(`t,${added}`);
       }
 
       prevVal = cur;
-
-      // Reset buffer if getting long to prevent unbounded memory/length
-      if (cur.length > 50) {
-        inputEl.value = '';
-        prevVal = '';
-      }
     }
 
     inputEl.addEventListener('compositionstart', () => {
@@ -3964,38 +3955,50 @@
 
     inputEl.addEventListener('compositionend', () => {
       isComposing = false;
-      processInputDelta();
+      setTimeout(processInputDelta, 0);
     });
 
     inputEl.addEventListener('input', () => {
       processInputDelta();
     });
 
+    // Detect backspace on soft keyboards when input is empty (Android keyCode 229 / beforeinput)
+    inputEl.addEventListener('beforeinput', (e) => {
+      if (e.inputType === 'deleteContentBackward' && !inputEl.value) {
+        if (typeof vibrate === 'function') vibrate(10);
+        sendCommand('k,backspace');
+      }
+    });
+
     inputEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.keyCode === 13) {
         e.preventDefault();
-        vibrate(15);
+        if (typeof vibrate === 'function') vibrate(15);
         sendCommand('k,enter');
         inputEl.value = '';
         prevVal = '';
-      } else if (e.key === 'Backspace' && inputEl.value === '') {
-        vibrate(10);
+      } else if ((e.key === 'Backspace' || e.keyCode === 8) && inputEl.value === '') {
+        if (typeof vibrate === 'function') vibrate(10);
         sendCommand('k,backspace');
-      } else if (e.key === 'Tab') {
+      } else if (e.key === 'Tab' || e.keyCode === 9) {
         e.preventDefault();
-        vibrate(15);
+        if (typeof vibrate === 'function') vibrate(15);
         sendCommand('k,tab');
-      } else if (e.key === 'Escape') {
+      } else if (e.key === 'Escape' || e.keyCode === 27) {
         e.preventDefault();
-        vibrate(15);
+        if (typeof vibrate === 'function') vibrate(15);
         sendCommand('k,escape');
         inputEl.blur();
       }
     });
 
+    inputEl.addEventListener('focus', () => {
+      prevVal = inputEl.value || '';
+    });
+
     if (clearBtn) {
       clearBtn.onclick = () => {
-        vibrate(15);
+        if (typeof vibrate === 'function') vibrate(15);
         inputEl.value = '';
         prevVal = '';
         inputEl.focus();
@@ -4024,13 +4027,12 @@
       bar.hidden = false;
       fab.classList.add('active');
       document.body.classList.add('typing-active');
+      if (input.resetLiveTyping) input.resetLiveTyping();
       // Focus must happen in the same gesture or Android will not raise the keyboard.
       input.focus();
-      if (input.value) {
-        const len = input.value.length;
-        try { input.setSelectionRange(len, len); } catch(e) {}
+      if (typeof showToast === 'function') {
+        showToast('Typing to PC — tap close when done', 'success');
       }
-      showToast('Typing to PC — tap  to close', 'success', '️');
     }
 
     function closeTypeBar() {
@@ -4038,6 +4040,7 @@
       bar.hidden = true;
       fab.classList.remove('active');
       document.body.classList.remove('typing-active');
+      if (input.resetLiveTyping) input.resetLiveTyping();
     }
 
     fab.addEventListener('click', (e) => {

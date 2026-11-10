@@ -3042,38 +3042,39 @@ body.typing-active .screen-aero-monitor-btn,
 
 .screen-type-bar {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  z-index: 100;
+  left: 10px;
+  right: 10px;
+  top: 10px;
+  bottom: auto;
+  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px;
-  background: var(--bg-surface-elevated);
-  border: 3px solid var(--neo-dark);
+  padding: 8px 10px;
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2.5px solid var(--neo-cyan) !important;
   border-radius: var(--radius-sm);
-  box-shadow: 4px 4px 0px var(--neo-dark);
-  /* The screen viewport sets touch-action:none for gestures; re-enable it here or
-     Android will not give the text field a caret. */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75) !important;
   touch-action: auto;
 }
 
 .screen-type-bar[hidden] {
-  display: none;
+  display: none !important;
 }
 
 .screen-type-input {
   flex: 1;
   min-width: 0;
-  padding: 9px 10px;
-  background: var(--bg-surface, #131926);
-  color: #fff;
-  border: 2px solid var(--neo-dark);
+  padding: 9px 12px;
+  background: #090d16 !important;
+  color: #00f0ff !important;
+  border: 2px solid var(--neo-dark) !important;
   border-radius: var(--radius-xs);
   font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   outline: none;
   touch-action: auto;
   user-select: text;

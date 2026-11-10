@@ -1,5 +1,6 @@
 import sys
 import time
+import struct
 from typing import List, Union, Dict
 
 _IS_WIN32 = sys.platform == "win32"
@@ -549,28 +550,30 @@ class WindowsInputController:
                 self.key_press('backspace')
                 time.sleep(0.005)
             else:
-                code = ord(char)
-                # Key down
-                inp_down = INPUT()
-                inp_down.type = INPUT_KEYBOARD
-                inp_down.u.ki.wVk = 0
-                inp_down.u.ki.wScan = code
-                inp_down.u.ki.dwFlags = KEYEVENTF_UNICODE
-                inp_down.u.ki.time = 0
-                inp_down.u.ki.dwExtraInfo = None
+                raw_bytes = char.encode("utf-16le")
+                code_units = struct.unpack(f"<{len(raw_bytes)//2}H", raw_bytes)
+                for code in code_units:
+                    # Key down
+                    inp_down = INPUT()
+                    inp_down.type = INPUT_KEYBOARD
+                    inp_down.u.ki.wVk = 0
+                    inp_down.u.ki.wScan = code
+                    inp_down.u.ki.dwFlags = KEYEVENTF_UNICODE
+                    inp_down.u.ki.time = 0
+                    inp_down.u.ki.dwExtraInfo = None
 
-                # Key up
-                inp_up = INPUT()
-                inp_up.type = INPUT_KEYBOARD
-                inp_up.u.ki.wVk = 0
-                inp_up.u.ki.wScan = code
-                inp_up.u.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
-                inp_up.u.ki.time = 0
-                inp_up.u.ki.dwExtraInfo = None
+                    # Key up
+                    inp_up = INPUT()
+                    inp_up.type = INPUT_KEYBOARD
+                    inp_up.u.ki.wVk = 0
+                    inp_up.u.ki.wScan = code
+                    inp_up.u.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP
+                    inp_up.u.ki.time = 0
+                    inp_up.u.ki.dwExtraInfo = None
 
-                inputs = (INPUT * 2)(inp_down, inp_up)
-                user32.SendInput(2, inputs, ctypes.sizeof(INPUT))
-                time.sleep(0.002)
+                    inputs = (INPUT * 2)(inp_down, inp_up)
+                    user32.SendInput(2, inputs, ctypes.sizeof(INPUT))
+                    time.sleep(0.001)
 
     def media(self, action: str):
         """Dispatch media action."""

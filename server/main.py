@@ -176,7 +176,7 @@ import urllib.parse
 import colorama
 from colorama import Fore, Style
 from fastapi import FastAPI, Body, File, Header, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import qrcode
@@ -990,14 +990,36 @@ if getattr(sys, "frozen", False):
     exe_dir = os.path.dirname(sys.executable)
     _ROOT_DIR = getattr(sys, "_MEIPASS", exe_dir)
     candidates = [
-        os.path.join(os.getcwd(), "static"),
-        os.path.join(exe_dir, "static"),
         os.path.join(_ROOT_DIR, "static"),
+        os.path.join(exe_dir, "static"),
+        os.path.join(os.getcwd(), "static"),
     ]
-    STATIC_DIR = next((p for p in candidates if os.path.exists(p)), candidates[-1])
+    STATIC_DIR = next((p for p in candidates if os.path.isfile(os.path.join(p, "index.html"))), os.path.join(_ROOT_DIR, "static"))
 else:
     _ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    STATIC_DIR = os.path.join(_ROOT_DIR, "static")
+    candidates = [
+        os.path.join(_ROOT_DIR, "static"),
+        os.path.join(os.getcwd(), "static"),
+    ]
+    STATIC_DIR = next((p for p in candidates if os.path.isfile(os.path.join(p, "index.html"))), os.path.join(_ROOT_DIR, "static"))
+
+
+def find_static_file(filename: str) -> Optional[str]:
+    """Find a static file in STATIC_DIR or fallback to bundled/repo static directory."""
+    search_dirs = [STATIC_DIR]
+    if getattr(sys, "frozen", False):
+        meipass = getattr(sys, "_MEIPASS", "")
+        if meipass:
+            search_dirs.append(os.path.join(meipass, "static"))
+        search_dirs.append(os.path.join(os.path.dirname(sys.executable), "static"))
+    else:
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        search_dirs.append(os.path.join(root, "static"))
+    for d in search_dirs:
+        p = os.path.join(d, filename)
+        if os.path.isfile(p):
+            return p
+    return None
 
 
 # Global connected client Pro status
@@ -2155,7 +2177,9 @@ async def get_root(request: Request):
     token = request.query_params.get("token") or request.query_params.get("t")
     if client_ip:
         _authenticated_ips.add(client_ip)
-    index_file = os.path.join(STATIC_DIR, "index.html")
+    index_file = find_static_file("index.html") or os.path.join(STATIC_DIR, "index.html")
+    if not os.path.isfile(index_file):
+        return HTMLResponse("<h3>PCDeck Web Remote: index.html not found</h3>", status_code=404)
     response = FileResponse(index_file)
     tok = token or get_pairing_token()
     if tok:
@@ -2166,10 +2190,13 @@ async def get_root(request: Request):
 @app.get("/desktop")
 async def get_desktop():
     """Serve the modern PC Companion / Desktop UI."""
-    desktop_file = os.path.join(STATIC_DIR, "desktop.html")
-    if os.path.exists(desktop_file):
+    desktop_file = find_static_file("desktop.html")
+    if desktop_file:
         return FileResponse(desktop_file)
-    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+    index_file = find_static_file("index.html")
+    if index_file:
+        return FileResponse(index_file)
+    return HTMLResponse("<h3>PCDeck: desktop.html not found</h3>", status_code=404)
 
 
 @app.get("/api/desktop/status")
@@ -2244,8 +2271,10 @@ async def get_connect_gateway(request: Request):
     token = request.query_params.get("token") or request.query_params.get("t")
     if client_ip:
         _authenticated_ips.add(client_ip)
-    connect_file = os.path.join(STATIC_DIR, "connect.html")
-    response = FileResponse(connect_file) if os.path.exists(connect_file) else FileResponse(os.path.join(STATIC_DIR, "index.html"))
+    connect_file = find_static_file("connect.html") or find_static_file("index.html")
+    if not connect_file:
+        return HTMLResponse("<h3>PCDeck: connect.html not found</h3>", status_code=404)
+    response = FileResponse(connect_file)
     tok = token or get_pairing_token()
     if tok:
         response.set_cookie(key="pcdeck_token", value=tok, max_age=86400 * 30, path="/", samesite="lax")
@@ -3768,8 +3797,10 @@ async def get_audio_status():
 
 
 # Mount static assets
-if os.path.exists(STATIC_DIR):
+if os.path.isdir(STATIC_DIR) and os.path.isfile(os.path.join(STATIC_DIR, "index.html")):
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+elif getattr(sys, "frozen", False) and os.path.isdir(os.path.join(getattr(sys, "_MEIPASS", ""), "static")):
+    app.mount("/", StaticFiles(directory=os.path.join(getattr(sys, "_MEIPASS", ""), "static"), html=True), name="static")
 
 
 def banner():

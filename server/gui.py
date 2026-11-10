@@ -3447,6 +3447,10 @@ class PCDeckProGUI:
     def _get_autostart_exe_path(self) -> str:
         """Returns the absolute path to the main PCDeck executable."""
         if getattr(sys, "frozen", False) and sys.executable:
+            exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+            root_exe = os.path.abspath(os.path.join(exe_dir, "..", "PCDeck.exe"))
+            if os.path.basename(exe_dir).lower() in ("website", "dist") and os.path.exists(root_exe):
+                return root_exe
             return os.path.abspath(sys.executable)
         parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         pcdeck_exe = os.path.join(parent_dir, "PCDeck.exe")
