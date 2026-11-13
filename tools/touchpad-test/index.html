@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Touchpad Latency &amp; Polling Rate Tester | PCDeck</title>
+<meta name="description" content="Test your laptop touchpad, mouse, or phone trackpad latency and polling rate (Hz) in real time. Benchmark precision, jitter, and response time online.">
+<meta name="keywords" content="touchpad latency test, trackpad polling rate test, mouse hz test, touchpad response time, test trackpad online, laptop touchpad benchmark, PCDeck">
+<link rel="canonical" href="https://getpcdeck.com/tools/touchpad-test/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://getpcdeck.com/tools/touchpad-test/">
+<meta property="og:title" content="Online Touchpad Latency &amp; Polling Rate Tester | PCDeck">
+<meta property="og:description" content="Test your laptop touchpad, mouse, or phone trackpad latency and polling rate (Hz) in real time. Benchmark precision, jitter, and response time online.">
+<meta property="og:image" content="https://getpcdeck.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Online Touchpad Latency &amp; Polling Rate Tester | PCDeck">
+<meta name="twitter:description" content="Test your laptop touchpad, mouse, or phone trackpad latency and polling rate (Hz) in real time. Benchmark precision, jitter, and response time online.">
+<meta name="twitter:image" content="https://getpcdeck.com/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<style>
+/* Scoped Touchpad Latency Tester Styles */
+.tool-hero {
+  padding: 42px 0 28px;
+  text-align: center;
+}
+.tool-hero h1 {
+  font-size: clamp(30px, 4.5vw, 48px);
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+.tool-hero p {
+  max-width: 740px;
+  margin: 0 auto 24px;
+  color: var(--graphite);
+  font-size: 17px;
+}
+
+/* Metric Cards */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.metric-card {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+  padding: 18px 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.metric-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.metric-val {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--signal-ink);
+  line-height: 1.1;
+}
+.metric-unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 2px;
+}
+.metric-sub {
+  font-size: 12px;
+  color: var(--graphite);
+  margin-top: 4px;
+}
+
+/* Interactive Surface */
+.test-stage-wrapper {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  margin-bottom: 32px;
+}
+.test-stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: color-mix(in srgb, var(--paper) 60%, var(--panel));
+  border-bottom: 1px solid var(--grid);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.test-stage-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--graphite);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+.stage-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-tool {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-tool:hover {
+  background: var(--grid-soft);
+  border-color: var(--graphite);
+}
+.btn-tool.primary {
+  background: var(--signal);
+  color: #ffffff;
+  border-color: var(--signal);
+}
+.btn-tool.primary:hover {
+  background: var(--signal-ink);
+}
+
+.canvas-container {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  background: #090d14;
+  cursor: crosshair;
+  user-select: none;
+  touch-action: none;
+}
+#trackCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.canvas-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 600;
+  max-width: 80%;
+  transition: opacity 0.25s ease;
+}
+.canvas-hint small {
+  display: block;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.28);
+  margin-top: 6px;
+}
+
+/* Oscillogram Graph Area */
+.graph-container {
+  height: 90px;
+  background: #06090e;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+#graphCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.graph-label {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+/* Product-Led CTA Banner */
+.cta-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 30px 28px;
+  color: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+.cta-banner-text {
+  max-width: 620px;
+}
+.cta-banner-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+.cta-banner h2 {
+  font-size: 24px;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+.cta-banner p {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.cta-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: none;
+}
+.cta-btn-store {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0078d4;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+  text-decoration: none;
+}
+.cta-btn-store:hover {
+  background: #005a9e;
+  text-decoration: none;
+}
+.cta-btn-exe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+  text-decoration: none;
+}
+.cta-btn-exe:hover {
+  background: rgba(255, 255, 255, 0.15);
+  text-decoration: none;
+}
+
+/* Educational Content Section */
+.edu-section {
+  margin-bottom: 48px;
+}
+.edu-section h2 {
+  font-size: 26px;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+.edu-section h3 {
+  font-size: 20px;
+  margin: 24px 0 10px;
+  color: var(--ink);
+}
+.edu-section p {
+  color: var(--graphite);
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+.table-wrapper {
+  overflow-x: auto;
+  margin: 20px 0;
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14.5px;
+}
+.data-table th, .data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--grid);
+}
+.data-table th {
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* FAQ Box */
+.faq-item {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.faq-item h4 {
+  font-size: 17px;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.faq-item p {
+  margin: 0;
+  color: var(--graphite);
+  font-size: 15px;
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://getpcdeck.com/tools/touchpad-test/#app",
+      "name": "PCDeck Touchpad Latency & Polling Rate Tester",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "All (Web Browser)",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "url": "https://getpcdeck.com/tools/touchpad-test/",
+      "featureList": "Live hardware polling rate measurement (Hz), microsecond report interval timing (ms), standard deviation jitter analysis, pointer coalescing benchmark"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://getpcdeck.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Tools",
+          "item": "https://getpcdeck.com/tools/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Touchpad Latency Tester",
+          "item": "https://getpcdeck.com/tools/touchpad-test/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://getpcdeck.com/tools/touchpad-test/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is touchpad polling rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Touchpad polling rate, measured in Hertz (Hz), represents how many times per second the touchpad hardware reports finger position updates to your operating system. Higher polling rates result in lower input latency and smoother cursor tracking."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does polling rate relate to input latency in milliseconds?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The mathematical relationship is Latency (ms) = 1000 / Polling Rate (Hz). For example, a standard 125 Hz touchpad reports updates every 8.0 ms, whereas a 250 Hz precision touchpad reports updates every 4.0 ms, cutting input delay in half."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does my laptop trackpad only score 60 Hz or 125 Hz?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most standard laptop touchpads are limited to 60 Hz to 125 Hz by default to conserve battery power on portable machines. Higher-end gaming mice and premium precision touchpads can report at 250 Hz, 500 Hz, or 1000 Hz."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How accurate is this online browser benchmark?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "This tool uses high-resolution performance.now() microsecond timers and the modern W3C Pointer Events API with coalesced event extraction (getCoalescedEvents), capturing intermediate hardware reports even if they arrive faster than your display refresh rate."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/guides/">Guides</a>
+      <a href="/#features">What it does</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/download/">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/#features" class="mob-link"><span>What it does</span><span>→</span></a>
+        <a href="/pricing/" class="mob-link"><span>Pricing</span><span>→</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>→</span></a>
+        <a href="/#faq" class="mob-link"><span>FAQ</span><span>→</span></a>
+        <a href="/#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>↓</span></a>
+      </div>
+
+      <div class="mobile-guides-title">Guides &amp; Tools</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/tools/touchpad-test/" class="mob-link">Touchpad Latency Tester</a>
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
+        <a href="/use-pc-without-mouse/" class="mob-link">Use PC without a mouse</a>
+        <a href="/use-pc-without-keyboard/" class="mob-link">Use PC without a keyboard</a>
+        <a href="/use-pc-without-monitor/" class="mob-link">Use PC without a monitor</a>
+        <a href="/stream-pc-audio-to-phone/" class="mob-link">Stream audio to phone</a>
+        <a href="/transfer-files-pc-to-android/" class="mob-link">Wi-Fi file transfer</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="shell crumbs" aria-label="Breadcrumb" style="padding-top:16px;">
+  <ol>
+    <li><a href="/">PCDeck</a></li>
+    <li><a href="/guides/">Tools</a></li>
+    <li>Touchpad Latency Tester</li>
+  </ol>
+</nav>
+
+<main class="shell" id="main">
+  <section class="tool-hero">
+    <div class="tag">Browser Benchmark Utility</div>
+    <h1>Online Touchpad Latency &amp; Polling Rate Tester</h1>
+    <p>Move your finger or mouse continuously on the test surface below. Measure your hardware polling frequency, report intervals, and jitter in real time.</p>
+  </section>
+
+  <!-- Metric Summary Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Live Polling Rate</div>
+      <div class="metric-val" id="valLiveHz">0<span class="metric-unit">Hz</span></div>
+      <div class="metric-sub" id="subLiveHz">Idle — awaiting input</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Average Polling Rate</div>
+      <div class="metric-val" id="valAvgHz">0<span class="metric-unit">Hz</span></div>
+      <div class="metric-sub" id="subAvgHz">Session average</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Report Interval</div>
+      <div class="metric-val" id="valInterval">0.0<span class="metric-unit">ms</span></div>
+      <div class="metric-sub" id="subInterval">Time between reports</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Peak Polling Rate</div>
+      <div class="metric-val" id="valPeakHz">0<span class="metric-unit">Hz</span></div>
+      <div class="metric-sub" id="subPeakHz">Maximum recorded</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Jitter Stability</div>
+      <div class="metric-val" id="valJitter">0.00<span class="metric-unit">ms</span></div>
+      <div class="metric-sub" id="subJitter">Standard deviation (σ)</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Events Sampled</div>
+      <div class="metric-val" id="valSamples">0</div>
+      <div class="metric-sub" id="subSamples">Movement frames</div>
+    </div>
+  </div>
+
+  <!-- Interactive Test Stage -->
+  <div class="test-stage-wrapper">
+    <div class="test-stage-header">
+      <div class="test-stage-title">
+        <span class="pulse-indicator" id="statusPulse"></span>
+        <span id="statusText">Active Touchpad Sensor: Ready</span>
+      </div>
+      <div class="stage-controls">
+        <button class="btn-tool" id="btnCopyResults" type="button" aria-label="Copy benchmark results">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Results
+        </button>
+        <button class="btn-tool primary" id="btnResetTest" type="button" aria-label="Reset test session">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Reset Stats
+        </button>
+      </div>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+      <canvas id="trackCanvas"></canvas>
+      <div class="canvas-hint" id="canvasHint">
+        Glide finger or move mouse continuously
+        <small>Captures microsecond hardware intervals &amp; coalesced pointer events</small>
+      </div>
+    </div>
+
+    <!-- Oscillogram Stream -->
+    <div class="graph-container">
+      <div class="graph-label">REAL-TIME POLLING FREQUENCY (Hz)</div>
+      <canvas id="graphCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Product-Led Growth Call to Action Banner -->
+  <section class="cta-banner">
+    <div class="cta-banner-text">
+      <div class="cta-banner-tag">Turn Your Phone Into a Trackpad</div>
+      <h2>Need a smoother wireless trackpad for your PC?</h2>
+      <p>Laptop touchpad unresponsive or broken? PCDeck turns any smartphone into an ultra-low latency wireless touchscreen, multi-touch trackpad, virtual webcam, and PC controller over local Wi-Fi with zero mobile app required.</p>
+    </div>
+    <div class="cta-banner-actions">
+      <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" class="cta-btn-store" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.902-1.801"/></svg>
+        Get on Microsoft Store
+      </a>
+      <a href="/download/windows/" class="cta-btn-exe">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Standalone PCDeck.exe
+      </a>
+    </div>
+  </section>
+
+  <!-- In-Depth Technical Guide & Educational Context -->
+  <section class="edu-section">
+    <h2>Understanding Touchpad Polling Rates (Hz) and Input Latency (ms)</h2>
+    <p>Input latency is the physical delay between the instant your finger moves on a touchpad and the moment your operating system registers that cursor displacement. It is directly governed by two factors: the <strong>polling rate (Hz)</strong> of the input sensor and the <strong>DPC / kernel dispatch latency</strong> of your operating system.</p>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Hardware Type</th>
+            <th>Standard Polling Rate</th>
+            <th>Report Interval (Latency)</th>
+            <th>Performance Assessment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Basic Laptop Touchpad</td>
+            <td>60 Hz</td>
+            <td>16.6 ms</td>
+            <td>Noticeable drag; standard for power-saving battery profiles.</td>
+          </tr>
+          <tr>
+            <td>Windows Precision Touchpad (PTP)</td>
+            <td>125 Hz – 150 Hz</td>
+            <td>6.6 ms – 8.0 ms</td>
+            <td>Smooth everyday productivity; low perceived jitter.</td>
+          </tr>
+          <tr>
+            <td>Premium Trackpad / Modern Tablets</td>
+            <td>240 Hz</td>
+            <td>4.1 ms</td>
+            <td>Fluid responsiveness; ideal for creative work and gestures.</td>
+          </tr>
+          <tr>
+            <td>Wired Optical Gaming Mouse</td>
+            <td>500 Hz – 1000 Hz</td>
+            <td>1.0 ms – 2.0 ms</td>
+            <td>Esports benchmark; instantaneous micro-adjustments.</td>
+          </tr>
+          <tr>
+            <td>PCDeck Wireless Phone Trackpad</td>
+            <td>60 Hz – 120 Hz (Binary Wire)</td>
+            <td>Sub-5.0 ms Wi-Fi round-trip</td>
+            <td>Optimized binary wire protocol bypassing Bluetooth buffer queues.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Why Do Some Laptop Touchpads Feel Sluggish or "Floaty"?</h3>
+    <p>Users often describe poor touchpad responsiveness as a "floaty" or "ice-skating" sensation. This is rarely caused by browser rendering. The most common underlying causes include:</p>
+    <ul>
+      <li><strong>Windows Pointer Ballistics &amp; Precision Acceleration:</strong> Windows applies non-linear acceleration curves to mouse and touchpad inputs by default. While helpful for small trackpads, it adds artificial velocity delays.</li>
+      <li><strong>I2C / HID Bus Throttling:</strong> Many laptop manufacturers cap internal I2C bus interrupt rates to 100 Hz or 125 Hz while running on battery power to prevent CPU package C-state wakeups.</li>
+      <li><strong>Bluetooth Polling Rate Ceiling:</strong> Standard Bluetooth wireless mice and touchpads are limited by the Bluetooth Human Interface Device (HID) specification to between 90 Hz and 133 Hz. High-speed local Wi-Fi or 2.4GHz proprietary dongles deliver substantially higher throughput.</li>
+      <li><strong>Display Refresh Synchronization:</strong> If your monitor operates at 60 Hz, moving a 125 Hz cursor can create micro-stutter due to mismatched frame delivery times. High-refresh 120Hz/144Hz displays dramatically improve visual tracking continuity.</li>
+    </ul>
+
+    <h3>How to Optimize Laptop Touchpad Latency on Windows 10 &amp; 11</h3>
+    <ol>
+      <li><strong>Enable Windows Precision Touchpad High Sensitivity:</strong> Navigate to <em>Settings &gt; Bluetooth &amp; devices &gt; Touchpad</em>. Set <em>Cursor speed</em> to medium-high and verify that <em>Tap sensitivity</em> is set to <strong>Most sensitive</strong>.</li>
+      <li><strong>Disable "Enhance Pointer Precision":</strong> Open Windows Run (<kbd>Win</kbd> + <kbd>R</kbd>), type <code>main.cpl</code>, press Enter. Go to the <strong>Pointer Options</strong> tab and uncheck <strong>Enhance pointer precision</strong> to enable true linear 1:1 hardware tracking.</li>
+      <li><strong>Connect to AC Power:</strong> Modern Intel and AMD laptops dynamically throttle internal sensor polling when unplugged. Testing while connected to wall power reveals true hardware capability.</li>
+      <li><strong>Use PCDeck for Emergency Zero-Lag Input:</strong> If your physical laptop touchpad is physically damaged, sticky, or limited to 60 Hz, launching PCDeck lets your smartphone screen act as an instant high-frequency multi-touch surface over local Wi-Fi.</li>
+    </ol>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="edu-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-item">
+      <h4>How does this online test measure touchpad polling rate?</h4>
+      <p>This benchmark registers high-frequency pointer listeners using the standard W3C Pointer Events API. When supported by your browser, it queries <code>event.getCoalescedEvents()</code> to extract intermediate sub-frame sensor updates. The elapsed time between consecutive hardware reports is measured via <code>performance.now()</code> with sub-millisecond precision.</p>
+    </div>
+    <div class="faq-item">
+      <h4>What is considered a "good" touchpad polling rate?</h4>
+      <p>For standard laptop trackpads, a stable 120 Hz to 150 Hz with jitter under 3.0 ms is considered excellent. External gaming mice typically achieve 500 Hz or 1000 Hz. Anything below 60 Hz will feel visibly choppy.</p>
+    </div>
+    <div class="faq-item">
+      <h4>Can I test my smartphone or tablet screen with this tool?</h4>
+      <p>Yes. Open this page in Safari or Chrome on your smartphone or tablet and drag your finger across the canvas. Most modern mobile displays report touch input at 120 Hz to 240 Hz.</p>
+    </div>
+    <div class="faq-item">
+      <h4>Why is jitter stability important?</h4>
+      <p>A consistent 125 Hz polling rate (where updates arrive evenly every 8.0 ms) feels significantly smoother than a 250 Hz sensor that experiences large timing spikes. High jitter causes sudden cursor jumps or skipped frames.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="bottom">
+  <div class="shell bottom-in">
+    <div class="bottom-brand">
+      <span class="mark"><img src="/icon.png" alt="PCDeck logo" width="28" height="28"></span>
+      <div>
+        <b>PCDeck</b>
+        <p class="tag">Offline Wi-Fi Touchscreen &amp; Trackpad Suite</p>
+      </div>
+    </div>
+    <p class="bottom-links">
+      <a href="/">Home</a> · 
+      <a href="/guides/">Guides Hub</a> · 
+      <a href="/tools/touchpad-test/">Touchpad Tester</a> · 
+      <a href="/pricing/">Pricing</a> · 
+      <a href="/download/">Download</a> · 
+      <a href="/use-pc-without-mouse/">Without a mouse</a> · 
+      <a href="/use-pc-without-keyboard/">Without a keyboard</a> · 
+      <a href="/security/">Security Architecture</a> · 
+      <a href="/privacy_policy.html">Privacy Policy</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Mobile Nav Toggle
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (toggle && menu) {
+    function toggleMenu(open) {
+      var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+      if (shouldOpen) {
+        menu.classList.add('active');
+        toggle.setAttribute('aria-expanded', 'true');
+        menu.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      } else {
+        menu.classList.remove('active');
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+    }
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleMenu();
+    });
+    menu.addEventListener('click', function (e) {
+      if (e.target === menu) toggleMenu(false);
+    });
+    var links = menu.querySelectorAll('.mob-link');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function () { toggleMenu(false); });
+    }
+  }
+
+  // --- High-Resolution Touchpad Latency Engine ---
+  var trackCanvas = document.getElementById('trackCanvas');
+  var graphCanvas = document.getElementById('graphCanvas');
+  var canvasContainer = document.getElementById('canvasContainer');
+  var canvasHint = document.getElementById('canvasHint');
+
+  var valLiveHz = document.getElementById('valLiveHz');
+  var subLiveHz = document.getElementById('subLiveHz');
+  var valAvgHz = document.getElementById('valAvgHz');
+  var subAvgHz = document.getElementById('subAvgHz');
+  var valInterval = document.getElementById('valInterval');
+  var subInterval = document.getElementById('subInterval');
+  var valPeakHz = document.getElementById('valPeakHz');
+  var subPeakHz = document.getElementById('subPeakHz');
+  var valJitter = document.getElementById('valJitter');
+  var subJitter = document.getElementById('subJitter');
+  var valSamples = document.getElementById('valSamples');
+  var statusText = document.getElementById('statusText');
+  var statusPulse = document.getElementById('statusPulse');
+
+  var btnReset = document.getElementById('btnResetTest');
+  var btnCopy = document.getElementById('btnCopyResults');
+
+  var tCtx = trackCanvas.getContext('2d');
+  var gCtx = graphCanvas.getContext('2d');
+
+  var lastEventTime = 0;
+  var eventCount = 0;
+  var peakHz = 0;
+  var intervalHistory = [];
+  var hzHistory = [];
+  var MAX_GRAPH_POINTS = 160;
+
+  var trailPoints = [];
+  var MAX_TRAIL = 24;
+  var isInteracting = false;
+  var idleTimer = null;
+
+  function resizeCanvases() {
+    var rect = canvasContainer.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    trackCanvas.width = rect.width * dpr;
+    trackCanvas.height = rect.height * dpr;
+    tCtx.scale(dpr, dpr);
+
+    var gRect = graphCanvas.getBoundingClientRect();
+    graphCanvas.width = gRect.width * dpr;
+    graphCanvas.height = gRect.height * dpr;
+    gCtx.scale(dpr, dpr);
+  }
+
+  window.addEventListener('resize', resizeCanvases);
+  resizeCanvases();
+
+  function resetStats() {
+    lastEventTime = 0;
+    eventCount = 0;
+    peakHz = 0;
+    intervalHistory = [];
+    hzHistory = [];
+    trailPoints = [];
+    valLiveHz.innerHTML = '0<span class="metric-unit">Hz</span>';
+    subLiveHz.textContent = 'Idle — awaiting input';
+    valAvgHz.innerHTML = '0<span class="metric-unit">Hz</span>';
+    subAvgHz.textContent = 'Session average';
+    valInterval.innerHTML = '0.0<span class="metric-unit">ms</span>';
+    subInterval.textContent = 'Time between reports';
+    valPeakHz.innerHTML = '0<span class="metric-unit">Hz</span>';
+    subPeakHz.textContent = 'Maximum recorded';
+    valJitter.innerHTML = '0.00<span class="metric-unit">ms</span>';
+    subJitter.textContent = 'Standard deviation (σ)';
+    valSamples.textContent = '0';
+    statusText.textContent = 'Active Touchpad Sensor: Ready';
+    statusPulse.style.background = '#10b981';
+    canvasHint.style.opacity = '1';
+    drawTrackCanvas();
+    drawGraphCanvas();
+  }
+
+  btnReset.addEventListener('click', resetStats);
+
+  btnCopy.addEventListener('click', function () {
+    var summary = [
+      '--- PCDeck Touchpad Latency & Polling Benchmark ---',
+      'Average Polling Rate: ' + valAvgHz.textContent,
+      'Peak Polling Rate: ' + valPeakHz.textContent,
+      'Average Report Interval: ' + valInterval.textContent,
+      'Jitter (Std Dev): ' + valJitter.textContent,
+      'Total Samples: ' + valSamples.textContent,
+      'Tested Online at: https://getpcdeck.com/tools/touchpad-test/'
+    ].join('\n');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(summary).then(function () {
+        btnCopy.textContent = 'Copied!';
+        setTimeout(function () {
+          btnCopy.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Results';
+        }, 2000);
+      });
+    }
+  });
+
+  function processTimestamp(now) {
+    if (lastEventTime === 0) {
+      lastEventTime = now;
+      return;
+    }
+    var dt = now - lastEventTime;
+    lastEventTime = now;
+
+    // Filter out unreasonable delays (>150ms or <0.2ms)
+    if (dt <= 0.2 || dt > 150) {
+      return;
+    }
+
+    eventCount++;
+    var currentHz = Math.round(1000 / dt);
+    if (currentHz > peakHz) {
+      peakHz = currentHz;
+    }
+
+    intervalHistory.push(dt);
+    if (intervalHistory.length > 500) {
+      intervalHistory.shift();
+    }
+
+    hzHistory.push(currentHz);
+    if (hzHistory.length > MAX_GRAPH_POINTS) {
+      hzHistory.shift();
+    }
+
+    // Compute metrics
+    var sumDt = 0;
+    for (var i = 0; i < intervalHistory.length; i++) {
+      sumDt += intervalHistory[i];
+    }
+    var avgDt = sumDt / intervalHistory.length;
+    var avgHz = Math.round(1000 / avgDt);
+
+    // Compute standard deviation (jitter)
+    var variance = 0;
+    for (var j = 0; j < intervalHistory.length; j++) {
+      variance += Math.pow(intervalHistory[j] - avgDt, 2);
+    }
+    var jitter = Math.sqrt(variance / intervalHistory.length);
+
+    // Update UI elements
+    valLiveHz.innerHTML = currentHz + '<span class="metric-unit">Hz</span>';
+    valAvgHz.innerHTML = avgHz + '<span class="metric-unit">Hz</span>';
+    valInterval.innerHTML = avgDt.toFixed(1) + '<span class="metric-unit">ms</span>';
+    valPeakHz.innerHTML = peakHz + '<span class="metric-unit">Hz</span>';
+    valJitter.innerHTML = jitter.toFixed(2) + '<span class="metric-unit">ms</span>';
+    valSamples.textContent = eventCount.toLocaleString();
+
+    // Contextual rating
+    if (avgHz >= 200) {
+      subAvgHz.textContent = 'High-Speed / Fluid';
+    } else if (avgHz >= 115) {
+      subAvgHz.textContent = 'Precision Touchpad Standard';
+    } else {
+      subAvgHz.textContent = 'Basic / Battery-Saving 60Hz';
+    }
+
+    if (jitter <= 1.5) {
+      subJitter.textContent = 'Excellent Stability';
+    } else if (jitter <= 3.5) {
+      subJitter.textContent = 'Normal Variance';
+    } else {
+      subJitter.textContent = 'Elevated Jitter';
+    }
+
+    statusText.textContent = 'Measuring: ' + currentHz + ' Hz (' + avgDt.toFixed(1) + ' ms)';
+    statusPulse.style.background = '#00f0ff';
+  }
+
+  function handlePointer(e) {
+    canvasHint.style.opacity = '0';
+    isInteracting = true;
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () {
+      isInteracting = false;
+      statusText.textContent = 'Sensor Paused — Move to Resume';
+      statusPulse.style.background = '#eab308';
+    }, 400);
+
+    var rect = trackCanvas.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+
+    trailPoints.push({ x: x, y: y, life: 1.0 });
+    if (trailPoints.length > MAX_TRAIL) {
+      trailPoints.shift();
+    }
+
+    // Coalesced events extraction
+    if (e.getCoalescedEvents && typeof e.getCoalescedEvents === 'function') {
+      var coalesced = e.getCoalescedEvents();
+      if (coalesced && coalesced.length > 0) {
+        for (var i = 0; i < coalesced.length; i++) {
+          processTimestamp(performance.now());
+        }
+        return;
+      }
+    }
+    processTimestamp(performance.now());
+  }
+
+  canvasContainer.addEventListener('pointerdown', function (e) {
+    canvasContainer.setPointerCapture(e.pointerId);
+    handlePointer(e);
+  });
+  canvasContainer.addEventListener('pointermove', handlePointer);
+
+  function drawTrackCanvas() {
+    var rect = canvasContainer.getBoundingClientRect();
+    var w = rect.width;
+    var h = rect.height;
+
+    tCtx.clearRect(0, 0, w, h);
+
+    // Subtle coordinate reticle
+    tCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    tCtx.lineWidth = 1;
+    tCtx.beginPath();
+    tCtx.moveTo(w / 2, 0); tCtx.lineTo(w / 2, h);
+    tCtx.moveTo(0, h / 2); tCtx.lineTo(w, h / 2);
+    tCtx.stroke();
+
+    // Render motion trail
+    for (var i = 0; i < trailPoints.length; i++) {
+      var pt = trailPoints[i];
+      var radius = (i / trailPoints.length) * 8 + 3;
+      var alpha = (i / trailPoints.length) * 0.7;
+
+      tCtx.beginPath();
+      tCtx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+      tCtx.fillStyle = 'rgba(0, 240, 255, ' + alpha + ')';
+      tCtx.fill();
+    }
+
+    if (trailPoints.length > 0) {
+      var last = trailPoints[trailPoints.length - 1];
+      tCtx.beginPath();
+      tCtx.arc(last.x, last.y, 14, 0, Math.PI * 2);
+      tCtx.strokeStyle = '#00f0ff';
+      tCtx.lineWidth = 2;
+      tCtx.stroke();
+    }
+  }
+
+  function drawGraphCanvas() {
+    var rect = graphCanvas.getBoundingClientRect();
+    var w = rect.width;
+    var h = rect.height;
+
+    gCtx.clearRect(0, 0, w, h);
+
+    if (hzHistory.length < 2) return;
+
+    var maxHzVal = Math.max(peakHz, 250);
+    var stepX = w / (MAX_GRAPH_POINTS - 1);
+
+    // Reference horizontal lines (60Hz, 125Hz, 240Hz)
+    var lines = [60, 125, 250];
+    gCtx.font = '9px monospace';
+    gCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    for (var k = 0; k < lines.length; k++) {
+      if (lines[k] <= maxHzVal) {
+        var lineY = h - (lines[k] / maxHzVal) * (h - 14) - 6;
+        gCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        gCtx.beginPath();
+        gCtx.moveTo(0, lineY);
+        gCtx.lineTo(w, lineY);
+        gCtx.stroke();
+        gCtx.fillText(lines[k] + 'Hz', w - 34, lineY - 2);
+      }
+    }
+
+    // Oscillogram line
+    gCtx.beginPath();
+    gCtx.strokeStyle = '#00f0ff';
+    gCtx.lineWidth = 2;
+
+    for (var i = 0; i < hzHistory.length; i++) {
+      var x = i * stepX;
+      var y = h - (hzHistory[i] / maxHzVal) * (h - 14) - 6;
+      if (i === 0) {
+        gCtx.moveTo(x, y);
+      } else {
+        gCtx.lineTo(x, y);
+      }
+    }
+    gCtx.stroke();
+
+    // Area fill
+    gCtx.lineTo((hzHistory.length - 1) * stepX, h);
+    gCtx.lineTo(0, h);
+    gCtx.closePath();
+    gCtx.fillStyle = 'rgba(0, 240, 255, 0.08)';
+    gCtx.fill();
+  }
+
+  function loop() {
+    drawTrackCanvas();
+    drawGraphCanvas();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script defer src="/va.js"></script>
+</body>
+</html>

@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Mic Test: Check Microphone Volume &amp; Echo | PCDeck</title>
+<meta name="description" content="Test your microphone online with a live decibel volume meter, waveform audio graph, and instant playback echo check. Free, private, zero install.">
+<meta name="keywords" content="online mic test, test microphone online, check mic volume, mic decibel meter, test pc mic for zoom, microphone echo test, PCDeck">
+<link rel="canonical" href="https://getpcdeck.com/tools/mic-test/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://getpcdeck.com/tools/mic-test/">
+<meta property="og:title" content="Online Mic Test: Check Microphone Volume &amp; Echo | PCDeck">
+<meta property="og:description" content="Test your microphone online with a live decibel volume meter, waveform audio graph, and instant playback echo check. Free, private, zero install.">
+<meta property="og:image" content="https://getpcdeck.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Online Mic Test: Check Microphone Volume &amp; Echo | PCDeck">
+<meta name="twitter:description" content="Test your microphone online with a live decibel volume meter, waveform audio graph, and instant playback echo check. Free, private, zero install.">
+<meta name="twitter:image" content="https://getpcdeck.com/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<style>
+/* Scoped Mic Tester Styles */
+.tool-hero {
+  padding: 42px 0 24px;
+  text-align: center;
+}
+.tool-hero h1 {
+  font-size: clamp(30px, 4.5vw, 48px);
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+.tool-hero p {
+  max-width: 740px;
+  margin: 0 auto 24px;
+  color: var(--graphite);
+  font-size: 17px;
+}
+
+/* Metric Cards */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.metric-card {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+  padding: 18px 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.metric-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.metric-val {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--signal-ink);
+  line-height: 1.1;
+}
+.metric-unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 2px;
+}
+.metric-sub {
+  font-size: 12px;
+  color: var(--graphite);
+  margin-top: 4px;
+}
+
+/* Audio Stage */
+.stage-wrapper {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  margin-bottom: 32px;
+}
+.stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: color-mix(in srgb, var(--paper) 60%, var(--panel));
+  border-bottom: 1px solid var(--grid);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.stage-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--graphite);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+.stage-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mic-select {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  max-width: 200px;
+}
+.btn-tool {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-tool:hover {
+  background: var(--grid-soft);
+  border-color: var(--graphite);
+}
+.btn-tool.primary {
+  background: var(--signal);
+  color: #ffffff;
+  border-color: var(--signal);
+}
+.btn-tool.primary:hover {
+  background: var(--signal-ink);
+}
+
+/* Decibel Meter Strip */
+.db-meter-container {
+  padding: 20px 24px;
+  background: #090d14;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.db-bar-track {
+  width: 100%;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.db-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #10b981 0%, #38bdf8 65%, #f59e0b 85%, #ef4444 100%);
+  transition: width 0.05s ease;
+  border-radius: 4px;
+}
+.db-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 6px;
+}
+
+/* Audio Visualizer Canvas */
+.visualizer-container {
+  height: 180px;
+  background: #06090e;
+  position: relative;
+}
+#audioCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.visualizer-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9, 13, 20, 0.9);
+  color: #ffffff;
+  padding: 24px;
+  text-align: center;
+}
+.visualizer-overlay h3 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+.visualizer-overlay p {
+  color: #94a3b8;
+  max-width: 440px;
+  margin: 0 auto 16px;
+  font-size: 14.5px;
+}
+
+/* Playback Echo Box */
+.echo-box {
+  padding: 16px 20px;
+  background: color-mix(in srgb, var(--paper) 40%, var(--panel));
+  border-top: 1px solid var(--grid);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.echo-info {
+  font-size: 14px;
+  color: var(--graphite);
+}
+.echo-info b {
+  color: var(--ink);
+}
+
+/* Product-Led CTA Banner */
+.cta-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 30px 28px;
+  color: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+.cta-banner-text {
+  max-width: 620px;
+}
+.cta-banner-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+.cta-banner h2 {
+  font-size: 24px;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+.cta-banner p {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.cta-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: none;
+}
+.cta-btn-store {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0078d4;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+  text-decoration: none;
+}
+.cta-btn-store:hover {
+  background: #005a9e;
+  text-decoration: none;
+}
+.cta-btn-guide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+  text-decoration: none;
+}
+.cta-btn-guide:hover {
+  background: rgba(255, 255, 255, 0.15);
+  text-decoration: none;
+}
+
+/* Educational Content Section */
+.edu-section {
+  margin-bottom: 48px;
+}
+.edu-section h2 {
+  font-size: 26px;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+.edu-section h3 {
+  font-size: 20px;
+  margin: 24px 0 10px;
+  color: var(--ink);
+}
+.edu-section p {
+  color: var(--graphite);
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+.table-wrapper {
+  overflow-x: auto;
+  margin: 20px 0;
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14.5px;
+}
+.data-table th, .data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--grid);
+}
+.data-table th {
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.faq-item {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.faq-item h4 {
+  font-size: 17px;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.faq-item p {
+  margin: 0;
+  color: var(--graphite);
+  font-size: 15px;
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://getpcdeck.com/tools/mic-test/#app",
+      "name": "PCDeck Online Microphone Tester",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "All (Web Browser)",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "url": "https://getpcdeck.com/tools/mic-test/",
+      "featureList": "Live decibel volume meter, frequency spectrum audio visualizer, hear yourself playback echo check, sample rate detection, noise floor benchmark"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://getpcdeck.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Tools",
+          "item": "https://getpcdeck.com/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Mic Tester",
+          "item": "https://getpcdeck.com/tools/mic-test/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://getpcdeck.com/tools/mic-test/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the ideal decibel level for speech in Zoom or Discord?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For voice calls and streaming, your speaking voice should peak between -18 dBFS and -6 dBFS. Audio peaking above -3 dBFS risks harsh clipping distortion, while audio below -30 dBFS sounds quiet and inaudible."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my microphone audio recorded or uploaded?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. All microphone audio analysis and playback echo checks happen entirely inside your local browser via the Web Audio API. Zero audio bytes are uploaded or stored externally."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is my laptop microphone picking up so much fan noise?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Integrated laptop microphones are physically installed inside the laptop chassis within inches of internal cooling fans and hard drives. PCDeck lets you use your phone as a wireless standalone PC mic, isolating your voice from PC fan hum."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/guides/">Guides</a>
+      <a href="/#features">What it does</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/download/">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/#features" class="mob-link"><span>What it does</span><span>→</span></a>
+        <a href="/pricing/" class="mob-link"><span>Pricing</span><span>→</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>→</span></a>
+        <a href="/#faq" class="mob-link"><span>FAQ</span><span>→</span></a>
+        <a href="/#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>↓</span></a>
+      </div>
+
+      <div class="mobile-guides-title">Diagnostic Tools &amp; Guides</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/tools/mic-test/" class="mob-link">Microphone Tester</a>
+        <a href="/tools/webcam-test/" class="mob-link">Webcam Tester</a>
+        <a href="/tools/touchpad-test/" class="mob-link">Touchpad Latency Tester</a>
+        <a href="/stream-pc-audio-to-phone/" class="mob-link">Stream PC audio to phone</a>
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="shell crumbs" aria-label="Breadcrumb" style="padding-top:16px;">
+  <ol>
+    <li><a href="/">PCDeck</a></li>
+    <li><a href="/guides/">Tools</a></li>
+    <li>Microphone Tester</li>
+  </ol>
+</nav>
+
+<main class="shell" id="main">
+  <section class="tool-hero">
+    <div class="tag">Browser Audio Diagnostic</div>
+    <h1>Online Mic Test: Volume &amp; Echo Benchmark</h1>
+    <p>Measure input volume in decibels (dB), check background noise, and test playback clarity with instant echo playback. Runs 100% locally in your browser.</p>
+  </section>
+
+  <!-- Metric Summary Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Input Volume</div>
+      <div class="metric-val" id="valDb">—<span class="metric-unit">dB</span></div>
+      <div class="metric-sub" id="subDb">Awaiting microphone</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Peak Volume</div>
+      <div class="metric-val" id="valPeakDb">—<span class="metric-unit">dB</span></div>
+      <div class="metric-sub" id="subPeakDb">Maximum speech level</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Sample Rate</div>
+      <div class="metric-val" id="valSampleRate">—<span class="metric-unit">kHz</span></div>
+      <div class="metric-sub" id="subSampleRate">Audio hardware clock</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Clarity Assessment</div>
+      <div class="metric-val" id="valSignal">—</div>
+      <div class="metric-sub" id="subSignal">Speech level status</div>
+    </div>
+  </div>
+
+  <!-- Interactive Mic Stage -->
+  <div class="stage-wrapper">
+    <div class="stage-header">
+      <div class="stage-title">
+        <span class="pulse-dot" id="statusPulse" style="background:#eab308;"></span>
+        <span id="statusText">Microphone Sensor: Ready to start</span>
+      </div>
+      <div class="stage-controls">
+        <select class="mic-select" id="micSelect" aria-label="Select Microphone Device">
+          <option value="">Default Microphone</option>
+        </select>
+        <button class="btn-tool primary" id="btnStartStop" type="button" aria-label="Start or Stop Microphone">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <span id="startStopText">Start Mic Test</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Decibel Meter -->
+    <div class="db-meter-container">
+      <div class="db-bar-track">
+        <div class="db-bar-fill" id="dbBarFill"></div>
+      </div>
+      <div class="db-scale-labels">
+        <span>-60 dB (Silent)</span>
+        <span>-30 dB (Quiet)</span>
+        <span>-12 dB (Optimal Speech)</span>
+        <span>0 dB (Clipping)</span>
+      </div>
+    </div>
+
+    <!-- Audio Visualizer Canvas -->
+    <div class="visualizer-container">
+      <canvas id="audioCanvas"></canvas>
+      <div class="visualizer-overlay" id="audioOverlay">
+        <h3>Microphone Access Required</h3>
+        <p>Click "Start Mic Test" above to verify volume levels, background room noise, and speech clarity.</p>
+        <button class="btn-tool primary" id="btnOverlayStart" type="button">
+          Start Mic Test
+        </button>
+      </div>
+    </div>
+
+    <!-- Echo Check Box -->
+    <div class="echo-box">
+      <div class="echo-info">
+        <b>Hear Yourself Test:</b> Record a 5-second sample to check how your voice sounds to others in calls.
+      </div>
+      <div class="stage-controls">
+        <button class="btn-tool" id="btnRecordEcho" type="button" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+          Record Echo Sample
+        </button>
+        <audio id="echoAudio" controls style="display:none; height:34px;"></audio>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product-Led Growth Call to Action Banner -->
+  <section class="cta-banner">
+    <div class="cta-banner-text">
+      <div class="cta-banner-tag">Turn Your Phone Into a Wireless PC Mic</div>
+      <h2>Microphone broken, muffled, or buzzing?</h2>
+      <p>Laptop microphones often capture noisy fan hum, and desktop PCs frequently lack microphones entirely. PCDeck turns your smartphone into an ultra-clear wireless PC microphone over local Wi-Fi for Zoom, Discord, and gaming calls with zero cables.</p>
+    </div>
+    <div class="cta-banner-actions">
+      <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" class="cta-btn-store" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.902-1.801"/></svg>
+        Get on Microsoft Store
+      </a>
+      <a href="/stream-pc-audio-to-phone/" class="cta-btn-guide">
+        Read Wireless Audio Guide
+      </a>
+    </div>
+  </section>
+
+  <!-- In-Depth Technical Guide & Educational Context -->
+  <section class="edu-section">
+    <h2>Understanding Decibels (dBFS) and Microphone Input Levels</h2>
+    <p>In digital audio, volume is measured in <strong>Decibels relative to Full Scale (dBFS)</strong>. Because digital maximum is <code>0 dBFS</code>, all input signals are represented as negative numbers.</p>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Volume Range</th>
+            <th>Digital Level</th>
+            <th>Voice Quality Assessment</th>
+            <th>Recommended Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Clipping Distortion</td>
+            <td>0 dBFS to -3 dBFS</td>
+            <td>Harsh robotic distortion; audio peaks square off.</td>
+            <td>Lower your Windows microphone gain in Sound Settings.</td>
+          </tr>
+          <tr>
+            <td>Ideal Speech Level</td>
+            <td>-6 dBFS to -18 dBFS</td>
+            <td>Crystal clear speech; optimal signal-to-noise ratio.</td>
+            <td>Perfect for Discord, Zoom, Teams, and voice streaming.</td>
+          </tr>
+          <tr>
+            <td>Quiet Speech</td>
+            <td>-20 dBFS to -35 dBFS</td>
+            <td>Muffled or faint; listeners will struggle to hear you.</td>
+            <td>Move closer to mic or enable Windows Microphone Boost.</td>
+          </tr>
+          <tr>
+            <td>Noise Floor / Room Ambience</td>
+            <td>-45 dBFS to -60 dBFS</td>
+            <td>Background noise (AC hum, PC fans, keyboard typing).</td>
+            <td>Normal ambient room level when quiet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>How to Fix Microphone Issues in Windows 10 &amp; 11</h3>
+    <ol>
+      <li><strong>Check Windows Input Volume:</strong> Open Windows Run (<kbd>Win</kbd> + <kbd>R</kbd>), type <code>mmsys.cpl</code>, press Enter. Go to the <strong>Recording</strong> tab, double-click your active microphone, open the <strong>Levels</strong> tab, and set volume to between <strong>75% and 85%</strong>.</li>
+      <li><strong>Disable Audio Enhancements if Robotic:</strong> In the microphone properties window, navigate to the <em>Advanced</em> or <em>Enhancements</em> tab and check <strong>Disable all enhancements</strong> to bypass faulty manufacturer DSP filters.</li>
+      <li><strong>Use PCDeck When Headset Fails:</strong> If your PC headset wire is frayed or your laptop mic captures too much keyboard clicking, PCDeck streams audio directly from your smartphone's noise-cancelling dual-microphone array to your Windows PC over local Wi-Fi.</li>
+    </ol>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="edu-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-item">
+      <h4>How does the "Hear Yourself" echo test work?</h4>
+      <p>When you click Record Echo Sample, your browser buffers 5 seconds of raw audio and renders an instant audio player so you can hear exactly how your voice sounds to participants in online meetings.</p>
+    </div>
+    <div class="faq-item">
+      <h4>Why is my microphone volume showing red (clipping)?</h4>
+      <p>Clipping occurs when the electrical signal from your microphone exceeds the analog-to-digital converter threshold. Lower your Windows input gain or back away slightly from the microphone capsule.</p>
+    </div>
+    <div class="faq-item">
+      <h4>Can I test wireless Bluetooth and USB microphones?</h4>
+      <p>Yes. Select your Bluetooth headset, USB condenser mic, or virtual PCDeck audio input from the device selector menu above.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="bottom">
+  <div class="shell bottom-in">
+    <div class="bottom-brand">
+      <span class="mark"><img src="/icon.png" alt="PCDeck logo" width="28" height="28"></span>
+      <div>
+        <b>PCDeck</b>
+        <p class="tag">Offline Wi-Fi Touchscreen &amp; Trackpad Suite</p>
+      </div>
+    </div>
+    <p class="bottom-links">
+      <a href="/">Home</a> · 
+      <a href="/guides/">Guides Hub</a> · 
+      <a href="/tools/mic-test/">Mic Tester</a> · 
+      <a href="/tools/webcam-test/">Webcam Tester</a> · 
+      <a href="/tools/touchpad-test/">Touchpad Tester</a> · 
+      <a href="/pricing/">Pricing</a> · 
+      <a href="/download/">Download</a> · 
+      <a href="/security/">Security Architecture</a> · 
+      <a href="/privacy_policy.html">Privacy Policy</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Mobile Nav Toggle
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (toggle && menu) {
+    function toggleMenu(open) {
+      var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+      if (shouldOpen) {
+        menu.classList.add('active');
+        toggle.setAttribute('aria-expanded', 'true');
+        menu.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      } else {
+        menu.classList.remove('active');
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+    }
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleMenu();
+    });
+    menu.addEventListener('click', function (e) {
+      if (e.target === menu) toggleMenu(false);
+    });
+    var links = menu.querySelectorAll('.mob-link');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function () { toggleMenu(false); });
+    }
+  }
+
+  // --- Live Microphone Diagnostic Engine ---
+  var audioCanvas = document.getElementById('audioCanvas');
+  var overlay = document.getElementById('audioOverlay');
+  var btnStartStop = document.getElementById('btnStartStop');
+  var btnOverlayStart = document.getElementById('btnOverlayStart');
+  var startStopText = document.getElementById('startStopText');
+  var micSelect = document.getElementById('micSelect');
+  var dbBarFill = document.getElementById('dbBarFill');
+
+  var valDb = document.getElementById('valDb');
+  var subDb = document.getElementById('subDb');
+  var valPeakDb = document.getElementById('valPeakDb');
+  var subPeakDb = document.getElementById('subPeakDb');
+  var valSampleRate = document.getElementById('valSampleRate');
+  var subSampleRate = document.getElementById('subSampleRate');
+  var valSignal = document.getElementById('valSignal');
+  var subSignal = document.getElementById('subSignal');
+  var statusText = document.getElementById('statusText');
+  var statusPulse = document.getElementById('statusPulse');
+
+  var btnRecordEcho = document.getElementById('btnRecordEcho');
+  var echoAudio = document.getElementById('echoAudio');
+
+  var audioCtx = null;
+  var analyser = null;
+  var mediaStream = null;
+  var isListening = false;
+  var animFrameId = null;
+  var peakVolume = -100;
+  var aCtx = audioCanvas.getContext('2d');
+
+  // MediaRecorder for Echo Test
+  var mediaRecorder = null;
+  var recordedChunks = [];
+
+  function resizeCanvas() {
+    var rect = audioCanvas.parentElement.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    audioCanvas.width = rect.width * dpr;
+    audioCanvas.height = rect.height * dpr;
+    aCtx.scale(dpr, dpr);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  async function listMicrophones() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+    try {
+      var devices = await navigator.mediaDevices.enumerateDevices();
+      var audioDevices = devices.filter(function (d) { return d.kind === 'audioinput'; });
+      micSelect.innerHTML = '';
+      if (audioDevices.length === 0) {
+        micSelect.innerHTML = '<option value="">Default Microphone</option>';
+        return;
+      }
+      audioDevices.forEach(function (device, index) {
+        var opt = document.createElement('option');
+        opt.value = device.deviceId;
+        opt.textContent = device.label || ('Microphone ' + (index + 1));
+        micSelect.appendChild(opt);
+      });
+    } catch (e) {
+      // Ignore enumeration errors
+    }
+  }
+
+  async function startMic(deviceId) {
+    if (isListening) stopMic();
+
+    statusText.textContent = 'Initializing audio stream...';
+    statusPulse.style.background = '#eab308';
+
+    var constraints = {
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    };
+    if (deviceId) {
+      constraints.audio.deviceId = { exact: deviceId };
+    }
+
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.8;
+
+      var source = audioCtx.createMediaStreamSource(mediaStream);
+      source.connect(analyser);
+
+      isListening = true;
+      overlay.style.display = 'none';
+      startStopText.textContent = 'Stop Mic Test';
+      btnStartStop.classList.remove('primary');
+      btnRecordEcho.disabled = false;
+      statusText.textContent = 'Microphone Sensor: Active';
+      statusPulse.style.background = '#10b981';
+
+      var sr = Math.round(audioCtx.sampleRate / 1000);
+      valSampleRate.innerHTML = sr + '<span class="metric-unit">kHz</span>';
+      subSampleRate.textContent = audioCtx.sampleRate + ' Hz Audio Clock';
+
+      await listMicrophones();
+      drawVisualizer();
+    } catch (err) {
+      statusText.textContent = 'Mic Access Denied: ' + (err.message || 'Error');
+      statusPulse.style.background = '#ef4444';
+      overlay.style.display = 'flex';
+    }
+  }
+
+  function stopMic() {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(function (t) { t.stop(); });
+      mediaStream = null;
+    }
+    if (audioCtx) {
+      audioCtx.close();
+      audioCtx = null;
+    }
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    isListening = false;
+    overlay.style.display = 'flex';
+    startStopText.textContent = 'Start Mic Test';
+    btnStartStop.classList.add('primary');
+    btnRecordEcho.disabled = true;
+    statusText.textContent = 'Microphone Sensor: Inactive';
+    statusPulse.style.background = '#eab308';
+
+    valDb.innerHTML = '—<span class="metric-unit">dB</span>';
+    subDb.textContent = 'Awaiting microphone';
+    valPeakDb.innerHTML = '—<span class="metric-unit">dB</span>';
+    subPeakDb.textContent = 'Maximum speech level';
+    valSignal.textContent = '—';
+    subSignal.textContent = 'Speech level status';
+    dbBarFill.style.width = '0%';
+  }
+
+  function drawVisualizer() {
+    if (!isListening || !analyser) return;
+
+    var bufferLength = analyser.frequencyBinCount;
+    var dataArray = new Uint8Array(bufferLength);
+    analyser.getByteFrequencyData(dataArray);
+
+    // Compute RMS amplitude in dB
+    var sum = 0;
+    for (var i = 0; i < bufferLength; i++) {
+      var amp = dataArray[i] / 255.0;
+      sum += amp * amp;
+    }
+    var rms = Math.sqrt(sum / bufferLength);
+    var db = rms > 0.0001 ? 20 * Math.log10(rms) : -60;
+    db = Math.max(-60, Math.min(0, db));
+
+    if (db > peakVolume) peakVolume = db;
+
+    // Decibel meter width calculation (scale -60dB to 0dB -> 0% to 100%)
+    var percent = ((db + 60) / 60) * 100;
+    dbBarFill.style.width = percent.toFixed(1) + '%';
+
+    valDb.innerHTML = db.toFixed(1) + '<span class="metric-unit">dB</span>';
+    valPeakDb.innerHTML = peakVolume.toFixed(1) + '<span class="metric-unit">dB</span>';
+
+    if (db > -4) {
+      valSignal.textContent = 'Clipping!';
+      subSignal.textContent = 'Input level too loud';
+      subDb.textContent = 'Distortion Danger';
+    } else if (db >= -20) {
+      valSignal.textContent = 'Optimal Voice';
+      subSignal.textContent = 'Clear for meetings';
+      subDb.textContent = 'Broadcast Standard';
+    } else if (db >= -40) {
+      valSignal.textContent = 'Quiet Speech';
+      subSignal.textContent = 'Move closer to mic';
+      subDb.textContent = 'Low volume';
+    } else {
+      valSignal.textContent = 'Room Ambience';
+      subSignal.textContent = 'Background level';
+      subDb.textContent = 'Silent/Ambient';
+    }
+
+    // Render Canvas Bars
+    var rect = audioCanvas.parentElement.getBoundingClientRect();
+    var w = rect.width;
+    var h = rect.height;
+    aCtx.clearRect(0, 0, w, h);
+
+    var barWidth = (w / bufferLength) * 2.5;
+    var barHeight;
+    var x = 0;
+
+    for (var j = 0; j < bufferLength; j++) {
+      barHeight = (dataArray[j] / 255) * h;
+
+      var grad = aCtx.createLinearGradient(0, h, 0, 0);
+      grad.addColorStop(0, '#10b981');
+      grad.addColorStop(0.7, '#00f0ff');
+      grad.addColorStop(1, '#a855f7');
+
+      aCtx.fillStyle = grad;
+      aCtx.fillRect(x, h - barHeight, barWidth - 1, barHeight);
+
+      x += barWidth;
+      if (x > w) break;
+    }
+
+    animFrameId = requestAnimationFrame(drawVisualizer);
+  }
+
+  // --- Echo Recording Test ---
+  btnRecordEcho.addEventListener('click', function () {
+    if (!mediaStream) return;
+    recordedChunks = [];
+    try {
+      mediaRecorder = new MediaRecorder(mediaStream);
+    } catch (e) {
+      alert('MediaRecorder not supported on this browser.');
+      return;
+    }
+
+    mediaRecorder.ondataavailable = function (e) {
+      if (e.data.size > 0) recordedChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = function () {
+      var blob = new Blob(recordedChunks, { type: 'audio/webm' });
+      echoAudio.src = URL.createObjectURL(blob);
+      echoAudio.style.display = 'block';
+      echoAudio.play();
+      btnRecordEcho.textContent = 'Record Echo Sample';
+      btnRecordEcho.disabled = false;
+    };
+
+    mediaRecorder.start();
+    btnRecordEcho.disabled = true;
+    var secondsLeft = 5;
+    btnRecordEcho.textContent = 'Recording (' + secondsLeft + 's)...';
+
+    var countdown = setInterval(function () {
+      secondsLeft--;
+      if (secondsLeft <= 0) {
+        clearInterval(countdown);
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+        }
+      } else {
+        btnRecordEcho.textContent = 'Recording (' + secondsLeft + 's)...';
+      }
+    }, 1000);
+  });
+
+  btnStartStop.addEventListener('click', function () {
+    if (isListening) stopMic();
+    else startMic(micSelect.value);
+  });
+
+  btnOverlayStart.addEventListener('click', function () {
+    startMic(micSelect.value);
+  });
+
+  micSelect.addEventListener('change', function () {
+    if (isListening) startMic(micSelect.value);
+  });
+
+  listMicrophones();
+})();
+</script>
+<script defer src="/va.js"></script>
+</body>
+</html>

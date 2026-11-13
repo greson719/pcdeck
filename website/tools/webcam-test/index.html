@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Webcam Test: Check Camera Resolution &amp; FPS | PCDeck</title>
+<meta name="description" content="Test your webcam online. Check real-time camera resolution (1080p, 4K), actual video FPS, aspect ratio, and lighting with a free, private browser tool.">
+<meta name="keywords" content="webcam test online, check camera resolution, webcam fps tester, test webcam 1080p, test camera for zoom, online camera diagnostic, PCDeck">
+<link rel="canonical" href="https://getpcdeck.com/tools/webcam-test/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://getpcdeck.com/tools/webcam-test/">
+<meta property="og:title" content="Online Webcam Test: Check Camera Resolution &amp; FPS | PCDeck">
+<meta property="og:description" content="Test your webcam online. Check real-time camera resolution (1080p, 4K), actual video FPS, aspect ratio, and lighting with a free, private browser tool.">
+<meta property="og:image" content="https://getpcdeck.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Online Webcam Test: Check Camera Resolution &amp; FPS | PCDeck">
+<meta name="twitter:description" content="Test your webcam online. Check real-time camera resolution (1080p, 4K), actual video FPS, aspect ratio, and lighting with a free, private browser tool.">
+<meta name="twitter:image" content="https://getpcdeck.com/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<style>
+/* Scoped Webcam Tester Styles */
+.tool-hero {
+  padding: 42px 0 24px;
+  text-align: center;
+}
+.tool-hero h1 {
+  font-size: clamp(30px, 4.5vw, 48px);
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+.tool-hero p {
+  max-width: 740px;
+  margin: 0 auto 24px;
+  color: var(--graphite);
+  font-size: 17px;
+}
+
+/* Metric Cards */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.metric-card {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+  padding: 18px 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.metric-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.metric-val {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--signal-ink);
+  line-height: 1.1;
+}
+.metric-unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 2px;
+}
+.metric-sub {
+  font-size: 12px;
+  color: var(--graphite);
+  margin-top: 4px;
+}
+
+/* Video Stage */
+.stage-wrapper {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  margin-bottom: 32px;
+}
+.stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: color-mix(in srgb, var(--paper) 60%, var(--panel));
+  border-bottom: 1px solid var(--grid);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.stage-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--graphite);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+.stage-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.camera-select {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  max-width: 200px;
+}
+.btn-tool {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-tool:hover {
+  background: var(--grid-soft);
+  border-color: var(--graphite);
+}
+.btn-tool.primary {
+  background: var(--signal);
+  color: #ffffff;
+  border-color: var(--signal);
+}
+.btn-tool.primary:hover {
+  background: var(--signal-ink);
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 520px;
+  background: #090d14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#webcamVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+#webcamVideo.mirrored {
+  transform: scaleX(-1);
+}
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9, 13, 20, 0.9);
+  color: #ffffff;
+  padding: 24px;
+  text-align: center;
+}
+.video-overlay h3 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.video-overlay p {
+  color: #94a3b8;
+  max-width: 480px;
+  margin: 0 auto 18px;
+  font-size: 15px;
+}
+
+/* Product-Led CTA Banner */
+.cta-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 30px 28px;
+  color: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+.cta-banner-text {
+  max-width: 620px;
+}
+.cta-banner-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+.cta-banner h2 {
+  font-size: 24px;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+.cta-banner p {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.cta-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: none;
+}
+.cta-btn-store {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0078d4;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+  text-decoration: none;
+}
+.cta-btn-store:hover {
+  background: #005a9e;
+  text-decoration: none;
+}
+.cta-btn-guide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+  text-decoration: none;
+}
+.cta-btn-guide:hover {
+  background: rgba(255, 255, 255, 0.15);
+  text-decoration: none;
+}
+
+/* Educational Content Section */
+.edu-section {
+  margin-bottom: 48px;
+}
+.edu-section h2 {
+  font-size: 26px;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+.edu-section h3 {
+  font-size: 20px;
+  margin: 24px 0 10px;
+  color: var(--ink);
+}
+.edu-section p {
+  color: var(--graphite);
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+.table-wrapper {
+  overflow-x: auto;
+  margin: 20px 0;
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14.5px;
+}
+.data-table th, .data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--grid);
+}
+.data-table th {
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.faq-item {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.faq-item h4 {
+  font-size: 17px;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.faq-item p {
+  margin: 0;
+  color: var(--graphite);
+  font-size: 15px;
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://getpcdeck.com/tools/webcam-test/#app",
+      "name": "PCDeck Online Webcam Tester",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "All (Web Browser)",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "url": "https://getpcdeck.com/tools/webcam-test/",
+      "featureList": "Live camera preview, real-time resolution detector (1080p/4K), actual video frame rate (FPS) counter, aspect ratio, mirror flip, and snapshot test"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PCDeck",
+          "item": "https://getpcdeck.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Tools",
+          "item": "https://getpcdeck.com/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Webcam Tester",
+          "item": "https://getpcdeck.com/tools/webcam-test/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://getpcdeck.com/tools/webcam-test/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How does this online webcam tester work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "This tool uses the browser W3C Media Capture and Streams API (navigator.mediaDevices.getUserMedia) to capture video directly from your webcam. It calculates true delivered frame rate using requestVideoFrameCallback and reads raw hardware resolution parameters from the video track."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my video private and secure?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, 100%. All video streams are processed entirely inside your local browser sandbox. No video, images, or audio are ever transmitted to or stored on any external server."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is my laptop camera only showing 720p resolution?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most Windows laptops are equipped with budget 720p (0.92 megapixel) camera sensors to fit into thin display bezels. You can achieve ultra-sharp 1080p or 4K quality by using PCDeck to stream your smartphone camera to your PC as a virtual DirectShow webcam."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is my webcam FPS lower in poor lighting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Webcams automatically lengthen their exposure time in dim environments to gather more light. When exposure exceeds 33ms, the camera can no longer sustain 30 FPS, causing video stutter."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/guides/">Guides</a>
+      <a href="/#features">What it does</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/security/">Security</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/download/">Download</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/#features" class="mob-link"><span>What it does</span><span>→</span></a>
+        <a href="/pricing/" class="mob-link"><span>Pricing</span><span>→</span></a>
+        <a href="/security/" class="mob-link"><span>Security Architecture</span><span>→</span></a>
+        <a href="/#faq" class="mob-link"><span>FAQ</span><span>→</span></a>
+        <a href="/#download" class="mob-link" style="color:var(--signal);font-weight:700;"><span>Download PCDeck</span><span>↓</span></a>
+      </div>
+
+      <div class="mobile-guides-title">Diagnostic Tools &amp; Guides</div>
+      <div class="mobile-menu-sublinks">
+        <a href="/tools/webcam-test/" class="mob-link">Webcam Tester</a>
+        <a href="/tools/touchpad-test/" class="mob-link">Touchpad Latency Tester</a>
+        <a href="/use-iphone-as-webcam-windows/" class="mob-link">Use iPhone as PC webcam</a>
+        <a href="/guides/" class="mob-link">All Guides Hub</a>
+        <a href="/use-pc-without-mouse/" class="mob-link">Use PC without a mouse</a>
+        <a href="/stream-pc-audio-to-phone/" class="mob-link">Stream audio to phone</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="shell crumbs" aria-label="Breadcrumb" style="padding-top:16px;">
+  <ol>
+    <li><a href="/">PCDeck</a></li>
+    <li><a href="/guides/">Tools</a></li>
+    <li>Webcam Tester</li>
+  </ol>
+</nav>
+
+<main class="shell" id="main">
+  <section class="tool-hero">
+    <div class="tag">Browser Hardware Diagnostic</div>
+    <h1>Online Webcam Test: Resolution &amp; FPS Benchmark</h1>
+    <p>Check your camera resolution, frame rate, aspect ratio, and lighting in real time. Private, instant, and runs 100% inside your browser.</p>
+  </section>
+
+  <!-- Metric Summary Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Resolution</div>
+      <div class="metric-val" id="valRes">—</div>
+      <div class="metric-sub" id="subRes">Awaiting camera start</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Delivered FPS</div>
+      <div class="metric-val" id="valFps">0<span class="metric-unit">fps</span></div>
+      <div class="metric-sub" id="subFps">Live frame counter</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Aspect Ratio</div>
+      <div class="metric-val" id="valRatio">—</div>
+      <div class="metric-sub" id="subRatio">Video sensor geometry</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Megapixels</div>
+      <div class="metric-val" id="valMp">0.0<span class="metric-unit">MP</span></div>
+      <div class="metric-sub" id="subMp">Calculated sensor output</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Quality Rating</div>
+      <div class="metric-val" id="valQuality">—</div>
+      <div class="metric-sub" id="subQuality">Clarity tier</div>
+    </div>
+  </div>
+
+  <!-- Interactive Camera Stage -->
+  <div class="stage-wrapper">
+    <div class="stage-header">
+      <div class="stage-title">
+        <span class="pulse-dot" id="statusPulse" style="background:#eab308;"></span>
+        <span id="statusText">Camera Sensor: Ready to start</span>
+      </div>
+      <div class="stage-controls">
+        <select class="camera-select" id="cameraSelect" aria-label="Select Camera Device">
+          <option value="">Default Camera</option>
+        </select>
+        <button class="btn-tool" id="btnMirror" type="button" aria-label="Mirror flip preview">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><line x1="21" y1="3" x2="14" y2="10"/><polyline points="9 21 3 21 3 15"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          Flip Mirror
+        </button>
+        <button class="btn-tool primary" id="btnStartStop" type="button" aria-label="Start or Stop Webcam">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span id="startStopText">Start Webcam</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="video-container" id="videoContainer">
+      <video id="webcamVideo" autoplay playsinline muted></video>
+      <div class="video-overlay" id="videoOverlay">
+        <h3>Camera Access Required</h3>
+        <p>Click "Start Webcam" above to initialize your camera sensor and benchmark resolution, frame pacing, and clarity.</p>
+        <button class="btn-tool primary" id="btnOverlayStart" type="button">
+          Start Webcam Test
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product-Led Growth Call to Action Banner -->
+  <section class="cta-banner">
+    <div class="cta-banner-text">
+      <div class="cta-banner-tag">Turn Your Phone Into a 1080p Webcam</div>
+      <h2>Camera blurry, grainy, or capped at 720p?</h2>
+      <p>Most built-in laptop webcams are cheap 720p sensors with noisy low-light performance. PCDeck lets you use your iPhone or Android phone as an ultra-sharp 1080p wireless PC webcam over local Wi-Fi for Zoom, Teams, and OBS — zero iOS or Android app install required.</p>
+    </div>
+    <div class="cta-banner-actions">
+      <a href="https://apps.microsoft.com/detail/9P4BK16LBGLS" class="cta-btn-store" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.902-1.801"/></svg>
+        Get on Microsoft Store
+      </a>
+      <a href="/use-iphone-as-webcam-windows/" class="cta-btn-guide">
+        Read Wireless Webcam Guide
+      </a>
+    </div>
+  </section>
+
+  <!-- In-Depth Technical Guide & Educational Context -->
+  <section class="edu-section">
+    <h2>Understanding Webcam Resolution (720p vs 1080p vs 4K) &amp; Frame Rates</h2>
+    <p>A webcam's video output is primarily defined by two technical metrics: <strong>pixel resolution</strong> (which governs fine image sharpness and detail) and <strong>capture frame rate</strong> (which dictates motion smoothness).</p>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Resolution Tier</th>
+            <th>Pixel Dimensions</th>
+            <th>Megapixels</th>
+            <th>Standard Usage &amp; Visual Assessment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Standard 720p HD</td>
+            <td>1280 &times; 720</td>
+            <td>0.92 MP</td>
+            <td>Default built-in laptop camera; grainy in low light, soft facial features.</td>
+          </tr>
+          <tr>
+            <td>Full HD 1080p</td>
+            <td>1920 &times; 1080</td>
+            <td>2.07 MP</td>
+            <td>Professional meeting standard; sharp text legibility and rich colors.</td>
+          </tr>
+          <tr>
+            <td>2K Quad HD</td>
+            <td>2560 &times; 1440</td>
+            <td>3.68 MP</td>
+            <td>High-end creator webcam; crisp zoom-in headroom.</td>
+          </tr>
+          <tr>
+            <td>Ultra HD 4K</td>
+            <td>3840 &times; 2160</td>
+            <td>8.29 MP</td>
+            <td>Studio broadcast grade; requires high CPU/GPU decoding power.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Why Do Built-In Laptop Webcams Look So Poor?</h3>
+    <p>Even premium $1,500+ laptops frequently feature sub-standard webcams. The primary reason is physical geometry: laptop display lids are often only 3mm to 4mm thick, forcing manufacturers to use microscopic image sensor dies (1/5" or 1/6" optical formats). These tiny sensors gather minimal light, causing heavy sensor noise, artificial smoothing, and washed-out contrast.</p>
+
+    <h3>How to Improve Webcam Quality in Windows 10 &amp; 11</h3>
+    <ol>
+      <li><strong>Position Light in Front of You:</strong> Never sit with a bright window or lamp behind your back. Front-facing soft light allows the sensor to lower exposure time and maintain stable 30 FPS.</li>
+      <li><strong>Turn Off Auto-Exposure Smoothing in Video Apps:</strong> In Zoom or Teams settings, disable aggressive digital skin smoothing, which blurs natural skin details.</li>
+      <li><strong>Use PCDeck to Upgrade Camera Quality for Free:</strong> Modern smartphones feature large 1/1.5" camera sensors with computational photography. PCDeck connects your phone to your PC over local Wi-Fi, transforming it into an HD DirectShow camera for all Windows desktop applications.</li>
+    </ol>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="edu-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-item">
+      <h4>How does this test verify camera frame rate?</h4>
+      <p>This benchmark measures actual video frames presented to the display pipeline using the W3C <code>requestVideoFrameCallback</code> API. Unlike synthetic estimates, this calculates real hardware delivery rates directly from the camera driver.</p>
+    </div>
+    <div class="faq-item">
+      <h4>Why is my 1080p webcam only delivering 720p?</h4>
+      <p>Some USB webcams default to 720p when connected to USB 2.0 ports due to USB bandwidth limitations. Plugging into a USB 3.0 (blue port) or selecting the camera explicitly in modern browsers often unlocks full 1080p output.</p>
+    </div>
+    <div class="faq-item">
+      <h4>Can I test external USB and virtual webcams?</h4>
+      <p>Yes. Any camera recognized by Windows (including integrated cameras, external USB webcams, and PCDeck virtual cameras) can be selected in the device dropdown.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="bottom">
+  <div class="shell bottom-in">
+    <div class="bottom-brand">
+      <span class="mark"><img src="/icon.png" alt="PCDeck logo" width="28" height="28"></span>
+      <div>
+        <b>PCDeck</b>
+        <p class="tag">Offline Wi-Fi Touchscreen &amp; Trackpad Suite</p>
+      </div>
+    </div>
+    <p class="bottom-links">
+      <a href="/">Home</a> · 
+      <a href="/guides/">Guides Hub</a> · 
+      <a href="/tools/webcam-test/">Webcam Tester</a> · 
+      <a href="/tools/touchpad-test/">Touchpad Tester</a> · 
+      <a href="/use-iphone-as-webcam-windows/">Phone as Webcam</a> · 
+      <a href="/pricing/">Pricing</a> · 
+      <a href="/download/">Download</a> · 
+      <a href="/security/">Security Architecture</a> · 
+      <a href="/privacy_policy.html">Privacy Policy</a>
+    </p>
+    <p class="tag">Independent software · not affiliated with Microsoft or Google</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Mobile Nav Toggle
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (toggle && menu) {
+    function toggleMenu(open) {
+      var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+      if (shouldOpen) {
+        menu.classList.add('active');
+        toggle.setAttribute('aria-expanded', 'true');
+        menu.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      } else {
+        menu.classList.remove('active');
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+    }
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleMenu();
+    });
+    menu.addEventListener('click', function (e) {
+      if (e.target === menu) toggleMenu(false);
+    });
+    var links = menu.querySelectorAll('.mob-link');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function () { toggleMenu(false); });
+    }
+  }
+
+  // --- Live Webcam Diagnostic Engine ---
+  var video = document.getElementById('webcamVideo');
+  var overlay = document.getElementById('videoOverlay');
+  var btnStartStop = document.getElementById('btnStartStop');
+  var btnOverlayStart = document.getElementById('btnOverlayStart');
+  var startStopText = document.getElementById('startStopText');
+  var btnMirror = document.getElementById('btnMirror');
+  var cameraSelect = document.getElementById('cameraSelect');
+
+  var valRes = document.getElementById('valRes');
+  var subRes = document.getElementById('subRes');
+  var valFps = document.getElementById('valFps');
+  var subFps = document.getElementById('subFps');
+  var valRatio = document.getElementById('valRatio');
+  var subRatio = document.getElementById('subRatio');
+  var valMp = document.getElementById('valMp');
+  var subMp = document.getElementById('subMp');
+  var valQuality = document.getElementById('valQuality');
+  var subQuality = document.getElementById('subQuality');
+  var statusText = document.getElementById('statusText');
+  var statusPulse = document.getElementById('statusPulse');
+
+  var currentStream = null;
+  var isStreaming = false;
+  var frameCount = 0;
+  var lastFpsTime = 0;
+  var fpsTimer = null;
+
+  async function listCameras() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+    try {
+      var devices = await navigator.mediaDevices.enumerateDevices();
+      var videoDevices = devices.filter(function (d) { return d.kind === 'videoinput'; });
+      cameraSelect.innerHTML = '';
+      if (videoDevices.length === 0) {
+        cameraSelect.innerHTML = '<option value="">Default Camera</option>';
+        return;
+      }
+      videoDevices.forEach(function (device, index) {
+        var opt = document.createElement('option');
+        opt.value = device.deviceId;
+        opt.textContent = device.label || ('Camera ' + (index + 1));
+        cameraSelect.appendChild(opt);
+      });
+    } catch (e) {
+      // Ignore enumeration errors
+    }
+  }
+
+  async function startWebcam(deviceId) {
+    if (currentStream) {
+      stopWebcam();
+    }
+    statusText.textContent = 'Requesting camera stream...';
+    statusPulse.style.background = '#eab308';
+
+    var constraints = {
+      video: {
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    };
+    if (deviceId) {
+      constraints.video.deviceId = { exact: deviceId };
+    }
+
+    try {
+      currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = currentStream;
+      isStreaming = true;
+      overlay.style.display = 'none';
+      startStopText.textContent = 'Stop Webcam';
+      btnStartStop.classList.remove('primary');
+      statusText.textContent = 'Camera Sensor: Active';
+      statusPulse.style.background = '#10b981';
+
+      await listCameras();
+
+      video.onloadedmetadata = function () {
+        updateResolutionMetrics();
+        startFpsMonitor();
+      };
+    } catch (err) {
+      statusText.textContent = 'Camera Access Denied: ' + (err.message || 'Error');
+      statusPulse.style.background = '#ef4444';
+      overlay.style.display = 'flex';
+    }
+  }
+
+  function stopWebcam() {
+    if (currentStream) {
+      currentStream.getTracks().forEach(function (t) { t.stop(); });
+      currentStream = null;
+    }
+    if (fpsTimer) {
+      cancelAnimationFrame(fpsTimer);
+      fpsTimer = null;
+    }
+    isStreaming = false;
+    video.srcObject = null;
+    overlay.style.display = 'flex';
+    startStopText.textContent = 'Start Webcam';
+    btnStartStop.classList.add('primary');
+    statusText.textContent = 'Camera Sensor: Inactive';
+    statusPulse.style.background = '#eab308';
+
+    valRes.textContent = '—';
+    subRes.textContent = 'Awaiting camera start';
+    valFps.innerHTML = '0<span class="metric-unit">fps</span>';
+    subFps.textContent = 'Live frame counter';
+    valRatio.textContent = '—';
+    subRatio.textContent = 'Video sensor geometry';
+    valMp.innerHTML = '0.0<span class="metric-unit">MP</span>';
+    subMp.textContent = 'Calculated sensor output';
+    valQuality.textContent = '—';
+    subQuality.textContent = 'Clarity tier';
+  }
+
+  function updateResolutionMetrics() {
+    var w = video.videoWidth;
+    var h = video.videoHeight;
+    if (!w || !h) return;
+
+    valRes.textContent = w + ' × ' + h;
+    var mp = ((w * h) / 1000000).toFixed(2);
+    valMp.innerHTML = mp + '<span class="metric-unit">MP</span>';
+
+    // Aspect Ratio
+    var gcd = function (a, b) { return b === 0 ? a : gcd(b, a % b); };
+    var div = gcd(w, h);
+    var rW = w / div;
+    var rH = h / div;
+    if (rW === 16 && rH === 9) {
+      valRatio.textContent = '16:9';
+      subRatio.textContent = 'Widescreen Standard';
+    } else if (rW === 4 && rH === 3) {
+      valRatio.textContent = '4:3';
+      subRatio.textContent = 'Standard TV/Monitor';
+    } else {
+      valRatio.textContent = (w / h).toFixed(2) + ':1';
+      subRatio.textContent = 'Aspect Ratio';
+    }
+
+    // Quality Rating
+    if (w >= 3840) {
+      valQuality.textContent = '4K UHD';
+      subQuality.textContent = 'Broadcast Grade';
+      subRes.textContent = 'Ultra HD 4K';
+    } else if (w >= 1920) {
+      valQuality.textContent = '1080p FHD';
+      subQuality.textContent = 'Professional Standard';
+      subRes.textContent = 'Full High Definition';
+    } else if (w >= 1280) {
+      valQuality.textContent = '720p HD';
+      subQuality.textContent = 'Standard Laptop Quality';
+      subRes.textContent = 'High Definition';
+    } else {
+      valQuality.textContent = 'SD Video';
+      subQuality.textContent = 'Low Resolution';
+      subRes.textContent = 'Standard Definition';
+    }
+  }
+
+  function startFpsMonitor() {
+    frameCount = 0;
+    lastFpsTime = performance.now();
+
+    function onFrame() {
+      if (!isStreaming) return;
+      frameCount++;
+      var now = performance.now();
+      var elapsed = now - lastFpsTime;
+
+      if (elapsed >= 1000) {
+        var currentFps = Math.round((frameCount * 1000) / elapsed);
+        valFps.innerHTML = currentFps + '<span class="metric-unit">fps</span>';
+        if (currentFps >= 50) {
+          subFps.textContent = 'Ultra Smooth (60 FPS)';
+        } else if (currentFps >= 25) {
+          subFps.textContent = 'Smooth Real-Time (30 FPS)';
+        } else {
+          subFps.textContent = 'Low Frame Delivery';
+        }
+        frameCount = 0;
+        lastFpsTime = now;
+      }
+
+      if ('requestVideoFrameCallback' in video) {
+        video.requestVideoFrameCallback(onFrame);
+      } else {
+        fpsTimer = requestAnimationFrame(onFrame);
+      }
+    }
+
+    if ('requestVideoFrameCallback' in video) {
+      video.requestVideoFrameCallback(onFrame);
+    } else {
+      fpsTimer = requestAnimationFrame(onFrame);
+    }
+  }
+
+  btnStartStop.addEventListener('click', function () {
+    if (isStreaming) {
+      stopWebcam();
+    } else {
+      startWebcam(cameraSelect.value);
+    }
+  });
+
+  btnOverlayStart.addEventListener('click', function () {
+    startWebcam(cameraSelect.value);
+  });
+
+  cameraSelect.addEventListener('change', function () {
+    if (isStreaming) {
+      startWebcam(cameraSelect.value);
+    }
+  });
+
+  btnMirror.addEventListener('click', function () {
+    video.classList.toggle('mirrored');
+  });
+
+  listCameras();
+})();
+</script>
+<script defer src="/va.js"></script>
+</body>
+</html>
