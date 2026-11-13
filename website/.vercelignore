@@ -36,7 +36,10 @@ build_android/
 msstore_assets/
 playstore_assets/
 scrcpy_bin/
-tools/
+tools/*.py
+tools/*.ps1
+tools/*.sh
+tools/__pycache__/
 scratch/
 .agents/
 .claude/
