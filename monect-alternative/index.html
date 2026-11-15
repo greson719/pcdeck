@@ -96,7 +96,7 @@
           "name": "Why look for an alternative to Monect PC Remote?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Monect requires installing virtual gamepad drivers (ViGEmBus/vJoy) that require administrator rights and system reboots. For users who simply want a fast trackpad, keyboard, or media controller, Monect feels bloated and intrusive. PCDeck requires zero drivers and zero reboots."
+            "text": "Monect requires installing virtual gamepad drivers (ViGEmBus/vJoy) that require administrator rights and system reboots. For users who simply want a fast trackpad, keyboard, or media controller, Monect feels bloated and intrusive. PCDeck requires zero drivers for core trackpad, keyboard, webcam, audio, and screen mirroring (optional ViGEmBus only if you choose to emulate a virtual Xbox controller)."
           }
         },
         {
@@ -104,7 +104,7 @@
           "name": "Does PCDeck require kernel drivers or system reboots?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. PCDeck uses standard Windows user-space input APIs. It requires no driver installations, no administrator privileges, and no reboot."
+            "text": "No. PCDeck uses standard Windows user-space input APIs for core trackpad, keyboard, webcam, and audio streaming. Zero drivers or reboots are required (optional ViGEmBus is only used if you choose to enable virtual Xbox gamepad emulation)."
           }
         }
       ]
@@ -158,6 +158,7 @@
     </a>
     <nav class="top-nav" aria-label="Main navigation">
       <a href="/guides/">Guides</a>
+      <a href="/pricing/">Pricing</a>
       <a href="/download/">Download</a>
       <a href="/security/">Security</a>
       <a href="/#features">Features</a>
@@ -174,6 +175,7 @@
   <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
     <div class="mobile-menu-panel">
       <div class="mobile-menu-links">
+        <a href="/pricing/" class="mob-link"><span>Pricing ($3.99 Pro)</span><span>&rarr;</span></a>
         <a href="/">Home</a>
         <a href="/download/">Download</a>
         <a href="/guides/">Guides Hub</a>
@@ -213,7 +215,7 @@
     <div class="direct-answer" style="margin-top:36px;">
       <span class="tag">Why Switch to PCDeck?</span>
       <p>
-        <strong>Skip complex driver installations and PC reboots.</strong> Monect requires kernel-level gamepad drivers (ViGEmBus). <strong>PCDeck is designed for clean desktop productivity and emergency control</strong>: it runs as a lightweight, driverless standalone executable, serving an instant multi-touch trackpad directly to Safari or Chrome via QR scan.
+        <strong>Skip complex driver installations and PC reboots.</strong> Monect mandates kernel-level gamepad drivers before basic use. <strong>PCDeck requires zero drivers</strong> for core trackpad, keyboard, webcam, audio, and screen mirroring (optional ViGEmBus only if you enable virtual Xbox gamepad emulation). It runs as a lightweight standalone executable, serving an instant multi-touch trackpad directly to Safari or Chrome via QR scan.
       </p>
     </div>
 
@@ -354,7 +356,7 @@
       <h2>The 3 Reasons Users Prefer PCDeck</h2>
       <h3>1. Zero Driver Installations &amp; No Reboots</h3>
       <p>
-        Monect installs kernel-level virtual input drivers that can conflict with other USB peripherals and require a full computer restart. PCDeck runs entirely in user space with zero third-party drivers.
+        Monect installs kernel-level virtual input drivers that can conflict with other USB peripherals and require a full computer restart. PCDeck requires zero drivers for core trackpad, keyboard, audio, and webcam streaming (optional ViGEmBus only if you enable virtual Xbox gamepad emulation).
       </p>
 
       <h3>2. No Mobile App Download</h3>
@@ -425,6 +427,7 @@
   <div class="shell foot">
     <p>&copy; 2026 PCDeck. Free, ad-free, local-network PC remote.</p>
     <div style="display:flex;gap:18px;flex-wrap:wrap;">
+      <a href="/pricing/">Pricing ($3.99 Pro)</a> · 
       <a href="/download/">Download</a>
       <a href="/guides/">All Guides</a>
       <a href="/remote-mouse-alternative/">Remote Mouse Alternative</a>
