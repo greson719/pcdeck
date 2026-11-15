@@ -118,13 +118,13 @@ SYSTEM REQUIREMENTS
 ### 5. SEARCH TERMS / KEYWORDS (7 Exact Partner Center Tags)
 *Microsoft Partner Center allows up to 7 search phrases (max 40 chars each). These target the highest-intent real searches on the Microsoft Store:*
 ```text
-1. remote mouse
-2. wireless trackpad
-3. pc remote
-4. phone webcam
-5. screen mirror
-6. wireless keyboard
-7. wifi file transfer
+1. iphone webcam windows 11
+2. phone as mouse
+3. wireless trackpad
+4. remote mouse
+5. steam deck remote
+6. stream pc audio to phone
+7. wireless keyboard
 ```
 
 ---

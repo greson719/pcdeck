@@ -136,15 +136,15 @@ SYSTEM REQUIREMENTS
 • 100% local peer-to-peer connection — no accounts, no cloud, no telemetry
 ```
 
-###  Search Terms / Keywords (7 Exact Phrases)
+### Search Terms / Keywords (7 Exact Phrases)
 ```text
-1. remote mouse
-2. wireless trackpad
-3. pc remote
-4. phone webcam
-5. screen mirror
-6. wireless keyboard
-7. wifi file transfer
+1. iphone webcam windows 11
+2. phone as mouse
+3. wireless trackpad
+4. remote mouse
+5. steam deck remote
+6. stream pc audio to phone
+7. wireless keyboard
 ```
 
 ---

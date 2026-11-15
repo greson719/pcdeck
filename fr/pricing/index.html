@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="fr" prefix="og: https://ogp.me/ns#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCDeck Tarifs — Gratuit à Vie + Option Pro à 3,99 $</title>
+<meta name="description" content="Tarification simple et honnête. Les fonctionnalités de base sont 100% gratuites et sans publicité. Option Pro à 3,99 $ en paiement unique à vie, sans abonnement.">
+<meta name="keywords" content="PCDeck tarifs, PCDeck prix, PCDeck pro, telecommande pc gratuit, pave tactile smartphone windows prix">
+<link rel="canonical" href="https://getpcdeck.com/fr/pricing/">
+<link rel="alternate" hreflang="x-default" href="https://getpcdeck.com/pricing/">
+<link rel="alternate" hreflang="en" href="https://getpcdeck.com/pricing/">
+<link rel="alternate" hreflang="de" href="https://getpcdeck.com/de/pricing/">
+<link rel="alternate" hreflang="fr" href="https://getpcdeck.com/fr/pricing/">
+<link rel="alternate" hreflang="es" href="https://getpcdeck.com/es/pricing/">
+<link rel="alternate" hreflang="pt" href="https://getpcdeck.com/pt/pricing/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="PCDeck">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PCDeck">
+<meta property="og:url" content="https://getpcdeck.com/fr/pricing/">
+<meta property="og:title" content="PCDeck Tarifs — Gratuit à Vie + Option Pro à 3,99 $">
+<meta property="og:description" content="Tarification simple et transparente. Base 100% gratuite. Option Pro à 3,99 $ en achat unique sans abonnement.">
+<meta property="og:image" content="https://getpcdeck.com/og-image.png">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PCDeck Tarifs — Gratuit à Vie + Option Pro à 3,99 $">
+<meta name="twitter:description" content="Tarifs clairs. Fonctions essentielles gratuites. Pro à 3,99 $ à vie.">
+<meta name="twitter:image" content="https://getpcdeck.com/og-image.png">
+
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<link rel="apple-touch-icon" href="/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guide.css">
+
+<style>
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin: 40px 0;
+}
+.pricing-card {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  padding: 36px 30px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.pricing-card.featured {
+  border: 2px solid var(--signal);
+  box-shadow: 0 12px 30px rgba(27, 68, 216, 0.08);
+}
+.pricing-badge {
+  position: absolute;
+  top: -12px;
+  right: 24px;
+  background: var(--signal);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.plan-name {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.plan-sub {
+  color: var(--graphite);
+  font-size: 14.5px;
+  margin-bottom: 24px;
+}
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--grid-soft);
+}
+.plan-price .amount {
+  font-family: var(--display);
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.plan-price .term {
+  color: var(--muted);
+  font-size: 14.5px;
+  font-family: var(--mono);
+}
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+.plan-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.45;
+}
+.plan-features li svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--signal);
+  margin-top: 2px;
+}
+.btn-block {
+  display: block;
+  text-align: center;
+  padding: 13px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 15px;
+}
+.btn-primary {
+  background: var(--signal);
+  color: #fff;
+  border: 1px solid var(--signal-ink);
+}
+.btn-primary:hover {
+  background: var(--signal-ink);
+  text-decoration: none;
+}
+.btn-secondary {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--grid);
+}
+.btn-secondary:hover {
+  background: var(--grid-soft);
+  text-decoration: none;
+}
+.comparison-wrap {
+  margin: 60px 0;
+  overflow-x: auto;
+}
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  font-size: 15px;
+}
+.comparison-table th, .comparison-table td {
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--grid-soft);
+}
+.comparison-table th {
+  background: var(--paper);
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.comparison-table th:nth-child(2),
+.comparison-table th:nth-child(3),
+.comparison-table td:nth-child(2),
+.comparison-table td:nth-child(3) {
+  text-align: center;
+  width: 180px;
+}
+.faq-wrap {
+  margin: 60px 0;
+}
+.faq-item {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+}
+.faq-item h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.faq-item p {
+  color: var(--graphite);
+  margin: 0;
+  font-size: 15px;
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://getpcdeck.com/fr/pricing/#software",
+      "name": "PCDeck",
+      "image": "https://getpcdeck.com/og-image.png",
+      "description": "Pavé tactile PC sans fil, clavier, miroir d'écran 60/120 FPS et streaming audio.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Windows 10, Windows 11 (64-bit), Linux, Android, iOS",
+      "softwareVersion": "2.8.0",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "PCDeck Core",
+          "price": "0",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://getpcdeck.com/fr/pricing/"
+        },
+        {
+          "@type": "Offer",
+          "name": "PCDeck Pro Lifetime",
+          "price": "3.99",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": "https://getpcdeck.com/fr/pricing/"
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Aller au contenu</a>
+
+<header class="top">
+  <div class="shell top-in">
+    <a class="brand" href="/fr/">
+      <span class="mark"><img src="/icon.png" alt="PCDeck Icon" width="30" height="30"></span>
+      <b>PCDeck</b>
+    </a>
+    <nav class="top-nav">
+      <a href="/fr/">Accueil</a>
+      <a href="/fr/pricing/">Tarifs</a>
+      <a href="/guides/">Guides</a>
+      <a href="/security/">Sécurité</a>
+      <a href="/download/windows/">Télécharger</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn sm" href="/download/windows/">Télécharger</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Basculer le menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-menu-links">
+        <a href="/fr/" class="mob-link">Accueil</a>
+        <a href="/fr/pricing/" class="mob-link">Tarifs ($3.99 Pro)</a>
+        <a href="/guides/" class="mob-link">Guides</a>
+        <a href="/download/windows/" class="mob-link">Télécharger pour Windows</a>
+        <a href="/pricing/" class="mob-link">Version Anglaise</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="shell">
+    <div style="text-align: center; max-width: 680px; margin: 48px auto 0;">
+      <span class="eyebrow" style="text-transform: uppercase; letter-spacing: .08em; font-family: var(--mono); font-size: 12px; color: var(--signal); font-weight: 600;">Tarification Simple et Honnête</span>
+      <h1 style="font-size: clamp(32px, 5vw, 48px); margin: 12px 0 16px; letter-spacing: -0.03em;">Gratuit à vie. Option Pro à 3,99 $.</h1>
+      <p style="font-size: 18px; color: var(--graphite); line-height: 1.55;">Toutes les fonctions essentielles de contrôle à distance sont 100% gratuites et sans publicité. Débloquez PCDeck Pro avec un paiement unique sans aucun abonnement récurrent.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Free Core -->
+      <div class="pricing-card">
+        <h2 class="plan-name">PCDeck Core</h2>
+        <div class="plan-sub">Télécommande gratuite pour une utilisation quotidienne</div>
+        <div class="plan-price">
+          <span class="amount">0 $</span>
+          <span class="term">/ Gratuit pour toujours</span>
+        </div>
+        <ul class="plan-features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Pavé tactile multi-touch avec gestes
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Clavier virtuel avec raccourcis Windows
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Webcam iPhone standard 720p HD (Sans filigrane)
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Miroir d'écran fluide à 30 FPS
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Audio PC sans fil vers écouteurs
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            100% sans pub ni compte obligatoire
+          </li>
+        </ul>
+        <a class="btn-block btn-secondary" href="/download/windows/">Télécharger gratuitement</a>
+      </div>
+
+      <!-- Lifetime Pro -->
+      <div class="pricing-card featured">
+        <span class="pricing-badge">Licence à Vie</span>
+        <h2 class="plan-name">PCDeck Pro</h2>
+        <div class="plan-sub">Pour le streaming, les joueurs et les utilisateurs avancés</div>
+        <div class="plan-price">
+          <span class="amount">3,99 $</span>
+          <span class="term">/ Achat unique (Sans abonnement)</span>
+        </div>
+        <ul class="plan-features">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <strong>Tout ce qui est inclus dans PCDeck Core</strong>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <strong>Webcam Studio 1080p 60 FPS</strong> pour Zoom, Teams &amp; OBS
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <strong>Miroir d'écran 60 &amp; 120 FPS</strong> pour un affichage ultra-fluide
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Mappage personnalisé des touches tactiles (HUD)
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Vitesse gigabit pour les transferts de fichiers Wi-Fi
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Thèmes personnalisés (Frutiger Aero, OLED Dark, Retro CRT)
+          </li>
+        </ul>
+        <a class="btn-block btn-primary" href="https://checkout.dodopayments.com/buy/pdt_49Lp150c9hFf0Qf7LSpvj?quantity=1" target="_blank" rel="noopener">Débloquer Pro à vie (3,99 $)</a>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="comparison-wrap">
+      <h2 style="font-size: 24px; margin-bottom: 20px;">Comparatif Détaillé</h2>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Fonctionnalité</th>
+            <th>PCDeck Core</th>
+            <th>PCDeck Pro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Prix</td>
+            <td><strong>0 $ (Gratuit)</strong></td>
+            <td><strong>3,99 $ unique</strong></td>
+          </tr>
+          <tr>
+            <td>Pavé tactile et clavier</td>
+            <td>Complet</td>
+            <td>Complet</td>
+          </tr>
+          <tr>
+            <td>Résolution Webcam iPhone</td>
+            <td>720p HD (Sans filigrane)</td>
+            <td>1080p 60 FPS Studio</td>
+          </tr>
+          <tr>
+            <td>Fréquence miroir d'écran</td>
+            <td>30 FPS</td>
+            <td>60 FPS / 120 FPS Ultra-fluide</td>
+          </tr>
+          <tr>
+            <td>Vitesse de transfert de fichiers</td>
+            <td>Standard</td>
+            <td>Gigabit Illimité</td>
+          </tr>
+          <tr>
+            <td>Compte cloud requis</td>
+            <td>Jamais</td>
+            <td>Jamais</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-wrap">
+      <h2>Questions Fréquentes</h2>
+      <div style="margin-top: 24px;">
+        <div class="faq-item">
+          <h3>PCDeck Core est-il réellement gratuit ?</h3>
+          <p>Oui. Toutes les fonctions de base (trackpad, clavier, streaming d'écran 30 FPS, audio et webcam) sont gratuites pour toujours, sans publicité et sans pistage.</p>
+        </div>
+        <div class="faq-item">
+          <h3>PCDeck Pro est-il un abonnement ?</h3>
+          <p>Non. PCDeck Pro est un paiement unique de 3,99 $. Vous possédez la licence à vie sans aucun frais mensuel ou annuel.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Comment activer PCDeck Pro ?</h3>
+          <p>Après le paiement sur Dodo Payments, vous recevez une clé d'activation à coller directement dans l'application pour débloquer immédiatement le 60/120 FPS et le 1080p.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="shell foot-in">
+    <div class="foot-col">
+      <div class="foot-brand">
+        <span class="mark"><img src="/icon.png" alt="PCDeck" width="24" height="24"></span>
+        <b>PCDeck</b>
+      </div>
+      <p class="foot-desc">Pavé tactile, clavier et contrôle à distance hors ligne pour Windows 10 &amp; 11.</p>
+    </div>
+    <div class="foot-nav">
+      <div>
+        <div class="foot-head">Produit</div>
+        <a href="/fr/">Accueil</a>
+        <a href="/fr/pricing/">Tarifs</a>
+        <a href="/download/windows/">Télécharger</a>
+        <a href="/security/">Sécurité</a>
+      </div>
+      <div>
+        <div class="foot-head">Guides</div>
+        <a href="/guides/">Tous les guides</a>
+        <a href="/use-pc-without-mouse/">PC sans souris</a>
+        <a href="/use-iphone-as-webcam-windows/">iPhone comme webcam</a>
+        <a href="/stream-pc-audio-to-phone/">Audio PC sur smartphone</a>
+      </div>
+      <div>
+        <div class="foot-head">Légal</div>
+        <a href="/privacy_policy.html">Confidentialité</a>
+        <a href="https://github.com/greson719/pcdeck">GitHub</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var toggle = document.getElementById('nav-toggle');
+  var menu = document.getElementById('mobile-menu');
+  if (!toggle || !menu) return;
+
+  function toggleMenu(open) {
+    var shouldOpen = typeof open === 'boolean' ? open : !menu.classList.contains('active');
+    if (shouldOpen) {
+      menu.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    } else {
+      menu.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menu.addEventListener('click', function (e) {
+    if (e.target === menu) toggleMenu(false);
+  });
+
+  var links = menu.querySelectorAll('.mob-link');
+  for (var i = 0; i < links.length; i++) {
+    links[i].addEventListener('click', function () { toggleMenu(false); });
+  }
+})();
+</script>
+<script defer src="/va.js"></script>
+</body>
+</html>
