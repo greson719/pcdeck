@@ -4,11 +4,14 @@ This kit provides ready-to-use listing descriptions, community forum posts, and 
 
 ---
 
-## 1. AlternativeTo.net Listing Kit
+## 1. Directory Listings (AlternativeTo & SaaSHub — Already Submitted)
+
+PCDeck is already submitted and tracked on **AlternativeTo** and **SaaSHub**. Below are the canonical details for reference or updates:
 
 - **Name:** PCDeck
-- **URL:** `https://getpcdeck.com/`
-- **License:** Free / Freemium ($3.99 Lifetime Pro)
+- **Website:** `https://getpcdeck.com/`
+- **Pricing:** Free Core ($0) + Lifetime Pro ($3.99 one-time via Dodo Payments)
+- **Status:** Already submitted to AlternativeTo and SaaSHub.
 - **Platforms:** Windows (10/11), Linux, Android, Web / Browser (iOS Safari, Android Chrome)
 - **Tagline:** Free browser-based PC remote, wireless trackpad, 1080p webcam, and audio streamer.
 - **Competitors to tag against:**
