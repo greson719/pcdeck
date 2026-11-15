@@ -2086,26 +2086,8 @@
     <!-- ================= TAB 5: MEDIA, MIC & WEBCAM ================= -->
     <section id="tab-media" class="tab-view">
       <div class="scroll-container">
-        <!-- Web Browser Exclusive Recommendation (Visible ONLY on web browser) -->
-        <div class="neo-card web-only-feature" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none; padding: 14px 16px; margin-bottom: 12px; background: rgba(0, 240, 255, 0.05);">
-          <div class="card-header-clean" style="margin-bottom: 6px;">
-            <div class="card-title-wrap">
-              <span class="card-dot dot-cyan"></span>
-              <span class="card-title-text">Hardware Tools</span>
-            </div>
-            <span class="mini-status-chip" style="background: rgba(0, 240, 255, 0.15); color: var(--neo-cyan); border-color: var(--neo-cyan);">APP EXCLUSIVE</span>
-          </div>
-          <p style="font-size: 0.74rem; color: #a0aec0; margin: 4px 0 12px 0; line-height: 1.4;">
-            Hardware low-latency Microphone, Webcam, and Gamepad streaming require direct hardware access via the native PCDeck Android App (browsers restrict HTTP hardware access).
-          </p>
-          <a href="/PCDeck.apk" download="PCDeck.apk" class="neo-btn btn-cyan" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; font-size: 0.8rem;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>DOWNLOAD PCDECK APP (1.5 MB)</span>
-          </a>
-        </div>
-
         <!-- ================= MICROPHONE CARD ================= -->
-        <div id="mic-panel-card" class="neo-card native-only-feature" style="border-color: rgba(57, 255, 20, 0.4); box-shadow: none;">
+        <div id="mic-panel-card" class="neo-card" style="border-color: rgba(57, 255, 20, 0.4); box-shadow: none;">
           <div class="card-header-clean">
             <div class="card-title-wrap">
               <span class="card-dot dot-lime"></span>
@@ -2146,7 +2128,7 @@
         </div>
 
         <!-- ================= CAMERA CARD ================= -->
-        <div id="cam-panel-card" class="neo-card native-only-feature" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
+        <div id="cam-panel-card" class="neo-card" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
           <div class="card-header-clean">
             <div class="card-title-wrap">
               <span class="card-dot dot-cyan"></span>
@@ -2383,6 +2365,24 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Android Native APK Alternative (Auto-hidden on iOS devices) -->
+        <div id="card-android-apk-promo" class="neo-card web-only-feature" style="border-color: rgba(57, 255, 20, 0.3); box-shadow: none; padding: 14px 16px; margin-top: 12px; background: rgba(57, 255, 20, 0.04);">
+          <div class="card-header-clean" style="margin-bottom: 6px;">
+            <div class="card-title-wrap">
+              <span class="card-dot dot-lime"></span>
+              <span class="card-title-text">Prefer Zero-Setup Native App?</span>
+            </div>
+            <span class="mini-status-chip" style="background: rgba(57, 255, 20, 0.15); color: var(--neo-lime); border-color: var(--neo-lime);">ANDROID APK</span>
+          </div>
+          <p style="font-size: 0.74rem; color: #a0aec0; margin: 4px 0 12px 0; line-height: 1.4;">
+            Using an Android device? The native PCDeck APK provides direct 40ms WASAPI microphone audio and hardware camera capture with zero browser security prompts.
+          </p>
+          <a href="/PCDeck.apk" download="PCDeck.apk" class="neo-btn btn-lime" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; font-size: 0.8rem; color: #000;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>DOWNLOAD ANDROID APK (1.5 MB)</span>
+          </a>
         </div>
       </div>
     </section>
@@ -3485,6 +3485,62 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- ================= SECURE BROWSER CAMERA & MIC SETUP MODAL ================= -->
+  <div id="modal-browser-ssl-guide" class="modal-backdrop" style="display: none; z-index: 10001;">
+    <div class="modal-card" style="max-width: 420px; border-color: var(--neo-cyan); box-shadow: 8px 8px 0px var(--neo-cyan); padding: 20px; text-align: left;">
+      <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="card-dot dot-cyan"></span>
+          <span style="font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--neo-cyan);">Enable Camera &amp; Mic</span>
+        </div>
+        <button type="button" id="btn-close-ssl-modal" class="neo-btn btn-dark" style="padding: 2px 8px; font-size: 0.75rem; height: 26px;">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 0; gap: 12px;">
+        <div style="background: rgba(0, 240, 255, 0.08); border: 1.5px solid rgba(0, 240, 255, 0.3); border-radius: 8px; padding: 10px 12px;">
+          <p style="font-size: 0.78rem; color: #e2e8f0; margin: 0; line-height: 1.45;">
+            Mobile browsers (Safari / Chrome) require a <strong>Secure Connection (HTTPS)</strong> to stream your phone's camera &amp; microphone to your PC.
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin: 4px 0;">
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <span style="background: var(--neo-cyan); color: #000; font-weight: 900; font-size: 0.72rem; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</span>
+            <div style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.35;">
+              Tap <strong>Switch to Secure HTTPS</strong> below.
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <span style="background: var(--neo-cyan); color: #000; font-weight: 900; font-size: 0.72rem; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</span>
+            <div style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.35;">
+              Safari/Chrome shows a normal local Wi-Fi check: <em>“Connection Not Private”</em>.<br>
+              Tap <strong>Show Details</strong> &rarr; <strong>visit this website</strong>.
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <span style="background: var(--neo-cyan); color: #000; font-weight: 900; font-size: 0.72rem; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</span>
+            <div style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.35;">
+              Tap <strong>Allow</strong> when prompted for Camera. Broadcast starts!
+            </div>
+          </div>
+        </div>
+
+        <a id="btn-modal-switch-https" href="#" class="neo-btn btn-cyan" style="width: 100%; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; font-size: 0.85rem; padding: 12px; margin-top: 4px;">
+          <svg class="deck-icon" width="16" height="16"><use href="#icon-lock"/></svg>
+          <span>SWITCH TO SECURE HTTPS</span>
+        </a>
+
+        <div id="modal-android-hint" style="margin-top: 6px; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; display: none;">
+          <span style="font-size: 0.72rem; color: #94a3b8;">On Android? </span>
+          <a href="/PCDeck.apk" download="PCDeck.apk" style="font-size: 0.72rem; color: var(--neo-lime); font-weight: 700; text-decoration: underline;">
+            Download Android APK (1.5 MB)
+          </a>
+          <span style="font-size: 0.72rem; color: #94a3b8;"> for zero-setup native hardware access.</span>
+        </div>
+      </div>
     </div>
   </div>
 

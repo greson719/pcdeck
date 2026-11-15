@@ -515,8 +515,10 @@ def get_local_ip() -> str:
 
 LOCAL_IP = get_local_ip()
 SERVER_PORT = 8000
+SERVER_SSL_PORT = 8443
 SERVER_VERSION = "2.8.0"
 SERVER_URL = f"http://{LOCAL_IP}:{SERVER_PORT}"
+SERVER_SSL_URL = f"https://{LOCAL_IP}:{SERVER_SSL_PORT}"
 
 # ---------------------------------------------------------------------------
 # Silent Pairing Token & Zero-Trust Local Security
@@ -1079,6 +1081,7 @@ async def get_ping(request: Request):
         "name": socket.gethostname(),
         "ip": live_ip,
         "port": SERVER_PORT,
+        "ssl_port": SERVER_SSL_PORT,
         "version": SERVER_VERSION,
         "token": get_pairing_token() if origin_ok else "",
         "pro_active": is_pro_client(),
@@ -1097,7 +1100,9 @@ async def get_info():
         "name": socket.gethostname(),
         "ip": live_ip,
         "port": SERVER_PORT,
+        "ssl_port": SERVER_SSL_PORT,
         "url": f"http://{live_ip}:{SERVER_PORT}",
+        "ssl_url": f"https://{live_ip}:{SERVER_SSL_PORT}",
         "token": get_pairing_token(),
         "transfer_dir": TRANSFER_DIR,
         "clients_connected": get_unique_client_count(),
@@ -3852,6 +3857,35 @@ def elevate_if_needed():
 def run_server():
     # elevate_if_needed()  # Run directly without UAC prompt to match gui.py
     banner()
+    try:
+        from server.cert_manager import get_or_create_ssl_cert
+        cert_path, key_path = get_or_create_ssl_cert(primary_ip=LOCAL_IP)
+        if cert_path and key_path:
+            def _run_ssl():
+                try:
+                    ssl_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(ssl_loop)
+                    ssl_cfg = Config(
+                        app=app,
+                        host="0.0.0.0",
+                        port=SERVER_SSL_PORT,
+                        ssl_keyfile=key_path,
+                        ssl_certfile=cert_path,
+                        log_level="error",
+                        access_log=False,
+                        loop="asyncio",
+                        ws_ping_interval=10.0,
+                        ws_ping_timeout=10.0,
+                    )
+                    Server(ssl_cfg).run()
+                except Exception as e:
+                    print(f"[SSL Server] Notice: {e}", flush=True)
+
+            threading.Thread(target=_run_ssl, daemon=True).start()
+            print(f"[SSL Server] HTTPS server active on port {SERVER_SSL_PORT}", flush=True)
+    except Exception as e:
+        print(f"[SSL Server] SSL init skipped: {e}", flush=True)
+
     config = Config(
         app=app,
         host="0.0.0.0",

@@ -43,6 +43,8 @@ def build():
         "--exclude-module", "PIL._avif",
         "--hidden-import", "server.gui",
         "--hidden-import", "server.main",
+        "--hidden-import", "server.cert_manager",
+        "--hidden-import", "cryptography",
         "--hidden-import", "server.binary_protocol",
         "--hidden-import", "server.license_manager",
         "--hidden-import", "server.screen_streamer",

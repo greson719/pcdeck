@@ -13126,18 +13126,14 @@ body[data-theme="lime"] #btn-air-mouse.active {
    🌐 WEB BROWSER VS NATIVE APP CONDITIONAL VISIBILITY
    ==========================================================================
    HUD and Gamepad are Android APK only — strictly hidden in web control.
-   Mic/Cam hardware features are also native-only.
+   Mic/Cam hardware features are available in both Native APK and Secure Browsers (HTTPS).
    ========================================================================== */
-html.is-web-browser .native-only-feature,
-body.is-web-browser .native-only-feature,
-html.is-web-browser #btn-quick-mic-toggle,
-body.is-web-browser #btn-quick-mic-toggle,
-html.is-web-browser #btn-quick-cam-toggle,
-body.is-web-browser #btn-quick-cam-toggle,
-html.is-web-browser #mic-panel-card,
-body.is-web-browser #mic-panel-card,
-html.is-web-browser #cam-panel-card,
-body.is-web-browser #cam-panel-card {
+html.is-web-browser .native-only-feature.gamepad-feature,
+body.is-web-browser .native-only-feature.gamepad-feature,
+html.is-web-browser #btn-screen-hud-fab,
+body.is-web-browser #btn-screen-hud-fab,
+html.is-web-browser #setting-row-gamepad-hud,
+body.is-web-browser #setting-row-gamepad-hud {
   display: none !important;
 }
 

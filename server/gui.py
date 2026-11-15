@@ -778,6 +778,7 @@ try:
     from server.main import (
         LOCAL_IP,
         SERVER_PORT,
+        SERVER_SSL_PORT,
         SERVER_URL,
         TRANSFER_DIR,
         app,
@@ -799,6 +800,7 @@ except ImportError:
     from main import (
         LOCAL_IP,
         SERVER_PORT,
+        SERVER_SSL_PORT,
         SERVER_URL,
         TRANSFER_DIR,
         app,
@@ -4281,6 +4283,39 @@ class PCDeckProGUI:
         self.is_running = True
         self.server_thread = threading.Thread(target=run_uvicorn, daemon=True)
         self.server_thread.start()
+
+        def run_uvicorn_ssl():
+            try:
+                from server.cert_manager import get_or_create_ssl_cert
+                cur_ip = getattr(self, "current_ip", LOCAL_IP)
+                cert_path, key_path = get_or_create_ssl_cert(primary_ip=cur_ip)
+                if not cert_path or not key_path:
+                    return
+                import asyncio
+                ssl_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(ssl_loop)
+                ssl_config = uvicorn.Config(
+                    app=app,
+                    host="0.0.0.0",
+                    port=SERVER_SSL_PORT,
+                    ssl_keyfile=key_path,
+                    ssl_certfile=cert_path,
+                    log_level="error",
+                    access_log=False,
+                    loop="asyncio",
+                    ws_ping_interval=10.0,
+                    ws_ping_timeout=10.0,
+                )
+                self.ssl_server = uvicorn.Server(ssl_config)
+                log_debug(f"Starting uvicorn SSL server on port {SERVER_SSL_PORT}...")
+                self.ssl_server.run()
+                log_debug("Uvicorn SSL server finished.")
+            except BaseException as e:
+                log_debug(f"SSL Uvicorn server exited or failed: {e}")
+
+        self.ssl_thread = threading.Thread(target=run_uvicorn_ssl, daemon=True)
+        self.ssl_thread.start()
+
         if hasattr(self, "status_pill") and self.status_pill.winfo_exists():
             self.status_pill.config(text="● SERVER ONLINE", bg=C_SUCCESS, fg=C_BG)
 
@@ -4288,6 +4323,8 @@ class PCDeckProGUI:
         if self.server:
             self.server.should_exit = True
             time.sleep(0.5)
+        if hasattr(self, "ssl_server") and self.ssl_server:
+            self.ssl_server.should_exit = True
         self.is_running = False
         self.start_server()
         self.refresh_network_ip()
@@ -4301,6 +4338,8 @@ class PCDeckProGUI:
     def stop_server(self):
         if self.server:
             self.server.should_exit = True
+        if hasattr(self, "ssl_server") and self.ssl_server:
+            self.ssl_server.should_exit = True
         self.is_running = False
         self.status_pill.config(text="● SERVER: [OFFLINE]", bg=C_DANGER, fg=C_TEXT)
         messagebox.showinfo("PCDeck", "Server stopped. Click Restart Server to resume.")

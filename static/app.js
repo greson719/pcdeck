@@ -12934,6 +12934,16 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
     }
 
+    // Adapt mic button & badge if accessed via insecure browser context
+    if (!window.AndroidApp && !window.isSecureContext && window.location.protocol !== 'https:') {
+      const micBtnText = document.getElementById('mic-btn-text');
+      if (micBtnText) micBtnText.textContent = 'Enable Mic (HTTPS)';
+      if (statusBadge) {
+        statusBadge.className = 'mini-status-chip offline';
+        statusBadge.textContent = 'HTTPS REQ';
+      }
+    }
+
     async function startMic() {
       let host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
       if (host && host.includes(':')) {
@@ -13144,7 +13154,15 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     const toggleMicHandler = () => {
       vibrate(15);
-      if (micActive) stopMic(); else startMic();
+      if (micActive) {
+        stopMic();
+      } else {
+        if (!window.AndroidApp && !window.isSecureContext && window.location.protocol !== 'https:') {
+          openBrowserSslModal('mic');
+          return;
+        }
+        startMic();
+      }
     };
 
     if (btnToggle) btnToggle.onclick = toggleMicHandler;
@@ -13580,9 +13598,27 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       };
     }
 
+    // Adapt camera button & badge if accessed via insecure browser context
+    if (!window.AndroidApp && !window.isSecureContext && window.location.protocol !== 'https:') {
+      const camBtnText = document.getElementById('cam-btn-text');
+      if (camBtnText) camBtnText.textContent = 'Enable Camera (HTTPS)';
+      if (statusBadge) {
+        statusBadge.className = 'mini-status-chip offline';
+        statusBadge.textContent = 'HTTPS REQ';
+      }
+    }
+
     const toggleCamHandler = () => {
       vibrate(15);
-      if (camActive) stopCam(); else startCam();
+      if (camActive) {
+        stopCam();
+      } else {
+        if (!window.AndroidApp && !window.isSecureContext && window.location.protocol !== 'https:') {
+          openBrowserSslModal('camera');
+          return;
+        }
+        startCam();
+      }
     };
 
     if (btnToggle) btnToggle.onclick = toggleCamHandler;
@@ -13598,6 +13634,49 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     enumerateCameras();
   }
+
+  // =========================================================================
+  // SECURE BROWSER SSL/HTTPS ONBOARDING MODAL CONTROLLER
+  // =========================================================================
+  function openBrowserSslModal(source) {
+    const modal = document.getElementById('modal-browser-ssl-guide');
+    if (!modal) return;
+    const btnSwitch = document.getElementById('btn-modal-switch-https');
+    const btnClose = document.getElementById('btn-close-ssl-modal');
+    const androidHint = document.getElementById('modal-android-hint');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (androidHint) {
+      androidHint.style.display = isIOS ? 'none' : 'block';
+    }
+
+    if (btnSwitch) {
+      const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+      const sslPort = '8443';
+      const storedToken = localStorage.getItem('pcdeck_token') || '';
+      const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+      btnSwitch.href = `https://${host}:${sslPort}/${tokenParam}#tab-media`;
+      btnSwitch.onclick = (e) => {
+        e.preventDefault();
+        window.location.href = `https://${host}:${sslPort}/${tokenParam}#tab-media`;
+      };
+    }
+
+    if (btnClose) {
+      btnClose.onclick = () => {
+        modal.style.display = 'none';
+      };
+    }
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    modal.style.display = 'flex';
+  }
+  window.openBrowserSslModal = openBrowserSslModal;
 
   function bootstrap() {
     initDomElements();
@@ -13639,6 +13718,13 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     }
     if (typeof updateGamepadHudVisibility === 'function') {
       updateGamepadHudVisibility();
+    }
+
+    // Auto-hide Android APK download promo on iPhone/iPad to prevent user confusion
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const apkPromoCard = document.getElementById('card-android-apk-promo');
+    if (apkPromoCard && isIOSDevice) {
+      apkPromoCard.style.display = 'none';
     }
 
     const urlParams = new URLSearchParams(window.location.search);
