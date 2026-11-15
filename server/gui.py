@@ -423,275 +423,217 @@ F_BUTTON = (F_FAMILY, 11, "bold")
 F_BUTTON_LARGE = (F_FAMILY, 12, "bold")
 F_BUTTON_SMALL = (F_FAMILY, 10, "bold")
 
-# CustomTkinter Modern Component System (WebView2 Aesthetic with Native Performance)
-try:
-    import customtkinter as ctk
-    HAS_CUSTOMTKINTER = True
-except ImportError:
-    ctk = None
-    HAS_CUSTOMTKINTER = False
+# Modern Native Component System (Clean Win32 Flat Styling & High Performance)
+HAS_CUSTOMTKINTER = False
 
-if HAS_CUSTOMTKINTER:
-    class CTkModernFrame(ctk.CTkFrame):
-        def __init__(self, master=None, **kwargs):
-            if "bg" in kwargs:
-                kwargs["fg_color"] = kwargs.pop("bg")
-            if "bd" in kwargs:
-                kwargs["border_width"] = kwargs.pop("bd")
-            if "highlightbackground" in kwargs:
-                kwargs["border_color"] = kwargs.pop("highlightbackground")
-            if "highlightthickness" in kwargs:
-                kwargs["border_width"] = kwargs.pop("highlightthickness")
-            kwargs.pop("relief", None)
-            if "corner_radius" not in kwargs:
-                kwargs["corner_radius"] = 12
-            if "fg_color" not in kwargs:
-                kwargs["fg_color"] = C_SURFACE
-            if "border_color" not in kwargs:
-                kwargs["border_color"] = C_BORDER
-            if "border_width" not in kwargs:
-                kwargs["border_width"] = 1
-            super().__init__(master, **kwargs)
 
-        def configure(self, *args, **kwargs):
-            if "bg" in kwargs:
-                kwargs["fg_color"] = kwargs.pop("bg")
-            if "bd" in kwargs:
-                kwargs["border_width"] = kwargs.pop("bd")
-            if "highlightbackground" in kwargs:
-                kwargs["border_color"] = kwargs.pop("highlightbackground")
-            if "highlightthickness" in kwargs:
-                kwargs["border_width"] = kwargs.pop("highlightthickness")
-            kwargs.pop("relief", None)
-            super().configure(*args, **kwargs)
+def apply_windows_dark_titlebar(window, is_dark: bool):
+    """Applies Windows 10/11 native immersive dark or light mode titlebar attribute."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        window.update_idletasks()
+        hwnd = ctypes.windll.user32.GetParent(window.winfo_id())
+        if not hwnd:
+            hwnd = window.winfo_id()
+        val = ctypes.c_int(1 if is_dark else 0)
+        # 20 = DWMWA_USE_IMMERSIVE_DARK_MODE (Windows 10 20H1+ and Windows 11)
+        # 19 = DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 (Windows 10 1809/1903)
+        for attr in (20, 19):
+            hr = ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd,
+                attr,
+                ctypes.byref(val),
+                ctypes.sizeof(val),
+            )
+            if hr == 0:
+                break
+    except Exception:
+        pass
 
-        def config(self, *args, **kwargs):
-            self.configure(*args, **kwargs)
 
-        def cget(self, attribute_name):
-            if attribute_name == "bg":
-                return self._fg_color
-            if attribute_name in ("border_color", "highlightbackground"):
-                return self._border_color
-            if attribute_name in ("border_width", "highlightthickness", "bd"):
-                return self._border_width
-            return super().cget(attribute_name)
+class CTkModernFrame(tk.Frame):
+    def __init__(self, master=None, **kwargs):
+        bg = kwargs.pop("fg_color", kwargs.pop("bg", C_SURFACE))
+        bd = kwargs.pop("border_width", kwargs.pop("bd", kwargs.pop("highlightthickness", 1)))
+        b_color = kwargs.pop("border_color", kwargs.pop("highlightbackground", C_BORDER))
+        kwargs.pop("corner_radius", None)
+        kwargs.pop("relief", None)
+        kwargs["bg"] = bg
+        kwargs["highlightthickness"] = bd
+        kwargs["highlightbackground"] = b_color
+        kwargs["highlightcolor"] = b_color
+        super().__init__(master, **kwargs)
 
-    class CTkModernButton(ctk.CTkButton):
-        def __init__(self, master=None, **kwargs):
-            if "bg" in kwargs:
-                kwargs["fg_color"] = kwargs.pop("bg")
-            if "fg" in kwargs:
-                kwargs["text_color"] = kwargs.pop("fg")
-            if "activebackground" in kwargs:
-                kwargs["hover_color"] = kwargs.pop("activebackground")
-            kwargs.pop("activeforeground", None)
-            kwargs.pop("padx", None)
-            kwargs.pop("pady", None)
-            kwargs.pop("cursor", None)
-            kwargs.pop("bd", None)
-            kwargs.pop("relief", None)
+    def configure(self, *args, **kwargs):
+        if "fg_color" in kwargs:
+            kwargs["bg"] = kwargs.pop("fg_color")
+        if "border_color" in kwargs:
+            kwargs["highlightbackground"] = kwargs.pop("border_color")
+            kwargs["highlightcolor"] = kwargs["highlightbackground"]
+        if "border_width" in kwargs:
+            kwargs["highlightthickness"] = kwargs.pop("border_width")
+        kwargs.pop("corner_radius", None)
+        kwargs.pop("relief", None)
+        super().configure(*args, **kwargs)
 
-            # Auto-resolve text_color if not provided (prevents white-on-white text in Light Mode)
-            fg_col = kwargs.get("fg_color", None)
-            if "text_color" not in kwargs:
-                if fg_col in ("#3b82f6", "#2563eb", "#1d4ed8", "#10b981", "#059669", "#ef4444", "#dc2626"):
-                    kwargs["text_color"] = "#ffffff"
-                elif fg_col in ("#eab308", "#ffd700"):
-                    kwargs["text_color"] = "#000000"
+    def config(self, *args, **kwargs):
+        self.configure(*args, **kwargs)
+
+    def cget(self, attribute_name):
+        if attribute_name in ("bg", "fg_color"):
+            return super().cget("bg")
+        if attribute_name in ("border_color", "highlightbackground"):
+            return super().cget("highlightbackground")
+        if attribute_name in ("border_width", "highlightthickness", "bd"):
+            return super().cget("highlightthickness")
+        return super().cget(attribute_name)
+
+
+class CTkModernButton(tk.Button):
+    def __init__(self, master=None, **kwargs):
+        bg = kwargs.pop("fg_color", kwargs.pop("bg", C_SURFACE_2))
+        fg = kwargs.pop("text_color", kwargs.pop("fg", None))
+        hover = kwargs.pop("hover_color", kwargs.pop("activebackground", None))
+        kwargs.pop("corner_radius", None)
+        kwargs.pop("activeforeground", None)
+
+        # Auto-resolve text_color if not provided (prevents white-on-white text in Light Mode)
+        if fg is None:
+            if bg in ("#3b82f6", "#2563eb", "#1d4ed8", "#10b981", "#059669", "#ef4444", "#dc2626"):
+                fg = "#ffffff"
+            elif bg in ("#eab308", "#ffd700"):
+                fg = "#000000"
+            else:
+                fg = C_TEXT
+
+        if hover is None:
+            if bg in ("#3b82f6", "#2563eb"):
+                hover = C_ACCENT_HOVER
+            elif bg in ("#ef4444", "#dc2626"):
+                hover = "#b91c1c"
+            elif bg in ("#10b981", "#059669"):
+                hover = "#047857"
+            else:
+                hover = "#d8dee6" if C_TEXT in ("#1f2328", "#0f172a") else "#282e3a"
+
+        kwargs["bg"] = bg
+        kwargs["fg"] = fg
+        kwargs["activebackground"] = hover
+        kwargs["activeforeground"] = fg
+        kwargs.setdefault("relief", "flat")
+        kwargs.setdefault("cursor", "hand2")
+        kwargs.setdefault("bd", 0)
+        super().__init__(master, **kwargs)
+
+        self._default_bg = bg
+        self._hover_bg = hover
+        self._default_fg = fg
+        self._command = kwargs.get("command", None)
+
+        self.bind("<Enter>", self._on_enter, add="+")
+        self.bind("<Leave>", self._on_leave, add="+")
+
+    def _on_enter(self, event=None):
+        if str(self.cget("state")) != tk.DISABLED:
+            super().configure(bg=self._hover_bg)
+
+    def _on_leave(self, event=None):
+        if str(self.cget("state")) != tk.DISABLED:
+            super().configure(bg=self._default_bg)
+
+    def _on_release(self, event=None):
+        if str(self.cget("state")) != tk.DISABLED:
+            self.invoke()
+
+    def configure(self, *args, **kwargs):
+        if "command" in kwargs:
+            self._command = kwargs["command"]
+        if "fg_color" in kwargs:
+            kwargs["bg"] = kwargs.pop("fg_color")
+        if "text_color" in kwargs:
+            kwargs["fg"] = kwargs.pop("text_color")
+        if "hover_color" in kwargs:
+            kwargs["activebackground"] = kwargs.pop("hover_color")
+
+        if "bg" in kwargs:
+            self._default_bg = kwargs["bg"]
+            if "hover_color" not in kwargs and "activebackground" not in kwargs:
+                bg = kwargs["bg"]
+                if bg in ("#3b82f6", "#2563eb"):
+                    self._hover_bg = C_ACCENT_HOVER
+                elif bg in ("#ef4444", "#dc2626"):
+                    self._hover_bg = "#b91c1c"
+                elif bg in ("#10b981", "#059669"):
+                    self._hover_bg = "#047857"
                 else:
-                    kwargs["text_color"] = C_TEXT
+                    self._hover_bg = "#d8dee6" if C_TEXT in ("#1f2328", "#0f172a") else "#282e3a"
+                kwargs["activebackground"] = self._hover_bg
 
-            # Auto-resolve hover_color if not provided
-            if "hover_color" not in kwargs:
-                if fg_col in ("#3b82f6", "#2563eb"):
-                    kwargs["hover_color"] = C_ACCENT_HOVER
-                elif fg_col in ("#ef4444", "#dc2626"):
-                    kwargs["hover_color"] = "#b91c1c"
-                elif fg_col in ("#10b981", "#059669"):
-                    kwargs["hover_color"] = "#047857"
-                else:
-                    kwargs["hover_color"] = "#d8dee6" if C_TEXT in ("#1f2328", "#0f172a") else "#282e3a"
+        if "fg" in kwargs:
+            self._default_fg = kwargs["fg"]
+            kwargs["activeforeground"] = kwargs["fg"]
 
-            if "corner_radius" not in kwargs:
-                kwargs["corner_radius"] = 8
-            if "font" not in kwargs:
-                kwargs["font"] = F_BUTTON
-            super().__init__(master, **kwargs)
+        kwargs.pop("corner_radius", None)
+        kwargs.pop("relief", None)
+        super().configure(*args, **kwargs)
 
-            # Robust click bindings: eliminate dropped clicks on trackpads, touchscreens, and rapid clicks
-            self.bind("<Button-1>", self._on_robust_press, add="+")
-            self.bind("<Return>", self._on_robust_invoke, add="+")
-            self.bind("<space>", self._on_robust_invoke, add="+")
-            if hasattr(self, "_canvas") and self._canvas:
-                self._canvas.bind("<Button-1>", self._on_robust_press, add="+")
-            if hasattr(self, "_text_label") and self._text_label:
-                self._text_label.bind("<Button-1>", self._on_robust_press, add="+")
+    def config(self, *args, **kwargs):
+        self.configure(*args, **kwargs)
 
-        def _on_robust_press(self, event=None):
-            self._mouse_inside = True
+    def cget(self, attribute_name):
+        if attribute_name in ("bg", "fg_color"):
+            return super().cget("bg")
+        if attribute_name in ("fg", "text_color"):
+            return super().cget("fg")
+        if attribute_name in ("hover_color", "activebackground"):
+            return self._hover_bg
+        return super().cget(attribute_name)
 
-        def _on_robust_invoke(self, event=None):
-            if self._state != tk.DISABLED and getattr(self, "_state", "") != "disabled":
-                if self._command is not None:
-                    self._command()
 
-        def _on_release(self, event=None):
-            # Override CustomTkinter's default _on_release: ensure click fires even if pointer jitter occurred
-            if self._state != tk.DISABLED and getattr(self, "_state", "") != "disabled":
-                try:
-                    self._on_leave()
-                    self._click_animation_running = True
-                    self.after(80, self._click_animation)
-                except Exception:
-                    pass
-                if self._command is not None:
-                    self._command()
+class CTkModernLabel(tk.Label):
+    def __init__(self, master=None, **kwargs):
+        bg = kwargs.pop("fg_color", kwargs.pop("bg", None))
+        fg = kwargs.pop("text_color", kwargs.pop("fg", C_TEXT))
+        kwargs.pop("corner_radius", None)
+        kwargs.pop("bd", None)
+        kwargs.pop("relief", None)
 
-        def configure(self, *args, **kwargs):
-            if "bg" in kwargs:
-                kwargs["fg_color"] = kwargs.pop("bg")
-            if "fg" in kwargs:
-                kwargs["text_color"] = kwargs.pop("fg")
-            if "activebackground" in kwargs:
-                kwargs["hover_color"] = kwargs.pop("activebackground")
-            kwargs.pop("activeforeground", None)
-            kwargs.pop("padx", None)
-            kwargs.pop("pady", None)
-            kwargs.pop("cursor", None)
-            kwargs.pop("bd", None)
-            kwargs.pop("relief", None)
+        if bg is None or bg == "transparent":
+            try:
+                bg = master.cget("bg")
+            except Exception:
+                bg = C_SURFACE
 
-            if "fg_color" in kwargs and "hover_color" not in kwargs:
-                fg_col = kwargs["fg_color"]
-                if fg_col in ("#3b82f6", "#2563eb"):
-                    kwargs["hover_color"] = C_ACCENT_HOVER
-                elif fg_col in ("#ef4444", "#dc2626"):
-                    kwargs["hover_color"] = "#b91c1c"
-                elif fg_col in ("#10b981", "#059669"):
-                    kwargs["hover_color"] = "#047857"
-                else:
-                    kwargs["hover_color"] = "#d8dee6" if C_TEXT in ("#1f2328", "#0f172a") else "#282e3a"
+        kwargs["bg"] = bg
+        kwargs["fg"] = fg
+        super().__init__(master, **kwargs)
 
-            super().configure(*args, **kwargs)
+    def configure(self, *args, **kwargs):
+        if "fg_color" in kwargs:
+            kwargs["bg"] = kwargs.pop("fg_color")
+        if "text_color" in kwargs:
+            kwargs["fg"] = kwargs.pop("text_color")
+        if "bg" in kwargs and kwargs["bg"] == "transparent":
+            try:
+                kwargs["bg"] = self.master.cget("bg")
+            except Exception:
+                kwargs["bg"] = C_SURFACE
+        kwargs.pop("corner_radius", None)
+        kwargs.pop("bd", None)
+        kwargs.pop("relief", None)
+        super().configure(*args, **kwargs)
 
-            if hasattr(self, "_text_label") and self._text_label:
-                self._text_label.bind("<Button-1>", self._on_robust_press, add="+")
+    def config(self, *args, **kwargs):
+        self.configure(*args, **kwargs)
 
-        def config(self, *args, **kwargs):
-            self.configure(*args, **kwargs)
-
-        def cget(self, attribute_name):
-            if attribute_name == "bg":
-                return self._fg_color
-            if attribute_name == "fg":
-                return self._text_color
-            if attribute_name == "state":
-                return self._state
-            return super().cget(attribute_name)
-
-    class CTkModernLabel(ctk.CTkLabel):
-        def __init__(self, master=None, **kwargs):
-            if "bg" in kwargs:
-                kwargs["fg_color"] = kwargs.pop("bg")
-            if "fg" in kwargs:
-                kwargs["text_color"] = kwargs.pop("fg")
-            kwargs.pop("bd", None)
-            kwargs.pop("relief", None)
-            if "fg_color" not in kwargs:
-                kwargs["fg_color"] = "transparent"
-            if "text_color" not in kwargs:
-                kwargs["text_color"] = C_TEXT
-            super().__init__(master, **kwargs)
-
-        def configure(self, *args, **kwargs):
-            if "bg" in kwargs:
-                kwargs["fg_color"] = kwargs.pop("bg")
-            if "fg" in kwargs:
-                kwargs["text_color"] = kwargs.pop("fg")
-            kwargs.pop("bd", None)
-            kwargs.pop("relief", None)
-            super().configure(*args, **kwargs)
-
-        def config(self, *args, **kwargs):
-            self.configure(*args, **kwargs)
-
-        def cget(self, attribute_name):
-            if attribute_name == "bg":
-                return self._fg_color
-            if attribute_name == "fg":
-                return self._text_color
-            return super().cget(attribute_name)
-
-else:
-    class CTkModernFrame(tk.Frame):
-        def __init__(self, master=None, **kwargs):
-            if "fg_color" in kwargs:
-                kwargs["bg"] = kwargs.pop("fg_color")
-            if "border_color" in kwargs:
-                kwargs["highlightbackground"] = kwargs.pop("border_color")
-            if "border_width" in kwargs:
-                kwargs["highlightthickness"] = kwargs.pop("border_width")
-            kwargs.pop("corner_radius", None)
-            super().__init__(master, **kwargs)
-
-        def configure(self, *args, **kwargs):
-            if "fg_color" in kwargs:
-                kwargs["bg"] = kwargs.pop("fg_color")
-            if "border_color" in kwargs:
-                kwargs["highlightbackground"] = kwargs.pop("border_color")
-            if "border_width" in kwargs:
-                kwargs["highlightthickness"] = kwargs.pop("border_width")
-            kwargs.pop("corner_radius", None)
-            super().configure(*args, **kwargs)
-
-        def config(self, *args, **kwargs):
-            self.configure(*args, **kwargs)
-
-    class CTkModernButton(tk.Button):
-        def __init__(self, master=None, **kwargs):
-            if "fg_color" in kwargs:
-                kwargs["bg"] = kwargs.pop("fg_color")
-            if "text_color" in kwargs:
-                kwargs["fg"] = kwargs.pop("text_color")
-            if "hover_color" in kwargs:
-                kwargs["activebackground"] = kwargs.pop("hover_color")
-            kwargs.pop("corner_radius", None)
-            kwargs.setdefault("relief", "flat")
-            super().__init__(master, **kwargs)
-
-        def configure(self, *args, **kwargs):
-            if "fg_color" in kwargs:
-                kwargs["bg"] = kwargs.pop("fg_color")
-            if "text_color" in kwargs:
-                kwargs["fg"] = kwargs.pop("text_color")
-            if "hover_color" in kwargs:
-                kwargs["activebackground"] = kwargs.pop("hover_color")
-            kwargs.pop("corner_radius", None)
-            super().configure(*args, **kwargs)
-
-        def config(self, *args, **kwargs):
-            self.configure(*args, **kwargs)
-
-    class CTkModernLabel(tk.Label):
-        def __init__(self, master=None, **kwargs):
-            if "fg_color" in kwargs:
-                kwargs["bg"] = kwargs.pop("fg_color")
-            if "text_color" in kwargs:
-                kwargs["fg"] = kwargs.pop("text_color")
-            kwargs.pop("corner_radius", None)
-            super().__init__(master, **kwargs)
-
-        def configure(self, *args, **kwargs):
-            if "fg_color" in kwargs:
-                kwargs["bg"] = kwargs.pop("fg_color")
-            if "text_color" in kwargs:
-                kwargs["fg"] = kwargs.pop("text_color")
-            kwargs.pop("corner_radius", None)
-            super().configure(*args, **kwargs)
-
-        def config(self, *args, **kwargs):
-            self.configure(*args, **kwargs)
+    def cget(self, attribute_name):
+        if attribute_name in ("bg", "fg_color"):
+            return super().cget("bg")
+        if attribute_name in ("fg", "text_color"):
+            return super().cget("fg")
+        return super().cget(attribute_name)
 
 
 CRASH_LOG_FILE = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "PCDeck", "crash.log")
@@ -1432,11 +1374,8 @@ class PCDeckProGUI:
         C_WARNING = self.c_warning
         C_DANGER = self.c_danger
 
-        if HAS_CUSTOMTKINTER:
-            try:
-                ctk.set_appearance_mode("Light" if tokens == THEME_LIGHT else "Dark")
-            except Exception:
-                pass
+        if hasattr(self, "root") and self.root:
+            apply_windows_dark_titlebar(self.root, is_dark=(tokens == THEME_DARK))
 
     def set_theme(self, pref: str):
         """Sets the color theme preference ('system', 'dark', 'light') and rebuilds UI cleanly."""
@@ -1447,10 +1386,7 @@ class PCDeckProGUI:
         cfg["theme"] = pref
         save_app_settings(cfg)
         self._apply_theme_tokens()
-        # Reset CustomTkinter master.configure monkeypatch to prevent dead widget callbacks
-        self.root.configure = tk.Tk.configure.__get__(self.root, tk.Tk)
-        self.root.config = tk.Tk.config.__get__(self.root, tk.Tk)
-        tk.Tk.configure(self.root, bg=self.c_bg)
+        self.root.configure(bg=self.c_bg)
 
         if hasattr(self, "theme_combo_var") and self.theme_combo_var:
             self.theme_combo_var.set("Light Mode" if pref == "light" else ("Dark Mode" if pref == "dark" else "Follow Windows (Auto)"))
@@ -1482,9 +1418,6 @@ class PCDeckProGUI:
             self.root.grab_release()
         except Exception:
             pass
-        # Unhook CustomTkinter monkeypatch before destroying children
-        self.root.configure = tk.Tk.configure.__get__(self.root, tk.Tk)
-        self.root.config = tk.Tk.config.__get__(self.root, tk.Tk)
         for child in list(self.root.winfo_children()):
             if isinstance(child, tk.Toplevel):
                 continue
@@ -1492,12 +1425,10 @@ class PCDeckProGUI:
                 child.destroy()
             except Exception:
                 pass
-        # Unhook CustomTkinter monkeypatch after destroying dead widgets
-        self.root.configure = tk.Tk.configure.__get__(self.root, tk.Tk)
-        self.root.config = tk.Tk.config.__get__(self.root, tk.Tk)
-        tk.Tk.configure(self.root, bg=self.c_bg)
+        self.root.configure(bg=self.c_bg)
         self._build_ui()
         self._switch_tab(curr_tab)
+        apply_windows_dark_titlebar(self.root, is_dark=(self.c_surface == THEME_DARK["C_SURFACE"]))
 
     def toggle_audio_stream(self):
         try:
