@@ -761,7 +761,7 @@ h1 {
   if (isVercel && !ipParam) {
     const handleVercelWebLaunch = function(e) {
       e.preventDefault();
-      const userIp = prompt("Enter your PC's IP address (shown in PCDeck app, e.g. 192.168.1.5:8000):", "");
+      const userIp = prompt("Enter your PC's IP address (shown on your PCDeck screen, e.g. 192.168.x.x:8000). Do not search this on Google:", "");
       if (userIp && userIp.trim()) {
         const clean = userIp.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
         window.location.href = `http://${clean}/?tab=screen${tokenQuery}`;
