@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How to Use a PC Without a Monitor (Display on Phone) — PCDeck</title>
-<meta name="description" content="Monitor broken or black? How to navigate Windows using shortcuts (Win+P, Narrator) and stream the desktop live to your phone screen over local Wi-Fi.">
+<title>How to Use a PC Without a Monitor (Stream Desktop to Phone) | PCDeck</title>
+<meta name="description" content="Cracked laptop screen or headless home server? Stream your Windows desktop live to your iPhone or Android browser over Wi-Fi—free, zero cloud, tap-to-click control.">
 <meta name="keywords" content="how to use pc without monitor, broken laptop screen display on phone, see pc screen on phone, black monitor windows fix, turn phone into monitor, headless pc setup, PCDeck">
 <link rel="canonical" href="https://getpcdeck.com/use-pc-without-monitor/">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -13,15 +13,15 @@
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="PCDeck">
 <meta property="og:url" content="https://getpcdeck.com/use-pc-without-monitor/">
-<meta property="og:title" content="How to Use a PC Without a Monitor (Display on Phone) — PCDeck">
-<meta property="og:description" content="Monitor broken or black? How to navigate Windows using shortcuts (Win+P, Narrator) and stream the desktop live to your phone screen over local Wi-Fi.">
+<meta property="og:title" content="How to Use a PC Without a Monitor (Stream Desktop to Phone) | PCDeck">
+<meta property="og:description" content="Cracked laptop screen or headless home server? Stream your Windows desktop live to your iPhone or Android browser over Wi-Fi—free, zero cloud, tap-to-click control.">
 <meta property="og:image" content="https://getpcdeck.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="How to Use a PC Without a Monitor (Display on Phone) — PCDeck">
-<meta name="twitter:description" content="Monitor broken or black? How to navigate Windows using shortcuts (Win+P, Narrator) and stream the desktop live to your phone screen over local Wi-Fi.">
+<meta name="twitter:title" content="How to Use a PC Without a Monitor (Stream Desktop to Phone) | PCDeck">
+<meta name="twitter:description" content="Cracked laptop screen or headless home server? Stream your Windows desktop live to your iPhone or Android browser over Wi-Fi—free, zero cloud, tap-to-click control.">
 <meta name="twitter:image" content="https://getpcdeck.com/og-image.png">
 
 <meta name="theme-color" content="#EEF0F3">
@@ -46,7 +46,7 @@
       "url": "https://getpcdeck.com/use-pc-without-monitor/",
       "inLanguage": "en",
       "datePublished": "2026-08-26",
-      "dateModified": "2026-09-09",
+      "dateModified": "2026-11-15",
       "author": {
         "@type": "Organization",
         "name": "PCDeck",
@@ -242,7 +242,7 @@
   <div class="shell lede-block">
     <h1>How to Use a PC Without a Monitor</h1>
     <p class="sub">Your laptop screen cracked, your external monitor went black, or you have a headless PC running in a closet. Here is how to diagnose the issue blindly and stream your desktop directly to your phone screen over Wi-Fi.</p>
-    <p class="updated tag">Updated September 2026 · Windows 10 &amp; 11 · Works on iPhone, iPad &amp; Android · Emergency Display</p>
+    <p class="updated tag">Updated November 2026 · Windows 10 &amp; 11 · Works on iPhone, iPad &amp; Android · Emergency Display</p>
   </div>
 
   <div class="shell guide">
@@ -307,12 +307,43 @@
       <li><strong>100% offline local Wi-Fi:</strong> Works even if your internet service is down or you connect directly via your phone's mobile hotspot.</li>
     </ul>
 
+    <h2>Headless Server &amp; Homelab Autostart Configuration</h2>
+    <p>For dedicated home servers, media rigs, or headless mini-PCs without a monitor attached, configure PCDeck to start automatically on system boot:</p>
+
+    <div style="background: var(--bg-card, #111420); border: 1px solid var(--border, #1f2438); border-radius: 8px; padding: 18px 20px; margin: 16px 0 24px;">
+      <h3 style="font-size: 16px; margin: 0 0 10px; color: var(--text-high, #fff);">Windows: Headless Startup Shortcut</h3>
+      <p style="font-size: 14px; margin: 0 0 10px; color: var(--text-mid, #94a3b8);">Press <kbd>Win</kbd> + <kbd>R</kbd>, enter <code>shell:startup</code>, and create a shortcut to <code>PCDeck.exe</code>, or execute in PowerShell:</p>
+      <pre style="background: #090b10; padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: 13px; color: #a5c2ff; margin: 0 0 16px;"><code>$WshShell = New-Object -comObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\PCDeck.lnk")
+$Shortcut.TargetPath = "$env:LOCALAPPDATA\Programs\PCDeck\PCDeck.exe"
+$Shortcut.Save()</code></pre>
+
+      <h3 style="font-size: 16px; margin: 16px 0 10px; color: var(--text-high, #fff);">Linux: systemd User Service</h3>
+      <p style="font-size: 14px; margin: 0 0 10px; color: var(--text-mid, #94a3b8);">For headless Linux boxes or home media servers running Ubuntu, Debian, Arch, or Fedora, create <code>~/.config/systemd/user/pcdeck.service</code>:</p>
+      <pre style="background: #090b10; padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: 13px; color: #a5c2ff; margin: 0;"><code>[Unit]
+Description=PCDeck Headless Server
+After=network.target
+
+[Service]
+ExecStart=%h/.local/bin/pcdeck
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target</code></pre>
+      <p style="font-size: 13px; color: var(--text-dim, #64748b); margin: 8px 0 0;">Enable and run with <code>systemctl --user enable --now pcdeck</code>.</p>
+    </div>
+
+    <h2>High-Framerate Remote Desktop: 60 FPS &amp; 120 FPS Pro</h2>
+    <p>Standard remote desktop tools restrict headless streaming to a choppy 15-30 frames per second. PCDeck Pro unlocks direct GPU-accelerated capture up to <strong>60 FPS and 120 FPS</strong> with ultra-low latency canvas rendering over local Wi-Fi.</p>
+    <p>Whether monitoring game servers, managing virtual machines, or using an iPad as a smooth portable second monitor, PCDeck Pro delivers crisp, real-time desktop responsiveness for a one-time payment of $3.99 lifetime (zero subscriptions). Check out <a href="/pricing/">PCDeck Pro Features &amp; Lifetime License</a>.</p>
+
     <div class="pitch" id="phone-screen-solution">
       <h2>Turn Any Phone into an Emergency PC Screen</h2>
       <p>Stream your Windows desktop in real-time to your phone or tablet over local Wi-Fi. Works on iPhone, iPad, Android, and web browsers.</p>
       <div class="row">
         <a class="btn" href="/#download">Download PCDeck (Free)</a>
-        <a class="btn ghost" href="/browser-pc-remote/">Learn About Web Remote</a>
+        <a class="btn ghost" href="/pricing/">Unlock 60/120 FPS Pro ($3.99) &rarr;</a>
       </div>
       <p class="fine">Windows 10 / 11 · Works on iPhone &amp; Android · 100% Local Wi-Fi · Zero Accounts</p>
     </div>
