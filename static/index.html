@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0e17">
+  <meta name="theme-color" content="#09090b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>PCDeck - Wireless PC Touch Deck &amp; Streamer</title>
@@ -17,7 +17,7 @@
   
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="PCDeck_Master_Logo.png">
-  <link rel="stylesheet" href="style.css?v=2.8.0">
+  <link rel="stylesheet" href="style.css?v=2.8.0.4">
 </head>
 <body class="on-screen-tab">
   <!-- ==========================================================================
@@ -606,11 +606,8 @@
     <!-- Slim & Clean Top Header (Guaranteed No Overflow on Any Phone) -->
     <header class="top-nav">
       <div class="nav-brand" id="btn-reconnect-header">
-        <img src="PCDeck_Master_Logo.png" alt="PCDeck" class="nav-logo" style="width: 28px; height: 28px; object-fit: contain;">
-        <div style="display: flex; flex-direction: column;">
-          <span class="brand-title">PC<span style="color: var(--neo-lime); font-size: 0.85em;">Deck</span> <span id="header-pro-badge" style="display: none; background: #eab308; color: #000; font-size: 0.52rem; font-weight: 800; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; letter-spacing: 0.5px;">PRO</span></span>
-          <span style="font-size: 0.55rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px;">WIRELESS PC TOUCH DECK</span>
-        </div>
+        <img src="PCDeck_Master_Logo.png" alt="PCDeck" class="nav-logo" style="width: 24px; height: 24px; object-fit: contain;">
+        <span class="brand-title">PCDeck <span id="header-pro-badge" style="display: none; background: #27272a; color: #ffffff; border: 1px solid #3f3f46; font-size: 0.52rem; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; letter-spacing: 0.5px;">PRO</span></span>
       </div>
 
       <div class="nav-status-pill" id="pill-status">
@@ -837,8 +834,8 @@
     <!-- ================= TAB 2: TRACKPAD ================= -->
     <section id="tab-trackpad" class="tab-view">
       <div class="trackpad-options-strip">
-        <button id="btn-speed-quick" class="neo-chip-toggle" style="background: var(--neo-yellow); color: #000; font-weight: 900;" title="Cursor Speed Multiplier">1.0x</button>
-        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle gamepad-feature" style="background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);" title="Switch to Virtual Gamepad Deck">
+        <button id="btn-speed-quick" class="neo-chip-toggle" title="Cursor Speed Multiplier">1.0x</button>
+        <button id="btn-gamepad-mode-toggle" class="neo-chip-toggle gamepad-feature" style="display: inline-flex; align-items: center; gap: 5px;" title="Switch to Virtual Gamepad Deck">
           <svg class="deck-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="6"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="13" r="1" fill="currentColor"/><circle cx="18" cy="11" r="1" fill="currentColor"/></svg>
           <span>Gamepad</span>
         </button>
@@ -851,15 +848,15 @@
           <svg class="deck-icon" width="14" height="14"><use href="#icon-show-desktop"/></svg>
           <span>Desktop</span>
         </button>
-        <button id="btn-quick-mic-toggle" class="neo-chip-toggle native-only-feature" style="background: var(--neo-lime); color: #000; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+        <button id="btn-quick-mic-toggle" class="neo-chip-toggle native-only-feature" style="display: inline-flex; align-items: center; gap: 4px;">
           <svg class="deck-icon" width="14" height="14"><use href="#icon-mic"/></svg>
           <span>Mic</span>
         </button>
-        <button id="btn-quick-cam-toggle" class="neo-chip-toggle native-only-feature" style="background: var(--neo-cyan); color: #000; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+        <button id="btn-quick-cam-toggle" class="neo-chip-toggle native-only-feature" style="display: inline-flex; align-items: center; gap: 4px;">
           <svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg>
           <span>Cam</span>
         </button>
-        <button id="btn-kbd-quick" class="neo-chip-toggle" style="background: var(--neo-pink); color: #fff; display: inline-flex; align-items: center; gap: 4px;">
+        <button id="btn-kbd-quick" class="neo-chip-toggle" style="display: inline-flex; align-items: center; gap: 4px;">
           <svg class="deck-icon" width="14" height="14"><use href="#icon-keys"/></svg>
           <span>Keys</span>
         </button>
@@ -2128,10 +2125,10 @@
         </div>
 
         <!-- ================= CAMERA CARD ================= -->
-        <div id="cam-panel-card" class="neo-card" style="border-color: rgba(0, 240, 255, 0.4); box-shadow: none;">
+        <div id="cam-panel-card" class="neo-card" style="border-color: rgba(255, 255, 255, 0.08); box-shadow: none;">
           <div class="card-header-clean">
             <div class="card-title-wrap">
-              <span class="card-dot dot-cyan"></span>
+              <span class="card-dot dot-white"></span>
               <span class="card-title-text">Camera</span>
             </div>
             <span id="cam-status-badge" class="mini-status-chip offline">STANDBY</span>
@@ -2185,7 +2182,7 @@
               </span>
               <span style="font-size: 0.74rem; font-weight: 800; letter-spacing: 0.5px;">FLIP</span>
             </button>
-            <button type="button" id="btn-cam-torch" class="neo-btn btn-yellow" title="Toggle Torch" style="display: none; padding: 0 12px; color: #000;">
+            <button type="button" id="btn-cam-torch" class="neo-btn btn-yellow" title="Toggle Torch" style="display: none; padding: 0 12px;">
               <span class="btn-svg-wrap">
                 <svg class="deck-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               </span>
@@ -2222,7 +2219,7 @@
 
           <!-- Primary Stream Controls Action Row -->
           <div style="display: flex; gap: 8px; margin: 10px 0 12px 0;">
-            <button id="btn-toggle-audio-stream" class="neo-btn btn-yellow" style="flex: 1; height: 46px; gap: 8px; color: #000; font-weight: 800;">
+            <button id="btn-toggle-audio-stream" class="neo-btn btn-yellow" style="flex: 1; height: 46px; gap: 8px; font-weight: 800;">
               <span id="audio-btn-icon" class="btn-svg-wrap">
                 <svg class="deck-icon" width="18" height="18"><use href="#icon-vol-up"/></svg>
               </span>
@@ -3545,6 +3542,6 @@
   </div>
 
   <script src="jsqr.js" defer></script>
-  <script src="app.js?v=2.8.0"></script>
+  <script src="app.js?v=2.8.0.3"></script>
 </body>
 </html>

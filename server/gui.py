@@ -4787,6 +4787,10 @@ class PCDeckProGUI:
                 menu=menu,
             )
             self.tray_icon.run_detached()
+            try:
+                self.tray_icon.visible = True
+            except Exception:
+                pass
         except Exception as e:
             log_debug(f"Failed to initialize system tray icon: {e}")
             self.tray_icon = None
@@ -4931,7 +4935,16 @@ $notifier.Show($toast)
         try:
             if hasattr(self, "flyout") and self.flyout and self.flyout.winfo_exists():
                 self.flyout.withdraw()
-            self.root.withdraw()
+            if not getattr(self, "tray_icon", None):
+                self._init_tray_icon()
+            if getattr(self, "tray_icon", None):
+                try:
+                    self.tray_icon.visible = True
+                except Exception:
+                    pass
+                self.root.withdraw()
+            else:
+                self.root.iconify()
             if not getattr(self, "_tray_minimized_notified", False):
                 self._tray_minimized_notified = True
                 self.show_notification(
@@ -4940,6 +4953,10 @@ $notifier.Show($toast)
                 )
         except Exception as e:
             log_debug(f"minimize_to_tray error: {e}")
+            try:
+                self.root.iconify()
+            except Exception:
+                pass
 
     def open_dashboard(self):
         """Brings the main window to the foreground and deiconifies from tray."""

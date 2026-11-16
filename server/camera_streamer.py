@@ -278,23 +278,23 @@ class CameraStreamer:
         return self._standby_frame
 
     def _render_standby_frame(self, w: int, h: int) -> np.ndarray:
-        img = Image.new("RGB", (w, h), (9, 13, 22))
+        img = Image.new("RGB", (w, h), (14, 17, 23))
         draw = ImageDraw.Draw(img)
-        # Cyber-neon outer border
-        draw.rectangle([(20, 20), (w - 20, h - 20)], outline=(0, 240, 255), width=2)
+        # Matte slate outer border
+        draw.rectangle([(20, 20), (w - 20, h - 20)], outline=(48, 54, 61), width=2)
         # Subtle inner border
-        draw.rectangle([(24, 24), (w - 24, h - 24)], outline=(20, 35, 55), width=1)
-        # Glowing badge
+        draw.rectangle([(24, 24), (w - 24, h - 24)], outline=(30, 36, 44), width=1)
+        # Matte slate badge
         badge_w, badge_h = min(420, w - 80), 50
         bx0 = (w - badge_w) // 2
         by0 = h // 2 - 90
-        draw.rectangle([(bx0, by0), (bx0 + badge_w, by0 + badge_h)], fill=(0, 240, 255))
-        draw.text((w // 2, by0 + badge_h // 2), "PCDECK WIRELESS HD WEBCAM", fill=(0, 0, 0), anchor="mm")
+        draw.rectangle([(bx0, by0), (bx0 + badge_w, by0 + badge_h)], fill=(33, 38, 45), outline=(48, 54, 61))
+        draw.text((w // 2, by0 + badge_h // 2), "PCDECK WIRELESS HD WEBCAM", fill=(240, 246, 252), anchor="mm")
         # Subtitle & instructions
-        draw.text((w // 2, h // 2 + 10), "STANDBY -- READY FOR CONNECTION", fill=(0, 240, 255), anchor="mm")
-        draw.text((w // 2, h // 2 + 55), "Tap 'Start Webcam' in the PCDeck phone app to stream live video", fill=(160, 175, 195), anchor="mm")
+        draw.text((w // 2, h // 2 + 10), "STANDBY -- READY FOR CONNECTION", fill=(139, 148, 158), anchor="mm")
+        draw.text((w // 2, h // 2 + 55), "Tap 'Start Camera' in the PCDeck phone app to stream live video", fill=(110, 118, 129), anchor="mm")
         # Bottom status
-        draw.text((w // 2, h - 45), "DirectShow Virtual Device Active -- WhatsApp / OBS / Zoom / Teams", fill=(70, 95, 125), anchor="mm")
+        draw.text((w // 2, h - 45), "DirectShow Virtual Device Active -- WhatsApp / OBS / Zoom / Teams", fill=(72, 79, 88), anchor="mm")
         return np.ascontiguousarray(np.array(img, dtype=np.uint8))
 
     def _ensure_device_open(self) -> bool:
@@ -328,9 +328,25 @@ class CameraStreamer:
                         pass
             return False
 
-    def start_standby(self):
-        """Initializes virtual camera lazily on-demand when live stream is requested."""
-        pass
+    def start_standby(self, width: int = 1280, height: int = 720, fps: int = 30):
+        """Initializes virtual camera and starts standby pump loop."""
+        with self.lock:
+            self.target_width = width
+            self.target_height = height
+            self.target_fps = fps
+            self.is_active = True
+            self.is_streaming_live = False
+            self._standby_frame = None
+            if not _HAS_PYVIRTUALCAM:
+                return
+            if self._ensure_device_open():
+                self._start_worker()
+                standby = self._get_standby_frame()
+                if standby is not None and self.cam_device:
+                    try:
+                        self.cam_device.send(standby)
+                    except Exception:
+                        pass
 
     def start_camera(self, width: int = 1280, height: int = 720, fps: int = 30) -> bool:
         """Starts the virtual camera device and live streaming mode."""
@@ -357,19 +373,19 @@ class CameraStreamer:
             return True
 
     def stop_camera(self):
-        """Called when phone stops streaming. Puts camera worker to sleep to save Wi-Fi airtime and CPU."""
+        """Called when phone stops streaming. Returns to standby frame without tearing down DirectShow device."""
         with self.lock:
             self.is_streaming_live = False
             self._latest_live_frame = None
             self.last_frame_time = 0.0
-            self._running = False
             if self.cam_device:
-                try:
-                    self.cam_device.close()
-                except Exception:
-                    pass
-                self.cam_device = None
-            print("[CameraStreamer] Phone stopped streaming; virtual camera put to sleep.", flush=True)
+                standby = self._get_standby_frame()
+                if standby is not None:
+                    try:
+                        self.cam_device.send(standby)
+                    except Exception:
+                        pass
+            print("[CameraStreamer] Phone stopped streaming; virtual camera returned to standby.", flush=True)
 
     def close_device(self):
         """Full shutdown of camera hardware sink."""
@@ -395,17 +411,19 @@ class CameraStreamer:
 
     def _camera_pump_loop(self):
         """
-        Watchdog keepalive thread:
+        Watchdog keepalive & standby pump thread:
         When live frames are streaming from phone, push_frame_bytes outputs them directly
         to pyvirtualcam with zero latency (<2ms).
-        If the phone stalls or disconnects (>120ms idle), this watchdog pumps standby
-        or hold frames to prevent DirectShow consumers (Zoom/Teams/Discord/OBS) from freezing.
+        If the phone stalls or is idle (>120ms idle), this watchdog pumps hold frames
+        (if recently stalled) or the clean standby card to keep DirectShow consumers
+        (Zoom/Teams/Discord/OBS/Chrome) active and prevent frozen or green screens.
         """
         while self._running:
             try:
                 now = time.time()
                 need_keepalive = False
                 frame_to_send = None
+                sleep_sec = 0.010
 
                 with self.lock:
                     if not self._running:
@@ -415,8 +433,10 @@ class CameraStreamer:
                         need_keepalive = True
                         if idle_duration < 1.0 and self._latest_live_frame is not None:
                             frame_to_send = self._latest_live_frame
+                            sleep_sec = 1.0 / max(1, self.target_fps)
                         else:
                             frame_to_send = self._get_standby_frame()
+                            sleep_sec = 0.20
 
                         if frame_to_send is not None and self._ensure_device_open() and self.cam_device:
                             try:
@@ -424,12 +444,9 @@ class CameraStreamer:
                             except Exception:
                                 pass
 
-                if need_keepalive:
-                    time.sleep(1.0 / max(1, self.target_fps))
-                else:
-                    time.sleep(0.010)
+                time.sleep(sleep_sec)
             except Exception:
-                time.sleep(0.033)
+                time.sleep(0.05)
 
     def push_frame_bytes(self, image_bytes: bytes):
         """

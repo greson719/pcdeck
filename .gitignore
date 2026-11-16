@@ -48,3 +48,6 @@ static/PCDeck.apk
 .env.*.local
 out.txt
 run_log.txt
+concept_*.jpg
+full_ui_*.jpg
+theme_preview.html

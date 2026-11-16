@@ -13243,32 +13243,58 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const btnCamRear = document.getElementById('btn-cam-rear');
     const btnCamFront = document.getElementById('btn-cam-front');
 
-    function applyFacingMode(mode) {
+    async function applyFacingMode(mode, targetDeviceId = null) {
+      const wasActive = camActive;
       camFacingMode = mode;
-      camSelectedDeviceId = '';
+
+      if (targetDeviceId) {
+        camSelectedDeviceId = targetDeviceId;
+      } else {
+        // Generic flip: clear selected device ID so browser getUserMedia prioritizes facingMode
+        camSelectedDeviceId = '';
+        if (availableVideoDevices && availableVideoDevices.length > 0) {
+          const match = availableVideoDevices.find(d => {
+            const lbl = (d.label || '').toLowerCase();
+            if (mode === 'user') {
+              return lbl.includes('front') || lbl.includes('user') || lbl.includes('selfie') || lbl.includes('secondary');
+            } else {
+              return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment') || lbl.includes('primary');
+            }
+          });
+          if (match && match.deviceId) {
+            camSelectedDeviceId = match.deviceId;
+          }
+        }
+      }
+
+      if (deviceSelect) {
+        deviceSelect.value = camSelectedDeviceId || mode;
+      }
       if (btnCamRear && btnCamFront) {
         btnCamRear.classList.toggle('active', mode === 'environment');
         btnCamFront.classList.toggle('active', mode === 'user');
       }
       if (videoPreview) {
-        videoPreview.style.transform = mode === 'user' ? 'scaleX(-1)' : 'none';
+        videoPreview.style.transform = (mode === 'user') ? 'scaleX(-1)' : 'none';
       }
-      if (camActive) {
+      if (wasActive) {
         stopCam();
-        startCam();
+        // Give mobile camera driver 150ms to cleanly release hardware sensor
+        await new Promise(r => setTimeout(r, 150));
+        await startCam();
       }
     }
 
-    if (btnCamRear) btnCamRear.onclick = () => { if (typeof vibrate === 'function') vibrate(15); applyFacingMode('environment'); };
-    if (btnCamFront) btnCamFront.onclick = () => { if (typeof vibrate === 'function') vibrate(15); applyFacingMode('user'); };
+    if (btnCamRear) btnCamRear.onclick = async () => { if (typeof vibrate === 'function') vibrate(15); await applyFacingMode('environment'); };
+    if (btnCamFront) btnCamFront.onclick = async () => { if (typeof vibrate === 'function') vibrate(15); await applyFacingMode('user'); };
 
     if (deviceSelect) {
-      deviceSelect.onchange = () => {
-        camSelectedDeviceId = deviceSelect.value;
-        if (camActive) {
-          stopCam();
-          startCam();
-        }
+      deviceSelect.onchange = async () => {
+        const selectedId = deviceSelect.value;
+        const dev = availableVideoDevices.find(d => d.deviceId === selectedId);
+        const label = dev ? (dev.label || '').toLowerCase() : '';
+        const targetFacing = (label.includes('front') || label.includes('user') || label.includes('selfie')) ? 'user' : 'environment';
+        await applyFacingMode(targetFacing, selectedId);
       };
     }
 
@@ -13370,16 +13396,53 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         };
 
         if (camSelectedDeviceId) {
-          videoConstraints.deviceId = { exact: camSelectedDeviceId };
+          videoConstraints.deviceId = { ideal: camSelectedDeviceId };
         } else {
-          videoConstraints.facingMode = camFacingMode;
+          videoConstraints.facingMode = { ideal: camFacingMode };
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+        let stream = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+        } catch (e1) {
+          console.warn('[PCDeck Webcam] Ideal constraints failed, attempting fallback with facingMode:', e1);
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: { ideal: camFacingMode },
+                width: { ideal: width },
+                height: { ideal: height }
+              }
+            });
+          } catch (e2) {
+            console.warn('[PCDeck Webcam] Facing mode fallback failed, trying basic video:', e2);
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          }
+        }
         camMediaStream = stream;
 
-        // Re-enumerate to get full device labels once permission is granted
+        // Re-enumerate devices with active permissions
         await enumerateCameras();
+
+        // Sync actual device ID & facing mode from real track settings
+        const activeTrack = stream.getVideoTracks()[0];
+        if (activeTrack && typeof activeTrack.getSettings === 'function') {
+          const settings = activeTrack.getSettings();
+          if (settings.deviceId) {
+            camSelectedDeviceId = settings.deviceId;
+            if (deviceSelect) deviceSelect.value = settings.deviceId;
+          }
+          if (settings.facingMode) {
+            camFacingMode = settings.facingMode;
+          }
+          if (btnCamRear && btnCamFront) {
+            btnCamRear.classList.toggle('active', camFacingMode === 'environment');
+            btnCamFront.classList.toggle('active', camFacingMode === 'user');
+          }
+          if (videoPreview) {
+            videoPreview.style.transform = (camFacingMode === 'user') ? 'scaleX(-1)' : 'none';
+          }
+        }
 
         if (videoPreview) {
           videoPreview.style.display = 'block';
@@ -13406,6 +13469,9 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
         camWs.onopen = () => {
           console.log('[PCDeck Webcam] Stream connected to PC');
+          try {
+            camWs.send(`cfg,${width},${height},${camFps}`);
+          } catch (e) {}
         };
         camWs.onerror = (e) => {
           console.warn('[PCDeck Webcam] Socket error:', e);
@@ -13420,7 +13486,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         canvas.height = height;
         const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'medium';
+        ctx.imageSmoothingQuality = 'high';
 
         const frameInterval = 1000 / camFps;
         let lastFrameTime = 0;
@@ -13470,13 +13536,14 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
                 ctx.save();
                 ctx.translate(canvas.width, 0);
                 ctx.scale(-1, 1);
-                ctx.drawImage(videoPreview, 0, 0, srcW, srcH, canvas.width - dx - dw, dy, dw, dh);
+                ctx.drawImage(videoPreview, 0, 0, srcW, srcH, dx, dy, dw, dh);
                 ctx.restore();
               } else {
                 ctx.drawImage(videoPreview, 0, 0, srcW, srcH, dx, dy, dw, dh);
               }
 
-              // Fast JPEG compression (0.52 gives 40KB packets, <15ms encode, ultra-fluid response)
+              // High-fidelity JPEG compression (0.80 gives vivid color depth, sharp edges, and natural skin tones)
+              const jpegQuality = camTargetRes === 1080 ? 0.82 : 0.80;
               canvas.toBlob((blob) => {
                 try {
                   if (blob && camWs && camWs.readyState === WebSocket.OPEN) {
@@ -13487,7 +13554,7 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
                 } finally {
                   isEncodingFrame = false;
                 }
-              }, 'image/jpeg', 0.52);
+              }, 'image/jpeg', jpegQuality);
             }
           }
           requestAnimationFrame(captureFrame);
@@ -13505,7 +13572,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         }
         const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
         if (quickCamBtn) {
-          quickCamBtn.style.background = 'var(--neo-pink)';
+          quickCamBtn.style.background = '#ffffff';
+          quickCamBtn.style.color = '#09090b';
           quickCamBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Cam: ON</span>';
         }
         const toolCamSub = document.getElementById('tool-cam-status');
@@ -13550,7 +13618,8 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
       }
       const quickCamBtn = document.getElementById('btn-quick-cam-toggle');
       if (quickCamBtn) {
-        quickCamBtn.style.background = 'var(--neo-cyan)';
+        quickCamBtn.style.background = '';
+        quickCamBtn.style.color = '';
         quickCamBtn.innerHTML = '<svg class="deck-icon" width="14" height="14"><use href="#icon-camera"/></svg><span>Cam</span>';
       }
       const toolCamSub = document.getElementById('tool-cam-status');
@@ -13579,21 +13648,36 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     // Cycle Next Lens / Flip Camera
     if (btnSwitch) {
-      btnSwitch.onclick = () => {
-        vibrate(15);
-        if (availableVideoDevices.length > 1) {
+      btnSwitch.onclick = async () => {
+        if (typeof vibrate === 'function') vibrate(15);
+        if (availableVideoDevices.length <= 1) {
+          await enumerateCameras();
+        }
+
+        const nextFacing = (camFacingMode === 'user') ? 'environment' : 'user';
+
+        if (availableVideoDevices && availableVideoDevices.length > 1) {
+          // Check if any device explicitly matches the target facing mode
+          const match = availableVideoDevices.find(d => {
+            const lbl = (d.label || '').toLowerCase();
+            return (nextFacing === 'user')
+              ? (lbl.includes('front') || lbl.includes('user') || lbl.includes('selfie'))
+              : (lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment'));
+          });
+          if (match && match.deviceId) {
+            await applyFacingMode(nextFacing, match.deviceId);
+            return;
+          }
+
+          // Otherwise cycle sequentially through available video hardware devices
           let currentIdx = availableVideoDevices.findIndex(d => d.deviceId === camSelectedDeviceId);
           let nextIdx = (currentIdx + 1) % availableVideoDevices.length;
-          camSelectedDeviceId = availableVideoDevices[nextIdx].deviceId;
-          if (deviceSelect) deviceSelect.value = camSelectedDeviceId;
-          let label = (availableVideoDevices[nextIdx].label || '').toLowerCase();
-          if (label.includes('front') || label.includes('user')) {
-            applyFacingMode('user');
-          } else {
-            applyFacingMode('environment');
-          }
+          const nextDev = availableVideoDevices[nextIdx];
+          const label = (nextDev.label || '').toLowerCase();
+          const targetFacing = (label.includes('front') || label.includes('user') || label.includes('selfie')) ? 'user' : 'environment';
+          await applyFacingMode(targetFacing, nextDev.deviceId);
         } else {
-          applyFacingMode(camFacingMode === 'user' ? 'environment' : 'user');
+          await applyFacingMode(nextFacing, null);
         }
       };
     }
