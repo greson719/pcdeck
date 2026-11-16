@@ -496,8 +496,33 @@ class CTkModernButton(tk.Button):
         bg = kwargs.pop("fg_color", kwargs.pop("bg", C_SURFACE_2))
         fg = kwargs.pop("text_color", kwargs.pop("fg", None))
         hover = kwargs.pop("hover_color", kwargs.pop("activebackground", None))
+        pixel_h = kwargs.pop("height", None)
+        pixel_w = kwargs.pop("width", None)
         kwargs.pop("corner_radius", None)
         kwargs.pop("activeforeground", None)
+
+        self._target_height = pixel_h if pixel_h is not None else 32
+        self._target_width = pixel_w if pixel_w is not None else 100
+
+        # In standard Tkinter tk.Button, 'height' is number of text lines and 'width' is character units.
+        # Passing pixel dimensions like height=36 makes the button 36 lines tall (768px), which breaks layouts.
+        # Translate pixel dimensions to appropriate internal padding (pady / padx).
+        if "pady" not in kwargs:
+            if pixel_h is not None:
+                if pixel_h >= 36:
+                    kwargs["pady"] = 6
+                elif pixel_h >= 30:
+                    kwargs["pady"] = 4
+                else:
+                    kwargs["pady"] = 2
+            else:
+                kwargs["pady"] = 4
+
+        if "padx" not in kwargs:
+            if pixel_w is not None and pixel_w > 15:
+                kwargs["padx"] = 10
+            else:
+                kwargs["padx"] = 12
 
         # Auto-resolve text_color if not provided (prevents white-on-white text in Light Mode)
         if fg is None:
@@ -557,6 +582,17 @@ class CTkModernButton(tk.Button):
         if "hover_color" in kwargs:
             kwargs["activebackground"] = kwargs.pop("hover_color")
 
+        if "height" in kwargs:
+            pixel_h = kwargs.pop("height")
+            self._target_height = pixel_h
+            if "pady" not in kwargs and pixel_h is not None:
+                kwargs["pady"] = 6 if pixel_h >= 36 else (4 if pixel_h >= 30 else 2)
+        if "width" in kwargs:
+            pixel_w = kwargs.pop("width")
+            self._target_width = pixel_w
+            if "padx" not in kwargs and pixel_w is not None and pixel_w > 15:
+                kwargs["padx"] = 10
+
         if "bg" in kwargs:
             self._default_bg = kwargs["bg"]
             if "hover_color" not in kwargs and "activebackground" not in kwargs:
@@ -589,6 +625,10 @@ class CTkModernButton(tk.Button):
             return super().cget("fg")
         if attribute_name in ("hover_color", "activebackground"):
             return self._hover_bg
+        if attribute_name == "height":
+            return self._target_height
+        if attribute_name == "width":
+            return self._target_width
         return super().cget(attribute_name)
 
 
@@ -599,6 +639,12 @@ class CTkModernLabel(tk.Label):
         kwargs.pop("corner_radius", None)
         kwargs.pop("bd", None)
         kwargs.pop("relief", None)
+        pixel_h = kwargs.pop("height", None)
+        pixel_w = kwargs.pop("width", None)
+        if pixel_h is not None and pixel_h <= 5:
+            kwargs["height"] = pixel_h
+        if pixel_w is not None and pixel_w <= 15:
+            kwargs["width"] = pixel_w
 
         if bg is None or bg == "transparent":
             try:
@@ -615,6 +661,12 @@ class CTkModernLabel(tk.Label):
             kwargs["bg"] = kwargs.pop("fg_color")
         if "text_color" in kwargs:
             kwargs["fg"] = kwargs.pop("text_color")
+        pixel_h = kwargs.pop("height", None)
+        pixel_w = kwargs.pop("width", None)
+        if pixel_h is not None and pixel_h <= 5:
+            kwargs["height"] = pixel_h
+        if pixel_w is not None and pixel_w <= 15:
+            kwargs["width"] = pixel_w
         if "bg" in kwargs and kwargs["bg"] == "transparent":
             try:
                 kwargs["bg"] = self.master.cget("bg")
