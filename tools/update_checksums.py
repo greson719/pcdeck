@@ -63,6 +63,7 @@ def update_file(filepath: str, rows: list[str]) -> bool:
 
 def main() -> int:
     rows = []
+    dl_rows = []
     missing = []
 
     for name in TARGETS:
@@ -80,6 +81,9 @@ def main() -> int:
             f"          <dd>{digest}</dd>\n"
             "        </dl>"
         )
+        dl_rows.append(
+            f"        <div><b>{name}</b> ({size:,} BYTES): <span style=\"color: var(--ink);\">{digest}</span></div>"
+        )
         print(f"{name:<22} {size:>12,} B  {digest}")
 
     if missing:
@@ -89,7 +93,9 @@ def main() -> int:
 
     changed_site = update_file(PAGE, rows)
     changed_root = update_file(os.path.join(ROOT, "index.html"), rows)
-    if not changed_site and not changed_root:
+    changed_dl_site = update_file(os.path.join(SITE, "download", "index.html"), dl_rows)
+    changed_dl_root = update_file(os.path.join(ROOT, "download", "index.html"), dl_rows)
+    if not any([changed_site, changed_root, changed_dl_site, changed_dl_root]):
         print("\nNo change — checksums already current.")
     return 0
 

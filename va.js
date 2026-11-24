@@ -201,6 +201,8 @@
       if (!el || typeof window.va !== 'function') return;
       var href = (el.getAttribute('href') || '').toLowerCase();
       var text = (el.textContent || '').trim().toLowerCase();
+      var pagePath = window.location.pathname;
+      var loc = el.id || (el.closest('section') && el.closest('section').id) || (el.closest('header') ? 'header' : (el.closest('footer') ? 'footer' : 'body'));
 
       // Microsoft Store & MSIX Direct Web Installer (Primary Windows Channel)
       if (href.indexOf('get.microsoft.com') !== -1 || 
@@ -209,6 +211,7 @@
           href.indexOf('ms-windows-store:') !== -1 || 
           text.indexOf('ms store') !== -1 || 
           text.indexOf('microsoft store') !== -1) {
+        window.va('event', { name: 'cta_ms_store_click', data: { page: pagePath, location: loc } });
         window.va('event', { name: 'download_windows_msstore' });
         window.va('event', { name: 'download_windows' });
       // Standalone Portable .exe (Secondary Windows Channel)
@@ -217,6 +220,7 @@
                  text.indexOf('download for windows') !== -1 || 
                  text.indexOf('download pcdeck.exe') !== -1 || 
                  text.indexOf('standalone .exe') !== -1) {
+        window.va('event', { name: 'cta_direct_exe_click', data: { page: pagePath } });
         window.va('event', { name: 'download_windows_exe' });
         window.va('event', { name: 'download_windows' });
       // Android APK Direct Download
@@ -224,14 +228,25 @@
                  href.indexOf('/download/android') !== -1 || 
                  text.indexOf('download apk') !== -1 || 
                  text.indexOf('download pcdeck.apk') !== -1) {
+        window.va('event', { name: 'cta_apk_download_click', data: { page: pagePath } });
         window.va('event', { name: 'download_android' });
       // Linux 1-Line Installer / Script
       } else if (href.indexOf('run_linux.sh') !== -1 || 
                  href.indexOf('install.sh') !== -1 || 
                  href.indexOf('/download/linux') !== -1 || 
                  href.indexOf('/linux-install') !== -1 || 
-                 text.indexOf('linux setup') !== -1) {
+                 text.indexOf('linux setup') !== -1 ||
+                 text.indexOf('curl') !== -1 ||
+                 el.id === 'dl-linux' ||
+                 el.id === 'btn-copy-linux') {
+        window.va('event', { name: 'cta_linux_copy_click', data: { page: pagePath } });
         window.va('event', { name: 'download_linux' });
+      // Pro Lifetime Checkout
+      } else if (href.indexOf('dodopayments.com') !== -1 || 
+                 text.indexOf('unlock pro') !== -1 || 
+                 text.indexOf('get lifetime pro') !== -1 ||
+                 (href.indexOf('/pricing') !== -1 && text.indexOf('pro') !== -1)) {
+        window.va('event', { name: 'cta_pro_checkout_click', data: { page: pagePath, plan: 'pro_lifetime' } });
       // Web Remote / Zero-Install Browser Launch
       } else if (href.indexOf('/connect') !== -1 || 
                  href.indexOf('/browser-pc-remote') !== -1 || 

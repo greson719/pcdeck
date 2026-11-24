@@ -300,8 +300,9 @@
         <p style="font-size: 13.5px; color: var(--graphite); margin: 0 0 16px; line-height: 1.5;">
           Works natively on Ubuntu, Debian, Arch Linux, Fedora, and SteamOS with X11/Wayland support.
         </p>
-        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 11px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 11px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
           <code style="color: var(--ink); overflow-x: auto; white-space: nowrap;">curl -sSL https://getpcdeck.com/install.sh | bash</code>
+          <button type="button" id="btn-copy-linux" onclick="navigator.clipboard.writeText('curl -sSL https://getpcdeck.com/install.sh | bash'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 2000)" style="background: var(--signal); color: #fff; border: none; border-radius: 4px; padding: 4px 8px; font-size: 10.5px; font-weight: 700; cursor: pointer; flex-shrink: 0;">Copy</button>
         </div>
         <a rel="nofollow" class="btn ghost sm" href="/run_linux.sh" download="run_linux.sh" style="width: 100%; justify-content: center;">
           Download Linux Launcher (.sh)
@@ -331,7 +332,8 @@
             <li>Wireless trackpad, full keyboard &amp; gestures</li>
             <li>30 FPS real-time desktop screen mirroring</li>
             <li>Lossless PC audio streaming to phone earbuds</li>
-            <li>720p wireless phone webcam (no watermark)</li>
+            <li>Standard Wi-Fi file transfers (10 MB/s)</li>
+            <li>720p webcam &amp; mic (APK / HTTPS, no watermark)</li>
             <li>100% offline local Wi-Fi, zero accounts</li>
           </ul>
         </div>
@@ -342,10 +344,11 @@
           <p style="color: var(--graphite); font-size: 13.5px; line-height: 1.5; margin: 0 0 10px;">For gamers, streamers, and homelab power users wanting high-refresh performance:</p>
           <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink); line-height: 1.6;">
             <li>60 FPS &amp; 120 FPS high-refresh desktop streaming</li>
-            <li>1080p 60 FPS studio iPhone webcam streaming</li>
+            <li>Uncapped multi-stream gigabit Wi-Fi file transfers</li>
+            <li>1080p / 60 FPS studio webcam (APK / HTTPS)</li>
             <li>Custom touch HUD keymapper &amp; overlays</li>
             <li>Aero, OLED Dark &amp; Retro CRT custom themes</li>
-            <li>One-time $3.99 payment, lifetime access on all personal PCs</li>
+            <li>Pay once, own forever · 30-day money-back guarantee</li>
           </ul>
         </div>
       </div>
@@ -357,8 +360,11 @@
       <p style="font-size: 13.5px; color: var(--graphite); margin: 0 0 14px;">Every release binary is independently hashed. Compare the SHA-256 checksums to verify authenticity:</p>
       
       <div style="font-family: var(--mono); font-size: 11.5px; color: var(--graphite); background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 12px; line-height: 1.6; overflow-x: auto;">
-        <div><b>PCDeck.exe</b>: <span style="color: var(--ink);">102ab4c95e6b57a353070775aad9785805aef25aad45178a382f7de8effe30a3</span></div>
-        <div><b>PCDeck.apk</b>: <span style="color: var(--ink);">0bc8996f70439932d933f646b0d1bd4ab70af7a8322e320e267251aa3b3afafd</span></div>
+        <!-- CHECKSUMS:BEGIN -->
+        <div><b>PCDeck.apk</b> (1,014,612 BYTES): <span style="color: var(--ink);">a2f7793d1c8c2f2c8413a21f8835f1ecad8dd6103760d5989b73341e4defe4dc</span></div>
+        <div><b>PCDeck.aab</b> (1,004,118 BYTES): <span style="color: var(--ink);">d02edcaa263ea88340bbc1c1416d7001128fa6a3b6f52cb5d4c83f3685a82de5</span></div>
+        <div><b>PCDeck.exe</b> (38,756,175 BYTES): <span style="color: var(--ink);">113dcfc6dc3963fd367377249e3a72ade4253113107ae6a3820e70cc66a76093</span></div>
+        <!-- CHECKSUMS:END -->
       </div>
     </div>
 

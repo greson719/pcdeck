@@ -569,7 +569,7 @@ async def track_client_and_set_token(request: Request, call_next):
 
     path_lower = request.url.path.lower()
     is_stream_or_download = (
-        path_lower.endswith((".apk", ".zip", ".exe", ".msix", ".wav", ".tar", ".gz", ".7z", ".bin"))
+        path_lower.endswith((".apk", ".zip", ".exe", ".msix", ".wav", ".tar", ".gz", ".7z", ".bin", ".crt", ".pem"))
         or path_lower.startswith((
             "/api/fs/download",
             "/api/fs/stream",
@@ -2000,6 +2000,20 @@ async def download_exe(range_header: Optional[str] = Header(None, alias="Range")
         if os.path.exists(c) and os.path.isfile(c):
             return serve_resumable(c, "PCDeck.exe", "application/octet-stream", range_header)
     return JSONResponse(status_code=404, content={"error": "PCDeck.exe not found"})
+
+
+@app.get("/cert.crt")
+@app.get("/api/cert")
+async def download_ssl_cert():
+    """Direct download for the PCDeck local TLS root certificate."""
+    try:
+        from server.cert_manager import get_ssl_storage_dir
+    except ImportError:
+        from cert_manager import get_ssl_storage_dir
+    cert_path = os.path.join(get_ssl_storage_dir(), "cert.pem")
+    if os.path.isfile(cert_path) and os.path.getsize(cert_path) > 100:
+        return FileResponse(cert_path, media_type="application/x-x509-ca-cert", filename="pcdeck-ca.crt")
+    return JSONResponse(status_code=404, content={"error": "Certificate not found"})
 
 
 def perform_delete_item(target: str):

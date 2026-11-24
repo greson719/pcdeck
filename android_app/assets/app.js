@@ -12999,6 +12999,12 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
       // 2. Browser WebAudio Fallback
       try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showToast('Microphone not supported or blocked in this browser', 'error');
+          openBrowserSslModal('mic');
+          return;
+        }
+
         let stream = null;
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -13034,10 +13040,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         micGainNode.connect(analyser);
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const port = state.serverPort || 8000;
+        const hostPort = (window.location.host && window.location.host !== '') ? window.location.host : `${host}:${state.serverPort || 8000}`;
         const storedToken = localStorage.getItem('pcdeck_token') || '';
         const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
-        const wsUrl = `${protocol}//${host}:${port}/ws/mic${tokenParam}`;
+        const wsUrl = `${protocol}//${hostPort}/ws/mic${tokenParam}`;
         micWs = new WebSocket(wsUrl);
         micWs.binaryType = 'arraybuffer';
 
@@ -13103,14 +13109,19 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         console.error('[Mic] Start error:', err);
         const msg = (err && err.message) ? err.message : String(err);
         if (err.name === 'NotAllowedError' || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('permission')) {
-          showToast('Mic Permission Needed: Allow in Phone Settings > Apps > PCDeck', 'error', '️');
-          if (window.AndroidApp && typeof window.AndroidApp.openAppPermissionsSettings === 'function') {
-            setTimeout(() => {
-              window.AndroidApp.openAppPermissionsSettings();
-            }, 800);
+          if (window.AndroidApp) {
+            showToast('Mic Permission Needed: Allow in Phone Settings > Apps > PCDeck', 'error', '🎤');
+            if (typeof window.AndroidApp.openAppPermissionsSettings === 'function') {
+              setTimeout(() => {
+                window.AndroidApp.openAppPermissionsSettings();
+              }, 800);
+            }
+          } else {
+            showToast('Mic Denied: Tap Lock/Shield icon in address bar to Allow Mic', 'error', '🎤');
+            openBrowserSslModal('mic');
           }
         } else {
-          showToast('Mic Access Denied: ' + msg, 'error', '️');
+          showToast('Mic Access Denied: ' + msg, 'error', '🎤');
         }
       }
     }
@@ -13384,6 +13395,12 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
 
     async function startCam() {
       try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showToast('Camera not supported or blocked in this browser', 'error');
+          openBrowserSslModal('camera');
+          return;
+        }
+
         let width = 1280;
         let height = 720;
         if (camTargetRes === 1080) { width = 1920; height = 1080; }
@@ -13462,9 +13479,10 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         }
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const hostPort = (window.location.host && window.location.host !== '') ? window.location.host : `${state.serverHost}:${state.serverPort || 8000}`;
         const storedToken = localStorage.getItem('pcdeck_token') || '';
         const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
-        const wsUrl = `${protocol}//${state.serverHost}:${state.serverPort}/ws/cam${tokenParam}`;
+        const wsUrl = `${protocol}//${hostPort}/ws/cam${tokenParam}`;
         camWs = new WebSocket(wsUrl);
 
         camWs.onopen = () => {
@@ -13582,7 +13600,25 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
         showToast('Camera Broadcasting to PC', 'success');
         requestAnimationFrame(captureFrame);
       } catch (err) {
-        showToast('Camera Access Denied: ' + err.message, 'error', '️');
+        console.error('[PCDeck Webcam] Start failed:', err);
+        const msg = (err && err.message) ? err.message : String(err);
+        if (err.name === 'NotAllowedError' || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('permission')) {
+          if (window.AndroidApp) {
+            showToast('Camera Permission Needed: Allow in Phone Settings > Apps > PCDeck', 'error', '📷');
+            if (typeof window.AndroidApp.openAppPermissionsSettings === 'function') {
+              setTimeout(() => { window.AndroidApp.openAppPermissionsSettings(); }, 800);
+            }
+          } else {
+            showToast('Camera Denied: Tap Lock/Shield icon in address bar to Allow Camera', 'error', '📷');
+            openBrowserSslModal('camera');
+          }
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          showToast('No camera hardware detected on this device', 'error', '📷');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          showToast('Camera in use by another app. Please close other camera apps and retry.', 'error', '📷');
+        } else {
+          showToast('Camera Access Denied: ' + msg, 'error', '📷');
+        }
       }
     }
 
@@ -13729,21 +13765,31 @@ try { registerProcessor('pcdeck-audio-player-worklet', PCDeckAudioPlayerProcesso
     const btnClose = document.getElementById('btn-close-ssl-modal');
     const androidHint = document.getElementById('modal-android-hint');
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isHttps = window.location.protocol === 'https:';
 
     if (androidHint) {
       androidHint.style.display = isIOS ? 'none' : 'block';
     }
 
     if (btnSwitch) {
-      const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
-      const sslPort = '8443';
-      const storedToken = localStorage.getItem('pcdeck_token') || '';
-      const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
-      btnSwitch.href = `https://${host}:${sslPort}/${tokenParam}#tab-media`;
-      btnSwitch.onclick = (e) => {
-        e.preventDefault();
-        window.location.href = `https://${host}:${sslPort}/${tokenParam}#tab-media`;
-      };
+      if (isHttps) {
+        btnSwitch.innerHTML = '<svg class="deck-icon" width="16" height="16"><use href="#icon-phone"/></svg><span>DOWNLOAD ANDROID APK (ZERO SETUP)</span>';
+        btnSwitch.href = '/PCDeck.apk';
+        btnSwitch.setAttribute('download', 'PCDeck.apk');
+        btnSwitch.onclick = null;
+      } else {
+        const host = state.serverHost || (window.location.hostname && window.location.hostname !== '' ? window.location.hostname : '127.0.0.1');
+        const sslPort = '8443';
+        const storedToken = localStorage.getItem('pcdeck_token') || '';
+        const tokenParam = storedToken ? `?token=${encodeURIComponent(storedToken)}` : '';
+        btnSwitch.innerHTML = '<svg class="deck-icon" width="16" height="16"><use href="#icon-lock"/></svg><span>SWITCH TO SECURE HTTPS</span>';
+        btnSwitch.href = `https://${host}:${sslPort}/${tokenParam}#tab-media`;
+        btnSwitch.removeAttribute('download');
+        btnSwitch.onclick = (e) => {
+          e.preventDefault();
+          window.location.href = `https://${host}:${sslPort}/${tokenParam}#tab-media`;
+        };
+      }
     }
 
     if (btnClose) {

@@ -233,7 +233,7 @@
           "name": "Do these features work in the browser or require the APK?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Multi-touch trackpad, mechanical keyboard, 60 FPS screen streaming, and Wi-Fi file transfer work 100% inside any mobile web browser (Safari, Chrome, Firefox) via QR code with zero installs. Low-latency hardware-level Webcam, Microphone, and Gamepad features run best in the native lightweight PCDeck Android APK (1.5 MB) due to browser security restrictions on background media streams."
+            "text": "Multi-touch trackpad, mechanical keyboard, 30 FPS screen streaming, and Wi-Fi file transfer work 100% inside any mobile web browser (Safari, Chrome, Firefox) via QR code with zero installs. Low-latency hardware-level Webcam, Microphone, and Gamepad features run best in the native lightweight PCDeck Android APK (983 KB) due to browser security restrictions on background media streams."
           }
         }
       ]
@@ -342,7 +342,7 @@
             <td>&lt; 4 ms</td>
           </tr>
           <tr>
-            <td><strong>60 FPS Screen Mirror</strong></td>
+            <td><strong>Screen Mirror</strong><br><span style="font-size: 11.5px; color: var(--graphite);">30 FPS Free / 60-120 FPS Pro</span></td>
             <td>Tab 3 (Screen View)</td>
             <td>WebSocket <code>/ws/screen</code> (JPEG Stream)</td>
             <td><span class="feat-badge badge-both">Web + APK</span></td>
@@ -363,17 +363,17 @@
             <td>&lt; 5 ms</td>
           </tr>
           <tr>
-            <td><strong>Wireless Microphone</strong></td>
+            <td><strong>Wireless Microphone</strong><br><span style="font-size: 11.5px; color: var(--graphite);">APK direct or browser HTTPS</span></td>
             <td>Tab 5 (Media Tab) &rarr; Mic Card</td>
             <td>Raw PCM Audio TCP Port <code>8002</code></td>
-            <td><span class="feat-badge badge-app">Native APK</span></td>
+            <td><span class="feat-badge badge-app">APK / HTTPS</span></td>
             <td>15 - 25 ms</td>
           </tr>
           <tr>
-            <td><strong>HD Phone Webcam</strong></td>
+            <td><strong>HD Phone Webcam</strong><br><span style="font-size: 11.5px; color: var(--graphite);">720p Free / 1080p Pro</span></td>
             <td>Tab 5 (Media Tab) &rarr; Camera Card</td>
             <td>WebSocket Binary <code>/ws/cam</code></td>
-            <td><span class="feat-badge badge-app">Native APK</span></td>
+            <td><span class="feat-badge badge-app">APK / HTTPS</span></td>
             <td>30 - 50 ms</td>
           </tr>
           <tr>
@@ -384,7 +384,7 @@
             <td>25 - 45 ms</td>
           </tr>
           <tr>
-            <td><strong>Wi-Fi File Transfer</strong></td>
+            <td><strong>Wi-Fi File Transfer</strong><br><span style="font-size: 11.5px; color: var(--graphite);">10 MB/s Free / Uncapped Pro</span></td>
             <td>Tab 4 (Files Explorer)</td>
             <td>HTTP Chunked Multipart Port <code>8000</code></td>
             <td><span class="feat-badge badge-both">Web + APK</span></td>
@@ -684,7 +684,7 @@
 
         <div style="background: var(--paper); border: 1px solid var(--grid); border-radius: 6px; padding: 18px 20px;">
           <h3 style="margin: 0 0 8px; font-size: 16px;">Do these features work in the browser or require the APK?</h3>
-          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Multi-touch trackpad, mechanical keyboard, 60 FPS screen streaming, and Wi-Fi file transfer work 100% inside any mobile web browser (Safari, Chrome, Firefox) via QR code with zero installs. Low-latency hardware-level Webcam, Microphone, and Gamepad features run best in the native lightweight PCDeck Android APK (1.5 MB) due to browser security restrictions on background media streams.</p>
+          <p style="margin: 0; font-size: 14.5px; color: var(--graphite);">Multi-touch trackpad, mechanical keyboard, 30 FPS screen streaming, and Wi-Fi file transfer work 100% inside any mobile web browser (Safari, Chrome, Firefox) via QR code with zero installs. Low-latency hardware-level Webcam, Microphone, and Gamepad features run best in the native lightweight PCDeck Android APK (983 KB) due to browser security restrictions on background media streams.</p>
         </div>
       </div>
     </section>
@@ -698,7 +698,7 @@
           <img src="/ms-badge.svg" alt="Get it from Microsoft Store" width="161" height="44" style="height: 52px; width: auto; display: block; border-radius: 6px; box-shadow: 0 4px 18px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.15);">
         </a>
         <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center; font-size: 13px;">
-          <a href="/download/android/" style="color: var(--signal-ink); text-decoration: underline; font-weight: 600;">Download Android APK (691 KB)</a>
+          <a href="/download/android/" style="color: var(--signal-ink); text-decoration: underline; font-weight: 600;">Download Android APK (983 KB)</a>
           <span style="color: var(--grid);">·</span>
           <a href="/download/windows/" style="color: var(--muted); text-decoration: underline; text-underline-offset: 3px;">Standalone Windows .exe (portable) &rarr;</a>
         </div>
