@@ -4,8 +4,8 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'website/**'
-      - '*.html'
+      - 'index.html'
+      - '**/index.html'
       - 'sitemap.xml'
   workflow_dispatch:
 
@@ -15,14 +15,43 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Ping Bing IndexNow
+      - name: Ping Bing IndexNow (Changed Sitemap URLs Only)
         run: |
           python -c "
-          import urllib.request, json, xml.etree.ElementTree as ET
-          tree = ET.parse('website/sitemap.xml')
+          import os, subprocess, urllib.request, json, xml.etree.ElementTree as ET
+
+          tree = ET.parse('sitemap.xml')
           ns = {'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-          urls = [u.find('sm:loc', ns).text.strip() for u in tree.getroot().findall('sm:url', ns)]
+          sitemap_urls = {u.find('sm:loc', ns).text.strip() for u in tree.getroot().findall('sm:url', ns)}
+
+          event_name = os.environ.get('GITHUB_EVENT_NAME', 'push')
+          if event_name == 'workflow_dispatch':
+              urls = sorted(sitemap_urls)
+          else:
+              diff = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], text=True).splitlines()
+              changed_urls = set()
+              for path in diff:
+                  path = path.strip().replace('\\\\', '/')
+                  if not path.endswith('.html') or path.startswith(('website/', 'static/', 'android_app/', 'build/', 'dist/')):
+                      continue
+                  if path == 'index.html':
+                      cand = 'https://getpcdeck.com/'
+                  elif path.endswith('/index.html'):
+                      cand = 'https://getpcdeck.com/' + path[:-len('index.html')]
+                  else:
+                      cand = 'https://getpcdeck.com/' + path
+                  if cand in sitemap_urls:
+                      changed_urls.add(cand)
+              urls = sorted(changed_urls)
+
+          if not urls:
+              print('No sitemap URLs modified in this commit — skipping IndexNow ping.')
+              raise SystemExit(0)
+
+          print(f'Submitting {len(urls)} changed URL(s) to IndexNow:', urls)
           payload = {
               'host': 'getpcdeck.com',
               'key': '2b967b3e45cd4a0cafab08e647e1fc47',
